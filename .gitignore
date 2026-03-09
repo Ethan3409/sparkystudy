@@ -1,0 +1,5 @@
+*.pdf
+pdf_extracted.txt
+.claude/
+node_modules/
+.env
