@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Match - Memory Card Game | SparkStudy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #f59e0b;
+            --secondary: #1e293b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --card-back: #1e293b;
+            --card-front: #ffffff;
+            --text-dark: #0f172a;
+            --text-light: #94a3b8;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(241, 158, 11, 0.1);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -0.25rem;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 1px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            gap: 0.4rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mobile-menu-btn span {
+            width: 1.5rem;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 1px;
+            transition: 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+        }
+
+        /* Main Content */
+        .game-container {
+            min-height: calc(100vh - 70px);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Level Select Screen */
+        .level-select {
+            display: grid;
+            gap: 2rem;
+            max-width: 900px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .level-select h1 {
+            text-align: center;
+            color: var(--light);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .level-select p {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .level-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid rgba(241, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .level-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .level-card:hover::before {
+            left: 100%;
+        }
+
+        .level-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(241, 158, 11, 0.2);
+        }
+
+        .level-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-card.locked:hover {
+            transform: none;
+            border-color: rgba(241, 158, 11, 0.2);
+            box-shadow: none;
+        }
+
+        .level-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .level-title {
+            color: var(--light);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-info {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-lock {
+            font-size: 1.5rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        /* Game Screen */
+        .game-screen {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .game-screen.active {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(241, 158, 11, 0.2);
+        }
+
+        .game-title {
+            color: var(--light);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #fbbf24);
+            width: 0%;
+            transition: width 0.4s ease;
+            border-radius: 4px;
+        }
+
+        /* Card Grid */
+        .cards-container {
+            perspective: 1000px;
+            display: grid;
+            gap: 1rem;
+            padding: 2rem;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            border: 1px solid rgba(241, 158, 11, 0.2);
+        }
+
+        .cards-4x3 {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            aspect-ratio: 4 / 3;
+        }
+
+        .cards-4x4 {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            aspect-ratio: 1 / 1;
+        }
+
+        .cards-5x4 {
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            aspect-ratio: 5 / 4;
+        }
+
+        .cards-6x4 {
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            aspect-ratio: 6 / 4;
+        }
+
+        @media (max-width: 768px) {
+            .cards-4x3, .cards-4x4, .cards-5x4, .cards-6x4 {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.75rem;
+                padding: 1rem;
+            }
+
+            .cards-4x3 {
+                grid-template-rows: repeat(4, 1fr);
+                aspect-ratio: 3 / 4;
+            }
+
+            .cards-4x4 {
+                grid-template-rows: repeat(5.33, 1fr);
+                aspect-ratio: 3 / 5.33;
+            }
+
+            .cards-5x4 {
+                grid-template-rows: repeat(6.67, 1fr);
+                aspect-ratio: 3 / 6.67;
+            }
+
+            .cards-6x4 {
+                grid-template-rows: repeat(8, 1fr);
+                aspect-ratio: 3 / 8;
+            }
+        }
+
+        /* Cards */
+        .card {
+            position: relative;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            user-select: none;
+            border-radius: 8px;
+            min-height: 100px;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            animation: matchPulse 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        .card.no-match {
+            animation: noMatch 0.4s ease-out;
+        }
+
+        @keyframes matchPulse {
+            0% {
+                transform: rotateY(180deg) scale(1);
+                box-shadow: 0 0 0 0 rgba(241, 158, 11, 0.7);
+            }
+            50% {
+                transform: rotateY(180deg) scale(1.05);
+            }
+            100% {
+                transform: rotateY(180deg) scale(1);
+                box-shadow: 0 0 20px 10px rgba(241, 158, 11, 0);
+            }
+        }
+
+        @keyframes noMatch {
+            0%, 100% {
+                transform: rotateY(180deg) translateX(0);
+            }
+            25% {
+                transform: rotateY(180deg) translateX(-10px);
+            }
+            75% {
+                transform: rotateY(180deg) translateX(10px);
+            }
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid rgba(241, 158, 11, 0.3);
+            color: var(--primary);
+            font-size: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-back::before {
+            content: '⚡';
+            position: absolute;
+            opacity: 0.1;
+            font-size: 5rem;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        .card-back-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid rgba(241, 158, 11, 0.2);
+            color: var(--text-dark);
+            transform: rotateY(180deg);
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-front.matched {
+            background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(241, 158, 11, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-term {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .card-definition {
+            font-size: 0.9rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        /* Completion Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            max-width: 500px;
+            text-align: center;
+            animation: slideUp 0.4s ease-out;
+            box-shadow: var(--shadow-lg);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h2 {
+            color: var(--light);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content p {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            font-size: 2rem;
+        }
+
+        .star {
+            opacity: 0.3;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .star.filled {
+            opacity: 1;
+            animation: starPop 0.4s ease-out;
+        }
+
+        @keyframes starPop {
+            0% {
+                transform: scale(0.5) rotate(-180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .score-details {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .score-row:last-child {
+            margin-bottom: 0;
+            border-top: 1px solid rgba(241, 158, 11, 0.2);
+            padding-top: 0.75rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #fbbf24);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(241, 158, 11, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(241, 158, 11, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--light);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(241, 158, 11, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Particles */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            font-size: 1.5rem;
+            animation: particleFloat 2s ease-out forwards;
+            z-index: 1999;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty)) scale(0);
+            }
+        }
+
+        /* Combo Counter */
+        .combo-counter {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(241, 158, 11, 0.5);
+            animation: comboPop 0.4s ease-out;
+            z-index: 500;
+        }
+
+        @keyframes comboPop {
+            0% {
+                transform: scale(2) translateY(-20px);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Back Button */
+        .back-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(241, 158, 11, 0.2);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .level-select h1 {
+                font-size: 1.75rem;
+            }
+
+            .levels-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .level-card {
+                padding: 1.5rem 1rem;
+                min-height: 150px;
+            }
+
+            .game-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .game-stats {
+                gap: 1rem;
+            }
+
+            .game-title {
+                font-size: 1.25rem;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .modal-content {
+                padding: 2rem 1.5rem;
+            }
+
+            .button-group {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .combo-counter {
+                top: 80px;
+                right: 1rem;
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="game-container">
+        <!-- Level Select Screen -->
+        <div class="level-select" id="levelSelect">
+            <h1>Power Match</h1>
+            <p>Match electrical terms with their definitions. Progress through levels and master electrical concepts!</p>
+            <div class="levels-grid" id="levelsGrid"></div>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <button class="back-btn" id="backBtn">←</button>
+
+            <div class="game-header">
+                <div class="game-title" id="gameTitle"></div>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-label">Moves</div>
+                        <div class="stat-value" id="moveCount">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Time</div>
+                        <div class="stat-value" id="timer">0:00</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Pairs</div>
+                        <div class="stat-value"><span id="pairsFound">0</span>/<span id="pairsTotal">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="cards-container" id="cardsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Completion Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <h2 id="modalTitle">Level Complete!</h2>
+            <div class="stars-container" id="starsContainer"></div>
+            <div class="score-details">
+                <div class="score-row">
+                    <span>Moves:</span>
+                    <span id="modalMoves">0</span>
+                </div>
+                <div class="score-row">
+                    <span>Time:</span>
+                    <span id="modalTime">0:00</span>
+                </div>
+                <div class="score-row">
+                    <span>Total Score:</span>
+                    <span id="modalScore">0</span>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" id="retryBtn">Play Again</button>
+                <button class="btn btn-primary" id="nextBtn">Next Level</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Data
+        const LEVELS = [
+            {
+                id: 1,
+                title: "Ohm's Law & Basic Terms",
+                description: "6 pairs",
+                pairs: [
+                    { term: "V = IR", definition: "Ohm's Law" },
+                    { term: "Voltage", definition: "Electrical pressure (Volts)" },
+                    { term: "Current", definition: "Flow of electrons (Amps)" },
+                    { term: "Resistance", definition: "Opposition to flow (Ohms)" },
+                    { term: "Power", definition: "P = V × I (Watts)" },
+                    { term: "Conductor", definition: "Material that allows current flow" }
+                ],
+                gridClass: "cards-4x3"
+            },
+            {
+                id: 2,
+                title: "Circuit Types",
+                description: "6 pairs",
+                pairs: [
+                    { term: "Series Circuit", definition: "Single path for current" },
+                    { term: "Parallel Circuit", definition: "Multiple paths for current" },
+                    { term: "Short Circuit", definition: "Unintended low-resistance path" },
+                    { term: "Open Circuit", definition: "Broken path, no current flows" },
+                    { term: "Ground Fault", definition: "Current leaks to ground" },
+                    { term: "Overload", definition: "Excess current in a circuit" }
+                ],
+                gridClass: "cards-4x3"
+            },
+            {
+                id: 3,
+                title: "Magnetism & Induction",
+                description: "8 pairs",
+                pairs: [
+                    { term: "Faraday's Law", definition: "Changing flux induces EMF" },
+                    { term: "Lenz's Law", definition: "Induced EMF opposes change" },
+                    { term: "Magnetic Flux", definition: "Φ = B × A (Webers)" },
+                    { term: "Inductance", definition: "Opposition to current change (Henrys)" },
+                    { term: "EMF", definition: "Electromotive Force (Volts)" },
+                    { term: "Solenoid", definition: "Coil that creates magnetic field" },
+                    { term: "Eddy Currents", definition: "Circular currents in conductors" },
+                    { term: "Transformer", definition: "Transfers energy via induction" }
+                ],
+                gridClass: "cards-4x4"
+            },
+            {
+                id: 4,
+                title: "CEC Code Essentials",
+                description: "8 pairs",
+                pairs: [
+                    { term: "Rule 8-200", definition: "Dwelling unit demand factors" },
+                    { term: "40% Fill", definition: "Max conduit fill for 3+ wires" },
+                    { term: "GFCI", definition: "Required in wet locations" },
+                    { term: "15A Breaker", definition: "Max for 14 AWG wire" },
+                    { term: "20A Breaker", definition: "Max for 12 AWG wire" },
+                    { term: "Bonding", definition: "Connecting metal parts to ground" },
+                    { term: "Service Entrance", definition: "Where utility meets building" },
+                    { term: "Arc Fault", definition: "AFCI protects against arcing" }
+                ],
+                gridClass: "cards-4x4"
+            },
+            {
+                id: 5,
+                title: "Formulas Challenge",
+                description: "10 pairs",
+                pairs: [
+                    { term: "P = V × I", definition: "Power formula" },
+                    { term: "V = I × R", definition: "Voltage formula" },
+                    { term: "I = V / R", definition: "Current formula" },
+                    { term: "R = V / I", definition: "Resistance formula" },
+                    { term: "E = -NΔΦ/Δt", definition: "Faraday's Law formula" },
+                    { term: "Vdrop = 2 × R × I × L", definition: "Voltage drop formula" },
+                    { term: "P² = S² - Q²", definition: "Power triangle" },
+                    { term: "Xₗ = 2πfL", definition: "Inductive reactance" },
+                    { term: "Xc = 1/(2πfC)", definition: "Capacitive reactance" },
+                    { term: "Z = √(R² + X²)", definition: "Impedance formula" }
+                ],
+                gridClass: "cards-5x4"
+            },
+            {
+                id: 6,
+                title: "Master Round",
+                description: "12 pairs",
+                pairs: [
+                    { term: "V = IR", definition: "Ohm's Law" },
+                    { term: "Voltage", definition: "Electrical pressure (Volts)" },
+                    { term: "Series Circuit", definition: "Single path for current" },
+                    { term: "Parallel Circuit", definition: "Multiple paths for current" },
+                    { term: "Faraday's Law", definition: "Changing flux induces EMF" },
+                    { term: "Inductance", definition: "Opposition to current change (Henrys)" },
+                    { term: "Rule 8-200", definition: "Dwelling unit demand factors" },
+                    { term: "GFCI", definition: "Required in wet locations" },
+                    { term: "P = V × I", definition: "Power formula" },
+                    { term: "I = V / R", definition: "Current formula" },
+                    { term: "Xₗ = 2πfL", definition: "Inductive reactance" },
+                    { term: "Z = √(R² + X²)", definition: "Impedance formula" }
+                ],
+                gridClass: "cards-6x4"
+            }
+        ];
+
+        // Game State
+        let gameState = {
+            currentLevel: null,
+            cards: [],
+            flipped: [],
+            matched: [],
+            moves: 0,
+            startTime: null,
+            timerInterval: null,
+            isProcessing: false,
+            combo: 0,
+            unlockedLevels: JSON.parse(localStorage.getItem('powerMatchUnlocked')) || [1]
+        };
+
+        // Initialize Game
+        function init() {
+            renderLevelSelect();
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('backBtn').addEventListener('click', goToLevelSelect);
+            document.getElementById('retryBtn').addEventListener('click', () => startLevel(gameState.currentLevel));
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                const nextLevel = gameState.currentLevel + 1;
+                if (nextLevel <= LEVELS.length) {
+                    startLevel(nextLevel);
+                } else {
+                    goToLevelSelect();
+                }
+            });
+        }
+
+        // Render Level Select
+        function renderLevelSelect() {
+            const grid = document.getElementById('levelsGrid');
+            grid.innerHTML = '';
+
+            LEVELS.forEach(level => {
+                const isUnlocked = gameState.unlockedLevels.includes(level.id);
+                const levelCard = document.createElement('div');
+                levelCard.className = `level-card ${isUnlocked ? '' : 'locked'}`;
+                levelCard.innerHTML = `
+                    <div class="level-number">Level ${level.id}</div>
+                    <div class="level-title">${level.title}</div>
+                    <div class="level-info">${level.description}</div>
+                    ${!isUnlocked ? '<div class="level-lock">🔒</div>' : ''}
+                `;
+
+                if (isUnlocked) {
+                    levelCard.addEventListener('click', () => startLevel(level.id));
+                }
+
+                grid.appendChild(levelCard);
+            });
+
+            document.getElementById('levelSelect').classList.add('active');
+            document.getElementById('gameScreen').classList.remove('active');
+        }
+
+        // Start Level
+        function startLevel(levelId) {
+            gameState.currentLevel = levelId;
+            const level = LEVELS[levelId - 1];
+
+            // Reset game state
+            gameState.cards = [];
+            gameState.flipped = [];
+            gameState.matched = [];
+            gameState.moves = 0;
+            gameState.combo = 0;
+            gameState.isProcessing = false;
+
+            // Create cards
+            const cardData = [];
+            level.pairs.forEach(pair => {
+                cardData.push({ type: 'term', text: pair.term, pair: pair.definition });
+                cardData.push({ type: 'definition', text: pair.definition, pair: pair.term });
+            });
+
+            // Shuffle cards
+            gameState.cards = fisherYatesShuffle([...cardData]);
+
+            // Render game screen
+            document.getElementById('levelSelect').classList.remove('active');
+            document.getElementById('gameScreen').classList.add('active');
+            document.getElementById('gameTitle').textContent = level.title;
+            document.getElementById('pairsTotal').textContent = level.pairs.length;
+
+            const container = document.getElementById('cardsContainer');
+            container.className = `cards-container ${level.gridClass}`;
+            container.innerHTML = '';
+
+            gameState.cards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-face card-back">
+                            <div class="card-back-content">⚡</div>
+                        </div>
+                        <div class="card-face card-front">
+                            <div class="${card.type === 'term' ? 'card-term' : 'card-definition'}">
+                                ${card.text}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                cardEl.dataset.index = index;
+                cardEl.dataset.pair = card.pair;
+                cardEl.dataset.text = card.text;
+
+                cardEl.addEventListener('click', () => flipCard(cardEl, index));
+                container.appendChild(cardEl);
+            });
+
+            // Start timer
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            gameState.startTime = Date.now();
+            gameState.timerInterval = setInterval(updateTimer, 100);
+
+            // Hide modal
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        // Fisher-Yates Shuffle
+        function fisherYatesShuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Flip Card
+        function flipCard(cardEl, index) {
+            if (gameState.isProcessing || gameState.flipped.length >= 2) return;
+            if (gameState.flipped.includes(index)) return;
+            if (gameState.matched.includes(index)) return;
+
+            gameState.flipped.push(index);
+            cardEl.classList.add('flipped');
+
+            if (gameState.flipped.length === 2) {
+                checkMatch();
+            }
+        }
+
+        // Check Match
+        function checkMatch() {
+            gameState.isProcessing = true;
+            const [index1, index2] = gameState.flipped;
+            const card1 = gameState.cards[index1];
+            const card2 = gameState.cards[index2];
+
+            gameState.moves++;
+            updateStats();
+
+            if (card1.pair === card2.text && card2.pair === card1.text) {
+                // Match!
+                setTimeout(() => {
+                    gameState.matched.push(index1, index2);
+                    const cards = document.querySelectorAll('.card');
+
+                    cards[index1].classList.add('matched');
+                    cards[index2].classList.add('matched');
+                    cards[index1].querySelector('.card-front').classList.add('matched');
+                    cards[index2].querySelector('.card-front').classList.add('matched');
+
+                    // Combo
+                    gameState.combo++;
+                    if (gameState.combo > 1) {
+                        createComboPopup();
+                    }
+
+                    // Particles
+                    createParticles(cards[index1]);
+                    createParticles(cards[index2]);
+
+                    // Check completion
+                    if (gameState.matched.length === gameState.cards.length) {
+                        completeLevel();
+                    }
+
+                    gameState.flipped = [];
+                    gameState.isProcessing = false;
+                    updateStats();
+                }, 600);
+            } else {
+                // No match
+                gameState.combo = 0;
+                setTimeout(() => {
+                    const cards = document.querySelectorAll('.card');
+                    cards[index1].classList.remove('flipped');
+                    cards[index2].classList.remove('flipped');
+                    cards[index1].classList.add('no-match');
+                    cards[index2].classList.add('no-match');
+
+                    setTimeout(() => {
+                        cards[index1].classList.remove('no-match');
+                        cards[index2].classList.remove('no-match');
+                        gameState.flipped = [];
+                        gameState.isProcessing = false;
+                    }, 400);
+                }, 800);
+            }
+        }
+
+        // Update Stats
+        function updateStats() {
+            document.getElementById('moveCount').textContent = gameState.moves;
+            document.getElementById('pairsFound').textContent = gameState.matched.length / 2;
+
+            const level = LEVELS[gameState.currentLevel - 1];
+            const progress = (gameState.matched.length / gameState.cards.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Update Timer
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timer').textContent =
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Create Combo Popup
+        function createComboPopup() {
+            const combo = document.createElement('div');
+            combo.className = 'combo-counter';
+            combo.textContent = `Combo x${gameState.combo}!`;
+            document.body.appendChild(combo);
+            setTimeout(() => combo.remove(), 1200);
+        }
+
+        // Create Particles
+        function createParticles(element) {
+            const rect = element.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+
+            const emojis = ['⚡', '✨', '🟡', '⭐'];
+
+            for (let i = 0; i < 5; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+                const angle = (Math.PI * 2 * i) / 5;
+                const distance = 80;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance - 60;
+
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.setProperty('--tx', tx + 'px');
+                particle.style.setProperty('--ty', ty + 'px');
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 2000);
+            }
+        }
+
+        // Complete Level
+        function completeLevel() {
+            clearInterval(gameState.timerInterval);
+
+            const level = LEVELS[gameState.currentLevel - 1];
+            const totalTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const perfectionScore = level.pairs.length * 2;
+            const score = Math.max(0, 1000 - (gameState.moves * 50) - (totalTime * 2));
+
+            // Calculate stars
+            let stars = 0;
+            if (gameState.moves <= perfectionScore + 2) stars = 3;
+            else if (gameState.moves <= perfectionScore + 5) stars = 2;
+            else stars = 1;
+
+            // Unlock next level
+            if (gameState.currentLevel < LEVELS.length) {
+                if (!gameState.unlockedLevels.includes(gameState.currentLevel + 1)) {
+                    gameState.unlockedLevels.push(gameState.currentLevel + 1);
+                    localStorage.setItem('powerMatchUnlocked', JSON.stringify(gameState.unlockedLevels));
+                }
+            }
+
+            // Show modal
+            const modalOverlay = document.getElementById('modalOverlay');
+            const starsContainer = document.getElementById('starsContainer');
+            starsContainer.innerHTML = '';
+
+            for (let i = 0; i < 3; i++) {
+                const star = document.createElement('div');
+                star.className = i < stars ? 'star filled' : 'star';
+                star.textContent = '⭐';
+                star.style.animationDelay = (i * 0.2) + 's';
+                starsContainer.appendChild(star);
+            }
+
+            document.getElementById('modalTitle').textContent =
+                stars === 3 ? '🎉 Perfect!' : stars === 2 ? '✨ Great Job!' : '💪 Completed!';
+            document.getElementById('modalMoves').textContent = gameState.moves;
+            document.getElementById('modalTime').textContent =
+                `${Math.floor(totalTime / 60)}:${(totalTime % 60).toString().padStart(2, '0')}`;
+            document.getElementById('modalScore').textContent = Math.max(0, score);
+
+            // Show/hide next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (gameState.currentLevel === LEVELS.length) {
+                nextBtn.textContent = 'Back to Levels';
+            } else {
+                nextBtn.textContent = 'Next Level';
+            }
+
+            modalOverlay.classList.add('active');
+
+            // Create celebration particles
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.textContent = ['⚡', '✨', '🟡', '⭐'][Math.floor(Math.random() * 4)];
+                    particle.style.left = Math.random() * window.innerWidth + 'px';
+                    particle.style.top = window.innerHeight / 2 + 'px';
+                    particle.style.setProperty('--tx', (Math.random() - 0.5) * 400 + 'px');
+                    particle.style.setProperty('--ty', (Math.random() - 1) * 400 + 'px');
+                    document.body.appendChild(particle);
+                    setTimeout(() => particle.remove(), 2000);
+                }, i * 30);
+            }
+        }
+
+        // Go to Level Select
+        function goToLevelSelect() {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            renderLevelSelect();
+        }
+
+        // Start!
+        init();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

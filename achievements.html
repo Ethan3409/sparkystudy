@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkStudy - Achievements & Badges</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            margin: 0 1rem;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        nav a.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.25rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-title p {
+            color: var(--muted);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .badge-card {
+            background-color: var(--panel);
+            border: 2px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge-card.unlocked {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .badge-card:hover:not(.locked) {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-card.locked {
+            opacity: 0.6;
+        }
+
+        .badge-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .badge-card.locked .badge-icon::after {
+            content: '🔒';
+            position: absolute;
+            bottom: -0.5rem;
+            right: 0;
+            font-size: 1.5rem;
+        }
+
+        .badge-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent2);
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-description {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .badge-criteria {
+            background-color: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--accent2);
+            margin-bottom: 1rem;
+        }
+
+        .progress-section {
+            width: 100%;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .progress-label span {
+            color: var(--muted);
+        }
+
+        .progress-label .current {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .unlock-date {
+            color: var(--green);
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+            font-weight: 500;
+        }
+
+        .locked-state {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--muted);
+        }
+
+        .empty-state p {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .page-title h1 {
+                font-size: 1.75rem;
+            }
+
+            .achievements-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            body {
+                padding: 1rem;
+            }
+
+            header {
+                flex-direction: column;
+            }
+
+            nav a {
+                margin: 0 0.5rem;
+            }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = 'login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = 'login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <header>
+        <div class="logo">⚡ SparkStudy</div>
+        <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link">Worksheets</a>
+        <a href="achievements.html" class="nav-link" style="color:#f59e0b;font-weight:600;">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-title">
+            <h1>Your Achievements</h1>
+            <p>Earn badges as you progress through your electrical studies</p>
+        </div>
+
+        <div class="stats-container" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-number" id="unlockedCount">0</div>
+                <div class="stat-label">Badges Unlocked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="studyTime">0h</div>
+                <div class="stat-label">Total Study Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="longestStreak">0</div>
+                <div class="stat-label">Longest Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalProgress">0%</div>
+                <div class="stat-label">Overall Progress</div>
+            </div>
+        </div>
+
+        <div class="achievements-grid" id="achievementsGrid">
+            <!-- Badges will be inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const achievements = [
+            {
+                id: 'first-spark',
+                name: 'First Spark',
+                icon: '⚡',
+                description: 'Complete your first quiz',
+                criteria: 'Complete any quiz',
+                unlock: () => {
+                    const results = JSON.parse(localStorage.getItem('sparty_quiz_results')) || [];
+                    return results.length > 0;
+                }
+            },
+            {
+                id: 'study-starter',
+                name: 'Study Starter',
+                icon: '📚',
+                description: 'Study for 5 different days',
+                criteria: 'Log in and study on 5+ different days',
+                unlock: () => {
+                    const days = JSON.parse(localStorage.getItem('sparty_study_days')) || [];
+                    return days.length >= 5;
+                },
+                progress: () => {
+                    const days = JSON.parse(localStorage.getItem('sparty_study_days')) || [];
+                    return { current: days.length, total: 5 };
+                }
+            },
+            {
+                id: 'on-fire',
+                name: 'On Fire',
+                icon: '🔥',
+                description: '7-day study streak',
+                criteria: 'Study for 7 consecutive days',
+                unlock: () => {
+                    const streak = JSON.parse(localStorage.getItem('sparty_streak')) || { current: 0 };
+                    return streak.current >= 7;
+                },
+                progress: () => {
+                    const streak = JSON.parse(localStorage.getItem('sparty_streak')) || { current: 0 };
+                    return { current: streak.current, total: 7 };
+                }
+            },
+            {
+                id: 'sharpshooter',
+                name: 'Sharpshooter',
+                icon: '🎯',
+                description: 'Score 100% on any quiz',
+                criteria: 'Perfect score (100%) on a quiz',
+                unlock: () => {
+                    const results = JSON.parse(localStorage.getItem('sparty_quiz_results')) || [];
+                    return results.some(r => r.score === 100);
+                }
+            },
+            {
+                id: 'tool-master',
+                name: 'Tool Master',
+                icon: '🔧',
+                description: 'Use all 16 simulators',
+                criteria: 'Access all interactive simulators',
+                unlock: () => {
+                    const toolsUsed = JSON.parse(localStorage.getItem('sparty_tools_used')) || [];
+                    return toolsUsed.length >= 16;
+                },
+                progress: () => {
+                    const toolsUsed = JSON.parse(localStorage.getItem('sparty_tools_used')) || [];
+                    return { current: toolsUsed.length, total: 16 };
+                }
+            },
+            {
+                id: 'worksheet-warrior',
+                name: 'Worksheet Warrior',
+                icon: '📝',
+                description: 'Complete 50 worksheet problems',
+                criteria: 'Solve 50+ practice problems',
+                unlock: () => {
+                    const problems = JSON.parse(localStorage.getItem('sparty_problems_completed')) || [];
+                    return problems.length >= 50;
+                },
+                progress: () => {
+                    const problems = JSON.parse(localStorage.getItem('sparty_problems_completed')) || [];
+                    return { current: problems.length, total: 50 };
+                }
+            },
+            {
+                id: 'ace-diagnostic',
+                name: 'Ace Diagnostic',
+                icon: '🧠',
+                description: 'Score >80% on diagnostic assessment',
+                criteria: 'Score above 80% on diagnostic exam',
+                unlock: () => {
+                    const diagnostic = JSON.parse(localStorage.getItem('sparty_diagnostic_results')) || {};
+                    return diagnostic.score > 80;
+                }
+            },
+            {
+                id: 'circuit-guru',
+                name: 'Circuit Guru',
+                icon: '⚡',
+                description: 'Complete all Circuit Connect levels',
+                criteria: 'Master the Circuit Connect simulator',
+                unlock: () => {
+                    const circuitLevels = JSON.parse(localStorage.getItem('sparty_circuit_levels')) || [];
+                    return circuitLevels.length >= 10;
+                },
+                progress: () => {
+                    const circuitLevels = JSON.parse(localStorage.getItem('sparty_circuit_levels')) || [];
+                    return { current: circuitLevels.length, total: 10 };
+                }
+            },
+            {
+                id: 'consistency-king',
+                name: 'Consistency King',
+                icon: '🏆',
+                description: '30-day study streak',
+                criteria: 'Study for 30 consecutive days',
+                unlock: () => {
+                    const streak = JSON.parse(localStorage.getItem('sparty_streak')) || { current: 0 };
+                    return streak.current >= 30;
+                },
+                progress: () => {
+                    const streak = JSON.parse(localStorage.getItem('sparty_streak')) || { current: 0 };
+                    return { current: streak.current, total: 30 };
+                }
+            },
+            {
+                id: 'electrician-elite',
+                name: 'Electrician Elite',
+                icon: '👑',
+                description: 'Score >90% on both Period 1 & 2',
+                criteria: 'Master both exam periods (90%+ each)',
+                unlock: () => {
+                    const period1 = JSON.parse(localStorage.getItem('sparty_period1_score')) || 0;
+                    const period2 = JSON.parse(localStorage.getItem('sparty_period2_score')) || 0;
+                    return period1 > 90 && period2 > 90;
+                }
+            }
+        ];
+
+        function renderAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+
+            let unlockedCount = 0;
+
+            achievements.forEach((achievement, index) => {
+                const isUnlocked = achievement.unlock();
+                if (isUnlocked) unlockedCount++;
+
+                const card = document.createElement('div');
+                card.className = `badge-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+                const progressData = achievement.progress?.();
+                const progressHTML = progressData ? `
+                    <div class="progress-section">
+                        <div class="progress-label">
+                            <span>Progress</span>
+                            <span class="current">${progressData.current}/${progressData.total}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${(progressData.current / progressData.total) * 100}%"></div>
+                        </div>
+                    </div>
+                ` : '';
+
+                const statusHTML = isUnlocked ?
+                    `<div class="unlock-date">✓ Unlocked</div>` :
+                    `<div class="locked-state">Locked</div>`;
+
+                card.innerHTML = `
+                    <div class="badge-icon">${achievement.icon}</div>
+                    <div class="badge-name">${achievement.name}</div>
+                    <div class="badge-description">${achievement.description}</div>
+                    <div class="badge-criteria">${achievement.criteria}</div>
+                    ${progressHTML}
+                    ${statusHTML}
+                `;
+
+                grid.appendChild(card);
+            });
+
+            // Update stats
+            updateStats(unlockedCount);
+        }
+
+        function updateStats(unlockedCount) {
+            document.getElementById('unlockedCount').textContent = unlockedCount;
+
+            const studyTime = JSON.parse(localStorage.getItem('sparty_total_study_time')) || 0;
+            document.getElementById('studyTime').textContent = `${Math.floor(studyTime / 60)}h`;
+
+            const streak = JSON.parse(localStorage.getItem('sparty_streak')) || { current: 0 };
+            document.getElementById('longestStreak').textContent = streak.current;
+
+            const progress = Math.round((unlockedCount / achievements.length) * 100);
+            document.getElementById('totalProgress').textContent = `${progress}%`;
+        }
+
+        // Demo mode: populate sample data
+        function populateSampleData() {
+            if (!localStorage.getItem('sparty_demo_mode')) {
+                // Sample data for demonstration
+                localStorage.setItem('sparty_quiz_results', JSON.stringify([
+                    { score: 85, date: new Date().toISOString() },
+                    { score: 100, date: new Date().toISOString() }
+                ]));
+
+                localStorage.setItem('sparty_study_days', JSON.stringify([
+                    new Date().toDateString(),
+                    new Date(Date.now() - 86400000).toDateString(),
+                    new Date(Date.now() - 172800000).toDateString(),
+                ]));
+
+                localStorage.setItem('sparty_streak', JSON.stringify({ current: 8 }));
+                localStorage.setItem('sparty_tools_used', JSON.stringify([
+                    'acWaveform', 'timeConstant', 'circuitDesigner', 'impedanceCalculator',
+                    'transformerCalc', 'motorControl', 'powerTriangle', 'faultCurrent'
+                ]));
+
+                localStorage.setItem('sparty_problems_completed', JSON.stringify(
+                    Array.from({ length: 45 }, (_, i) => ({ id: i + 1 }))
+                ));
+
+                localStorage.setItem('sparty_total_study_time', JSON.stringify(4800)); // 80 minutes
+                localStorage.setItem('sparty_demo_mode', 'true');
+            }
+        }
+
+        // Initialize
+        populateSampleData();
+        renderAchievements();
+
+        // Listen for updates from other tabs
+        window.addEventListener('storage', renderAchievements);
+    </script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = 'login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

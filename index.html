@@ -1401,24 +1401,25 @@ a {
 }
 
 </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f59e0b">
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container nav-container">
-            <a href="index.html" class="logo">
-                <span class="logo-icon">⚡</span> SparkStudy
-            </a>
-            <div class="nav-links">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="period1.html" class="nav-link">Period 1</a>
-                <a href="period2.html" class="nav-link">Period 2</a>
-                <a href="tools.html" class="nav-link">Tools & Sims</a>
-                <a href="pricing.html" class="nav-link">Pricing</a>
-            </div>
-            <button class="mobile-menu-btn" aria-label="Toggle menu">
-                <span></span><span></span><span></span>
-            </button>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link">Worksheets</a>
+        <a href="achievements.html" class="nav-link">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
         </div>
     </nav>
 
@@ -1427,24 +1428,24 @@ a {
         <div class="container">
             <div class="hero-content">
                 <div class="hero-badge">Alberta Electrician Apprenticeship</div>
-                <h1>Master Your <span class="highlight">Period 1 & 2</span> Exams</h1>
-                <p class="hero-subtitle">Clear explanations, practice tests, flashcards, and memory tricks for every single module. Built by apprentices, for apprentices.</p>
+                <h1>The Ultimate <span class="highlight">Electrician Exam</span> Prep Platform</h1>
+                <p class="hero-subtitle">16 interactive simulators, 5 addictive games, practice worksheets, diagnostic assessments, and personalized study plans. Everything you need to crush your Alberta Period 1 & 2 exams.</p>
                 <div class="hero-actions">
-                    <a href="onboarding.html" class="btn btn-primary btn-lg">Start Free Trial</a>
-                    <a href="tools.html" class="btn btn-outline btn-lg">Explore Tools</a>
+                    <a href="login.html" class="btn btn-primary btn-lg">Start 7-Day Free Trial</a>
+                    <a href="tools.html" class="btn btn-outline btn-lg">Explore 16 Simulators</a>
                 </div>
                 <div class="hero-stats">
                     <div class="stat">
-                        <span class="stat-number" id="moduleCount">—</span>
-                        <span class="stat-label">Modules</span>
+                        <span class="stat-number">16</span>
+                        <span class="stat-label">Interactive Simulators</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-number" id="questionCount">—</span>
-                        <span class="stat-label">Practice Questions</span>
+                        <span class="stat-number">5</span>
+                        <span class="stat-label">Learning Games</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-number">3</span>
-                        <span class="stat-label">Study Modes</span>
+                        <span class="stat-number">6</span>
+                        <span class="stat-label">Worksheet Sets</span>
                     </div>
                 </div>
             </div>
@@ -1456,37 +1457,37 @@ a {
     <section class="features">
         <div class="container">
             <h2 class="section-title">Everything You Need to Pass</h2>
-            <p class="section-subtitle">No fluff. Just the tools that actually help you learn and retain the material.</p>
+            <p class="section-subtitle">The most complete electrician exam prep platform ever built. Nothing else comes close.</p>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
-                    <h3>Placement Assessment</h3>
-                    <p>Take a 15-question assessment when you sign up. SparkStudy identifies your strengths and weaknesses and builds a personalized study plan just for you.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📖</div>
-                    <h3>Plain-English Explanations</h3>
-                    <p>Every objective broken down in language that actually makes sense. No more deciphering confusing module wording — we translate it for you.</p>
+                    <h3>Diagnostic Assessment</h3>
+                    <p>36-question diagnostic across 6 categories identifies exactly where you're strong and where you need work. Get a personalized study plan targeting your weak spots.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">⚡</div>
-                    <h3>Live Simulators</h3>
-                    <p>Interactive Ohm's Law, Faraday's Law, and circuit simulators. Drag magnets, adjust voltages, build circuits — see the physics happen in real-time.</p>
+                    <h3>16 Interactive Simulators</h3>
+                    <p>Ohm's Law, AC waveforms, impedance, transformers, motor control, trig, formula transposing, wire ampacity, and more. Hands-on learning that sticks.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h3>5 Learning Games</h3>
+                    <p>Wire Runner, Conduit Tetris, Circuit Connect, Fault Finder, and Power Match. Actually fun, actually educational, and completely addictive.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Practice Worksheets</h3>
+                    <p>Randomized math problems for Ohm's Law, power, reactance, time constants, voltage drop, and transformers. Three difficulty levels with instant grading.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔧</div>
-                    <h3>CEC Code Calculators</h3>
-                    <p>Demand factors, conductor sizing, conduit fill, voltage drop — all the CEC calculations with step-by-step breakdowns so you actually learn the method.</p>
+                    <h3>CEC Code Tools</h3>
+                    <p>Demand factors, conductor sizing, conduit fill, voltage drop, wire ampacity with CEC Table 2. Step-by-step breakdowns so you learn the method.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">✅</div>
-                    <h3>Quizzes, Flashcards & More</h3>
-                    <p>Multiple choice, flashcards, fill-in-the-blank — three study modes for every module. Instant feedback on every answer.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">💡</div>
-                    <h3>Tips & Memory Tricks</h3>
-                    <p>Mnemonics, analogies, and shortcuts for tough concepts. Like remembering Lenz's Law as "nature is lazy and hates change."</p>
+                    <div class="feature-icon">🏆</div>
+                    <h3>Achievements & Tracking</h3>
+                    <p>Earn badges, track your study streak, monitor progress across every tool and worksheet. Stay motivated with visible milestones and exam countdown.</p>
                 </div>
             </div>
         </div>
@@ -1526,10 +1527,11 @@ a {
         <div class="container">
             <div class="cta-card">
                 <h2>Try Elite Free for 7 Days</h2>
-                <p>Take the placement assessment, get your personalized study plan, and unlock every simulator and tool. No credit card required.</p>
+                <p>Full access to every simulator, game, worksheet, and study tool. Take the diagnostic, get your personalized plan, and start dominating your exams.</p>
                 <div class="cta-actions">
-                    <a href="onboarding.html" class="btn btn-primary btn-lg">Start Free Trial</a>
-                    <a href="tools.html" class="btn btn-outline btn-lg">Explore Tools & Sims</a>
+                    <a href="login.html" class="btn btn-primary btn-lg">Start Free Trial</a>
+                    <a href="pricing.html" class="btn btn-secondary btn-lg">View Pricing</a>
+                    <a href="institutions.html" class="btn btn-outline btn-lg">For Trade Schools</a>
                 </div>
             </div>
         </div>
@@ -1544,9 +1546,13 @@ a {
                     <p>Alberta Electrician Apprenticeship exam prep. Built by apprentices, for apprentices.</p>
                 </div>
                 <div class="footer-links">
-                    <a href="period1.html">Period 1</a>
-                    <a href="period2.html">Period 2</a>
-                    <a href="progress.html">My Progress</a>
+                    <a href="tools.html">Simulators</a>
+                    <a href="games.html">Games</a>
+                    <a href="worksheets.html">Worksheets</a>
+                    <a href="pricing.html">Pricing</a>
+                    <a href="institutions.html">For Schools</a>
+                    <a href="terms.html">Terms</a>
+                    <a href="refund.html">Refund Policy</a>
                 </div>
             </div>
             <div class="footer-bottom">
@@ -1603,6 +1609,31 @@ const SparkStore = {
     }
 };
 
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+}
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = 'login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
 </script>
 </body>
 </html>

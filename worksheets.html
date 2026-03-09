@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worksheets - SparkStudy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-tertiary: #252d3d;
+            --bg-hover: #2d3748;
+            --border-color: #3d4655;
+            --text-primary: #e4e6eb;
+            --text-secondary: #a0a6b8;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav .links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--accent-blue);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Worksheets grid */
+        .worksheets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Worksheet card */
+        .worksheet-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .worksheet-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+        }
+
+        .worksheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 1rem;
+        }
+
+        .worksheet-icon {
+            font-size: 2.5rem;
+        }
+
+        .worksheet-title {
+            flex: 1;
+        }
+
+        .worksheet-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .badge-beginner {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .badge-intermediate {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .badge-advanced {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        /* Info section */
+        .worksheet-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.25rem 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .info-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Progress bar */
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 0.25rem;
+            transition: width 0.3s;
+        }
+
+        /* CTA button */
+        .worksheet-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .worksheet-button:hover {
+            background: var(--accent-purple);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .worksheet-button:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .worksheets-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 1.5rem;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            nav .links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            nav {
+                padding: 0.75rem 1rem;
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .worksheet-card {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .worksheets-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            nav .links {
+                display: none;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = 'login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = 'login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link" style="color:#f59e0b;font-weight:600;">Worksheets</a>
+        <a href="achievements.html" class="nav-link">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container">
+        <header>
+            <h1>Practice Worksheets</h1>
+            <p>Master electrical calculations through targeted practice</p>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value" id="totalCompleted">0</div>
+                <div class="stat-label">Problems Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="currentStreak">0</div>
+                <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="averageScore">0%</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+        </div>
+
+        <!-- Worksheets -->
+        <div class="worksheets-grid" id="worksheetsGrid"></div>
+    </div>
+
+    <script>
+        // Auth guard
+        function checkAuth() {
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) {
+                window.location.href = 'login.html';
+            }
+        }
+        checkAuth();
+
+        // Worksheets data
+        const worksheets = [
+            {
+                id: 'ohms-law',
+                name: 'Ohm\'s Law',
+                icon: '⚙️',
+                difficulty: 'Beginner',
+                description: 'V=IR, P=VI calculations',
+                problemCount: 10
+            },
+            {
+                id: 'power',
+                name: 'Power Calculations',
+                icon: '⚡',
+                difficulty: 'Intermediate',
+                description: 'P=I²R, P=V²/R formulas',
+                problemCount: 10
+            },
+            {
+                id: 'reactance',
+                name: 'Reactance',
+                icon: '〰️',
+                difficulty: 'Intermediate',
+                description: 'XL=2πfL, XC=1/(2πfC)',
+                problemCount: 10
+            },
+            {
+                id: 'time-constant',
+                name: 'Time Constants',
+                icon: '⏱️',
+                difficulty: 'Intermediate',
+                description: 'τ=RC, τ=L/R, 5τ calculations',
+                problemCount: 10
+            },
+            {
+                id: 'voltage-drop',
+                name: 'Voltage Drop',
+                icon: '↓',
+                difficulty: 'Advanced',
+                description: 'VD = 2×I×R×L/1000',
+                problemCount: 10
+            },
+            {
+                id: 'transformer',
+                name: 'Transformer Ratios',
+                icon: '🔋',
+                difficulty: 'Advanced',
+                description: 'N1/N2=V1/V2 calculations',
+                problemCount: 10
+            }
+        ];
+
+        // Load stats
+        function loadStats() {
+            let totalCompleted = 0;
+            let totalScore = 0;
+            let scoreCount = 0;
+
+            worksheets.forEach(ws => {
+                const completion = localStorage.getItem(`worksheet_${ws.id}_completed`) || 0;
+                const score = localStorage.getItem(`worksheet_${ws.id}_score`);
+                totalCompleted += parseInt(completion);
+                if (score) {
+                    totalScore += parseInt(score);
+                    scoreCount++;
+                }
+            });
+
+            document.getElementById('totalCompleted').textContent = totalCompleted;
+            document.getElementById('currentStreak').textContent = calculateStreak();
+            document.getElementById('averageScore').textContent =
+                scoreCount > 0 ? Math.round(totalScore / scoreCount) + '%' : '0%';
+        }
+
+        function calculateStreak() {
+            // Simple streak calculation based on recent worksheet completions
+            let streak = 0;
+            const today = new Date().toDateString();
+            const lastCompleted = localStorage.getItem('last_worksheet_completed');
+
+            if (lastCompleted === today) {
+                streak = parseInt(localStorage.getItem('worksheet_streak')) || 1;
+            }
+
+            return streak;
+        }
+
+        // Render worksheets
+        function renderWorksheets() {
+            const container = document.getElementById('worksheetsGrid');
+            container.innerHTML = '';
+
+            worksheets.forEach(ws => {
+                const completed = parseInt(localStorage.getItem(`worksheet_${ws.id}_completed`) || 0);
+                const attempts = parseInt(localStorage.getItem(`worksheet_${ws.id}_attempts`) || 0);
+                const score = localStorage.getItem(`worksheet_${ws.id}_score`) || 0;
+
+                const card = document.createElement('div');
+                card.className = 'worksheet-card';
+                card.innerHTML = `
+                    <div class="worksheet-header">
+                        <div class="worksheet-icon">${ws.icon}</div>
+                        <div class="worksheet-title">
+                            <div class="worksheet-name">${ws.name}</div>
+                            <span class="badge badge-${ws.difficulty.toLowerCase()}">${ws.difficulty}</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-secondary); font-size: 0.95rem;">${ws.description}</p>
+
+                    <div class="worksheet-info">
+                        <div class="info-item">
+                            <span class="info-label">
+                                <span>📋</span>
+                                <span>Problems per set</span>
+                            </span>
+                            <span class="info-value">${ws.problemCount}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                <span>✓</span>
+                                <span>Sets completed</span>
+                            </span>
+                            <span class="info-value">${attempts}</span>
+                        </div>
+                        ${attempts > 0 ? `
+                        <div class="info-item">
+                            <span class="info-label">
+                                <span>📊</span>
+                                <span>Best score</span>
+                            </span>
+                            <span class="info-value">${score}%</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Progress</span>
+                            <span>${completed}/${ws.problemCount}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${(completed / ws.problemCount * 100)}%"></div>
+                        </div>
+                    </div>
+
+                    <a href="worksheets/${ws.id}.html" class="worksheet-button">
+                        Start Worksheet →
+                    </a>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Initialize
+        loadStats();
+        renderWorksheets();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = 'login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

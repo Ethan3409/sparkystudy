@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conduit Tetris - SparkStudy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #f59e0b;
+            --secondary: #1e293b;
+            --bg-dark: #0f172a;
+            --text-light: #f1f5f9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-light);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s ease;
+        }
+
+        .logo:hover {
+            color: var(--primary);
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            flex-direction: column;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .mobile-menu-btn span {
+            width: 25px;
+            height: 3px;
+            background: var(--text-light);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+        }
+
+        /* Main Game Container */
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-section {
+            flex: 1;
+            min-width: 300px;
+            max-width: 600px;
+        }
+
+        .sidebar {
+            flex: 0 1 280px;
+        }
+
+        /* Canvas and Game Area */
+        .game-area {
+            background: rgba(15, 23, 42, 0.8);
+            border: 3px solid var(--primary);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle at 50% 50%, #1e293b, #0f172a);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 100%;
+            touch-action: none;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            font-size: 14px;
+            color: rgba(241, 245, 249, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .lives {
+            font-size: 20px;
+            letter-spacing: 4px;
+        }
+
+        /* CEC Info Box */
+        .cec-info {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(245, 158, 11, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .cec-info h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cec-info p {
+            color: rgba(241, 245, 249, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .cec-info p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Controls Info */
+        .controls-info {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .controls-info h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: rgba(241, 245, 249, 0.8);
+        }
+
+        .control-key {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 8px;
+            z-index: 100;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .screen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        }
+
+        .screen h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+
+        .screen p {
+            font-size: 16px;
+            color: rgba(241, 245, 249, 0.8);
+            margin-bottom: 12px;
+            max-width: 500px;
+        }
+
+        .screen button {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .screen button:hover {
+            background: #fbbf24;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .instructions {
+            text-align: left;
+            margin: 30px 0;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .instructions h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+            margin-left: 20px;
+        }
+
+        .game-area {
+            position: relative;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .sidebar {
+                flex: 1;
+                width: 100%;
+            }
+
+            .screen h1 {
+                font-size: 36px;
+            }
+
+            .screen {
+                padding: 20px;
+            }
+        }
+    </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="game-container">
+        <div class="game-section">
+            <div class="game-area">
+                <canvas id="gameCanvas"></canvas>
+
+                <!-- Start Screen -->
+                <div id="startScreen" class="screen active">
+                    <h1>⚡ CONDUIT TETRIS</h1>
+                    <p style="margin-top: 20px; font-size: 18px;">Fill conduits with conductors to exactly 40%</p>
+
+                    <div class="instructions">
+                        <h3>How to Play:</h3>
+                        <ul>
+                            <li>Conductors fall from above into the conduit</li>
+                            <li>Fill the conduit to ~40% without exceeding the limit</li>
+                            <li>Complete a conduit to earn points and advance</li>
+                            <li>Exceed 40% and lose a life!</li>
+                            <li>3 lives total - don't let them run out</li>
+                        </ul>
+                    </div>
+
+                    <div class="instructions">
+                        <h3>Controls:</h3>
+                        <ul>
+                            <li><strong>← →</strong> Move conductor left/right</li>
+                            <li><strong>↓</strong> Drop faster</li>
+                            <li><strong>SPACE</strong> Instant drop</li>
+                            <li><strong>P</strong> Pause/Resume</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="game.startGame()">START GAME</button>
+                </div>
+
+                <!-- Game Over Screen -->
+                <div id="gameOverScreen" class="screen">
+                    <h2>GAME OVER</h2>
+                    <p style="font-size: 32px; color: var(--primary); margin: 20px 0;">Final Score: <span id="finalScore">0</span></p>
+                    <p id="levelReached"></p>
+                    <button onclick="game.returnToStart()">PLAY AGAIN</button>
+                </div>
+
+                <!-- Pause Screen -->
+                <div id="pauseScreen" class="screen">
+                    <h2>PAUSED</h2>
+                    <p style="margin-top: 20px;">Press P to resume</p>
+                    <button onclick="game.togglePause()">RESUME</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value" id="scoreDisplay">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Level</span>
+                    <span class="stat-value" id="levelDisplay">1</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Lives</span>
+                    <span class="stat-value lives" id="livesDisplay">❤️ ❤️ ❤️</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Fill %</span>
+                    <span class="stat-value" id="fillDisplay">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Completed</span>
+                    <span class="stat-value" id="completedDisplay">0/5</span>
+                </div>
+            </div>
+
+            <div class="cec-info">
+                <h4>📋 CEC Code Limits</h4>
+                <p>The National Electrical Code (NEC) specifies that conduit fill cannot exceed <strong>40%</strong> for 3 or more conductors.</p>
+                <p>Each conductor type has a specific cross-sectional area (mm²) that counts toward the total fill.</p>
+                <p>Overfilling reduces cooling airflow and damages conductors!</p>
+            </div>
+
+            <div class="controls-info">
+                <h4>⌨️ Controls</h4>
+                <div class="control-item">
+                    <span class="control-key">← →</span>
+                    <span>Move left/right</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">↓</span>
+                    <span>Drop faster</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">SPACE</span>
+                    <span>Instant drop</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">P</span>
+                    <span>Pause game</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Conductor Types with CEC data
+        const CONDUCTORS = {
+            'AWG14': { name: '#14 AWG', color: '#22c55e', area: 8.0, size: 12 },
+            'AWG12': { name: '#12 AWG', color: '#3b82f6', area: 11.7, size: 16 },
+            'AWG10': { name: '#10 AWG', color: '#f59e0b', area: 16.0, size: 20 },
+            'AWG8': { name: '#8 AWG', color: '#ff8a3d', area: 30.8, size: 28 },
+            'AWG6': { name: '#6 AWG', color: '#ef4444', area: 48.0, size: 36 }
+        };
+
+        // Conduit types with their capacities (in mm²)
+        const CONDUITS = [
+            { name: '1/2" Trade', capacity: 530, radius: 45 },
+            { name: '3/4" Trade', capacity: 910, radius: 60 },
+            { name: '1" Trade', capacity: 1350, radius: 75 },
+            { name: '1-1/4" Trade', capacity: 2100, radius: 95 },
+            { name: '1-1/2" Trade', capacity: 2800, radius: 115 },
+            { name: '2" Trade', capacity: 4200, radius: 145 }
+        ];
+
+        // Game state
+        const game = {
+            canvas: canvas,
+            ctx: ctx,
+            gameActive: false,
+            gamePaused: false,
+            score: 0,
+            level: 1,
+            lives: 3,
+            completedConduits: 0,
+            targetConduits: 5,
+
+            currentConductor: null,
+            nextConductor: null,
+            conductorsInConduit: [],
+            currentConduit: null,
+
+            keys: {},
+            lastDropTime: 0,
+            dropInterval: 600,
+
+            particle: [],
+
+            init() {
+                this.setupEventListeners();
+                this.updateUI();
+            },
+
+            setupEventListeners() {
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                    if (e.key === ' ') {
+                        e.preventDefault();
+                        if (this.gameActive) this.dropInstantly();
+                    }
+                    if (e.key.toLowerCase() === 'p') {
+                        e.preventDefault();
+                        this.togglePause();
+                    }
+                });
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+
+                // Touch controls
+                canvas.addEventListener('touchstart', (e) => {
+                    this.touchStartX = e.touches[0].clientX;
+                }, false);
+                canvas.addEventListener('touchmove', (e) => {
+                    if (!this.gameActive || this.gamePaused) return;
+                    e.preventDefault();
+                    const deltaX = e.touches[0].clientX - this.touchStartX;
+                    if (deltaX < -30) this.currentConductor.x -= 5;
+                    if (deltaX > 30) this.currentConductor.x += 5;
+                }, false);
+                canvas.addEventListener('touchend', () => {
+                    this.dropInstantly();
+                }, false);
+            },
+
+            startGame() {
+                this.gameActive = true;
+                this.gamePaused = false;
+                this.score = 0;
+                this.level = 1;
+                this.lives = 3;
+                this.completedConduits = 0;
+                this.conductorsInConduit = [];
+                this.particle = [];
+
+                document.getElementById('startScreen').classList.remove('active');
+                document.getElementById('gameOverScreen').classList.remove('active');
+                document.getElementById('pauseScreen').classList.remove('active');
+
+                this.currentConduit = this.getRandomConduit();
+                this.spawnNewConductor();
+                this.updateUI();
+                this.gameLoop(0);
+            },
+
+            togglePause() {
+                this.gamePaused = !this.gamePaused;
+                document.getElementById('pauseScreen').classList.toggle('active');
+            },
+
+            returnToStart() {
+                this.gameActive = false;
+                this.gamePaused = false;
+                document.getElementById('startScreen').classList.add('active');
+                document.getElementById('gameOverScreen').classList.remove('active');
+            },
+
+            getRandomConduit() {
+                const levelIndex = Math.min(Math.floor((this.level - 1) / 2), CONDUITS.length - 1);
+                return { ...CONDUITS[levelIndex] };
+            },
+
+            spawnNewConductor() {
+                const types = Object.keys(CONDUCTORS);
+                const randomType = types[Math.floor(Math.random() * types.length)];
+                const conductor = CONDUCTORS[randomType];
+
+                this.currentConductor = {
+                    type: randomType,
+                    data: conductor,
+                    x: canvas.width / 2,
+                    y: -50,
+                    vx: 0,
+                    vy: 0,
+                    inConduit: false
+                };
+            },
+
+            dropInstantly() {
+                if (!this.currentConductor || !this.gameActive) return;
+                this.currentConductor.y = canvas.height - this.currentConduit.radius - this.currentConductor.data.size;
+                this.lockConductor();
+            },
+
+            updateConductorPosition() {
+                if (!this.currentConductor) return;
+
+                // Horizontal movement
+                if (this.keys['arrowleft']) {
+                    this.currentConductor.x -= 8;
+                }
+                if (this.keys['arrowright']) {
+                    this.currentConductor.x += 8;
+                }
+
+                // Clamp to canvas width
+                const margin = this.currentConductor.data.size;
+                this.currentConductor.x = Math.max(margin, Math.min(canvas.width - margin, this.currentConductor.x));
+
+                // Vertical movement (gravity)
+                const speedMultiplier = this.keys['arrowdown'] ? 1.5 : 1;
+                this.currentConductor.vy += 0.5 * speedMultiplier;
+                this.currentConductor.vy = Math.min(this.currentConductor.vy, 15);
+                this.currentConductor.y += this.currentConductor.vy;
+
+                // Check if conductor reaches bottom/conduit area
+                const conduitY = canvas.height - 150;
+                if (this.currentConductor.y >= conduitY) {
+                    this.lockConductor();
+                }
+            },
+
+            lockConductor() {
+                if (!this.currentConductor) return;
+
+                this.currentConductor.y = Math.max(0, Math.min(this.currentConductor.y, canvas.height - 150));
+                this.currentConductor.vy = 0;
+                this.currentConductor.vx = 0;
+
+                // Add to conduit
+                this.conductorsInConduit.push({
+                    type: this.currentConductor.type,
+                    data: this.currentConductor.data,
+                    x: this.currentConductor.x,
+                    y: this.currentConductor.y + this.currentConductor.data.size
+                });
+
+                // Create particles
+                this.createParticles(this.currentConductor.x, this.currentConductor.y, this.currentConductor.data.color);
+
+                // Check fill percentage
+                const fillPercent = this.getConduitFill();
+                if (fillPercent > 40) {
+                    // Overfilled! Lose a life
+                    this.lives--;
+                    this.conductorsInConduit = [];
+                    this.currentConduit = this.getRandomConduit();
+                    if (this.lives <= 0) {
+                        this.endGame();
+                        return;
+                    }
+                } else if (fillPercent >= 35 && fillPercent <= 40) {
+                    // Perfect fill! Complete conduit
+                    this.completeConduit();
+                    return;
+                }
+
+                this.spawnNewConductor();
+                this.updateUI();
+            },
+
+            getConduitFill() {
+                const totalArea = this.conductorsInConduit.reduce((sum, c) => sum + c.data.area, 0);
+                return (totalArea / this.currentConduit.capacity) * 100;
+            },
+
+            completeConduit() {
+                // Award points based on accuracy to 40%
+                const fillPercent = this.getConduitFill();
+                const accuracy = 100 - Math.abs(40 - fillPercent);
+                const basePoints = 100;
+                const bonusPoints = Math.floor((accuracy / 100) * 50);
+                const levelMultiplier = 1 + (this.level - 1) * 0.2;
+
+                const points = Math.floor((basePoints + bonusPoints) * levelMultiplier);
+                this.score += points;
+
+                this.completedConduits++;
+
+                // Level up after completing target
+                if (this.completedConduits >= this.targetConduits) {
+                    this.level++;
+                    this.completedConduits = 0;
+                    this.targetConduits = 5 + Math.floor(this.level * 0.5);
+                    this.dropInterval = Math.max(300, 600 - this.level * 50);
+                }
+
+                // Big particle burst
+                for (let i = 0; i < 15; i++) {
+                    this.createParticles(canvas.width / 2, canvas.height - 150, '#f59e0b');
+                }
+
+                // Reset for next conduit
+                this.conductorsInConduit = [];
+                this.currentConduit = this.getRandomConduit();
+                this.spawnNewConductor();
+                this.updateUI();
+            },
+
+            createParticles(x, y, color) {
+                for (let i = 0; i < 5; i++) {
+                    const angle = (Math.PI * 2 * i) / 5;
+                    this.particle.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * (2 + Math.random() * 3),
+                        vy: Math.sin(angle) * (2 + Math.random() * 3),
+                        life: 1,
+                        color: color
+                    });
+                }
+            },
+
+            updateParticles() {
+                this.particle = this.particle.filter(p => p.life > 0);
+                this.particle.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3;
+                    p.life -= 0.03;
+                });
+            },
+
+            endGame() {
+                this.gameActive = false;
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('levelReached').textContent = `Level Reached: ${this.level}`;
+                document.getElementById('gameOverScreen').classList.add('active');
+            },
+
+            updateUI() {
+                document.getElementById('scoreDisplay').textContent = this.score;
+                document.getElementById('levelDisplay').textContent = this.level;
+                document.getElementById('livesDisplay').textContent = '❤️ '.repeat(this.lives);
+                document.getElementById('fillDisplay').textContent = Math.round(this.getConduitFill()) + '%';
+                document.getElementById('completedDisplay').textContent = `${this.completedConduits}/${this.targetConduits}`;
+            },
+
+            draw() {
+                // Clear canvas
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw conduit
+                this.drawConduit();
+
+                // Draw conductors in conduit
+                this.conductorsInConduit.forEach(c => {
+                    ctx.fillStyle = c.data.color;
+                    ctx.beginPath();
+                    ctx.arc(canvas.width / 2, canvas.height - 150, c.data.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+
+                // Draw falling conductor
+                if (this.currentConductor) {
+                    ctx.fillStyle = this.currentConductor.data.color;
+                    ctx.beginPath();
+                    ctx.arc(this.currentConductor.x, this.currentConductor.y, this.currentConductor.data.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Draw label
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 11px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.currentConductor.data.name.split(' ')[0], this.currentConductor.x, this.currentConductor.y);
+                }
+
+                // Draw particles
+                this.particle.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                });
+
+                // Draw UI on canvas
+                this.drawCanvasUI();
+            },
+
+            drawConduit() {
+                const conduitX = canvas.width / 2;
+                const conduitY = canvas.height - 150;
+
+                // Outer circle (conduit body)
+                ctx.fillStyle = '#6b7280';
+                ctx.beginPath();
+                ctx.arc(conduitX, conduitY, this.currentConduit.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Inner circle (fill area)
+                ctx.fillStyle = '#1f2937';
+                ctx.beginPath();
+                ctx.arc(conduitX, conduitY, this.currentConduit.radius - 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Fill indicator
+                const fillPercent = this.getConduitFill();
+                const fillHeight = (fillPercent / 100) * (this.currentConduit.radius - 8) * 2;
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.3)';
+                ctx.fillRect(conduitX - (this.currentConduit.radius - 8), conduitY + (this.currentConduit.radius - 8) - fillHeight, (this.currentConduit.radius - 8) * 2, fillHeight);
+
+                // 40% limit line (glowing)
+                const limitY = conduitY - (this.currentConduit.radius - 8) + ((this.currentConduit.radius - 8) * 2 * (40 / 100));
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(conduitX - (this.currentConduit.radius - 8), limitY);
+                ctx.lineTo(conduitX + (this.currentConduit.radius - 8), limitY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Glow effect for limit line
+                ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(conduitX - (this.currentConduit.radius - 8), limitY);
+                ctx.lineTo(conduitX + (this.currentConduit.radius - 8), limitY);
+                ctx.stroke();
+                ctx.shadowColor = 'transparent';
+
+                // Conduit name
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = 'bold 16px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.currentConduit.name, conduitX, conduitY - this.currentConduit.radius - 25);
+            },
+
+            drawCanvasUI() {
+                // Fill percentage warning
+                const fillPercent = this.getConduitFill();
+                let fillColor = '#10b981';
+                if (fillPercent > 40) fillColor = '#ef4444';
+                else if (fillPercent > 30) fillColor = '#f59e0b';
+
+                ctx.fillStyle = fillColor;
+                ctx.font = 'bold 24px Inter';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(fillPercent) + '%', canvas.width - 20, 40);
+
+                // Target indicator
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.7)';
+                ctx.font = 'bold 14px Inter';
+                ctx.textAlign = 'right';
+                ctx.fillText('Target: 40%', canvas.width - 20, 65);
+            },
+
+            gameLoop(timestamp) {
+                if (!this.gameActive) return;
+
+                if (!this.gamePaused) {
+                    this.updateConductorPosition();
+                    this.updateParticles();
+                    this.updateUI();
+                }
+
+                this.draw();
+
+                requestAnimationFrame((t) => this.gameLoop(t));
+            }
+        };
+
+        game.init();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

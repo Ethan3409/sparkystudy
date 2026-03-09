@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Calculations Worksheet - SparkStudy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-tertiary: #252d3d;
+            --bg-hover: #2d3748;
+            --border-color: #3d4655;
+            --text-primary: #e4e6eb;
+            --text-secondary: #a0a6b8;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav .links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--accent-blue);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .worksheet-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .worksheet-header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-selector,
+        .show-answers-toggle,
+        .generate-btn,
+        .print-btn {
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .difficulty-selector {
+            padding: 0.75rem;
+            min-width: 150px;
+        }
+
+        .generate-btn:hover,
+        .print-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .show-answers-toggle.active {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .progress-section {
+            margin-bottom: 2rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s;
+        }
+
+        .problems-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .problem {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.75rem;
+            transition: all 0.3s;
+        }
+
+        .problem.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .problem.incorrect {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .problem-number {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .problem-text {
+            font-size: 1.1rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
+        }
+
+        .problem-input-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .problem-input {
+            flex: 1;
+            min-width: 150px;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 0.35rem;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .problem-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .problem-unit {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.35rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .check-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 0.35rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .check-btn:hover {
+            background: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        .check-btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.35rem;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.correct {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .result.incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .result-text {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-details {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .result.correct .result-details {
+            color: var(--accent-green);
+        }
+
+        .result.incorrect .result-details {
+            color: var(--accent-red);
+        }
+
+        .summary-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            display: none;
+        }
+
+        .summary-section.show {
+            display: block;
+        }
+
+        .summary-grade {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-stat {
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+        }
+
+        .summary-stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .summary-button {
+            padding: 0.875rem 2rem;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .summary-button:hover {
+            background: var(--accent-purple);
+            transform: translateY(-2px);
+        }
+
+        @media print {
+            nav,
+            .worksheet-header,
+            .progress-section,
+            .header-controls,
+            .check-btn,
+            .summary-section {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .problem {
+                page-break-inside: avoid;
+                border: 1px solid black;
+                background: white;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .worksheet-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-controls {
+                width: 100%;
+            }
+
+            .difficulty-selector,
+            .generate-btn,
+            .print-btn {
+                flex: 1;
+                min-width: 100px;
+            }
+
+            .problem-input-group {
+                flex-direction: column;
+            }
+
+            .problem-unit {
+                width: 100%;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            nav .links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .worksheet-header h1 {
+                font-size: 1.5rem;
+            }
+
+            nav .links {
+                display: none;
+            }
+
+            .header-controls {
+                width: 100%;
+            }
+
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="worksheet-header">
+            <h1>⚡ Power Calculations Worksheet</h1>
+            <div class="header-controls">
+                <select id="difficultySelect" class="difficulty-selector">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <button id="showAnswersBtn" class="show-answers-toggle">Show Answers</button>
+                <button id="generateBtn" class="generate-btn">Generate New Set</button>
+                <button id="printBtn" class="print-btn">🖨️ Print</button>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-info">
+                <span>Progress</span>
+                <span><span id="completedCount">0</span>/10 completed</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="problems-container" id="problemsContainer"></div>
+
+        <div class="summary-section" id="summarySection">
+            <div class="summary-grade" id="summaryGrade">0%</div>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statCorrect">0</div>
+                    <div class="summary-stat-label">Correct</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statWrong">0</div>
+                    <div class="summary-stat-label">Incorrect</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statTime">0:00</div>
+                    <div class="summary-stat-label">Time Taken</div>
+                </div>
+            </div>
+            <button id="generateNewBtn" class="summary-button">Generate New Set</button>
+        </div>
+    </div>
+
+    <script>
+        function checkAuth() {
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) {
+                window.location.href = '../login.html';
+            }
+        }
+        checkAuth();
+
+        let currentProblems = [];
+        let startTime = Date.now();
+        let showAnswers = false;
+
+        function generateProblems(difficulty) {
+            if (difficulty === 'easy') {
+                return shuffleArray([
+                    { question: 'P = V × I. V = 12V, I = 2A. Find P', answer: 24, unit: 'W', explanation: 'P = 12 × 2 = 24W' },
+                    { question: 'P = I² × R. I = 3A, R = 10Ω. Find P', answer: 90, unit: 'W', explanation: 'P = 3² × 10 = 9 × 10 = 90W' },
+                    { question: 'P = V² / R. V = 48V, R = 16Ω. Find P', answer: 144, unit: 'W', explanation: 'P = 48² / 16 = 2304 / 16 = 144W' },
+                    { question: 'P = V × I. V = 120V, I = 5A. Find P', answer: 600, unit: 'W', explanation: 'P = 120 × 5 = 600W' },
+                    { question: 'P = I² × R. I = 2A, R = 20Ω. Find P', answer: 80, unit: 'W', explanation: 'P = 2² × 20 = 4 × 20 = 80W' },
+                    { question: 'P = V² / R. V = 60V, R = 12Ω. Find P', answer: 300, unit: 'W', explanation: 'P = 60² / 12 = 3600 / 12 = 300W' },
+                    { question: 'P = V × I. V = 24V, I = 3A. Find P', answer: 72, unit: 'W', explanation: 'P = 24 × 3 = 72W' },
+                    { question: 'P = I² × R. I = 4A, R = 5Ω. Find P', answer: 80, unit: 'W', explanation: 'P = 4² × 5 = 16 × 5 = 80W' },
+                    { question: 'P = V² / R. V = 36V, R = 18Ω. Find P', answer: 72, unit: 'W', explanation: 'P = 36² / 18 = 1296 / 18 = 72W' },
+                    { question: 'P = V × I. V = 100V, I = 2A. Find P', answer: 200, unit: 'W', explanation: 'P = 100 × 2 = 200W' },
+                ]).slice(0, 10);
+
+            } else if (difficulty === 'medium') {
+                return shuffleArray([
+                    { question: 'P = V × I. V = 120V, I = 0.5A. Find P', answer: 60, unit: 'W', explanation: 'P = 120 × 0.5 = 60W' },
+                    { question: 'P = I² × R. I = 0.75A, R = 220Ω. Find P', answer: 123.75, unit: 'W', explanation: 'P = 0.75² × 220 = 0.5625 × 220 = 123.75W' },
+                    { question: 'P = V² / R. V = 240V, R = 1440Ω. Find P', answer: 40, unit: 'W', explanation: 'P = 240² / 1440 = 57600 / 1440 = 40W' },
+                    { question: 'Power loss in wire: R = 0.1Ω, I = 15A. Find P', answer: 22.5, unit: 'W', explanation: 'P = 15² × 0.1 = 225 × 0.1 = 22.5W' },
+                    { question: 'P = V × I. V = 480V, I = 0.25A. Find P', answer: 120, unit: 'W', explanation: 'P = 480 × 0.25 = 120W' },
+                    { question: 'P = I² × R. I = 1.5A, R = 100Ω. Find P', answer: 225, unit: 'W', explanation: 'P = 1.5² × 100 = 2.25 × 100 = 225W' },
+                    { question: 'P = V² / R. V = 110V, R = 550Ω. Find P', answer: 22, unit: 'W', explanation: 'P = 110² / 550 = 12100 / 550 = 22W' },
+                    { question: 'LED power: V = 5V, I = 0.02A. Find P', answer: 0.1, unit: 'W', explanation: 'P = 5 × 0.02 = 0.1W' },
+                    { question: 'P = I² × R. I = 2.5A, R = 8Ω. Find P', answer: 50, unit: 'W', explanation: 'P = 2.5² × 8 = 6.25 × 8 = 50W' },
+                    { question: 'P = V² / R. V = 200V, R = 400Ω. Find P', answer: 100, unit: 'W', explanation: 'P = 200² / 400 = 40000 / 400 = 100W' },
+                ]).slice(0, 10);
+
+            } else {
+                return shuffleArray([
+                    { question: 'Three 50W bulbs in parallel at 120V. Find total current', answer: 1.25, unit: 'A', explanation: 'Ptotal = 150W. I = P/V = 150/120 = 1.25A' },
+                    { question: 'Efficiency: Input 1000W, Output 850W. Find efficiency %', answer: 85, unit: '%', explanation: 'Efficiency = (850/1000) × 100% = 85%' },
+                    { question: 'Motor: 240V, 2.5kW, 0.85 power factor. Find current', answer: 12.25, unit: 'A', explanation: 'P = V × I × pf. I = 2500 / (240 × 0.85) = 12.25A' },
+                    { question: 'Heat dissipation: 5A through 0.5Ω for 1 hour. Energy?', answer: 9000, unit: 'J', explanation: 'P = 5² × 0.5 = 12.5W. E = 12.5 × 3600 = 45000J' },
+                    { question: 'Series circuit: R1=10Ω, R2=15Ω, I=1A. Total power dissipated?', answer: 25, unit: 'W', explanation: 'Rtotal = 25Ω. P = 1² × 25 = 25W' },
+                    { question: 'Voltage drop & power: I=5A, cable R=0.05Ω. Power loss?', answer: 1.25, unit: 'W', explanation: 'P = 5² × 0.05 = 25 × 0.05 = 1.25W' },
+                    { question: 'Transformer 2:1 ratio, primary 240V 5A. Secondary power?', answer: 1200, unit: 'W', explanation: 'Pprimary = 240 × 5 = 1200W (ideal transformer)' },
+                    { question: 'Load matching: V=12V, max power 5W. Min resistance?', answer: 28.8, unit: 'Ω', explanation: 'R = V²/P = 144/5 = 28.8Ω' },
+                    { question: 'Three 100Ω resistors: series at 120V then parallel. Power difference?', answer: 48, unit: 'W', explanation: 'Series: P=120²/300=48W. Parallel: P=120²/33.33=432W. Diff ≈ 384W or 48W series' },
+                    { question: 'AC circuit: V=120V, I=3A, pf=0.8. True power?', answer: 288, unit: 'W', explanation: 'P = V × I × pf = 120 × 3 × 0.8 = 288W' },
+                ]).slice(0, 10);
+            }
+        }
+
+        function shuffleArray(arr) {
+            return [...arr].sort(() => Math.random() - 0.5);
+        }
+
+        function renderProblems() {
+            const container = document.getElementById('problemsContainer');
+            container.innerHTML = '';
+
+            currentProblems.forEach((problem, index) => {
+                const div = document.createElement('div');
+                div.className = 'problem';
+                div.id = `problem-${index}`;
+                div.innerHTML = `
+                    <div class="problem-number">Problem ${index + 1} of 10</div>
+                    <div class="problem-text">${problem.question}</div>
+                    <div class="problem-input-group">
+                        <input
+                            type="number"
+                            step="0.01"
+                            class="problem-input"
+                            id="input-${index}"
+                            placeholder="Enter answer"
+                            data-index="${index}"
+                        >
+                        <div class="problem-unit">${problem.unit}</div>
+                        <button class="check-btn" onclick="checkAnswer(${index})">Check</button>
+                    </div>
+                    <div class="result" id="result-${index}">
+                        <div class="result-text"></div>
+                        <div class="result-details"></div>
+                    </div>
+                    ${showAnswers ? `<div class="result show correct"><div class="result-text">Answer: ${problem.answer} ${problem.unit}</div><div class="result-details">${problem.explanation}</div></div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function checkAnswer(index) {
+            const input = document.getElementById(`input-${index}`);
+            const problem = currentProblems[index];
+            const userAnswer = parseFloat(input.value);
+            const tolerance = Math.max(problem.answer * 0.05, 0.1);
+            const isCorrect = Math.abs(userAnswer - problem.answer) <= tolerance;
+
+            const resultEl = document.getElementById(`result-${index}`);
+            const problemEl = document.getElementById(`problem-${index}`);
+
+            resultEl.classList.add('show');
+            resultEl.querySelector('.result-text').textContent = isCorrect ?
+                `✓ Correct! ${problem.answer}${problem.unit}` :
+                `✗ Incorrect. Correct answer: ${problem.answer}${problem.unit}`;
+            resultEl.querySelector('.result-details').textContent = problem.explanation;
+
+            if (isCorrect) {
+                resultEl.classList.add('correct');
+                resultEl.classList.remove('incorrect');
+                problemEl.classList.add('correct');
+                problemEl.classList.remove('incorrect');
+                input.disabled = true;
+            } else {
+                resultEl.classList.add('incorrect');
+                resultEl.classList.remove('correct');
+                problemEl.classList.add('incorrect');
+                problemEl.classList.remove('correct');
+            }
+
+            updateProgress();
+            checkCompletion();
+        }
+
+        function updateProgress() {
+            let completed = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) completed++;
+            });
+
+            document.getElementById('completedCount').textContent = completed;
+            const percentage = (completed / 10) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+
+            localStorage.setItem('worksheet_power_completed', completed);
+        }
+
+        function checkCompletion() {
+            let completed = 0;
+            let correct = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) {
+                    completed++;
+                    const result = document.getElementById(`result-${index}`);
+                    if (result.classList.contains('correct')) correct++;
+                }
+            });
+
+            if (completed === 10) {
+                showSummary(correct);
+            }
+        }
+
+        function showSummary(correct) {
+            const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(timeElapsed / 60);
+            const seconds = timeElapsed % 60;
+            const percentage = Math.round((correct / 10) * 100);
+
+            document.getElementById('summaryGrade').textContent = percentage + '%';
+            document.getElementById('statCorrect').textContent = correct;
+            document.getElementById('statWrong').textContent = 10 - correct;
+            document.getElementById('statTime').textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
+
+            document.getElementById('summarySection').classList.add('show');
+
+            localStorage.setItem('worksheet_power_attempts', parseInt(localStorage.getItem('worksheet_power_attempts') || 0) + 1);
+            localStorage.setItem('worksheet_power_score', Math.max(percentage, parseInt(localStorage.getItem('worksheet_power_score') || 0)));
+        }
+
+        document.getElementById('difficultySelect').addEventListener('change', (e) => {
+            currentProblems = generateProblems(e.target.value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('showAnswersBtn').addEventListener('click', function() {
+            showAnswers = !showAnswers;
+            this.classList.toggle('active');
+            renderProblems();
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const difficulty = document.getElementById('difficultySelect').value;
+            currentProblems = generateProblems(difficulty);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('generateNewBtn').addEventListener('click', () => {
+            const difficulty = document.getElementById('difficultySelect').value;
+            currentProblems = generateProblems(difficulty);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+        currentProblems = generateProblems('medium');
+        renderProblems();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

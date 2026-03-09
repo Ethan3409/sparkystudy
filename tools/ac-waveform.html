@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AC Waveform Simulator - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #f59e0b; --accent2: #58a6ff; --green: #10b981; --red: #ef4444; --radius: 12px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; }
+        .navbar { background-color: var(--panel); border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.3rem; color: var(--accent); text-decoration: none; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-link { color: var(--text); text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
+        .nav-link:hover, .nav-link.active { color: var(--accent); }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
+        .page-title { font-size: 2rem; margin-bottom: 2rem; color: var(--text); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+        .card { background-color: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+        .card-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--accent2); }
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem; font-weight: 500; }
+        input[type="range"], input[type="number"] { width: 100%; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.95rem; }
+        input[type="range"] { padding: 0; height: 6px; }
+        input[type="number"]:focus, input[type="range"]:focus { outline: none; border-color: var(--accent2); }
+        .slider-value { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.95rem; color: var(--text); font-weight: 600; }
+        .preset-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+        .preset-btn { padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
+        .preset-btn:hover { background-color: var(--border); border-color: var(--accent2); color: var(--accent2); }
+        .preset-btn.active { background-color: var(--accent2); border-color: var(--accent2); color: var(--bg); }
+        canvas { border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg); display: block; width: 100%; margin: 1rem 0; }
+        .waveform-overlay { margin-top: 1.5rem; }
+        .overlay-toggle { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .values-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+        .value-box { background-color: var(--bg); padding: 1rem; border-radius: 6px; border: 1px solid var(--border); }
+        .value-label { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .value-amount { font-size: 1.5rem; font-weight: 700; color: var(--accent2); }
+        .phase-indicator { margin-top: 1.5rem; padding: 1rem; background-color: var(--bg); border-radius: 6px; border-left: 4px solid var(--accent); }
+        .phase-label { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .phase-angle { font-size: 1.3rem; font-weight: 700; color: var(--accent2); }
+        .info-text { font-size: 0.85rem; color: var(--muted); margin-top: 1rem; line-height: 1.8; }
+    </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">AC Waveform Simulator</h1>
+
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">Voltage Waveform</h3>
+
+                <div class="input-group">
+                    <label for="frequencySlider">Frequency: <span id="freqValue">60</span> Hz</label>
+                    <input type="range" id="frequencySlider" min="1" max="120" value="60" oninput="updateFrequency()">
+                </div>
+
+                <div class="input-group">
+                    <label for="amplitudeSlider">Amplitude: <span id="ampValue">170</span> V</label>
+                    <input type="range" id="amplitudeSlider" min="10" max="340" value="170" step="5" oninput="updateAmplitude()">
+                </div>
+
+                <div class="input-group">
+                    <label for="phaseSlider">Phase: <span id="phaseValue">0</span>°</label>
+                    <input type="range" id="phaseSlider" min="0" max="360" value="0" oninput="updatePhase()">
+                </div>
+
+                <div class="preset-btns">
+                    <button class="preset-btn active" onclick="setPreset(120, 60, 0)">120V 60Hz (NA)</button>
+                    <button class="preset-btn" onclick="setPreset(240, 60, 0)">240V 60Hz (NA)</button>
+                    <button class="preset-btn" onclick="setPreset(230, 50, 0)">230V 50Hz (EU)</button>
+                    <button class="preset-btn" onclick="setPreset(0, 0, 0)">Custom</button>
+                </div>
+
+                <div class="values-grid">
+                    <div class="value-box">
+                        <div class="value-label">Peak Voltage</div>
+                        <div class="value-amount" id="vpeak">170 V</div>
+                    </div>
+                    <div class="value-box">
+                        <div class="value-label">RMS Voltage</div>
+                        <div class="value-amount" id="vrms">120 V</div>
+                    </div>
+                    <div class="value-box">
+                        <div class="value-label">Average Voltage</div>
+                        <div class="value-amount" id="vavg">108 V</div>
+                    </div>
+                    <div class="value-box">
+                        <div class="value-label">Peak-to-Peak</div>
+                        <div class="value-amount" id="vpp">340 V</div>
+                    </div>
+                    <div class="value-box">
+                        <div class="value-label">Period (T)</div>
+                        <div class="value-amount" id="period">16.67 ms</div>
+                    </div>
+                    <div class="value-box">
+                        <div class="value-label">Angular Freq (ω)</div>
+                        <div class="value-amount" id="omega">377 rad/s</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Waveform Overlay</h3>
+
+                <div class="waveform-overlay">
+                    <div class="overlay-toggle">
+                        <input type="checkbox" id="overlayToggle" onchange="toggleOverlay()">
+                        <label for="overlayToggle" style="margin-bottom: 0;">Show Current Overlay</label>
+                    </div>
+
+                    <div class="input-group" id="currentGroup" style="display: none;">
+                        <label for="currentPhaseSlider">Current Phase Difference: <span id="currentPhaseValue">0</span>°</label>
+                        <input type="range" id="currentPhaseSlider" min="-180" max="180" value="0" oninput="updateCurrentPhase()">
+                    </div>
+
+                    <div class="values-grid" id="currentValuesGrid" style="display: none; margin-top: 1rem;">
+                        <div class="value-box">
+                            <div class="value-label">Current Peak</div>
+                            <div class="value-amount" id="ipeak">10 A</div>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-label">Current RMS</div>
+                            <div class="value-amount" id="irms">7.07 A</div>
+                        </div>
+                    </div>
+
+                    <div class="phase-indicator" id="phaseIndicator" style="display: none;">
+                        <div class="phase-label">Phase Angle (I leading V):</div>
+                        <div class="phase-angle" id="phaseAngle">0°</div>
+                    </div>
+                </div>
+
+                <div class="info-text">
+                    <strong>Formulas:</strong><br>
+                    • RMS = Peak / √2<br>
+                    • Avg = 0.637 × Peak<br>
+                    • Period = 1 / Frequency<br>
+                    • ω = 2π × f
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h3 class="card-title">Live Waveform Display</h3>
+            <canvas id="waveformCanvas" height="300"></canvas>
+            <div class="info-text" style="text-align: center; margin-top: 1rem;">
+                Waveform updates in real-time. Adjust parameters above to see changes.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let frequency = 60;
+        let amplitude = 170;
+        let phase = 0;
+        let showOverlay = false;
+        let currentPhase = 0;
+        let time = 0;
+        let animationId = null;
+
+        const canvas = document.getElementById('waveformCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function setCanvasSize() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 300;
+        }
+
+        function updateFrequency() {
+            frequency = parseFloat(document.getElementById('frequencySlider').value);
+            document.getElementById('freqValue').textContent = frequency;
+            updateValues();
+        }
+
+        function updateAmplitude() {
+            amplitude = parseFloat(document.getElementById('amplitudeSlider').value);
+            document.getElementById('ampValue').textContent = amplitude.toFixed(0);
+            updateValues();
+        }
+
+        function updatePhase() {
+            phase = parseFloat(document.getElementById('phaseSlider').value);
+            document.getElementById('phaseValue').textContent = phase;
+            updateValues();
+        }
+
+        function updateCurrentPhase() {
+            currentPhase = parseFloat(document.getElementById('currentPhaseSlider').value);
+            document.getElementById('currentPhaseValue').textContent = currentPhase;
+            document.getElementById('phaseAngle').textContent = currentPhase + '°';
+        }
+
+        function toggleOverlay() {
+            showOverlay = document.getElementById('overlayToggle').checked;
+            document.getElementById('currentGroup').style.display = showOverlay ? 'block' : 'none';
+            document.getElementById('currentValuesGrid').style.display = showOverlay ? 'grid' : 'none';
+            document.getElementById('phaseIndicator').style.display = showOverlay ? 'block' : 'none';
+        }
+
+        function setPreset(v, f, p) {
+            if (v === 0) return;
+            amplitude = v * Math.sqrt(2);
+            frequency = f;
+            phase = p;
+            document.getElementById('frequencySlider').value = f;
+            document.getElementById('amplitudeSlider').value = amplitude;
+            document.getElementById('phaseSlider').value = p;
+            document.getElementById('freqValue').textContent = f;
+            document.getElementById('ampValue').textContent = amplitude.toFixed(0);
+            document.getElementById('phaseValue').textContent = p;
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            updateValues();
+        }
+
+        function updateValues() {
+            const vrms = amplitude / Math.sqrt(2);
+            const vavg = 0.637 * amplitude;
+            const vpp = 2 * amplitude;
+            const period = 1 / frequency;
+            const omega = 2 * Math.PI * frequency;
+
+            document.getElementById('vpeak').textContent = amplitude.toFixed(1) + ' V';
+            document.getElementById('vrms').textContent = vrms.toFixed(1) + ' V';
+            document.getElementById('vavg').textContent = vavg.toFixed(1) + ' V';
+            document.getElementById('vpp').textContent = vpp.toFixed(1) + ' V';
+            document.getElementById('period').textContent = (period * 1000).toFixed(2) + ' ms';
+            document.getElementById('omega').textContent = omega.toFixed(1) + ' rad/s';
+
+            if (showOverlay) {
+                const ipeak = amplitude / 100;
+                const irms = ipeak / Math.sqrt(2);
+                document.getElementById('ipeak').textContent = ipeak.toFixed(2) + ' A';
+                document.getElementById('irms').textContent = irms.toFixed(2) + ' A';
+            }
+        }
+
+        function drawWaveform() {
+            setCanvasSize();
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerY = height / 2;
+            const pixelsPerCycle = width / 4;
+
+            ctx.fillStyle = '#0d1117';
+            ctx.fillRect(0, 0, width, height);
+
+            // Grid
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < width; i += pixelsPerCycle / 4) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < height; i += height / 4) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(width, i);
+                ctx.stroke();
+            }
+
+            // Center line
+            ctx.strokeStyle = '#8b949e';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+
+            // Voltage waveform
+            ctx.strokeStyle = '#58a6ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let x = 0; x < width; x++) {
+                const t = (x / pixelsPerCycle) * (1 / frequency);
+                const y = centerY - (amplitude / 2) * Math.sin(2 * Math.PI * frequency * t + (phase * Math.PI / 180));
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Current waveform overlay
+            if (showOverlay) {
+                const currentAmplitude = amplitude / 100;
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let x = 0; x < width; x++) {
+                    const t = (x / pixelsPerCycle) * (1 / frequency);
+                    const currentPhaseRad = (currentPhase * Math.PI / 180);
+                    const y = centerY - (currentAmplitude / 2) * Math.sin(2 * Math.PI * frequency * t + (phase * Math.PI / 180) + currentPhaseRad);
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            // Legend
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '12px Inter';
+            ctx.fillText('Voltage', 10, 20);
+            if (showOverlay) {
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillText('Current', 10, 35);
+            }
+
+            // Scale labels
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '11px Inter';
+            ctx.textAlign = 'right';
+            ctx.fillText((amplitude).toFixed(0) + 'V', width - 10, 15);
+            ctx.fillText('0V', width - 10, centerY + 5);
+            ctx.fillText('-' + (amplitude).toFixed(0) + 'V', width - 10, height - 5);
+
+            ctx.textAlign = 'center';
+            ctx.fillText('0', pixelsPerCycle / 2, height - 5);
+            ctx.fillText('T/2', pixelsPerCycle, height - 5);
+        }
+
+        function animate() {
+            time += 0.01;
+            if (time > 1 / frequency) time = 0;
+            drawWaveform();
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Initialize
+        window.addEventListener('resize', () => {
+            setCanvasSize();
+            drawWaveform();
+        });
+
+        setCanvasSize();
+        updateValues();
+        drawWaveform();
+        animate();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

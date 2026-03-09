@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impedance Calculator - SparkStudy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #f59e0b;
+      --accent2: #58a6ff;
+      --green: #10b981;
+      --red: #ef4444;
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .navbar {
+      background-color: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo span {
+      font-size: 2rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 0.3s;
+    }
+
+    .nav-link.active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.25rem;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .toggle-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      background-color: var(--bg);
+      color: var(--muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+
+    .toggle-btn.active {
+      background-color: var(--accent2);
+      color: var(--bg);
+      border-color: var(--accent2);
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .result-item {
+      background-color: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent2);
+    }
+
+    .result-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent2);
+    }
+
+    .result-unit {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-left: 0.25rem;
+    }
+
+    .phasor-canvas {
+      width: 100%;
+      height: 400px;
+      background-color: var(--bg);
+      border-radius: 6px;
+      margin-top: 1rem;
+    }
+
+    .section {
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .triangle-display {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .triangle-item {
+      text-align: center;
+      padding: 1rem;
+      background-color: var(--bg);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .triangle-item .label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .triangle-item .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .practice-scenarios {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .scenario {
+      background-color: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .scenario h4 {
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+    }
+
+    .scenario p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background-color: var(--accent2);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      background-color: #4da3f7;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background-color: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-secondary:hover {
+      background-color: #f09e0a;
+      transform: translateY(-2px);
+    }
+
+    .check-result {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .check-result.correct {
+      background-color: rgba(16, 185, 129, 0.2);
+      color: var(--green);
+      border: 1px solid var(--green);
+    }
+
+    .check-result.incorrect {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      .nav-links {
+        gap: 1rem;
+        font-size: 0.9rem;
+      }
+
+      .results {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+  <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+  <div class="container">
+    <h1>Impedance Calculator</h1>
+    <p class="subtitle">Analyze AC circuit impedance, phase angle, and power factor</p>
+
+    <div class="main-content">
+      <div class="card">
+        <h2 style="margin-bottom: 1.5rem; color: var(--accent2);">Circuit Parameters</h2>
+
+        <div class="input-group">
+          <label>Resistance (R)</label>
+          <input type="number" id="resistanceInput" value="30" min="0" step="1">
+          <span style="color: var(--muted); font-size: 0.85rem;">Ω (Ohms)</span>
+        </div>
+
+        <div class="toggle-buttons">
+          <button class="toggle-btn active" data-type="inductive">Inductive (XL)</button>
+          <button class="toggle-btn" data-type="capacitive">Capacitive (XC)</button>
+        </div>
+
+        <div class="input-group">
+          <label id="reactanceLabel">Inductive Reactance (XL)</label>
+          <input type="number" id="reactanceInput" value="40" min="0" step="1">
+          <span style="color: var(--muted); font-size: 0.85rem;">Ω (Ohms)</span>
+        </div>
+
+        <div class="results">
+          <div class="result-item">
+            <div class="result-label">Total Impedance</div>
+            <div class="result-value" id="impedanceValue">50<span class="result-unit">Ω</span></div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Phase Angle</div>
+            <div class="result-value" id="phaseAngleValue">53.1<span class="result-unit">°</span></div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Power Factor</div>
+            <div class="result-value" id="powerFactorValue">0.60</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Circuit Type</div>
+            <div class="result-value" id="circuitType" style="font-size: 1rem; color: var(--accent);">Inductive</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-bottom: 1.5rem; color: var(--accent);">Phasor Diagram</h2>
+        <canvas id="phasorCanvas" class="phasor-canvas"></canvas>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-top: 1rem;">
+          <span style="color: var(--green);">● Green:</span> Resistance (R) |
+          <span style="color: var(--accent2);">● Blue:</span> Reactance (X) |
+          <span style="color: var(--accent);">● Amber:</span> Impedance (Z)
+        </p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Power Triangle</h2>
+      <div class="triangle-display">
+        <div class="triangle-item">
+          <div class="label">Real Power (P)</div>
+          <div class="value" id="realPower">900<span class="result-unit" style="display: block; font-size: 0.9rem;">W</span></div>
+        </div>
+        <div class="triangle-item">
+          <div class="label">Reactive Power (Q)</div>
+          <div class="value" id="reactivePower">1200<span class="result-unit" style="display: block; font-size: 0.9rem;">VAR</span></div>
+        </div>
+        <div class="triangle-item">
+          <div class="label">Apparent Power (S)</div>
+          <div class="value" id="apparentPower">1500<span class="result-unit" style="display: block; font-size: 0.9rem;">VA</span></div>
+        </div>
+      </div>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-top: 1rem;">
+        Based on 30A applied current. (P = I²R, Q = I²X, S = I²Z)
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>Practice Scenarios</h2>
+      <div class="practice-scenarios">
+        <div class="scenario">
+          <h4>Scenario 1: AC Motor</h4>
+          <p>A motor winding has R = 10Ω and XL = 15Ω. Find Z and PF.</p>
+          <button class="btn btn-primary" onclick="loadScenario(1)">Load Scenario</button>
+          <div id="scenario1Result"></div>
+        </div>
+        <div class="scenario">
+          <h4>Scenario 2: RLC Circuit</h4>
+          <p>Capacitive circuit: R = 50Ω, XC = 30Ω. Verify Z and θ.</p>
+          <button class="btn btn-primary" onclick="loadScenario(2)">Load Scenario</button>
+          <div id="scenario2Result"></div>
+        </div>
+        <div class="scenario">
+          <h4>Scenario 3: Power Factor Correction</h4>
+          <p>Inductive: R = 20Ω, XL = 20Ω. Check PF and type.</p>
+          <button class="btn btn-primary" onclick="loadScenario(3)">Load Scenario</button>
+          <div id="scenario3Result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let circuitType = 'inductive';
+    const scenarios = [
+      { R: 10, X: 15, type: 'inductive' },
+      { R: 50, X: 30, type: 'capacitive' },
+      { R: 20, X: 20, type: 'inductive' }
+    ];
+
+    const resistanceInput = document.getElementById('resistanceInput');
+    const reactanceInput = document.getElementById('reactanceInput');
+    const reactanceLabel = document.getElementById('reactanceLabel');
+    const toggleButtons = document.querySelectorAll('.toggle-btn');
+    const phasorCanvas = document.getElementById('phasorCanvas');
+    const ctx = phasorCanvas.getContext('2d');
+
+    // DPI scaling
+    const dpr = window.devicePixelRatio || 1;
+    phasorCanvas.width = phasorCanvas.offsetWidth * dpr;
+    phasorCanvas.height = phasorCanvas.offsetHeight * dpr;
+    ctx.scale(dpr, dpr);
+
+    toggleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        toggleButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        circuitType = btn.dataset.type;
+        const label = circuitType === 'inductive' ? 'Inductive Reactance (XL)' : 'Capacitive Reactance (XC)';
+        reactanceLabel.textContent = label;
+        update();
+      });
+    });
+
+    resistanceInput.addEventListener('input', update);
+    reactanceInput.addEventListener('input', update);
+
+    function update() {
+      const R = parseFloat(resistanceInput.value) || 0;
+      const X = parseFloat(reactanceInput.value) || 0;
+
+      // Calculate impedance
+      const Z = Math.sqrt(R * R + X * X);
+
+      // Calculate phase angle (in degrees)
+      const theta = Math.atan2(X, R) * (180 / Math.PI);
+
+      // Calculate power factor
+      const PF = Math.cos(theta * Math.PI / 180);
+
+      // Update results
+      document.getElementById('impedanceValue').textContent = Z.toFixed(2) + '⁄Ω';
+      document.getElementById('phaseAngleValue').textContent = theta.toFixed(1) + '⁄°';
+      document.getElementById('powerFactorValue').textContent = Math.abs(PF).toFixed(3);
+      document.getElementById('circuitType').textContent = circuitType === 'inductive' ? 'Inductive' : 'Capacitive';
+
+      // Update power triangle (assume 30A)
+      const I = 30;
+      const P = I * I * R;
+      const Q = I * I * X;
+      const S = I * I * Z;
+
+      document.getElementById('realPower').innerHTML = P.toFixed(0) + '<span class="result-unit" style="display: block; font-size: 0.9rem;">W</span>';
+      document.getElementById('reactivePower').innerHTML = Q.toFixed(0) + '<span class="result-unit" style="display: block; font-size: 0.9rem;">VAR</span>';
+      document.getElementById('apparentPower').innerHTML = S.toFixed(0) + '<span class="result-unit" style="display: block; font-size: 0.9rem;">VA</span>';
+
+      drawPhasor(R, X, Z, theta);
+    }
+
+    function drawPhasor(R, X, Z, theta) {
+      const width = phasorCanvas.offsetWidth;
+      const height = phasorCanvas.offsetHeight;
+      const centerX = width * 0.4;
+      const centerY = height / 2;
+      const scale = Math.min(width, height) / 4 / Math.max(R, X, Z || 1);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Grid
+      ctx.strokeStyle = 'rgba(139, 148, 158, 0.1)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < width; i += 40) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, height);
+        ctx.stroke();
+      }
+      for (let i = 0; i < height; i += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(width, i);
+        ctx.stroke();
+      }
+
+      // Axes
+      ctx.strokeStyle = 'rgba(139, 148, 158, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, 0);
+      ctx.lineTo(centerX, height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(width, centerY);
+      ctx.stroke();
+
+      // R vector (horizontal)
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 3;
+      const rEnd = centerX + R * scale;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(rEnd, centerY);
+      ctx.stroke();
+
+      // X vector (vertical)
+      ctx.strokeStyle = '#58a6ff';
+      ctx.lineWidth = 3;
+      const xEnd = centerY - X * scale;
+      ctx.beginPath();
+      ctx.moveTo(rEnd, centerY);
+      ctx.lineTo(rEnd, xEnd);
+      ctx.stroke();
+
+      // Z vector (diagonal)
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(rEnd, xEnd);
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 14px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText(`R=${(R).toFixed(0)}Ω`, (centerX + rEnd) / 2, centerY + 20);
+
+      ctx.fillStyle = '#58a6ff';
+      ctx.textAlign = 'left';
+      ctx.fillText(`X=${(X).toFixed(0)}Ω`, rEnd + 10, (centerY + xEnd) / 2);
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.textAlign = 'right';
+      ctx.fillText(`Z=${(Z).toFixed(0)}Ω`, rEnd - 20, (centerY + xEnd) / 2 - 20);
+
+      // Angle arc
+      if (theta !== 0) {
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const arcRadius = 60;
+        ctx.arc(centerX, centerY, arcRadius, 0, theta * Math.PI / 180, theta < 0);
+        ctx.stroke();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = '12px Inter';
+        ctx.textAlign = 'center';
+        const arcLabelAngle = theta * Math.PI / 180 / 2;
+        const arcLabelX = centerX + (arcRadius + 20) * Math.cos(arcLabelAngle);
+        const arcLabelY = centerY - (arcRadius + 20) * Math.sin(arcLabelAngle);
+        ctx.fillText(`θ=${theta.toFixed(1)}°`, arcLabelX, arcLabelY);
+      }
+    }
+
+    function loadScenario(num) {
+      const scenario = scenarios[num - 1];
+      resistanceInput.value = scenario.R;
+      reactanceInput.value = scenario.X;
+
+      if (scenario.type !== circuitType) {
+        const btn = document.querySelector(`[data-type="${scenario.type}"]`);
+        btn.click();
+      }
+
+      update();
+
+      const resultDiv = document.getElementById(`scenario${num}Result`);
+      const R = scenario.R;
+      const X = scenario.X;
+      const Z = Math.sqrt(R * R + X * X);
+      const theta = Math.atan2(X, R) * (180 / Math.PI);
+      const PF = Math.cos(theta * Math.PI / 180);
+
+      resultDiv.innerHTML = `
+        <div class="check-result correct">
+          ✓ Z = ${Z.toFixed(2)}Ω, θ = ${theta.toFixed(1)}°, PF = ${Math.abs(PF).toFixed(3)}
+        </div>
+      `;
+
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Initial update
+    update();
+  </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

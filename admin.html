@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkStudy - Owner Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navigation Bar */
+        nav {
+            background-color: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 1.25rem;
+            transition: color 0.2s;
+        }
+
+        .logo:hover {
+            color: var(--accent);
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg);
+            font-weight: 700;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent);
+        }
+
+        /* Main Layout */
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: var(--panel);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1.5rem 0;
+        }
+
+        .sidebar-item {
+            padding: 0.75rem 1.5rem;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+        }
+
+        .sidebar-item.active {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Section Titles */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            background-color: rgba(245, 158, 11, 0.05);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Buttons */
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--bg);
+        }
+
+        .btn-primary:hover {
+            background-color: #f59e0b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .btn-danger {
+            background-color: var(--red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background-color: var(--green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: var(--panel);
+            border-bottom: 2px solid var(--border);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: var(--text);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        tbody tr.clickable:hover {
+            background-color: rgba(245, 158, 11, 0.05);
+            cursor: pointer;
+        }
+
+        /* Search Bar */
+        .search-box {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            max-width: 300px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
+
+        /* Charts */
+        .chart-container {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-active {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--green);
+        }
+
+        .badge-inactive {
+            background-color: rgba(107, 114, 128, 0.2);
+            color: var(--muted);
+        }
+
+        .badge-paid {
+            background-color: rgba(88, 166, 255, 0.2);
+            color: var(--accent2);
+        }
+
+        .badge-free {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--accent);
+        }
+
+        /* Grid Layouts */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-full {
+            grid-column: 1 / -1;
+        }
+
+        /* User Detail View */
+        .detail-section {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent);
+            color: var(--bg);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification.error {
+            background-color: var(--red);
+        }
+
+        .notification.success {
+            background-color: var(--green);
+        }
+    </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = 'login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = 'login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link">Worksheets</a>
+        <a href="achievements.html" class="nav-link">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-item active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+            <div class="sidebar-item" onclick="switchTab('promo')">🎟️ Promo Codes</div>
+            <div class="sidebar-item" onclick="switchTab('users')">👥 User Management</div>
+            <div class="sidebar-item" onclick="switchTab('messaging')">💬 Messaging & Gifts</div>
+            <div class="sidebar-item" onclick="switchTab('analytics')">📈 Analytics</div>
+            <div class="sidebar-item" onclick="switchTab('refunds')">💰 Refund Requests</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- DASHBOARD TAB -->
+            <div id="dashboard" class="tab-content active">
+                <h1>Dashboard Overview</h1>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value" id="stat-total-users">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Paid Users</div>
+                        <div class="stat-value" id="stat-paid-users">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Estimated Revenue</div>
+                        <div class="stat-value" id="stat-revenue">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Active Promos</div>
+                        <div class="stat-value" id="stat-active-promos">0</div>
+                    </div>
+                </div>
+
+                <h2>New Signups (Last 30 Days)</h2>
+                <div class="chart-container">
+                    <canvas id="signupsChart"></canvas>
+                </div>
+
+                <h2>Promo Code Usage</h2>
+                <div class="chart-container">
+                    <canvas id="promoChart"></canvas>
+                </div>
+            </div>
+
+            <!-- PROMO CODES TAB -->
+            <div id="promo" class="tab-content">
+                <h1>Promo Code Management</h1>
+
+                <button class="btn-primary" onclick="openCreatePromoModal()">+ Create New Promo Code</button>
+
+                <h2 style="margin-top: 2rem;">Active Promo Codes</h2>
+                <div class="table-wrapper">
+                    <table id="promoTable">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Discount</th>
+                                <th>Type</th>
+                                <th>Uses</th>
+                                <th>Max Uses</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promoTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- USER MANAGEMENT TAB -->
+            <div id="users" class="tab-content">
+                <h1>User Management</h1>
+
+                <div class="search-box">
+                    <input type="text" id="userSearch" placeholder="Search users by name or email..." onkeyup="filterUsers()">
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Signup Date</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Promo Used</th>
+                                <th>Last Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MESSAGING & GIFTS TAB -->
+            <div id="messaging" class="tab-content">
+                <h1>Messaging & Gifts</h1>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <!-- Send Individual Message -->
+                    <div>
+                        <h2>Send Message to User</h2>
+                        <div class="form-group">
+                            <label>Select User</label>
+                            <select id="messageUserSelect">
+                                <option value="">-- Choose User --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="messageText" placeholder="Enter message..."></textarea>
+                        </div>
+                        <button class="btn-primary" onclick="sendUserMessage()">Send Message</button>
+                    </div>
+
+                    <!-- Send Broadcast Message -->
+                    <div>
+                        <h2>Broadcast to All Users</h2>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="broadcastText" placeholder="Enter broadcast message..."></textarea>
+                        </div>
+                        <button class="btn-primary" onclick="sendBroadcastMessage()">Send to All</button>
+                    </div>
+                </div>
+
+                <!-- Gift System -->
+                <div style="margin-top: 3rem;">
+                    <h2>Send Gift/Reward</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Select User</label>
+                            <select id="giftUserSelect">
+                                <option value="">-- Choose User --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gift Type</label>
+                            <select id="giftType">
+                                <option value="free_month">Free Month Access</option>
+                                <option value="achievement_badge">Achievement Badge</option>
+                                <option value="discount_code">Discount Code</option>
+                                <option value="custom">Custom Reward</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Personal Message</label>
+                            <textarea id="giftMessage" placeholder="Add a personal message..." style="min-height: 60px;"></textarea>
+                        </div>
+                        <div class="form-group form-full">
+                            <button class="btn-primary" onclick="sendGift()">Send Gift</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message History -->
+                <div style="margin-top: 3rem;">
+                    <h2>Message History</h2>
+                    <div class="table-wrapper">
+                        <table id="messageHistoryTable">
+                            <thead>
+                                <tr>
+                                    <th>Recipient</th>
+                                    <th>Type</th>
+                                    <th>Content</th>
+                                    <th>Sent Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messageHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS TAB -->
+            <div id="analytics" class="tab-content">
+                <h1>Analytics</h1>
+
+                <h2>Diagnostic Score Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="scoreDistributionChart"></canvas>
+                </div>
+
+                <h2>Most Failed Questions</h2>
+                <div class="chart-container">
+                    <canvas id="failedQuestionsChart"></canvas>
+                </div>
+
+                <h2>Tool Usage Statistics</h2>
+                <div class="chart-container">
+                    <canvas id="toolUsageChart"></canvas>
+                </div>
+
+                <h2>Worksheet Completion Rate</h2>
+                <div class="chart-container">
+                    <canvas id="worksheetChart"></canvas>
+                </div>
+            </div>
+
+            <!-- REFUND REQUESTS TAB -->
+            <div id="refunds" class="tab-content">
+                <h1>Refund Requests</h1>
+
+                <div class="table-wrapper">
+                    <table id="refundsTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Date</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="refundsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Create Promo Modal -->
+    <div id="createPromoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Promo Code</h2>
+                <button class="modal-close" onclick="closeModal('createPromoModal')">×</button>
+            </div>
+            <form onsubmit="createPromoCode(event)">
+                <div class="form-group">
+                    <label>Promo Code</label>
+                    <input type="text" id="promoCode" placeholder="e.g., SAVE20" required>
+                </div>
+                <div class="form-group">
+                    <label>Discount Percentage (0-100)</label>
+                    <input type="number" id="promoDiscount" min="0" max="100" placeholder="50" required>
+                </div>
+                <div class="form-group">
+                    <label>Max Uses (0 = unlimited)</label>
+                    <input type="number" id="promoMaxUses" min="0" placeholder="100">
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date (Optional)</label>
+                    <input type="date" id="promoExpiry">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Create Promo Code</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="userDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>User Details</h2>
+                <button class="modal-close" onclick="closeModal('userDetailsModal')">×</button>
+            </div>
+            <div id="userDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Refund Decision Modal -->
+    <div id="refundDecisionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Refund Request Decision</h2>
+                <button class="modal-close" onclick="closeModal('refundDecisionModal')">×</button>
+            </div>
+            <div id="refundDecisionContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONSTANTS & CONFIG ====================
+        const PRICE_PER_MONTH = 9.99;
+        const DEFAULT_PROMO_CODES = [
+            { code: 'FREE_ACCESS', discount: 100, type: 'percentage', maxUses: 0, usedBy: [], createdDate: new Date().toISOString() },
+            { code: 'HALF_OFF', discount: 50, type: 'percentage', maxUses: 0, usedBy: [], createdDate: new Date().toISOString() },
+            { code: 'STUDENT2026', discount: 25, type: 'percentage', maxUses: 0, usedBy: [], createdDate: new Date().toISOString() }
+        ];
+
+        // ==================== INITIALIZATION ====================
+        function initializeApp() {
+            // Check auth
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) {
+                alert('You must be logged in');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            try {
+                const authData = JSON.parse(auth);
+                if (authData.role !== 'owner' && authData.email !== 'owner@sparkystudy.com' && authData.email !== 'ethan') {
+                    alert('You do not have permission to access this page');
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+            } catch (e) {
+                alert('Invalid authentication');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // Initialize storage if needed
+            initializeStorage();
+
+            // Load all data
+            loadDashboard();
+            loadPromoCodeTab();
+            loadUserManagementTab();
+            loadMessagingTab();
+            loadAnalyticsTab();
+            loadRefundsTab();
+        }
+
+        function initializeStorage() {
+            if (!localStorage.getItem('sparty_users')) {
+                localStorage.setItem('sparty_users', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('sparty_signups_log')) {
+                localStorage.setItem('sparty_signups_log', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('sparty_promo_codes')) {
+                localStorage.setItem('sparty_promo_codes', JSON.stringify(DEFAULT_PROMO_CODES));
+            }
+            if (!localStorage.getItem('sparty_user_notifications')) {
+                localStorage.setItem('sparty_user_notifications', JSON.stringify({}));
+            }
+            if (!localStorage.getItem('sparty_tool_usage')) {
+                localStorage.setItem('sparty_tool_usage', JSON.stringify({}));
+            }
+            if (!localStorage.getItem('sparty_refund_requests')) {
+                localStorage.setItem('sparty_refund_requests', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('sparty_message_history')) {
+                localStorage.setItem('sparty_message_history', JSON.stringify([]));
+            }
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Reload tab data
+            if (tabName === 'dashboard') loadDashboard();
+            else if (tabName === 'promo') loadPromoCodeTab();
+            else if (tabName === 'users') loadUserManagementTab();
+            else if (tabName === 'messaging') loadMessagingTab();
+            else if (tabName === 'analytics') loadAnalyticsTab();
+            else if (tabName === 'refunds') loadRefundsTab();
+        }
+
+        // ==================== DASHBOARD ====================
+        function loadDashboard() {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+            const signupsLog = JSON.parse(localStorage.getItem('sparty_signups_log')) || [];
+
+            // Calculate stats
+            const totalUsers = users.length;
+            const paidUsers = users.filter(u => u.paid === true).length;
+            const estimatedRevenue = paidUsers * PRICE_PER_MONTH;
+            const activePromos = promoCodes.filter(p => p.active !== false).length;
+
+            // Update stat cards
+            document.getElementById('stat-total-users').textContent = totalUsers;
+            document.getElementById('stat-paid-users').textContent = paidUsers;
+            document.getElementById('stat-revenue').textContent = '$' + estimatedRevenue.toFixed(2);
+            document.getElementById('stat-active-promos').textContent = activePromos;
+
+            // Draw signups chart
+            drawSignupsChart(signupsLog);
+
+            // Draw promo usage chart
+            drawPromoChart(promoCodes);
+        }
+
+        function drawSignupsChart(signupsLog) {
+            const canvas = document.getElementById('signupsChart');
+            const ctx = canvas.getContext('2d');
+
+            // Calculate last 30 days
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            const dailySignups = {};
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                const dateStr = date.toISOString().split('T')[0];
+                dailySignups[dateStr] = 0;
+            }
+
+            signupsLog.forEach(signup => {
+                const dateStr = new Date(signup.date).toISOString().split('T')[0];
+                if (dailySignups[dateStr] !== undefined) {
+                    dailySignups[dateStr]++;
+                }
+            });
+
+            const labels = Object.keys(dailySignups);
+            const data = Object.values(dailySignups);
+
+            drawBarChart(ctx, labels, [data], 'New Signups Last 30 Days', '#f59e0b');
+        }
+
+        function drawPromoChart(promoCodes) {
+            const canvas = document.getElementById('promoChart');
+            const ctx = canvas.getContext('2d');
+
+            const labels = promoCodes.map(p => p.code);
+            const data = promoCodes.map(p => (p.usedBy || []).length);
+
+            drawBarChart(ctx, labels, [data], 'Promo Code Usage Count', '#58a6ff');
+        }
+
+        function drawBarChart(ctx, labels, datasets, title, color) {
+            const canvas = ctx.canvas;
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 300;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 50;
+            const chartWidth = width - 2 * padding;
+            const chartHeight = height - 2 * padding;
+
+            const data = datasets[0];
+            const maxValue = Math.max(...data, 1);
+
+            ctx.fillStyle = '#e6edf3';
+            ctx.font = 'bold 16px Inter';
+            ctx.fillText(title, padding, 25);
+
+            // Draw axes
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.lineTo(width - padding, padding);
+            ctx.stroke();
+
+            // Draw bars
+            const barWidth = chartWidth / labels.length;
+            ctx.fillStyle = color;
+
+            data.forEach((value, index) => {
+                const barHeight = (value / maxValue) * chartHeight;
+                const x = padding + index * barWidth + barWidth * 0.1;
+                const y = height - padding - barHeight;
+
+                ctx.fillRect(x, y, barWidth * 0.8, barHeight);
+            });
+
+            // Draw labels
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'center';
+            labels.forEach((label, index) => {
+                const x = padding + index * barWidth + barWidth / 2;
+                ctx.fillText(label, x, height - padding + 20);
+            });
+        }
+
+        // ==================== PROMO CODE MANAGEMENT ====================
+        function loadPromoCodeTab() {
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+            const tbody = document.getElementById('promoTableBody');
+            tbody.innerHTML = '';
+
+            promoCodes.forEach((promo, index) => {
+                const row = document.createElement('tr');
+                const usageCount = (promo.usedBy || []).length;
+                const maxUses = promo.maxUses === 0 ? 'Unlimited' : promo.maxUses;
+                const status = promo.active === false ? 'Disabled' : 'Active';
+
+                row.innerHTML = `
+                    <td><strong>${promo.code}</strong></td>
+                    <td>${promo.discount}%</td>
+                    <td>${promo.type === 'percentage' ? 'Percentage' : 'Free'}</td>
+                    <td>${usageCount}</td>
+                    <td>${maxUses}</td>
+                    <td><span class="badge ${status === 'Active' ? 'badge-active' : 'badge-inactive'}">${status}</span></td>
+                    <td>${new Date(promo.createdDate).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn-small btn-secondary" onclick="togglePromoStatus(${index})">
+                            ${status === 'Active' ? 'Disable' : 'Enable'}
+                        </button>
+                        <button class="btn-small btn-danger" onclick="deletePromo(${index})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function openCreatePromoModal() {
+            document.getElementById('createPromoModal').classList.add('active');
+        }
+
+        function createPromoCode(event) {
+            event.preventDefault();
+
+            const code = document.getElementById('promoCode').value.toUpperCase();
+            const discount = parseInt(document.getElementById('promoDiscount').value);
+            const maxUses = parseInt(document.getElementById('promoMaxUses').value) || 0;
+            const expiry = document.getElementById('promoExpiry').value || null;
+
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+
+            // Check if code already exists
+            if (promoCodes.some(p => p.code === code)) {
+                showNotification('Promo code already exists!', 'error');
+                return;
+            }
+
+            const newPromo = {
+                code,
+                discount,
+                type: 'percentage',
+                maxUses,
+                expiry,
+                usedBy: [],
+                active: true,
+                createdDate: new Date().toISOString()
+            };
+
+            promoCodes.push(newPromo);
+            localStorage.setItem('sparty_promo_codes', JSON.stringify(promoCodes));
+
+            showNotification('Promo code created successfully!', 'success');
+            closeModal('createPromoModal');
+            document.querySelector('form').reset();
+            loadPromoCodeTab();
+        }
+
+        function togglePromoStatus(index) {
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+            promoCodes[index].active = !promoCodes[index].active;
+            localStorage.setItem('sparty_promo_codes', JSON.stringify(promoCodes));
+            loadPromoCodeTab();
+            showNotification('Promo status updated!', 'success');
+        }
+
+        function deletePromo(index) {
+            if (confirm('Are you sure you want to delete this promo code?')) {
+                const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+                promoCodes.splice(index, 1);
+                localStorage.setItem('sparty_promo_codes', JSON.stringify(promoCodes));
+                loadPromoCodeTab();
+                showNotification('Promo code deleted!', 'success');
+            }
+        }
+
+        // ==================== USER MANAGEMENT ====================
+        function loadUserManagementTab() {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+
+            // Populate search
+            const userSearch = document.getElementById('userSearch');
+            if (userSearch) userSearch.value = '';
+
+            // Populate message/gift selects
+            const messageSelect = document.getElementById('messageUserSelect');
+            const giftSelect = document.getElementById('giftUserSelect');
+
+            messageSelect.innerHTML = '<option value="">-- Choose User --</option>';
+            giftSelect.innerHTML = '<option value="">-- Choose User --</option>';
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.email;
+                option.textContent = `${user.name} (${user.email})`;
+                messageSelect.appendChild(option.cloneNode(true));
+                giftSelect.appendChild(option.cloneNode(true));
+            });
+
+            loadUsersTable(users);
+        }
+
+        function loadUsersTable(users = null) {
+            if (users === null) {
+                users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            }
+
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.className = 'clickable';
+                row.onclick = () => showUserDetails(index);
+
+                const role = user.role || 'student';
+                const status = user.paid ? 'Paid' : 'Free';
+                const lastActive = user.lastActive ? new Date(user.lastActive).toLocaleDateString() : 'Never';
+
+                row.innerHTML = `
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.email}</td>
+                    <td>${user.signupDate ? new Date(user.signupDate).toLocaleDateString() : 'N/A'}</td>
+                    <td>${role}</td>
+                    <td><span class="badge ${status === 'Paid' ? 'badge-paid' : 'badge-free'}">${status}</span></td>
+                    <td>${user.promoCodeUsed || '-'}</td>
+                    <td>${lastActive}</td>
+                    <td>
+                        <button class="btn-small btn-secondary" onclick="editUser(event, ${index})">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const filtered = users.filter(user =>
+                (user.name || '').toLowerCase().includes(searchTerm) ||
+                (user.email || '').toLowerCase().includes(searchTerm)
+            );
+            loadUsersTable(filtered);
+        }
+
+        function showUserDetails(userIndex) {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const user = users[userIndex];
+
+            const content = document.getElementById('userDetailsContent');
+            content.innerHTML = `
+                <div class="detail-section">
+                    <h3>Personal Information</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Name</span>
+                        <span class="detail-value">${user.name || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">${user.email}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Signup Date</span>
+                        <span class="detail-value">${user.signupDate ? new Date(user.signupDate).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Account Status</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Role</span>
+                        <select id="userRole" value="${user.role || 'student'}" onchange="updateUserRole(${userIndex}, this.value)">
+                            <option value="student">Student</option>
+                            <option value="school-admin">School Admin</option>
+                        </select>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Paid Status</span>
+                        <span class="detail-value">
+                            <input type="checkbox" ${user.paid ? 'checked' : ''} onchange="toggleUserPaidStatus(${userIndex}, this.checked)">
+                            ${user.paid ? 'Paid' : 'Free'}
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Promo Used</span>
+                        <span class="detail-value">${user.promoCodeUsed || 'None'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Activity</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Last Active</span>
+                        <span class="detail-value">${user.lastActive ? new Date(user.lastActive).toLocaleString() : 'Never'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Diagnostic Score</span>
+                        <span class="detail-value">${user.diagnosticScore || 'Not completed'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Actions</h3>
+                    <button class="btn-secondary" onclick="closeModal('userDetailsModal')">Close</button>
+                </div>
+            `;
+
+            document.getElementById('userDetailsModal').classList.add('active');
+        }
+
+        function editUser(event, userIndex) {
+            event.stopPropagation();
+            showUserDetails(userIndex);
+        }
+
+        function updateUserRole(userIndex, newRole) {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            users[userIndex].role = newRole;
+            localStorage.setItem('sparty_users', JSON.stringify(users));
+            showNotification('User role updated!', 'success');
+        }
+
+        function toggleUserPaidStatus(userIndex, isPaid) {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            users[userIndex].paid = isPaid;
+            localStorage.setItem('sparty_users', JSON.stringify(users));
+            showNotification('User status updated!', 'success');
+        }
+
+        // ==================== MESSAGING & GIFTS ====================
+        function loadMessagingTab() {
+            loadMessageHistory();
+        }
+
+        function sendUserMessage() {
+            const email = document.getElementById('messageUserSelect').value;
+            const message = document.getElementById('messageText').value;
+
+            if (!email || !message) {
+                showNotification('Please select a user and enter a message', 'error');
+                return;
+            }
+
+            const notifications = JSON.parse(localStorage.getItem('sparty_user_notifications')) || {};
+            if (!notifications[email]) {
+                notifications[email] = [];
+            }
+
+            notifications[email].push({
+                type: 'message',
+                message,
+                date: new Date().toISOString()
+            });
+
+            localStorage.setItem('sparty_user_notifications', JSON.stringify(notifications));
+
+            // Log to message history
+            logMessage(email, 'personal', message);
+
+            showNotification('Message sent successfully!', 'success');
+            document.getElementById('messageText').value = '';
+            loadMessageHistory();
+        }
+
+        function sendBroadcastMessage() {
+            const message = document.getElementById('broadcastText').value;
+
+            if (!message) {
+                showNotification('Please enter a message', 'error');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const notifications = JSON.parse(localStorage.getItem('sparty_user_notifications')) || {};
+
+            users.forEach(user => {
+                if (!notifications[user.email]) {
+                    notifications[user.email] = [];
+                }
+                notifications[user.email].push({
+                    type: 'broadcast',
+                    message,
+                    date: new Date().toISOString()
+                });
+
+                logMessage(user.email, 'broadcast', message);
+            });
+
+            localStorage.setItem('sparty_user_notifications', JSON.stringify(notifications));
+            showNotification('Broadcast sent to all users!', 'success');
+            document.getElementById('broadcastText').value = '';
+            loadMessageHistory();
+        }
+
+        function sendGift() {
+            const email = document.getElementById('giftUserSelect').value;
+            const giftType = document.getElementById('giftType').value;
+            const message = document.getElementById('giftMessage').value;
+
+            if (!email) {
+                showNotification('Please select a user', 'error');
+                return;
+            }
+
+            const notifications = JSON.parse(localStorage.getItem('sparty_user_notifications')) || {};
+            if (!notifications[email]) {
+                notifications[email] = [];
+            }
+
+            notifications[email].push({
+                type: 'gift',
+                giftType,
+                message,
+                date: new Date().toISOString()
+            });
+
+            localStorage.setItem('sparty_user_notifications', JSON.stringify(notifications));
+
+            logMessage(email, 'gift', `Gift: ${giftType} - ${message}`);
+
+            showNotification('Gift sent successfully!', 'success');
+            document.getElementById('giftMessage').value = '';
+            document.getElementById('giftUserSelect').value = '';
+            loadMessageHistory();
+        }
+
+        function logMessage(recipient, type, content) {
+            const history = JSON.parse(localStorage.getItem('sparty_message_history')) || [];
+            history.push({
+                recipient,
+                type,
+                content: content.substring(0, 100),
+                date: new Date().toISOString()
+            });
+            localStorage.setItem('sparty_message_history', JSON.stringify(history));
+        }
+
+        function loadMessageHistory() {
+            const history = JSON.parse(localStorage.getItem('sparty_message_history')) || [];
+            const tbody = document.getElementById('messageHistoryBody');
+            tbody.innerHTML = '';
+
+            // Show last 10 messages
+            history.slice(-10).reverse().forEach(msg => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${msg.recipient}</td>
+                    <td><span class="badge badge-active">${msg.type}</span></td>
+                    <td>${msg.content}</td>
+                    <td>${new Date(msg.date).toLocaleString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ==================== ANALYTICS ====================
+        function loadAnalyticsTab() {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const toolUsage = JSON.parse(localStorage.getItem('sparty_tool_usage')) || {};
+
+            // Mock data for charts
+            drawScoreDistributionChart(users);
+            drawFailedQuestionsChart();
+            drawToolUsageChart(toolUsage);
+            drawWorksheetChart();
+        }
+
+        function drawScoreDistributionChart(users) {
+            const canvas = document.getElementById('scoreDistributionChart');
+            const ctx = canvas.getContext('2d');
+
+            const scores = users.map(u => u.diagnosticScore || 0).filter(s => s > 0);
+            const ranges = {
+                '0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0
+            };
+
+            scores.forEach(score => {
+                if (score <= 20) ranges['0-20']++;
+                else if (score <= 40) ranges['21-40']++;
+                else if (score <= 60) ranges['41-60']++;
+                else if (score <= 80) ranges['61-80']++;
+                else ranges['81-100']++;
+            });
+
+            const labels = Object.keys(ranges);
+            const data = Object.values(ranges);
+            drawBarChart(ctx, labels, [data], 'Score Distribution', '#10b981');
+        }
+
+        function drawFailedQuestionsChart() {
+            const canvas = document.getElementById('failedQuestionsChart');
+            const ctx = canvas.getContext('2d');
+
+            const mockData = [12, 8, 15, 5, 9, 11, 6];
+            const mockLabels = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'];
+
+            drawBarChart(ctx, mockLabels, [mockData], 'Most Failed Questions', '#ef4444');
+        }
+
+        function drawToolUsageChart(toolUsage) {
+            const canvas = document.getElementById('toolUsageChart');
+            const ctx = canvas.getContext('2d');
+
+            const tools = Object.keys(toolUsage);
+            const usage = Object.values(toolUsage);
+
+            if (tools.length === 0) {
+                const mockTools = ['Grammar Checker', 'Math Solver', 'Essay Writer', 'Flashcards', 'Quiz Maker'];
+                const mockUsage = [45, 32, 28, 52, 18];
+                drawBarChart(ctx, mockTools, [mockUsage], 'Tool Usage Statistics', '#58a6ff');
+            } else {
+                drawBarChart(ctx, tools, [usage], 'Tool Usage Statistics', '#58a6ff');
+            }
+        }
+
+        function drawWorksheetChart() {
+            const canvas = document.getElementById('worksheetChart');
+            const ctx = canvas.getContext('2d');
+
+            const mockLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const mockData = [65, 72, 68, 81];
+
+            drawBarChart(ctx, mockLabels, [mockData], 'Worksheet Completion Rate (%)', '#f59e0b');
+        }
+
+        // ==================== REFUND REQUESTS ====================
+        function loadRefundsTab() {
+            const refunds = JSON.parse(localStorage.getItem('sparty_refund_requests')) || [];
+            const tbody = document.getElementById('refundsTableBody');
+            tbody.innerHTML = '';
+
+            refunds.forEach((refund, index) => {
+                const row = document.createElement('tr');
+                const statusClass = refund.status === 'pending' ? 'badge-active' : 'badge-inactive';
+
+                row.innerHTML = `
+                    <td>${refund.userName || 'N/A'}</td>
+                    <td>${refund.email}</td>
+                    <td>${new Date(refund.date).toLocaleDateString()}</td>
+                    <td>${refund.reason}</td>
+                    <td><span class="badge ${statusClass}">${refund.status}</span></td>
+                    <td>
+                        <button class="btn-small btn-success" onclick="handleRefund(${index}, 'approved')">Approve</button>
+                        <button class="btn-small btn-danger" onclick="handleRefund(${index}, 'denied')">Deny</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function handleRefund(index, decision) {
+            const refunds = JSON.parse(localStorage.getItem('sparty_refund_requests')) || [];
+            refunds[index].status = decision;
+            localStorage.setItem('sparty_refund_requests', JSON.stringify(refunds));
+
+            showNotification(`Refund request ${decision}!`, 'success');
+            loadRefundsTab();
+        }
+
+        // ==================== MODAL & UTILITY ====================
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'dashboard.html';
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ==================== PAGE LOAD ====================
+        window.addEventListener('load', initializeApp);
+
+        // Close modals on outside click
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

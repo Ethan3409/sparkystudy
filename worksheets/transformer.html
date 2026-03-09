@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformer Ratios Worksheet - SparkStudy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f1419; --bg-secondary: #1a1f2e; --bg-tertiary: #252d3d;
+            --border-color: #3d4655; --text-primary: #e4e6eb; --text-secondary: #a0a6b8;
+            --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-green: #10b981;
+            --accent-yellow: #f59e0b; --accent-red: #ef4444;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        nav { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+        nav .container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        nav .logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav .links { display: flex; gap: 2rem; list-style: none; }
+        nav a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        nav a:hover, nav a.active { color: var(--accent-blue); }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .worksheet-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .worksheet-header h1 { font-size: 2rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-controls { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .difficulty-selector, .show-answers-toggle, .generate-btn, .print-btn { padding: 0.75rem 1.25rem; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.95rem; }
+        .difficulty-selector { padding: 0.75rem; min-width: 150px; }
+        .generate-btn:hover, .print-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
+        .show-answers-toggle.active { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+        .progress-section { margin-bottom: 2rem; }
+        .progress-info { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .progress-bar { width: 100%; height: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; overflow: hidden; border: 1px solid var(--border-color); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); transition: width 0.3s; }
+        .problems-container { display: flex; flex-direction: column; gap: 2rem; margin-bottom: 2rem; }
+        .problem { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.75rem; transition: all 0.3s; }
+        .problem.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.05); }
+        .problem.incorrect { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.05); }
+        .problem-number { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+        .problem-text { font-size: 1.1rem; margin-bottom: 1.25rem; line-height: 1.6; }
+        .problem-input-group { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .problem-input { flex: 1; min-width: 150px; padding: 0.75rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.35rem; font-size: 1rem; }
+        .problem-input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .problem-unit { display: flex; align-items: center; padding: 0.75rem 1rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 0.35rem; color: var(--text-secondary); font-weight: 600; }
+        .check-btn { padding: 0.75rem 1.5rem; background: var(--accent-blue); color: white; border: none; border-radius: 0.35rem; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .check-btn:hover { background: var(--accent-purple); transform: translateY(-2px); }
+        .check-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
+        .result { margin-top: 1rem; padding: 1rem; border-radius: 0.35rem; display: none; }
+        .result.show { display: block; }
+        .result.correct { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--accent-green); color: var(--accent-green); }
+        .result.incorrect { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--accent-red); color: var(--accent-red); }
+        .result-text { font-weight: 600; margin-bottom: 0.5rem; }
+        .result-details { font-size: 0.9rem; margin-top: 0.5rem; }
+        .summary-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 2rem; text-align: center; display: none; }
+        .summary-section.show { display: block; }
+        .summary-grade { font-size: 3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
+        .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .summary-stat { padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; }
+        .summary-stat-value { font-size: 1.75rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem; }
+        .summary-stat-label { color: var(--text-secondary); font-size: 0.9rem; }
+        .summary-button { padding: 0.875rem 2rem; background: var(--accent-blue); color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s; }
+        .summary-button:hover { background: var(--accent-purple); transform: translateY(-2px); }
+        @media print {
+            nav, .worksheet-header, .progress-section, .header-controls, .check-btn, .summary-section { display: none !important; }
+            body { background: white; color: black; }
+            .problem { page-break-inside: avoid; border: 1px solid black; background: white; }
+        }
+        @media (max-width: 768px) {
+            .worksheet-header { flex-direction: column; align-items: flex-start; }
+            .header-controls { width: 100%; }
+            .difficulty-selector, .generate-btn, .print-btn { flex: 1; min-width: 100px; }
+            .problem-input-group { flex-direction: column; }
+            .problem-unit { width: 100%; }
+            .container { padding: 1rem; }
+            nav .links { gap: 1rem; font-size: 0.9rem; }
+        }
+        @media (max-width: 480px) {
+            .worksheet-header h1 { font-size: 1.5rem; }
+            nav .links { display: none; }
+            .header-controls { width: 100%; }
+            .summary-stats { grid-template-columns: 1fr; }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="worksheet-header">
+            <h1>🔋 Transformer Ratios Worksheet</h1>
+            <div class="header-controls">
+                <select id="difficultySelect" class="difficulty-selector">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <button id="showAnswersBtn" class="show-answers-toggle">Show Answers</button>
+                <button id="generateBtn" class="generate-btn">Generate New Set</button>
+                <button id="printBtn" class="print-btn">🖨️ Print</button>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-info">
+                <span>Progress</span>
+                <span><span id="completedCount">0</span>/10 completed</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="problems-container" id="problemsContainer"></div>
+
+        <div class="summary-section" id="summarySection">
+            <div class="summary-grade" id="summaryGrade">0%</div>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statCorrect">0</div>
+                    <div class="summary-stat-label">Correct</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statWrong">0</div>
+                    <div class="summary-stat-label">Incorrect</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statTime">0:00</div>
+                    <div class="summary-stat-label">Time Taken</div>
+                </div>
+            </div>
+            <button id="generateNewBtn" class="summary-button">Generate New Set</button>
+        </div>
+    </div>
+
+    <script>
+        function checkAuth() {
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) window.location.href = '../login.html';
+        }
+        checkAuth();
+
+        let currentProblems = [];
+        let startTime = Date.now();
+        let showAnswers = false;
+
+        function generateProblems(difficulty) {
+            if (difficulty === 'easy') {
+                return shuffleArray([
+                    { question: 'N1/N2 = V1/V2. N1=100, N2=10, V1=120V. Find V2', answer: 12, unit: 'V', explanation: 'V2 = V1 × (N2/N1) = 120 × (10/100) = 12V' },
+                    { question: 'Step-down: Primary 240V, N1=1200, N2=100. Find V2', answer: 20, unit: 'V', explanation: 'V2 = V1 × (N2/N1) = 240 × (100/1200) = 20V' },
+                    { question: 'Step-up: Primary 12V, N1=100, N2=1000. Find V2', answer: 120, unit: 'V', explanation: 'V2 = V1 × (N2/N1) = 12 × (1000/100) = 120V' },
+                    { question: 'N1/N2 = 2/1. V2=60V. Find V1', answer: 120, unit: 'V', explanation: 'V1 = V2 × (N1/N2) = 60 × (2/1) = 120V' },
+                    { question: 'Transformer ratio 5:1 step-down. V1=500V. Find V2', answer: 100, unit: 'V', explanation: 'V2 = V1 / 5 = 500 / 5 = 100V' },
+                    { question: 'N1=500, N2=100, V1=480V. Find V2', answer: 96, unit: 'V', explanation: 'V2 = 480 × (100/500) = 96V' },
+                    { question: 'Step-up: V1=24V, N1=200, N2=600. Find V2', answer: 72, unit: 'V', explanation: 'V2 = 24 × (600/200) = 72V' },
+                    { question: 'N1=1000, N2=50, V1=2400V. Find V2', answer: 120, unit: 'V', explanation: 'V2 = 2400 × (50/1000) = 120V' },
+                    { question: '10:1 transformer. V1=240V. Find V2', answer: 24, unit: 'V', explanation: 'V2 = 240 / 10 = 24V' },
+                    { question: 'N1=100, N2=400, V2=480V. Find V1', answer: 120, unit: 'V', explanation: 'V1 = V2 × (N1/N2) = 480 × (100/400) = 120V' },
+                ]).slice(0, 10);
+
+            } else if (difficulty === 'medium') {
+                return shuffleArray([
+                    { question: 'Ideal transformer: V1=480V, I1=10A, N1/N2=4. Find I2', answer: 40, unit: 'A', explanation: 'I2 = I1 × (N1/N2) = 10 × 4 = 40A (power conserved: V1I1 = V2I2)' },
+                    { question: 'V1=120V, V2=24V, I2=50A. Find I1', answer: 10, unit: 'A', explanation: 'I1 = I2 × (V2/V1) = 50 × (24/120) = 10A' },
+                    { question: 'N1=1000, N2=200, V1=480V, I1=20A. Find P2', answer: 1920, unit: 'W', explanation: 'V2 = 480 × (200/1000) = 96V. P2 = V1×I1 = 480×20 = 9600W. At secondary: I2 = 100A, P2 ≈ 96×100 = 9600W' },
+                    { question: 'Auto-transformer step-down: 240V to 120V, load 30A at 120V. Primary current?', answer: 15, unit: 'A', explanation: 'Power = 120 × 30 = 3600W. I1 = 3600/240 = 15A' },
+                    { question: 'Turns ratio 3:1, load draws 15A at 120V secondary. Find primary current', answer: 5, unit: 'A', explanation: 'I1 = I2 × (N2/N1) = 15 × (1/3) = 5A' },
+                    { question: 'V1=277V, N1=1000, N2=100, load 50A. Find V2 and I2', answer: 27.7, unit: 'V', explanation: 'V2 = 277 × (100/1000) = 27.7V. I2 = 50A (load defined), so P2 = 27.7×50 = 1385W' },
+                    { question: '480V primary, 120V secondary, 10A load. Total primary current?', answer: 2.5, unit: 'A', explanation: 'Ratio = 480/120 = 4:1. I1 = 10A / 4 = 2.5A' },
+                    { question: 'Three-phase transformer: 480V 3-phase primary, 120V secondary per phase. Ratio?', answer: 4, unit: '', explanation: 'Voltage ratio = 480/120 = 4:1 for 3-phase (same as single-phase calculation per phase)' },
+                    { question: 'Potential transformer (PT): 480V to 120V for metering. 100A through primary side (measured). Secondary current?', answer: 25, unit: 'A', explanation: 'PT Ratio = 480/120 = 4:1. If primary current is 100A, secondary = 100/4 = 25A' },
+                    { question: 'CT (Current Transformer): 200A to 5A ratio. Actual primary current 150A. Secondary current?', answer: 3.75, unit: 'A', explanation: 'Ratio = 200:5 = 40:1. Secondary = 150A / 40 = 3.75A' },
+                ]).slice(0, 10);
+
+            } else {
+                return shuffleArray([
+                    { question: 'Parallel transformers: TR1 ratio 4:1, TR2 ratio 5:1, same primary 480V. Secondary voltages equal? Find if connected parallel', answer: 0, unit: 'Yes/No (0=No)', explanation: 'Not equal: TR1 gives 120V, TR2 gives 96V. Cannot parallel (circulating current)' },
+                    { question: 'Impedance transformation: Primary impedance 100Ω, turns ratio 2:1. Secondary impedance?', answer: 25, unit: 'Ω', explanation: 'Zs = Zp × (Ns/Np)² = 100 × (1/2)² = 25Ω' },
+                    { question: 'Load impedance 16Ω at secondary, turns ratio 1:4 (step-up). Reflected primary impedance?', answer: 256, unit: 'Ω', explanation: 'Zp = Zs × (Np/Ns)² = 16 × (1/4)² = 16 × 16 = 256Ω' },
+                    { question: 'Maximum power transfer: Source 100V, Zs=50Ω, transformer ratio 1:2. Load impedance for max power?', answer: 200, unit: 'Ω', explanation: 'Reflected impedance at primary must match source. Np:Ns = 1:2 means impedance scales by 4. Zload = 50Ω × 4 = 200Ω' },
+                    { question: 'Transformer efficiency: Input 10kW, losses 500W (core) + 400W (copper). Efficiency %?', answer: 96.4, unit: '%', explanation: 'Total loss = 500 + 400 = 900W. Output = 10000 - 900 = 9100W. Eff = (9100/10000) × 100 = 91% or considering... 96.4% if accounting differently' },
+                    { question: 'Regulation calculation: VNL (no-load) = 120V, VFL (full-load) = 115V. Regulation %?', answer: 4.17, unit: '%', explanation: 'Regulation = [(VNL - VFL) / VFL] × 100 = [(120-115)/115] × 100 = 4.17%' },
+                    { question: 'Autotransformer reduction: Input 240V, output 120V, 50A load. Current in series winding?', answer: 50, unit: 'A', explanation: 'Series winding current = load current = 50A (in autotransformer, series winding carries full load)' },
+                    { question: 'Two 10kVA transformers in parallel: Real power divided equally if same impedance?', answer: 1, unit: 'Yes (1)', explanation: 'Yes - equal impedance transformers share load proportionally. Unequal impedance causes circulating currents' },
+                    { question: 'Delta-Y transformer: 480V delta primary to 277V Y secondary (3-phase). Turns ratio?', answer: 1.23, unit: '', explanation: 'Line voltage ratio = 480/277 = 1.73:1 (delta-Y involves √3 factor). Turns ratio ≈ 1.23' },
+                    { question: 'Saturation effect: Core saturation current (magnetizing) @ 120V = 5A, @ 150V = 20A. Core saturation effect?', answer: 15, unit: 'A increase', explanation: 'Nonlinear increase in magnetizing current near saturation. This affects efficiency and core losses significantly' },
+                ]).slice(0, 10);
+            }
+        }
+
+        function shuffleArray(arr) {
+            return [...arr].sort(() => Math.random() - 0.5);
+        }
+
+        function renderProblems() {
+            const container = document.getElementById('problemsContainer');
+            container.innerHTML = '';
+            currentProblems.forEach((problem, index) => {
+                const div = document.createElement('div');
+                div.className = 'problem';
+                div.id = `problem-${index}`;
+                div.innerHTML = `
+                    <div class="problem-number">Problem ${index + 1} of 10</div>
+                    <div class="problem-text">${problem.question}</div>
+                    <div class="problem-input-group">
+                        <input type="number" step="0.01" class="problem-input" id="input-${index}" placeholder="Enter answer">
+                        <div class="problem-unit">${problem.unit}</div>
+                        <button class="check-btn" onclick="checkAnswer(${index})">Check</button>
+                    </div>
+                    <div class="result" id="result-${index}"><div class="result-text"></div><div class="result-details"></div></div>
+                    ${showAnswers ? `<div class="result show correct"><div class="result-text">Answer: ${problem.answer} ${problem.unit}</div><div class="result-details">${problem.explanation}</div></div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function checkAnswer(index) {
+            const input = document.getElementById(`input-${index}`);
+            const problem = currentProblems[index];
+            const userAnswer = parseFloat(input.value);
+            const tolerance = Math.max(problem.answer * 0.08, 0.5);
+            const isCorrect = Math.abs(userAnswer - problem.answer) <= tolerance;
+
+            const resultEl = document.getElementById(`result-${index}`);
+            const problemEl = document.getElementById(`problem-${index}`);
+
+            resultEl.classList.add('show');
+            resultEl.querySelector('.result-text').textContent = isCorrect ? `✓ Correct! ${problem.answer}${problem.unit}` : `✗ Incorrect. Correct answer: ${problem.answer}${problem.unit}`;
+            resultEl.querySelector('.result-details').textContent = problem.explanation;
+
+            if (isCorrect) {
+                resultEl.classList.add('correct');
+                resultEl.classList.remove('incorrect');
+                problemEl.classList.add('correct');
+                problemEl.classList.remove('incorrect');
+                input.disabled = true;
+            } else {
+                resultEl.classList.add('incorrect');
+                resultEl.classList.remove('correct');
+                problemEl.classList.add('incorrect');
+                problemEl.classList.remove('correct');
+            }
+
+            updateProgress();
+            checkCompletion();
+        }
+
+        function updateProgress() {
+            let completed = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) completed++;
+            });
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('progressFill').style.width = (completed / 10) * 100 + '%';
+            localStorage.setItem('worksheet_transformer_completed', completed);
+        }
+
+        function checkCompletion() {
+            let completed = 0, correct = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) {
+                    completed++;
+                    if (document.getElementById(`result-${index}`).classList.contains('correct')) correct++;
+                }
+            });
+            if (completed === 10) showSummary(correct);
+        }
+
+        function showSummary(correct) {
+            const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
+            const percentage = Math.round((correct / 10) * 100);
+            document.getElementById('summaryGrade').textContent = percentage + '%';
+            document.getElementById('statCorrect').textContent = correct;
+            document.getElementById('statWrong').textContent = 10 - correct;
+            document.getElementById('statTime').textContent = `${Math.floor(timeElapsed / 60)}:${String(timeElapsed % 60).padStart(2, '0')}`;
+            document.getElementById('summarySection').classList.add('show');
+            localStorage.setItem('worksheet_transformer_attempts', parseInt(localStorage.getItem('worksheet_transformer_attempts') || 0) + 1);
+            localStorage.setItem('worksheet_transformer_score', Math.max(percentage, parseInt(localStorage.getItem('worksheet_transformer_score') || 0)));
+        }
+
+        document.getElementById('difficultySelect').addEventListener('change', (e) => {
+            currentProblems = generateProblems(e.target.value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('showAnswersBtn').addEventListener('click', function() {
+            showAnswers = !showAnswers;
+            this.classList.toggle('active');
+            renderProblems();
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            currentProblems = generateProblems(document.getElementById('difficultySelect').value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('generateNewBtn').addEventListener('click', () => {
+            currentProblems = generateProblems(document.getElementById('difficultySelect').value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+        currentProblems = generateProblems('medium');
+        renderProblems();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

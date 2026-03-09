@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wire Ampacity Calculator - SparkStudy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #f59e0b;
+      --accent2: #58a6ff;
+      --green: #10b981;
+      --red: #ef4444;
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .navbar {
+      background-color: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo span {
+      font-size: 2rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 0.3s;
+    }
+
+    .nav-link.active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.25rem;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .toggle-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      background-color: var(--bg);
+      color: var(--muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+
+    .toggle-btn.active {
+      background-color: var(--accent2);
+      color: var(--bg);
+      border-color: var(--accent2);
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .result-item {
+      background-color: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent2);
+    }
+
+    .result-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent2);
+    }
+
+    .result-unit {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-left: 0.25rem;
+    }
+
+    .wire-gauge-display {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .wire-circle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background-color: var(--bg);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .wire-circle:hover {
+      border-color: var(--accent2);
+      box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
+    }
+
+    .wire-circle.active {
+      background-color: rgba(88, 166, 255, 0.2);
+      border-color: var(--accent2);
+    }
+
+    .wire-size {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+
+    .wire-diameter {
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .section {
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin-top: 1.5rem;
+    }
+
+    .table-container table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .table-container th {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+      font-weight: 600;
+    }
+
+    .table-container td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .table-container tr:hover {
+      background-color: var(--bg);
+    }
+
+    .scenario {
+      background-color: var(--bg);
+      padding: 1.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .scenario h4 {
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .scenario p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .scenarios {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background-color: var(--accent2);
+      color: var(--bg);
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background-color: #4da3f7;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background-color: var(--accent);
+      color: var(--bg);
+      padding: 1rem;
+      width: 100%;
+    }
+
+    .btn-secondary:hover {
+      background-color: #f09e0a;
+      transform: translateY(-2px);
+    }
+
+    .correction-box {
+      background-color: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent);
+      margin-top: 1rem;
+    }
+
+    .correction-box h4 {
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .correction-factor {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .correction-item {
+      color: var(--muted);
+    }
+
+    .solution {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--green);
+      border-radius: 6px;
+      color: var(--green);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      .nav-links {
+        gap: 1rem;
+        font-size: 0.9rem;
+      }
+
+      .results {
+        grid-template-columns: 1fr;
+      }
+
+      .table-container {
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+  <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+  <div class="container">
+    <h1>Wire Ampacity Calculator</h1>
+    <p class="subtitle">CEC Table 2 Interactive Lookup with Temperature & Bundling Corrections</p>
+
+    <div class="main-content">
+      <div class="card">
+        <h2 style="margin-bottom: 1.5rem; color: var(--accent2);">Wire Selection</h2>
+
+        <div class="toggle-buttons">
+          <button class="toggle-btn active" data-material="copper">Copper</button>
+          <button class="toggle-btn" data-material="aluminum">Aluminum</button>
+        </div>
+
+        <div class="input-group">
+          <label>Wire Size (AWG / kcmil)</label>
+          <select id="wireSize">
+            <option value="14">14 AWG</option>
+            <option value="12">12 AWG</option>
+            <option value="10">10 AWG</option>
+            <option value="8">8 AWG</option>
+            <option value="6">6 AWG</option>
+            <option value="4">4 AWG</option>
+            <option value="3">3 AWG</option>
+            <option value="2">2 AWG</option>
+            <option value="1">1 AWG</option>
+            <option value="0">1/0 AWG</option>
+            <option value="00">2/0 AWG</option>
+            <option value="000">3/0 AWG</option>
+            <option value="0000">4/0 AWG</option>
+            <option value="250">250 kcmil</option>
+            <option value="350">350 kcmil</option>
+            <option value="500">500 kcmil</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>Insulation Type</label>
+          <select id="insulationType">
+            <option value="60C_TW">60°C (TW)</option>
+            <option value="75C_RW90">75°C (RW90)</option>
+            <option value="90C_RW90">90°C (RW90)</option>
+          </select>
+        </div>
+
+        <div class="results">
+          <div class="result-item">
+            <div class="result-label">Base Ampacity</div>
+            <div class="result-value" id="baseAmpacity">20<span class="result-unit">A</span></div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Final Ampacity</div>
+            <div class="result-value" id="finalAmpacity">20<span class="result-unit">A</span></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--accent);">Wire Gauge Comparison</h3>
+        <div class="wire-gauge-display">
+          <div class="wire-circle active" onclick="selectWire('14')">
+            <div class="wire-size">14</div>
+            <div class="wire-diameter">2.08mm</div>
+          </div>
+          <div class="wire-circle" onclick="selectWire('12')">
+            <div class="wire-size">12</div>
+            <div class="wire-diameter">2.05mm</div>
+          </div>
+          <div class="wire-circle" onclick="selectWire('10')">
+            <div class="wire-size">10</div>
+            <div class="wire-diameter">2.59mm</div>
+          </div>
+          <div class="wire-circle" onclick="selectWire('8')">
+            <div class="wire-size">8</div>
+            <div class="wire-diameter">3.26mm</div>
+          </div>
+          <div class="wire-circle" onclick="selectWire('6')">
+            <div class="wire-size">6</div>
+            <div class="wire-diameter">4.11mm</div>
+          </div>
+          <div class="wire-circle" onclick="selectWire('4')">
+            <div class="wire-size">4</div>
+            <div class="wire-diameter">5.19mm</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-bottom: 1.5rem; color: var(--accent);">Correction Factors</h2>
+
+        <div class="input-group">
+          <label>Ambient Temperature (°C)</label>
+          <input type="number" id="ambientTemp" value="30" step="1" min="0" max="50">
+        </div>
+
+        <div class="correction-box">
+          <h4>Temperature Correction Factor</h4>
+          <div class="correction-factor">
+            <div class="correction-item">Ref Temp: 30°C</div>
+            <div class="correction-item">Factor: <span id="tempFactor">1.00</span></div>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-top: 1.5rem;">
+          <label>Number of Bundled Conductors</label>
+          <input type="number" id="bundledCount" value="3" step="1" min="1" max="50">
+        </div>
+
+        <div class="correction-box">
+          <h4>Bundling Correction Factor</h4>
+          <div class="correction-factor">
+            <div class="correction-item">Conductors: <span id="bundleDisplay">3</span></div>
+            <div class="correction-item">Factor: <span id="bundleFactor">0.85</span></div>
+          </div>
+        </div>
+
+        <div style="background-color: rgba(88, 166, 255, 0.1); padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+          <p style="color: var(--accent2); font-size: 0.9rem;">
+            <strong>Final Ampacity = Base × Temp Factor × Bundle Factor</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>CEC Table 2: Wire Ampacity Reference</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Size (AWG/kcmil)</th>
+              <th>60°C TW Cu</th>
+              <th>75°C RW90 Cu</th>
+              <th>90°C RW90 Cu</th>
+              <th>60°C TW Al</th>
+              <th>75°C RW90 Al</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>14</td>
+              <td>15</td>
+              <td>15</td>
+              <td>20</td>
+              <td>15</td>
+              <td>15</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>20</td>
+              <td>20</td>
+              <td>25</td>
+              <td>15</td>
+              <td>20</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>30</td>
+              <td>30</td>
+              <td>40</td>
+              <td>25</td>
+              <td>30</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>40</td>
+              <td>50</td>
+              <td>55</td>
+              <td>30</td>
+              <td>40</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>55</td>
+              <td>65</td>
+              <td>75</td>
+              <td>40</td>
+              <td>50</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>70</td>
+              <td>85</td>
+              <td>95</td>
+              <td>55</td>
+              <td>65</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>95</td>
+              <td>115</td>
+              <td>130</td>
+              <td>75</td>
+              <td>90</td>
+            </tr>
+            <tr>
+              <td>1/0</td>
+              <td>125</td>
+              <td>150</td>
+              <td>170</td>
+              <td>100</td>
+              <td>120</td>
+            </tr>
+            <tr>
+              <td>2/0</td>
+              <td>145</td>
+              <td>175</td>
+              <td>195</td>
+              <td>115</td>
+              <td>135</td>
+            </tr>
+            <tr>
+              <td>3/0</td>
+              <td>165</td>
+              <td>200</td>
+              <td>225</td>
+              <td>130</td>
+              <td>155</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="printTable()">Print Table</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Common Sizing Scenarios</h2>
+      <div class="scenarios">
+        <div class="scenario">
+          <h4>Scenario 1: 40A Circuit at 75°C</h4>
+          <p>Size wire for a 40A load with 75°C insulation. Ambient temp is 30°C, single conductor.</p>
+          <button class="btn btn-primary" onclick="loadScenario(1)">Solve</button>
+          <div id="scenario1Result"></div>
+        </div>
+        <div class="scenario">
+          <h4>Scenario 2: Hot Environment Bundle</h4>
+          <p>5 conductors bundled in 40°C ambient. Wire size 6 AWG, 75°C insulation. Find derated ampacity.</p>
+          <button class="btn btn-primary" onclick="loadScenario(2)">Solve</button>
+          <div id="scenario2Result"></div>
+        </div>
+        <div class="scenario">
+          <h4>Scenario 3: Cold Weather Advantage</h4>
+          <p>10 AWG wire at 10°C ambient temp, 3 bundled conductors, 90°C insulation. What's the derated ampacity?</p>
+          <button class="btn btn-primary" onclick="loadScenario(3)">Solve</button>
+          <div id="scenario3Result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // CEC Table 2 data (copper wires)
+    const cecTable = {
+      copper: {
+        '60C_TW': { 14: 15, 12: 20, 10: 30, 8: 40, 6: 55, 4: 70, 3: 85, 2: 95, 1: 110, 0: 125, 00: 145, 000: 165, '0000': 195, 250: 215, 350: 260, 500: 320 },
+        '75C_RW90': { 14: 15, 12: 20, 10: 30, 8: 50, 6: 65, 4: 85, 3: 100, 2: 115, 1: 130, 0: 150, 00: 175, 000: 200, '0000': 230, 250: 255, 350: 310, 500: 380 },
+        '90C_RW90': { 14: 20, 12: 25, 10: 40, 8: 55, 6: 75, 4: 95, 3: 110, 2: 130, 1: 150, 0: 170, 00: 195, 000: 225, '0000': 260, 250: 290, 350: 350, 500: 430 }
+      },
+      aluminum: {
+        '60C_TW': { 14: 15, 12: 15, 10: 25, 8: 30, 6: 40, 4: 55, 3: 65, 2: 75, 1: 85, 0: 100, 00: 115, 000: 130, '0000': 150, 250: 170, 350: 210, 500: 260 },
+        '75C_RW90': { 14: 15, 12: 20, 10: 30, 8: 40, 6: 50, 4: 65, 3: 75, 2: 90, 1: 100, 0: 120, 00: 135, 000: 155, '0000': 180, 250: 205, 350: 250, 500: 305 },
+        '90C_RW90': { 14: 20, 12: 25, 10: 35, 8: 50, 6: 60, 4: 75, 3: 85, 2: 105, 1: 120, 0: 140, 00: 160, 000: 180, '0000': 210, 250: 235, 350: 290, 500: 350 }
+      }
+    };
+
+    // Temperature correction factors (relative to 30°C reference)
+    const tempFactors = {
+      '60C_TW': { 10: 1.10, 20: 1.05, 30: 1.00, 40: 0.95, 50: 0.90 },
+      '75C_RW90': { 10: 1.08, 20: 1.04, 30: 1.00, 40: 0.96, 50: 0.91 },
+      '90C_RW90': { 10: 1.06, 20: 1.03, 30: 1.00, 40: 0.97, 50: 0.93 }
+    };
+
+    // Bundling correction factors
+    const bundleFactors = {
+      1: 1.00,
+      2: 1.00,
+      3: 0.85,
+      4: 0.80,
+      5: 0.80,
+      6: 0.75,
+      7: 0.75,
+      8: 0.70,
+      9: 0.70,
+      10: 0.70
+    };
+
+    let selectedMaterial = 'copper';
+
+    const wireSizeSelect = document.getElementById('wireSize');
+    const insulationSelect = document.getElementById('insulationType');
+    const ambientTempInput = document.getElementById('ambientTemp');
+    const bundledCountInput = document.getElementById('bundledCount');
+    const materialToggleButtons = document.querySelectorAll('.toggle-btn');
+
+    materialToggleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        materialToggleButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedMaterial = btn.dataset.material;
+        update();
+      });
+    });
+
+    wireSizeSelect.addEventListener('change', update);
+    insulationSelect.addEventListener('change', update);
+    ambientTempInput.addEventListener('input', update);
+    bundledCountInput.addEventListener('input', update);
+
+    function getTemperatureFactor(insulation, temp) {
+      const factors = tempFactors[insulation];
+      if (factors[temp] !== undefined) return factors[temp];
+
+      const temps = Object.keys(factors).map(Number).sort((a, b) => a - b);
+      if (temp < temps[0]) return factors[temps[0]];
+      if (temp > temps[temps.length - 1]) return factors[temps[temps.length - 1]];
+
+      for (let i = 0; i < temps.length - 1; i++) {
+        if (temp >= temps[i] && temp <= temps[i + 1]) {
+          const t1 = temps[i], t2 = temps[i + 1];
+          const f1 = factors[t1], f2 = factors[t2];
+          return f1 + (f2 - f1) * ((temp - t1) / (t2 - t1));
+        }
+      }
+    }
+
+    function getBundleFactor(count) {
+      if (count <= 10) return bundleFactors[count] || 0.70;
+      return 0.70;
+    }
+
+    function update() {
+      const wireSize = document.getElementById('wireSize').value;
+      const insulation = document.getElementById('insulationType').value;
+      const ambientTemp = parseFloat(ambientTempInput.value) || 30;
+      const bundledCount = parseInt(bundledCountInput.value) || 1;
+
+      // Get base ampacity
+      const baseAmpacity = cecTable[selectedMaterial][insulation][wireSize] || 0;
+
+      // Get correction factors
+      const tempFactor = getTemperatureFactor(insulation, ambientTemp);
+      const bundleFactor = getBundleFactor(bundledCount);
+
+      // Calculate final ampacity
+      const finalAmpacity = Math.floor(baseAmpacity * tempFactor * bundleFactor * 10) / 10;
+
+      // Update displays
+      document.getElementById('baseAmpacity').innerHTML = baseAmpacity + '<span class="result-unit">A</span>';
+      document.getElementById('finalAmpacity').innerHTML = finalAmpacity.toFixed(1) + '<span class="result-unit">A</span>';
+      document.getElementById('tempFactor').textContent = tempFactor.toFixed(3);
+      document.getElementById('bundleDisplay').textContent = bundledCount;
+      document.getElementById('bundleFactor').textContent = bundleFactor.toFixed(2);
+    }
+
+    function selectWire(size) {
+      wireSizeSelect.value = size;
+      document.querySelectorAll('.wire-circle').forEach(c => c.classList.remove('active'));
+      event.target.closest('.wire-circle').classList.add('active');
+      update();
+    }
+
+    function loadScenario(num) {
+      if (num === 1) {
+        // 40A circuit at 75°C
+        wireSizeSelect.value = '8';
+        insulationSelect.value = '75C_RW90';
+        ambientTempInput.value = '30';
+        bundledCountInput.value = '1';
+        selectedMaterial = 'copper';
+        update();
+
+        const baseAmp = cecTable.copper['75C_RW90']['8'];
+        const resultDiv = document.getElementById('scenario1Result');
+        resultDiv.innerHTML = `
+          <div class="solution">
+            ✓ Wire 8 AWG (75°C) has base 50A ampacity.
+            Single conductor at 30°C = 50A ✓ Suitable for 40A load.
+          </div>
+        `;
+      } else if (num === 2) {
+        // Hot environment bundle
+        wireSizeSelect.value = '6';
+        insulationSelect.value = '75C_RW90';
+        ambientTempInput.value = '40';
+        bundledCountInput.value = '5';
+        update();
+
+        const baseAmp = cecTable.copper['75C_RW90']['6'];
+        const tempFactor = getTemperatureFactor('75C_RW90', 40);
+        const bundleFactor = getBundleFactor(5);
+        const derated = baseAmp * tempFactor * bundleFactor;
+
+        const resultDiv = document.getElementById('scenario2Result');
+        resultDiv.innerHTML = `
+          <div class="solution">
+            ✓ Base: ${baseAmp}A × Temp (${tempFactor.toFixed(2)}) × Bundle (${bundleFactor.toFixed(2)}) = ${derated.toFixed(1)}A
+          </div>
+        `;
+      } else if (num === 3) {
+        // Cold weather advantage
+        wireSizeSelect.value = '10';
+        insulationSelect.value = '90C_RW90';
+        ambientTempInput.value = '10';
+        bundledCountInput.value = '3';
+        update();
+
+        const baseAmp = cecTable.copper['90C_RW90']['10'];
+        const tempFactor = getTemperatureFactor('90C_RW90', 10);
+        const bundleFactor = getBundleFactor(3);
+        const derated = baseAmp * tempFactor * bundleFactor;
+
+        const resultDiv = document.getElementById('scenario3Result');
+        resultDiv.innerHTML = `
+          <div class="solution">
+            ✓ Base: ${baseAmp}A × Temp (${tempFactor.toFixed(2)}) × Bundle (${bundleFactor.toFixed(2)}) = ${derated.toFixed(1)}A
+          </div>
+        `;
+      }
+
+      document.querySelector('.section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function printTable() {
+      const printWindow = window.open('', '', 'width=800,height=600');
+      printWindow.document.write('<html><head><title>CEC Table 2</title>');
+      printWindow.document.write('<style>body { font-family: Arial; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }</style>');
+      printWindow.document.write('<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head><body>');
+      printWindow.document.write(document.querySelector('.table-container').innerHTML);
+      printWindow.document.write('<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body></html>');
+      printWindow.document.close();
+      printWindow.print();
+    }
+
+    // Initial update
+    update();
+  </script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

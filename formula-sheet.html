@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkStudy - Electrical Formula Reference Sheet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            background-color: var(--accent2);
+            color: #000;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: opacity 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button.secondary {
+            background-color: var(--accent);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .sheet-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .sheet-title h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sheet-title p {
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .formulas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .section-panel {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(88, 166, 255, 0.2));
+            border-bottom: 2px solid var(--accent);
+            padding: 1rem 1.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: var(--accent2);
+            margin: 0;
+        }
+
+        .formulas-list {
+            padding: 1.5rem;
+        }
+
+        .formula-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .formula-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .formula-name {
+            font-weight: 600;
+            color: var(--accent2);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .formula-code {
+            font-family: 'Courier New', monospace;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            color: var(--green);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .formula-description {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .cec-special {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--red);
+        }
+
+        .cec-special .formula-name {
+            color: var(--red);
+        }
+
+        .motor-control-note {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--green);
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+            color: var(--green);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        @media print {
+            header {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+                background-color: white;
+                color: black;
+            }
+
+            .controls {
+                display: none;
+            }
+
+            .section-panel {
+                background-color: white;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+
+            .section-header {
+                background-color: #f0f0f0;
+                border-bottom: 2px solid #333;
+            }
+
+            .section-header h2 {
+                color: #333;
+            }
+
+            .formula-name {
+                color: #333;
+            }
+
+            .formula-code {
+                background-color: #f9f9f9;
+                color: #000;
+                border: 1px solid #ddd;
+            }
+
+            .formula-description {
+                color: #666;
+            }
+
+            .formula-item {
+                border-bottom-color: #ddd;
+            }
+
+            .cec-special {
+                background-color: #fff3f3;
+                border-left: 3px solid #d32f2f;
+            }
+
+            .cec-special .formula-name {
+                color: #d32f2f;
+            }
+
+            .motor-control-note {
+                background-color: #f1f5f4;
+                border-left: 3px solid #1b5e20;
+                color: #1b5e20;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sheet-title h1 {
+                font-size: 1.75rem;
+            }
+
+            .formulas-grid {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 1rem;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .controls {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            button {
+                flex: 1;
+                min-width: 150px;
+            }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = 'login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = 'login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link">Worksheets</a>
+        <a href="achievements.html" class="nav-link">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link" style="color:#f59e0b;font-weight:600;">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="sheet-title">
+            <h1>Electrical Formula Reference</h1>
+            <p>Complete guide for Period 1 & 2 Apprenticeship Studies</p>
+        </div>
+
+        <div class="formulas-grid">
+            <!-- AC Fundamentals -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>AC Fundamentals</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Frequency from Speed</div>
+                        <div class="formula-code">f = p × n / 120</div>
+                        <div class="formula-description">f: frequency (Hz), p: poles, n: RPM</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Period</div>
+                        <div class="formula-code">T = 1 / f</div>
+                        <div class="formula-description">Period in seconds</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Angular Velocity</div>
+                        <div class="formula-code">ω = 2πf</div>
+                        <div class="formula-description">Radians per second</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Instantaneous Voltage</div>
+                        <div class="formula-code">v = Vp × sin(ωt)</div>
+                        <div class="formula-description">Vp: peak voltage</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">RMS Voltage</div>
+                        <div class="formula-code">Vrms = 0.707 × Vp</div>
+                        <div class="formula-description">Also: Vrms = Vp / √2</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Peak from RMS</div>
+                        <div class="formula-code">Vp = 1.414 × Vrms</div>
+                        <div class="formula-description">Also: Vp = Vrms × √2</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Average Voltage</div>
+                        <div class="formula-code">Vavg = 0.637 × Vp</div>
+                        <div class="formula-description">Over half-cycle</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Peak-to-Peak</div>
+                        <div class="formula-code">Vpp = 2 × Vp</div>
+                        <div class="formula-description">Peak to peak voltage</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ohm's Law & Power -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Ohm's Law & Power</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Voltage</div>
+                        <div class="formula-code">V = IR</div>
+                        <div class="formula-description">Volts, Amps, Ohms</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Current</div>
+                        <div class="formula-code">I = V / R</div>
+                        <div class="formula-description">Current in amperes</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Resistance</div>
+                        <div class="formula-code">R = V / I</div>
+                        <div class="formula-description">Resistance in ohms</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Power (VI)</div>
+                        <div class="formula-code">P = VI</div>
+                        <div class="formula-description">Watts</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Power (I²R)</div>
+                        <div class="formula-code">P = I²R</div>
+                        <div class="formula-description">Power dissipated in resistor</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Power (V²/R)</div>
+                        <div class="formula-code">P = V² / R</div>
+                        <div class="formula-description">Alternative power formula</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inductors -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Inductors</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Inductive Reactance</div>
+                        <div class="formula-code">XL = 2πfL</div>
+                        <div class="formula-description">L: inductance (H), f: frequency (Hz)</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Time Constant</div>
+                        <div class="formula-code">τ = L / R</div>
+                        <div class="formula-description">Tau in seconds</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Stored Energy</div>
+                        <div class="formula-code">E = ½LI²</div>
+                        <div class="formula-description">Joules</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Induced Voltage</div>
+                        <div class="formula-code">VL = L × (di/dt)</div>
+                        <div class="formula-description">Rate of current change</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capacitors -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Capacitors</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Capacitive Reactance</div>
+                        <div class="formula-code">XC = 1 / (2πfC)</div>
+                        <div class="formula-description">C: capacitance (F), f: frequency (Hz)</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Time Constant</div>
+                        <div class="formula-code">τ = RC</div>
+                        <div class="formula-description">Tau in seconds</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Stored Energy</div>
+                        <div class="formula-code">E = ½CV²</div>
+                        <div class="formula-description">Joules</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Displacement Current</div>
+                        <div class="formula-code">IC = C × (dv/dt)</div>
+                        <div class="formula-description">Rate of voltage change</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impedance -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Impedance</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Impedance Magnitude</div>
+                        <div class="formula-code">Z = √(R² + X²)</div>
+                        <div class="formula-description">X = XL - XC (net reactance)</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Phase Angle</div>
+                        <div class="formula-code">θ = arctan(X / R)</div>
+                        <div class="formula-description">Degrees or radians</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Power Factor</div>
+                        <div class="formula-code">PF = cos(θ) = R / Z</div>
+                        <div class="formula-description">0 to 1 (ideal = 1.0)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Power Triangle -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Power Triangle</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Apparent Power</div>
+                        <div class="formula-code">S = VI (VA)</div>
+                        <div class="formula-description">Volt-Amperes</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Real Power</div>
+                        <div class="formula-code">P = VI × cos(θ) (W)</div>
+                        <div class="formula-description">Watts, actual work done</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Reactive Power</div>
+                        <div class="formula-code">Q = VI × sin(θ) (VAR)</div>
+                        <div class="formula-description">Volt-Amperes Reactive</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Pythagorean Relationship</div>
+                        <div class="formula-code">S = √(P² + Q²)</div>
+                        <div class="formula-description">Apparent power formula</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transformers -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Transformers</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Voltage Ratio</div>
+                        <div class="formula-code">V1 / V2 = N1 / N2</div>
+                        <div class="formula-description">Primary to secondary turns</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Current Ratio</div>
+                        <div class="formula-code">I1 / I2 = N2 / N1</div>
+                        <div class="formula-description">Inverse of turns ratio</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Power Rating</div>
+                        <div class="formula-code">kVA = V × I / 1000</div>
+                        <div class="formula-description">Kilovolt-Amperes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CEC (Electrical Code) -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>CEC Calculations</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item cec-special">
+                        <div class="formula-name">Voltage Drop</div>
+                        <div class="formula-code">VD = 2 × I × R × L / 1000</div>
+                        <div class="formula-description">Max 3% branch, 5% total (CEC)</div>
+                    </div>
+                    <div class="formula-item cec-special">
+                        <div class="formula-name">Fault Current</div>
+                        <div class="formula-code">I_fault = (kVA × 1000) / (V × %Z)</div>
+                        <div class="formula-description">Short circuit current calculation</div>
+                    </div>
+                    <div class="formula-item cec-special">
+                        <div class="formula-name">Conduit Fill</div>
+                        <div class="formula-code">Fill % ≤ 40%</div>
+                        <div class="formula-description">3+ conductors or cables per CEC Rule 12-614</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Constants -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Time Constants (RC/RL)</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Full Charge/Discharge</div>
+                        <div class="formula-code">t = 5τ (99.3%)</div>
+                        <div class="formula-description">Practical fully charged/discharged</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">At 1 Time Constant</div>
+                        <div class="formula-code">t = 1τ (63.2%)</div>
+                        <div class="formula-description">One tau</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">At 2 Time Constants</div>
+                        <div class="formula-code">t = 2τ (86.5%)</div>
+                        <div class="formula-description">Two tau</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">At 3 Time Constants</div>
+                        <div class="formula-code">t = 3τ (95%)</div>
+                        <div class="formula-description">Three tau</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motor Control -->
+            <div class="section-panel">
+                <div class="section-header">
+                    <h2>Motor Control</h2>
+                </div>
+                <div class="formulas-list">
+                    <div class="formula-item">
+                        <div class="formula-name">Stop Circuits</div>
+                        <div class="formula-code">Connected in SERIES</div>
+                        <div class="motor-control-note">Safety critical: Any stop must break circuit</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Start Circuits</div>
+                        <div class="formula-code">Connected in PARALLEL</div>
+                        <div class="motor-control-note">Any start pushes can activate contactor</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Seal-in Voltage</div>
+                        <div class="formula-code">≈ 85% of rated voltage</div>
+                        <div class="formula-description">Holds contactor after start button release</div>
+                    </div>
+                    <div class="formula-item">
+                        <div class="formula-name">Drop-out Voltage</div>
+                        <div class="formula-code">≈ 50% of rated voltage</div>
+                        <div class="formula-description">Contactor releases below this voltage</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function downloadAsImage() {
+            alert('To download as image, use Print function to save as PDF, or take a screenshot of the page.');
+        }
+    </script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = 'login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

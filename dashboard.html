@@ -3,776 +3,927 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — SpartyStudy</title>
+    <title>SparkStudy - Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-:root {
-    --bg: #0d1117;
-    --panel: #161b22;
-    --border: #30363d;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --accent: #f59e0b;
-    --accent2: #58a6ff;
-    --green: #10b981;
-    --red: #ef4444;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
-    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
-}
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: var(--text);
-    background: var(--bg);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-}
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+        }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #484f58; }
+        header {
+            background-color: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-a { color: inherit; text-decoration: none; }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
 
-/* ---- NAV ---- */
-.nav {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(13,17,23,0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 2rem;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+        .welcome-section {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
 
-.nav-left { display: flex; align-items: center; gap: 2rem; }
+        .welcome-text h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
 
-.nav-logo {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-}
+        .streak-badge {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
 
-.nav-links { display: flex; gap: 0.25rem; }
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
 
-.nav-links a {
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--muted);
-    transition: all 0.2s;
-}
-.nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-.nav-links a.active { color: var(--text); background: rgba(255,255,255,0.08); }
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 0.25rem;
+            transition: all 0.3s;
+        }
 
-.nav-right { display: flex; align-items: center; gap: 1rem; }
+        nav a:hover {
+            color: var(--accent);
+        }
 
-.owner-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--accent);
-    border: 1.5px solid var(--accent);
-    padding: 0.2rem 0.75rem;
-    border-radius: 999px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
+        nav a.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
 
-.logout-btn {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--muted);
-    background: none;
-    border: 1px solid var(--border);
-    padding: 0.4rem 1rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s;
-}
-.logout-btn:hover { color: var(--red); border-color: var(--red); }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
 
-/* ---- MAIN LAYOUT ---- */
-.main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2.5rem 2rem 4rem;
-}
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
 
-/* ---- WELCOME HEADER ---- */
-.welcome { margin-bottom: 2.5rem; }
-.welcome h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    margin-bottom: 0.25rem;
-}
-.welcome h1 span { color: var(--accent); }
-.welcome-date {
-    font-size: 0.875rem;
-    color: var(--muted);
-    margin-bottom: 0.5rem;
-}
-.welcome-motive {
-    font-size: 1rem;
-    color: var(--accent2);
-    font-weight: 500;
-}
+        .stat-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
 
-/* ---- QUICK ACTIONS ---- */
-.quick-actions {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 3rem;
-}
+        .stat-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+        }
 
-.qa-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    padding: 1.75rem 1rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--panel);
-    cursor: pointer;
-    transition: all 0.25s;
-    text-align: center;
-}
-.qa-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
 
-.qa-card .qa-icon { font-size: 2rem; }
-.qa-card .qa-label { font-size: 0.9375rem; font-weight: 600; }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
 
-.qa-card.amber  { border-color: rgba(245,158,11,0.3); }
-.qa-card.amber:hover  { border-color: var(--accent); background: rgba(245,158,11,0.06); }
-.qa-card.blue   { border-color: rgba(88,166,255,0.3); }
-.qa-card.blue:hover   { border-color: var(--accent2); background: rgba(88,166,255,0.06); }
-.qa-card.green  { border-color: rgba(16,185,129,0.3); }
-.qa-card.green:hover  { border-color: var(--green); background: rgba(16,185,129,0.06); }
-.qa-card.gray   { border-color: var(--border); }
-.qa-card.gray:hover   { border-color: var(--muted); background: rgba(255,255,255,0.03); }
+        .stat-detail {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
 
-/* ---- SECTIONS ---- */
-.section { margin-bottom: 3rem; }
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-    letter-spacing: -0.3px;
-}
-.section-desc {
-    font-size: 0.875rem;
-    color: var(--muted);
-    margin-bottom: 1.25rem;
-}
+        .section {
+            margin-bottom: 3rem;
+        }
 
-/* ---- KNOWLEDGE MAP ---- */
-.km-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 1rem;
-}
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
 
-.km-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    transition: all 0.2s;
-}
-.km-card:hover { border-color: #484f58; }
-.km-card.untested { border-style: dashed; }
+        .section-icon {
+            font-size: 1.5rem;
+        }
 
-.km-card-name {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-}
+        .knowledge-map {
+            display: grid;
+            gap: 1.5rem;
+        }
 
-.km-bar-track {
-    width: 100%;
-    height: 8px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 999px;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
-}
+        .category-bar {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
 
-.km-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    width: 0;
-    transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
-}
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
 
-.km-bar-fill.green  { background: var(--green); }
-.km-bar-fill.amber  { background: var(--accent); }
-.km-bar-fill.red    { background: var(--red); }
+        .category-name {
+            font-weight: 600;
+            color: var(--accent2);
+        }
 
-.km-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8125rem;
-}
+        .category-score {
+            color: var(--green);
+            font-weight: 700;
+        }
 
-.km-score { font-weight: 600; }
-.km-score.green { color: var(--green); }
-.km-score.amber { color: var(--accent); }
-.km-score.red   { color: var(--red); }
-.km-score.muted { color: var(--muted); font-weight: 400; }
+        .category-progress {
+            width: 100%;
+            height: 12px;
+            background-color: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
 
-.km-link {
-    color: var(--accent2);
-    font-weight: 500;
-    font-size: 0.8125rem;
-    transition: color 0.2s;
-}
-.km-link:hover { color: #79b8ff; text-decoration: underline; }
+        .category-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--accent2));
+            border-radius: 6px;
+            transition: width 0.3s;
+        }
 
-/* ---- STUDY PLAN ---- */
-.sp-empty {
-    background: var(--panel);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 2rem;
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.9375rem;
-}
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
 
-.sp-list { display: flex; flex-direction: column; gap: 1rem; }
+        .recommendation-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
 
-.sp-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem 1.5rem;
-    border-left: 3px solid var(--red);
-}
+        .recommendation-card:hover {
+            border-left-color: var(--accent2);
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.1);
+        }
 
-.sp-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
+        .recommendation-title {
+            color: var(--accent2);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
 
-.sp-card-name { font-weight: 600; font-size: 0.9375rem; }
+        .recommendation-text {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
 
-.sp-card-score {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
-}
-.sp-card-score.amber { color: var(--accent); background: rgba(245,158,11,0.12); }
-.sp-card-score.red   { color: var(--red); background: rgba(239,68,68,0.12); }
+        .recommendation-link {
+            display: inline-block;
+            background-color: var(--accent);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: opacity 0.3s;
+        }
 
-.sp-card-tips {
-    font-size: 0.8125rem;
-    color: var(--muted);
-    line-height: 1.7;
-    margin-bottom: 0.75rem;
-}
+        .recommendation-link:hover {
+            opacity: 0.9;
+        }
 
-.sp-practice-btn {
-    display: inline-block;
-    font-family: inherit;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--accent2);
-    background: rgba(88,166,255,0.08);
-    border: 1px solid rgba(88,166,255,0.25);
-    padding: 0.4rem 1rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.sp-practice-btn:hover { background: rgba(88,166,255,0.15); border-color: var(--accent2); }
+        .activity-feed {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 600px;
+        }
 
-/* ---- MODULES ---- */
-.mod-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1rem;
-}
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
 
-.mod-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    transition: all 0.2s;
-}
-.mod-card:hover { border-color: #484f58; }
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
 
-.mod-card.locked {
-    opacity: 0.45;
-    pointer-events: none;
-    position: relative;
-}
-.mod-card.locked::after {
-    content: "Coming Soon";
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    background: rgba(255,255,255,0.06);
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-}
+        .activity-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
 
-.mod-card-title {
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-}
+        .activity-content {
+            flex: 1;
+        }
 
-.mod-card-sub {
-    font-size: 0.8125rem;
-    color: var(--muted);
-    margin-bottom: 1rem;
-}
+        .activity-text {
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
 
-.mod-card-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .activity-time {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
 
-.mod-link {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    padding: 0.35rem 0.85rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    transition: all 0.2s;
-    color: var(--muted);
-}
-.mod-link:hover { color: var(--text); border-color: var(--muted); }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
 
-/* ---- STATS ---- */
-.stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-}
+        .action-button {
+            background-color: var(--panel);
+            border: 2px solid var(--border);
+            color: var(--text);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
 
-.stat-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    text-align: center;
-}
+        .action-button:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+        }
 
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: 0.15rem;
-}
+        .action-icon {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
 
-.stat-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
+        .action-text {
+            font-size: 0.9rem;
+        }
 
-/* ---- RESPONSIVE ---- */
-@media (max-width: 900px) {
-    .quick-actions { grid-template-columns: repeat(2, 1fr); }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .km-grid { grid-template-columns: 1fr; }
-}
+        .achievement-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
 
-@media (max-width: 640px) {
-    .nav { padding: 0 1rem; }
-    .nav-links { display: none; }
-    .main { padding: 1.5rem 1rem 3rem; }
-    .quick-actions { grid-template-columns: 1fr 1fr; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
-    .welcome h1 { font-size: 1.375rem; }
-}
-    </style>
+        .mini-badge {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .mini-badge.locked {
+            opacity: 0.5;
+        }
+
+        .mini-badge:hover:not(.locked) {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
+
+        .mini-badge-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .mini-badge-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent2);
+        }
+
+        .exam-countdown {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(88, 166, 255, 0.1));
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 400px;
+        }
+
+        .countdown-title {
+            color: var(--accent2);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .countdown-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .countdown-form input {
+            flex: 1;
+            padding: 0.5rem;
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .countdown-form button {
+            padding: 0.5rem 1rem;
+            background-color: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .countdown-form button:hover {
+            opacity: 0.9;
+        }
+
+        .countdown-display {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+
+        .countdown-days {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .countdown-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .stat-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 1.25rem;
+            }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = 'login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = 'login.html';
+    }
+})();
+</script>
 </head>
 <body>
-
-<!-- NAV -->
-<nav class="nav">
-    <div class="nav-left">
-        <a href="index.html" class="nav-logo">SpartyStudy</a>
-        <div class="nav-links">
-            <a href="dashboard.html" class="active">Dashboard</a>
-            <a href="period2.html">Period 2</a>
-            <a href="tools.html">Tools</a>
-            <a href="pricing.html">Pricing</a>
-        </div>
-    </div>
-    <div class="nav-right">
-        <span class="owner-badge">Owner</span>
-        <button class="logout-btn" id="logoutBtn">Logout</button>
-    </div>
-</nav>
-
-<!-- MAIN -->
-<div class="main">
-
-    <!-- WELCOME -->
-    <div class="welcome">
-        <h1>Welcome back, <span>Ethan</span></h1>
-        <div class="welcome-date" id="todayDate"></div>
-        <div class="welcome-motive">You have quizzes coming up &mdash; let's crush them.</div>
-    </div>
-
-    <!-- QUICK ACTIONS -->
-    <div class="quick-actions">
-        <a href="modules/diagnostic-assessment.html" class="qa-card amber">
-            <div class="qa-icon">&#127919;</div>
-            <div class="qa-label">Take Diagnostic</div>
-        </a>
-        <a href="modules/concepts.html" class="qa-card blue">
-            <div class="qa-icon">&#128214;</div>
-            <div class="qa-label">Study Concepts</div>
-        </a>
-        <a href="modules/flashcards.html" class="qa-card green">
-            <div class="qa-icon">&#127139;</div>
-            <div class="qa-label">Flashcards</div>
-        </a>
-        <a href="tools.html" class="qa-card gray">
-            <div class="qa-icon">&#128295;</div>
-            <div class="qa-label">Simulator Tools</div>
-        </a>
-    </div>
-
-    <!-- KNOWLEDGE MAP -->
-    <div class="section" id="knowledgeMap">
-        <div class="section-title">Your Knowledge Map</div>
-        <div class="section-desc">Take the diagnostic test to see your strengths and weaknesses.</div>
-        <div class="km-grid" id="kmGrid"></div>
-    </div>
-
-    <!-- STUDY PLAN -->
-    <div class="section" id="studyPlan">
-        <div class="section-title">Your Study Plan</div>
-        <div class="section-desc">Focused review on your weakest areas.</div>
-        <div id="spContent"></div>
-    </div>
-
-    <!-- MODULES -->
-    <div class="section">
-        <div class="section-title">Your Modules</div>
-        <div class="section-desc">Study materials organized by topic.</div>
-        <div class="mod-grid">
-            <div class="mod-card">
-                <div class="mod-card-title">Fundamentals of AC</div>
-                <div class="mod-card-sub">Sine waves, frequency, peak/RMS/average, instantaneous voltage</div>
-                <div class="mod-card-links">
-                    <a href="modules/diagnostic-assessment.html" class="mod-link">Assessment</a>
-                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
-                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
-                </div>
+    <header>
+        <div class="logo">⚡ SparkStudy</div>
+        <div class="welcome-section">
+            <div class="welcome-text">
+                <h1>Welcome back, <span id="userName">Student</span>! 🎓</h1>
             </div>
-            <div class="mod-card">
-                <div class="mod-card-title">Properties of Inductors &amp; Capacitors</div>
-                <div class="mod-card-sub">Faraday's law, Lenz's law, inductance &amp; capacitance factors</div>
-                <div class="mod-card-links">
-                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
-                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
-                </div>
-            </div>
-            <div class="mod-card">
-                <div class="mod-card-title">Inductors &amp; Capacitors in Circuits</div>
-                <div class="mod-card-sub">Time constants, ELI the ICE man, reactance, phasors</div>
-                <div class="mod-card-links">
-                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
-                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
-                </div>
-            </div>
-            <div class="mod-card">
-                <div class="mod-card-title">Relays &amp; Contactors</div>
-                <div class="mod-card-sub">Contact forms, seal-in/drop-out, shading coils, laminations</div>
-                <div class="mod-card-links">
-                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
-                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
-                </div>
-            </div>
-            <div class="mod-card">
-                <div class="mod-card-title">Timers &amp; Smart Relays</div>
-                <div class="mod-card-sub">TDOE, TDOD, timing functions, smart relay programming</div>
-                <div class="mod-card-links">
-                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
-                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
-                </div>
-            </div>
-            <div class="mod-card">
-                <div class="mod-card-title">Pilot &amp; Overcurrent Devices</div>
-                <div class="mod-card-sub">Stop/start circuits, fuses, breakers, fault currents</div>
-                <div class="mod-card-links">
-                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
-                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
-                </div>
+            <div class="streak-badge" id="streakBadge">
+                🔥 0-day streak
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- STATS -->
-    <div class="section">
-        <div class="section-title">Activity &amp; Stats</div>
-        <div class="section-desc">Your study progress at a glance.</div>
-        <div class="stats-row">
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link" style="color:#f59e0b;font-weight:600;">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link">Worksheets</a>
+        <a href="achievements.html" class="nav-link">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Stats Overview -->
+        <div class="stat-cards">
             <div class="stat-card">
-                <div class="stat-value" id="statTests">0</div>
-                <div class="stat-label">Diagnostics Taken</div>
+                <div class="stat-label">Tests Taken</div>
+                <div class="stat-value" id="testsTaken">0</div>
+                <div class="stat-detail">In this session</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="statFlash">0</div>
-                <div class="stat-label">Flashcards Reviewed</div>
+                <div class="stat-label">Average Score</div>
+                <div class="stat-value" id="avgScore">--</div>
+                <div class="stat-detail">All assessments</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="statLast">&mdash;</div>
-                <div class="stat-label">Last Session</div>
+                <div class="stat-label">Study Streak</div>
+                <div class="stat-value" id="studyStreak">0</div>
+                <div class="stat-detail">Consecutive days</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="statStreak">0</div>
-                <div class="stat-label">Day Streak</div>
+                <div class="stat-label">Tools Used</div>
+                <div class="stat-value" id="toolsUsed">0</div>
+                <div class="stat-detail">of 16 simulators</div>
+            </div>
+        </div>
+
+        <!-- Knowledge Map -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">📊</span>
+                Knowledge Map - Your Strengths & Weaknesses
+            </div>
+            <div class="knowledge-map">
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">AC Fundamentals</span>
+                        <span class="category-score" id="score-ac">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-ac" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Ohm's Law & Power</span>
+                        <span class="category-score" id="score-ohm">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-ohm" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Inductors & Capacitors</span>
+                        <span class="category-score" id="score-lc">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-lc" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Impedance & Phase</span>
+                        <span class="category-score" id="score-impedance">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-impedance" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Power Systems</span>
+                        <span class="category-score" id="score-power">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-power" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Motor Control & CEC</span>
+                        <span class="category-score" id="score-motor">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-motor" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Next Steps -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">🎯</span>
+                Recommended Next Steps
+            </div>
+            <div class="recommendations" id="recommendationsContainer">
+                <div class="recommendation-card">
+                    <div class="recommendation-title">Complete Your First Quiz</div>
+                    <div class="recommendation-text">Jump into a diagnostic assessment to gauge your current knowledge level.</div>
+                    <a href="#" class="recommendation-link">Take Diagnostic →</a>
+                </div>
+                <div class="recommendation-card">
+                    <div class="recommendation-title">Explore the AC Waveform Generator</div>
+                    <div class="recommendation-text">Visualize how AC sine waves work with our interactive simulator.</div>
+                    <a href="#" class="recommendation-link">Open Tool →</a>
+                </div>
+                <div class="recommendation-card">
+                    <div class="recommendation-title">Practice Ohm's Law</div>
+                    <div class="recommendation-text">Master the fundamentals with targeted practice worksheets.</div>
+                    <a href="#" class="recommendation-link">Start Worksheet →</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column">
+            <!-- Activity Feed -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-icon">📋</span>
+                    Recent Activity
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="activity-item">
+                        <div class="activity-icon">📚</div>
+                        <div class="activity-content">
+                            <div class="activity-text">No activity yet</div>
+                            <div class="activity-time">Start studying to see your progress here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Countdown -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-icon">📅</span>
+                    Exam Countdown
+                </div>
+                <div class="exam-countdown">
+                    <div class="countdown-title">Set Your Exam Date</div>
+                    <div class="countdown-form">
+                        <input type="date" id="examDate" placeholder="Select exam date">
+                        <button onclick="setExamDate()">Set</button>
+                    </div>
+                    <div class="countdown-display">
+                        <div class="countdown-days" id="daysRemaining">--</div>
+                        <div class="countdown-label">days until your exam</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">⚡</span>
+                Quick Actions
+            </div>
+            <div class="quick-actions">
+                <button class="action-button" onclick="takeTest()">
+                    <span class="action-icon">📝</span>
+                    <span class="action-text">Take a Quiz</span>
+                </button>
+                <button class="action-button" onclick="openTools()">
+                    <span class="action-icon">🔧</span>
+                    <span class="action-text">Open Tools</span>
+                </button>
+                <button class="action-button" onclick="practiceWorksheets()">
+                    <span class="action-icon">📋</span>
+                    <span class="action-text">Practice Worksheets</span>
+                </button>
+                <button class="action-button" onclick="playGames()">
+                    <span class="action-icon">🎮</span>
+                    <span class="action-text">Play Games</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Achievement Preview -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">🏆</span>
+                Achievement Preview - Next Badges to Unlock
+            </div>
+            <div class="achievement-preview" id="achievementPreview">
+                <div class="mini-badge">
+                    <div class="mini-badge-icon">⚡</div>
+                    <div class="mini-badge-name">First Spark</div>
+                </div>
+                <div class="mini-badge">
+                    <div class="mini-badge-icon">📚</div>
+                    <div class="mini-badge-name">Study Starter</div>
+                </div>
+                <div class="mini-badge">
+                    <div class="mini-badge-icon">🔥</div>
+                    <div class="mini-badge-name">On Fire</div>
+                </div>
             </div>
         </div>
     </div>
 
-</div>
+    <script>
+        // Initialize with sample data
+        function initDashboard() {
+            // Set user name
+            const userName = localStorage.getItem('sparty_user_name') || 'Apprentice';
+            document.getElementById('userName').textContent = userName;
 
+            // Load scores from localStorage or generate sample data
+            const diagnostic = JSON.parse(localStorage.getItem('sparty_diagnostic_results')) || {
+                ac: 65,
+                ohm: 72,
+                lc: 55,
+                impedance: 48,
+                power: 70,
+                motor: 80
+            };
+
+            // Update knowledge map
+            updateKnowledgeMap(diagnostic);
+
+            // Update stats
+            const quizResults = JSON.parse(localStorage.getItem('sparty_quiz_results')) || [];
+            const streak = JSON.parse(localStorage.getItem('sparty_streak')) || { current: 0 };
+            const toolsUsed = JSON.parse(localStorage.getItem('sparty_tools_used')) || [];
+
+            document.getElementById('testsTaken').textContent = quizResults.length;
+
+            if (quizResults.length > 0) {
+                const avgScore = Math.round(
+                    quizResults.reduce((sum, q) => sum + q.score, 0) / quizResults.length
+                );
+                document.getElementById('avgScore').textContent = avgScore + '%';
+            }
+
+            document.getElementById('studyStreak').textContent = streak.current;
+            document.getElementById('toolsUsed').textContent = toolsUsed.length;
+            document.getElementById('streakBadge').textContent = `🔥 ${streak.current}-day streak`;
+
+            // Update recommendations based on weak areas
+            updateRecommendations(diagnostic);
+
+            // Update exam countdown
+            updateExamCountdown();
+
+            // Populate activity feed
+            populateActivityFeed(quizResults);
+        }
+
+        function updateKnowledgeMap(scores) {
+            const categories = [
+                { id: 'ac', label: 'AC Fundamentals' },
+                { id: 'ohm', label: 'Ohm\'s Law & Power' },
+                { id: 'lc', label: 'Inductors & Capacitors' },
+                { id: 'impedance', label: 'Impedance & Phase' },
+                { id: 'power', label: 'Power Systems' },
+                { id: 'motor', label: 'Motor Control & CEC' }
+            ];
+
+            categories.forEach(cat => {
+                const score = scores[cat.id] || 0;
+                document.getElementById(`score-${cat.id}`).textContent = score + '%';
+                document.getElementById(`fill-${cat.id}`).style.width = score + '%';
+            });
+        }
+
+        function updateRecommendations(scores) {
+            const recommendations = [];
+
+            if (scores.ac < 70) {
+                recommendations.push({
+                    title: 'Master AC Fundamentals',
+                    text: 'Your AC score needs improvement. Practice with the AC Waveform Generator.',
+                    link: 'Open AC Tool →'
+                });
+            }
+
+            if (scores.lc < 70) {
+                recommendations.push({
+                    title: 'Strengthen L & C Concepts',
+                    text: 'Try the Time Constant Calculator to visualize reactive components.',
+                    link: 'Open Calculator →'
+                });
+            }
+
+            if (scores.motor < 75) {
+                recommendations.push({
+                    title: 'Improve Motor Control',
+                    text: 'Use the Motor Control Simulator to master control circuits.',
+                    link: 'Open Motor Tool →'
+                });
+            }
+
+            if (recommendations.length === 0) {
+                recommendations.push({
+                    title: 'You\'re Doing Great!',
+                    text: 'Keep practicing to maintain your strong knowledge base.',
+                    link: 'Take Another Quiz →'
+                });
+            }
+
+            // Limit to 3 recommendations
+            recommendations.slice(0, 3).forEach((rec, idx) => {
+                const cards = document.querySelectorAll('.recommendation-card');
+                if (cards[idx]) {
+                    cards[idx].querySelector('.recommendation-title').textContent = rec.title;
+                    cards[idx].querySelector('.recommendation-text').textContent = rec.text;
+                    cards[idx].querySelector('.recommendation-link').textContent = rec.link;
+                }
+            });
+        }
+
+        function populateActivityFeed(quizResults) {
+            const feed = document.getElementById('activityFeed');
+
+            if (quizResults.length === 0) return;
+
+            feed.innerHTML = quizResults.slice(-5).reverse().map(q => `
+                <div class="activity-item">
+                    <div class="activity-icon">📊</div>
+                    <div class="activity-content">
+                        <div class="activity-text">Quiz completed - Score: ${q.score}%</div>
+                        <div class="activity-time">${new Date(q.date).toLocaleDateString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setExamDate() {
+            const dateInput = document.getElementById('examDate').value;
+            if (dateInput) {
+                localStorage.setItem('sparty_exam_date', dateInput);
+                updateExamCountdown();
+            }
+        }
+
+        function updateExamCountdown() {
+            const examDate = localStorage.getItem('sparty_exam_date');
+            const daysElement = document.getElementById('daysRemaining');
+
+            if (examDate) {
+                const exam = new Date(examDate);
+                const today = new Date();
+                const diff = exam - today;
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+                if (days >= 0) {
+                    daysElement.textContent = days;
+                    document.getElementById('examDate').value = examDate;
+                } else {
+                    daysElement.textContent = '0';
+                    daysElement.style.color = 'var(--red)';
+                }
+            }
+        }
+
+        function takeTest() {
+            alert('Quiz feature coming soon!');
+        }
+
+        function openTools() {
+            alert('Tools page coming soon!');
+        }
+
+        function practiceWorksheets() {
+            alert('Worksheets page coming soon!');
+        }
+
+        function playGames() {
+            alert('Games page coming soon!');
+        }
+
+        // Populate sample data if first time
+        function initSampleData() {
+            if (!localStorage.getItem('sparty_user_name')) {
+                localStorage.setItem('sparty_user_name', 'Alex');
+                localStorage.setItem('sparty_quiz_results', JSON.stringify([
+                    { score: 78, date: new Date().toISOString() },
+                    { score: 85, date: new Date(Date.now() - 86400000).toISOString() }
+                ]));
+                localStorage.setItem('sparty_streak', JSON.stringify({ current: 3 }));
+                localStorage.setItem('sparty_tools_used', JSON.stringify(['acWaveform', 'timeConstant', 'circuitDesigner']));
+                localStorage.setItem('sparty_diagnostic_results', JSON.stringify({
+                    ac: 65,
+                    ohm: 72,
+                    lc: 55,
+                    impedance: 48,
+                    power: 70,
+                    motor: 80
+                }));
+            }
+        }
+
+        initSampleData();
+        initDashboard();
+    </script>
 <script>
-/* ---- AUTH CHECK ---- */
-(function(){
-  try {
-    const auth = JSON.parse(localStorage.getItem('sparty_auth'));
-    if (!auth || auth.role !== 'owner' || (Date.now() - auth.loginTime > 86400000)) {
-      localStorage.removeItem('sparty_auth');
-      window.location.href = 'login.html';
-    }
-  } catch(e) { window.location.href = 'login.html'; }
-})();
-
-/* ---- LOGOUT ---- */
-document.getElementById('logoutBtn').addEventListener('click', function() {
+function logout() {
     localStorage.removeItem('sparty_auth');
     window.location.href = 'login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
 });
-
-/* ---- DATE ---- */
-(function() {
-    const d = new Date();
-    const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('todayDate').textContent = d.toLocaleDateString('en-US', opts);
-})();
-
-/* ---- CATEGORY DATA ---- */
-const CATEGORIES = [
-    "AC Fundamentals",
-    "Properties of Inductors & Capacitors",
-    "Inductors & Capacitors in Circuits",
-    "Relays & Contactors",
-    "Timers & Smart Relays",
-    "Pilot & Overcurrent Devices"
-];
-
-const STUDY_TIPS = {
-    "AC Fundamentals": "Review sine wave generation, drill f = pn/120, memorize 0.707 for RMS, practice instantaneous voltage calculations with e = Em\u00d7sin(\u03b8)",
-    "Properties of Inductors & Capacitors": "Know Faraday's and Lenz's laws, TPAL mnemonic for inductance factors, capacitor types (especially electrolytic polarity!)",
-    "Inductors & Capacitors in Circuits": "Master ELI the ICE man, drill time constant formulas (\u03c4=L/R and \u03c4=RC), practice XL and Xc calculations, remember 5 time constants to steady state",
-    "Relays & Contactors": "Know contact forms (A=NO, B=NC, C=changeover), seal-in ~85% and drop-out ~50%, understand why AC coils need laminations and shading coils",
-    "Timers & Smart Relays": "TDOE = on-delay (delay after energize), TDOD = off-delay (delay after de-energize), know interval vs one-shot vs repeat cycle timing",
-    "Pilot & Overcurrent Devices": "Stop SERIES, Start PARALLEL, know maintained vs momentary, fuse types (single vs dual element), breaker types (instantaneous vs inverse-time)"
-};
-
-/* ---- KNOWLEDGE MAP ---- */
-function renderKnowledgeMap() {
-    const grid = document.getElementById('kmGrid');
-    let results = null;
-    try {
-        results = JSON.parse(localStorage.getItem('sparty_diagnostic_results'));
-    } catch(e) {}
-
-    grid.innerHTML = '';
-
-    CATEGORIES.forEach(function(cat) {
-        const card = document.createElement('div');
-        card.className = 'km-card';
-
-        let catData = null;
-        if (results && results.categories && results.categories[cat]) {
-            catData = results.categories[cat];
-        }
-
-        if (!catData) {
-            card.classList.add('untested');
-            card.innerHTML =
-                '<div class="km-card-name">' + cat + '</div>' +
-                '<div class="km-bar-track"><div class="km-bar-fill" style="width:0"></div></div>' +
-                '<div class="km-meta">' +
-                    '<span class="km-score muted">Not tested</span>' +
-                    '<a href="modules/concepts.html" class="km-link">Study This &rarr;</a>' +
-                '</div>';
-        } else {
-            var pct = catData.pct;
-            var colorClass = pct >= 80 ? 'green' : pct >= 60 ? 'amber' : 'red';
-            card.innerHTML =
-                '<div class="km-card-name">' + cat + '</div>' +
-                '<div class="km-bar-track"><div class="km-bar-fill ' + colorClass + '" data-width="' + pct + '"></div></div>' +
-                '<div class="km-meta">' +
-                    '<span class="km-score ' + colorClass + '">' + pct + '%</span>' +
-                    '<a href="modules/concepts.html" class="km-link">Study This &rarr;</a>' +
-                '</div>';
-        }
-
-        grid.appendChild(card);
-    });
-
-    /* Animate bars */
-    requestAnimationFrame(function() {
-        setTimeout(function() {
-            document.querySelectorAll('.km-bar-fill[data-width]').forEach(function(bar) {
-                bar.style.width = bar.getAttribute('data-width') + '%';
-            });
-        }, 100);
-    });
-}
-
-/* ---- STUDY PLAN ---- */
-function renderStudyPlan() {
-    var container = document.getElementById('spContent');
-    var results = null;
-    try {
-        results = JSON.parse(localStorage.getItem('sparty_diagnostic_results'));
-    } catch(e) {}
-
-    if (!results || !results.categories) {
-        container.innerHTML = '<div class="sp-empty">Take the diagnostic test first to get a personalized study plan.</div>';
-        return;
-    }
-
-    var weakCats = [];
-    CATEGORIES.forEach(function(cat) {
-        var data = results.categories[cat];
-        if (data && data.pct < 80) {
-            weakCats.push({ name: cat, pct: data.pct });
-        }
-    });
-
-    if (weakCats.length === 0) {
-        container.innerHTML = '<div class="sp-empty" style="border-style:solid;color:var(--green);">All categories at 80% or above. Great work! Keep reviewing to stay sharp.</div>';
-        return;
-    }
-
-    /* Sort weakest first */
-    weakCats.sort(function(a, b) { return a.pct - b.pct; });
-
-    var html = '<div class="sp-list">';
-    weakCats.forEach(function(item) {
-        var scoreClass = item.pct >= 60 ? 'amber' : 'red';
-        html +=
-            '<div class="sp-card">' +
-                '<div class="sp-card-header">' +
-                    '<span class="sp-card-name">' + item.name + '</span>' +
-                    '<span class="sp-card-score ' + scoreClass + '">' + item.pct + '%</span>' +
-                '</div>' +
-                '<div class="sp-card-tips">' + STUDY_TIPS[item.name] + '</div>' +
-                '<a href="modules/flashcards.html" class="sp-practice-btn">Practice This &rarr;</a>' +
-            '</div>';
-    });
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-/* ---- STATS ---- */
-function renderStats() {
-    var results = null;
-    try { results = JSON.parse(localStorage.getItem('sparty_diagnostic_results')); } catch(e) {}
-
-    var activity = null;
-    try { activity = JSON.parse(localStorage.getItem('sparty_activity')); } catch(e) {}
-
-    /* Diagnostics taken */
-    var testCount = 0;
-    try {
-        var tc = localStorage.getItem('sparty_diagnostic_count');
-        if (tc) testCount = parseInt(tc, 10) || 0;
-        if (testCount === 0 && results && results.lastTaken) testCount = 1;
-    } catch(e) {}
-    document.getElementById('statTests').textContent = testCount;
-
-    /* Flashcards reviewed */
-    var flashCount = 0;
-    try {
-        var fc = localStorage.getItem('sparty_flashcard_count');
-        if (fc) flashCount = parseInt(fc, 10) || 0;
-    } catch(e) {}
-    document.getElementById('statFlash').textContent = flashCount;
-
-    /* Last session */
-    var lastSession = null;
-    if (results && results.lastTaken) lastSession = results.lastTaken;
-    try {
-        var ls = localStorage.getItem('sparty_last_session');
-        if (ls) {
-            var lsTime = parseInt(ls, 10);
-            if (!lastSession || lsTime > lastSession) lastSession = lsTime;
-        }
-    } catch(e) {}
-
-    if (lastSession) {
-        var d = new Date(lastSession);
-        var now = new Date();
-        var diffDays = Math.floor((now - d) / 86400000);
-        if (diffDays === 0) {
-            document.getElementById('statLast').textContent = 'Today';
-        } else if (diffDays === 1) {
-            document.getElementById('statLast').textContent = 'Yesterday';
-        } else {
-            document.getElementById('statLast').textContent = diffDays + 'd ago';
-        }
-    }
-
-    /* Streak */
-    var streak = 0;
-    try {
-        var sk = localStorage.getItem('sparty_streak');
-        if (sk) streak = parseInt(sk, 10) || 0;
-        if (streak === 0 && lastSession) {
-            var diffD = Math.floor((Date.now() - lastSession) / 86400000);
-            if (diffD <= 1) streak = 1;
-        }
-    } catch(e) {}
-    document.getElementById('statStreak').textContent = streak;
-}
-
-/* ---- INIT ---- */
-renderKnowledgeMap();
-renderStudyPlan();
-renderStats();
 </script>
-
 </body>
 </html>

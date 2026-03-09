@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Study Guide - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+            --accent-bg: rgba(245,158,11,0.1);
+            --accent2-bg: rgba(88,166,255,0.1);
+            --green-bg: rgba(16,185,129,0.1);
+            --red-bg: rgba(239,68,68,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.4);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+            --transition: all 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ============== NAVBAR ============== */
+        .navbar {
+            background-color: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            color: var(--accent);
+        }
+
+        /* ============== MAIN CONTENT ============== */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* ============== HEADER ============== */
+        .header {
+            background: linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(88,166,255,0.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-score {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 1rem 0;
+        }
+
+        .header-date {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .header-message {
+            color: var(--text);
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        /* ============== SCORE OVERVIEW ============== */
+        .score-overview {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .score-overview h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .category-bars {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .category-bar {
+            display: grid;
+            grid-template-columns: 200px 1fr 80px;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .category-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .bar-container {
+            height: 24px;
+            background-color: var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+        }
+
+        .bar-fill.weak {
+            background: linear-gradient(90deg, var(--red), #f97316);
+        }
+
+        .bar-percent {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* ============== STUDY SECTIONS ============== */
+        .study-section {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(88,166,255,0.15) 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .section-header:hover {
+            background: linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(88,166,255,0.2) 100%);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .section-score-badge {
+            background-color: var(--red-bg);
+            border: 1px solid var(--red);
+            color: var(--red);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .section-score-badge.good {
+            background-color: var(--green-bg);
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .toggle-icon {
+            color: var(--accent);
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .section-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 2rem;
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .section-content.hidden {
+            max-height: 0;
+            padding: 0;
+        }
+
+        /* ============== SUBSECTION PANELS ============== */
+        .subsection {
+            margin-bottom: 2rem;
+        }
+
+        .subsection:last-child {
+            margin-bottom: 0;
+        }
+
+        .subsection h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .subsection-content {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1.5rem;
+        }
+
+        /* ============== KEY CONCEPTS ============== */
+        .concepts-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .concept {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.75rem;
+            align-items: start;
+        }
+
+        .concept-icon {
+            color: var(--accent2);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+        }
+
+        .concept-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text);
+        }
+
+        .concept-label {
+            color: var(--accent);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        /* ============== FORMULAS ============== */
+        .formula-box {
+            background-color: rgba(0, 0, 0, 0.5);
+            border-left: 3px solid var(--accent2);
+            padding: 1.2rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text);
+            margin: 0.5rem 0;
+        }
+
+        .formula-name {
+            color: var(--accent2);
+            font-weight: 600;
+        }
+
+        .formula-number {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .formula-variable {
+            color: var(--text);
+        }
+
+        /* ============== MEMORY TRICKS ============== */
+        .memory-tricks {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .memory-trick {
+            background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-left: 3px solid var(--accent);
+            padding: 1.2rem;
+            border-radius: var(--radius-sm);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .memory-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .memory-text {
+            flex: 1;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text);
+        }
+
+        .memory-highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ============== COMMON MISTAKES ============== */
+        .mistakes-box {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(239,68,68,0.05) 100%);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-left: 3px solid var(--red);
+            padding: 1.5rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .mistakes-box h4 {
+            color: var(--red);
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mistakes-list {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .mistake-item {
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .mistake-item::before {
+            content: "✗";
+            position: absolute;
+            left: 0;
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        /* ============== PRACTICE QUESTIONS ============== */
+        .practice-section {
+            background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%);
+            border: 1px solid rgba(16,185,129,0.3);
+            padding: 1.5rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .practice-section h4 {
+            color: var(--green);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .practice-questions {
+            display: grid;
+            gap: 1.2rem;
+        }
+
+        .question {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1.2rem;
+            overflow: hidden;
+        }
+
+        .question-text {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .question-text:hover {
+            color: var(--accent2);
+        }
+
+        .question-number {
+            color: var(--accent2);
+            font-weight: 700;
+            min-width: 25px;
+        }
+
+        .reveal-btn {
+            background: none;
+            border: none;
+            color: var(--accent2);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            padding: 0;
+        }
+
+        .reveal-btn:hover {
+            color: var(--accent);
+        }
+
+        .answer-box {
+            background-color: rgba(16,185,129,0.15);
+            border: 1px solid var(--green);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            margin-top: 0.8rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .answer-box.revealed {
+            max-height: 500px;
+            padding: 1rem;
+        }
+
+        .answer-label {
+            color: var(--green);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .answer-text {
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* ============== STRONG AREAS ============== */
+        .strong-areas {
+            background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-left: 3px solid var(--green);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin: 3rem 0;
+            text-align: center;
+        }
+
+        .strong-areas h2 {
+            color: var(--green);
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strong-categories {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .strong-badge {
+            background-color: var(--green-bg);
+            border: 1px solid var(--green);
+            color: var(--green);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .strong-message {
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        /* ============== NO DATA MESSAGE ============== */
+        .no-data {
+            background: linear-gradient(135deg, rgba(88,166,255,0.15) 0%, rgba(88,166,255,0.05) 100%);
+            border: 1px solid rgba(88,166,255,0.3);
+            border-left: 3px solid var(--accent2);
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .no-data h2 {
+            color: var(--accent2);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .no-data p {
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        /* ============== ACTION BUTTONS ============== */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 3rem 0;
+        }
+
+        .btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #f97316);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(245,158,11,0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-tertiary {
+            background-color: var(--border);
+            color: var(--text);
+        }
+
+        .btn-tertiary:hover {
+            background-color: var(--border);
+            color: var(--accent2);
+        }
+
+        /* ============== FOOTER ============== */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ============== RESPONSIVE ============== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 2rem 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header-score {
+                font-size: 2.5rem;
+            }
+
+            .category-bar {
+                grid-template-columns: 150px 1fr 50px;
+                gap: 0.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+
+        /* ============== ANIMATIONS ============== */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-content {
+            animation: slideDown 0.3s ease;
+        }
+    </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <!-- ============== NAVBAR ============== -->
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <!-- ============== MAIN CONTENT ============== -->
+    <div class="container" id="mainContainer">
+        <!-- Content will be dynamically generated here -->
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 SparkStudy. Built for Alberta electrician apprentices. Keep learning!</p>
+    </footer>
+
+    <script>
+        // ========== DATA & CONFIG ==========
+        const STUDY_CONTENT = {
+            'AC Fundamentals': {
+                concepts: [
+                    { label: 'AC Generation', text: 'A rotating conductor in a magnetic field creates a sinusoidal (sine wave) voltage.' },
+                    { label: 'Sine Wave Pattern', text: 'Starts at 0°, peaks at 90°, returns to 0° at 180°, reaches negative peak at 270°, completes cycle at 360°.' },
+                    { label: 'Peak Value (Vp)', text: 'The maximum voltage in either direction from the centerline.' },
+                    { label: 'Peak-to-Peak (Vpp)', text: 'The total vertical swing of the wave = 2 × Peak voltage.' },
+                    { label: 'RMS (Vrms)', text: 'The "effective" value that represents the equivalent DC voltage doing the same work. RMS = Peak × 0.707. This is what your multimeter displays!' },
+                    { label: 'Average Value (Vavg)', text: 'Represents the mathematical average = Peak × 0.637. Less commonly used than RMS.' },
+                    { label: 'Frequency (f)', text: 'Number of complete cycles per second, measured in Hertz (Hz). In Alberta: 60 Hz.' },
+                    { label: 'Period (T)', text: 'Time for one complete cycle. T = 1/f. At 60 Hz: T = 16.67 milliseconds.' },
+                    { label: 'Angular Velocity (ω)', text: 'Rate of rotation in radians per second. ω = 2πf = 2π(60) = 377 rad/s for 60 Hz systems.' },
+                    { label: 'Instantaneous Voltage', text: 'The voltage at any specific moment in time: v = Vp × sin(ωt).' },
+                    { label: 'Phase Relationships', text: 'In purely resistive circuits, voltage and current are in phase (same timing). In L and C circuits, they shift relative to each other.' }
+                ],
+                formulas: [
+                    { name: 'RMS to Peak', text: 'V<sub>rms</sub> = V<sub>p</sub> × 0.707' },
+                    { name: 'Peak to RMS', text: 'V<sub>p</sub> = V<sub>rms</sub> × 1.414 (same as ÷ 0.707)' },
+                    { name: 'Peak-to-Peak', text: 'V<sub>pp</sub> = 2 × V<sub>p</sub>' },
+                    { name: 'Period from Frequency', text: 'T = 1/f' },
+                    { name: 'Frequency from Period', text: 'f = 1/T' },
+                    { name: 'Angular Velocity', text: 'ω = 2πf' },
+                    { name: 'Instantaneous Voltage', text: 'v = V<sub>p</sub> × sin(ωt)' },
+                    { name: 'Average Value', text: 'V<sub>avg</sub> = V<sub>p</sub> × 0.637' }
+                ],
+                tricks: [
+                    { text: '<span class="memory-highlight">0.707 is your FRIEND on the exam</span> — Always use it to convert peak to RMS. Memorize this number!' },
+                    { text: '<span class="memory-highlight">RMS = Really Means Something</span> — It\'s the equivalent DC value that produces the same heating effect and work as the AC signal.' },
+                    { text: '<span class="memory-highlight">Peak × √2 ≠ Peak-to-Peak!</span> Peak × 2 = Peak-to-Peak. Don\'t confuse √2 (≈1.414) with ×2. Common mistake!' },
+                    { text: '<span class="memory-highlight">T and f are inverses:</span> If frequency doubles, period halves. Think: more cycles per second = less time per cycle.' }
+                ],
+                mistakes: [
+                    'Confusing Vp, Vpp, and Vrms — RMS is what meters read, not peak!',
+                    'Using peak voltage in calculations when RMS is required (voltage drop, power, impedance)',
+                    'Forgetting that 0.707 is an approximation; some questions may use √2 ≈ 1.414 instead',
+                    'Not converting frequency to angular velocity when using instantaneous voltage equations',
+                    'Assuming peak-to-peak is the same as peak (it\'s double!)'
+                ],
+                questions: [
+                    {
+                        q: 'A 170V peak sine wave — what is the RMS value?',
+                        a: '170V × 0.707 = 120.1V (approx 120V, your standard household voltage!)'
+                    },
+                    {
+                        q: 'At 60 Hz, what is the period of one complete cycle?',
+                        a: 'T = 1/60 = 0.01667 seconds = 16.67 milliseconds'
+                    },
+                    {
+                        q: 'If Vrms = 240V (typical industrial), what is the peak-to-peak voltage?',
+                        a: 'First find peak: 240V ÷ 0.707 = 340V. Then V<sub>pp</sub> = 2 × 340 = 680V'
+                    },
+                    {
+                        q: 'What is the angular velocity (ω) at 60 Hz?',
+                        a: 'ω = 2πf = 2π(60) = 377 radians per second'
+                    }
+                ]
+            },
+            'Properties of L & C': {
+                concepts: [
+                    { label: 'Inductors (L)', text: 'Oppose CHANGES in current flow. Measured in Henrys (H). Made by coiling wire; the coil stores energy in a magnetic field.' },
+                    { label: 'Inductor Energy Storage', text: 'E = ½LI². The energy stored is proportional to inductance and the square of current.' },
+                    { label: 'Inductive Time Constant', text: 'τ = L/R (inductance divided by resistance). After 5τ, the inductor is fully charged and current reaches steady state.' },
+                    { label: 'Capacitors (C)', text: 'Oppose CHANGES in voltage. Measured in Farads (F). Made of two metal plates separated by an insulator; stores energy in an electric field.' },
+                    { label: 'Capacitor Energy Storage', text: 'E = ½CV². The energy stored is proportional to capacitance and the square of voltage.' },
+                    { label: 'Capacitive Time Constant', text: 'τ = R × C (resistance times capacitance). After 5τ, the capacitor is fully charged.' },
+                    { label: 'Inductor in DC: Initially', text: 'Opposes current change, acts like an OPEN CIRCUIT. As time progresses, current builds up and inductor allows current to flow like a SHORT CIRCUIT.' },
+                    { label: 'Capacitor in DC: Initially', text: 'Allows charging current to flow like a SHORT CIRCUIT. After fully charged, blocks all current like an OPEN CIRCUIT.' },
+                    { label: 'Key Difference', text: 'Inductors and capacitors are OPPOSITES: L opposes current changes; C opposes voltage changes.' },
+                    { label: 'Fully Charged Definition', text: 'After 5 time constants (5τ), the circuit reaches 99.3% of final steady-state value. Practically, we say "fully charged".' }
+                ],
+                formulas: [
+                    { name: 'Inductive Time Constant', text: 'τ<sub>L</sub> = L/R' },
+                    { name: 'Capacitive Time Constant', text: 'τ<sub>C</sub> = R × C' },
+                    { name: 'Full Charge Time', text: '5τ = fully charged (99.3%)' },
+                    { name: 'Inductor Energy', text: 'E<sub>L</sub> = ½LI²' },
+                    { name: 'Capacitor Energy', text: 'E<sub>C</sub> = ½CV²' }
+                ],
+                tricks: [
+                    { text: '<span class="memory-highlight">"ELI the ICE man"</span> — In inductors (L), voltage (E) LEADS current (I). In capacitors (C), current (I) LEADS voltage (E). Super useful!' },
+                    { text: '<span class="memory-highlight">Inductors hate CURRENT changes</span> — they try to keep current constant. Capacitors hate VOLTAGE changes — they try to keep voltage constant.' },
+                    { text: '<span class="memory-highlight">5 time constants = done deal</span> — After 5τ, the circuit has reached steady state (99.3% complete). No need to wait forever!' },
+                    { text: '<span class="memory-highlight">Inductors: L→I, Capacitors: C→V</span> — Inductors relate to current (L/R), Capacitors relate to voltage (R×C).' }
+                ],
+                mistakes: [
+                    'Thinking inductors and capacitors behave the same way — they\'re complete opposites!',
+                    'Forgetting the 5τ rule and thinking circuits change instantly',
+                    'Confusing which time constant formula to use: τ = L/R for inductors, τ = R×C for capacitors',
+                    'In DC steady state: forgetting that inductors act like wires (short) and capacitors block everything (open)',
+                    'Mixing up "inductor initially opposes current" (acts open) with "capacitor initially acts short"'
+                ],
+                questions: [
+                    {
+                        q: 'A 2H inductor with 500Ω resistance — what\'s the time constant?',
+                        a: 'τ = L/R = 2H / 500Ω = 0.004 seconds = 4 milliseconds'
+                    },
+                    {
+                        q: 'A 10μF capacitor and 100kΩ resistor — how long to fully charge?',
+                        a: '5τ = 5 × (R × C) = 5 × (100,000Ω × 0.00001F) = 5 seconds'
+                    },
+                    {
+                        q: 'At what point does an inductor behave like a short circuit?',
+                        a: 'After 5 time constants in DC. Initially it acts open, then as current builds, it acts like a short.'
+                    },
+                    {
+                        q: 'How much energy does a 4H inductor store with 3A flowing through it?',
+                        a: 'E = ½LI² = ½(4)(3²) = ½(4)(9) = 18 Joules'
+                    }
+                ]
+            },
+            'L & C in Circuits': {
+                concepts: [
+                    { label: 'Inductive Reactance (XL)', text: 'Opposition to AC current from an inductor. XL = 2πfL. INCREASES with frequency — inductors fight high-frequency AC harder.' },
+                    { label: 'Capacitive Reactance (XC)', text: 'Opposition to AC current from a capacitor. XC = 1/(2πfC). DECREASES with frequency — capacitors pass high-frequency AC more easily.' },
+                    { label: 'Pure Inductive Circuit', text: 'Current LAGS voltage by 90°. The inductor resists the change, so current comes "late".' },
+                    { label: 'Pure Capacitive Circuit', text: 'Current LEADS voltage by 90°. The capacitor is already charged, so current flows "early".' },
+                    { label: 'Impedance (Z)', text: 'Total opposition to AC current, combining resistance and reactance: Z = √(R² + X²). Measured in ohms (Ω).' },
+                    { label: 'Net Reactance', text: 'In RLC circuits: X<sub>net</sub> = XL - XC. If positive, circuit is inductive; if negative, capacitive.' },
+                    { label: 'AC Power (Real)', text: 'P = V × I × cos(θ). Only the resistive component does real work (heating). Measured in Watts (W).' },
+                    { label: 'Reactive Power (Q)', text: 'Q = V × I × sin(θ). Power that sloshes back and forth in L and C. Measured in Volt-Amps Reactive (VAR).' },
+                    { label: 'Apparent Power (S)', text: 'S = V × I. Total power delivered. Measured in Volt-Amps (VA).' },
+                    { label: 'Power Factor (PF)', text: 'cos(θ) = R/Z. PF = 1 (purely resistive) is ideal. Low PF = lots of reactive power wasting money.' },
+                    { label: 'Resonance', text: 'Occurs when XL = XC. Circuit impedance is purely resistive and at minimum. Current and voltage are in phase.' }
+                ],
+                formulas: [
+                    { name: 'Inductive Reactance', text: 'X<sub>L</sub> = 2πfL (Ω)' },
+                    { name: 'Capacitive Reactance', text: 'X<sub>C</sub> = 1 / (2πfC) (Ω)' },
+                    { name: 'Impedance (R+L)', text: 'Z = √(R² + X<sub>L</sub>²)' },
+                    { name: 'Impedance (R+C)', text: 'Z = √(R² + X<sub>C</sub>²)' },
+                    { name: 'Impedance (R+L+C)', text: 'Z = √(R² + (X<sub>L</sub> - X<sub>C</sub>)²)' },
+                    { name: 'Real Power', text: 'P = VI × cos(θ) (W)' },
+                    { name: 'Reactive Power', text: 'Q = VI × sin(θ) (VAR)' },
+                    { name: 'Apparent Power', text: 'S = VI (VA)' },
+                    { name: 'Power Factor', text: 'PF = cos(θ) = R/Z' },
+                    { name: 'Resonant Frequency', text: 'f<sub>r</sub> = 1 / (2π√(LC))' }
+                ],
+                tricks: [
+                    { text: '<span class="memory-highlight">XL goes UP with frequency</span> — Think "L for Large at high f". Higher frequency = higher inductive reactance.' },
+                    { text: '<span class="memory-highlight">XC goes DOWN with frequency</span> — Think "C for Calm at high f". Higher frequency = lower capacitive reactance.' },
+                    { text: '<span class="memory-highlight">CIVIL: C-I-V-I-L</span> — In a Capacitor, I leads V. In an Inductor, V leads I (and there\'s an L at the end).' },
+                    { text: '<span class="memory-highlight">Impedance triangle</span> — Just like a right triangle: Z is the hypotenuse, R is horizontal, X is vertical. Z² = R² + X².' },
+                    { text: '<span class="memory-highlight">Power factor = cosine of angle</span> — If Z makes a 30° angle, PF = cos(30°) ≈ 0.866. More reactive = smaller PF.' }
+                ],
+                mistakes: [
+                    'Confusing XL and XC — XL increases with f, XC decreases with f!',
+                    'Forgetting to use cos(θ) for real power — many students calculate VI without the power factor',
+                    'Mixing up phase angles: inductive lags, capacitive leads',
+                    'Using addition instead of the Pythagorean theorem for impedance: Z ≠ R + X; instead Z = √(R² + X²)',
+                    'In RLC circuits: not subtracting reactances (XL - XC) when they oppose each other'
+                ],
+                questions: [
+                    {
+                        q: 'What is XL for a 0.5H inductor at 60Hz?',
+                        a: 'XL = 2πfL = 2π(60)(0.5) = 188.5Ω'
+                    },
+                    {
+                        q: 'What is XC for a 50μF capacitor at 60Hz?',
+                        a: 'XC = 1/(2πfC) = 1/(2π(60)(0.00005)) = 1/0.01885 = 53.1Ω'
+                    },
+                    {
+                        q: 'In a pure capacitive circuit, does current lead or lag voltage?',
+                        a: 'Current LEADS voltage by 90°. The capacitor "expects" the current early!'
+                    },
+                    {
+                        q: 'A circuit has R = 100Ω, XL = 60Ω. What is impedance Z?',
+                        a: 'Z = √(R² + XL²) = √(100² + 60²) = √(10,000 + 3,600) = √13,600 = 116.6Ω'
+                    }
+                ]
+            },
+            'Relays & Contactors': {
+                concepts: [
+                    { label: 'Relay Basics', text: 'An electromagnetic switch. Energize the coil → magnetic field created → contacts mechanically open or close.' },
+                    { label: 'NO (Normally Open)', text: 'Contact is OPEN (disconnected) when coil is de-energized. Energize the coil → contact CLOSES.' },
+                    { label: 'NC (Normally Closed)', text: 'Contact is CLOSED (connected) when coil is de-energized. Energize the coil → contact OPENS.' },
+                    { label: 'Contactor', text: 'A heavy-duty relay designed for high-power circuits (motors, heaters). Can handle larger currents than standard relays.' },
+                    { label: 'Contactor Parts', text: 'Coil (energizes the electromagnet), Main Contacts (handle power), Auxiliary Contacts (control other circuits).' },
+                    { label: 'Holding/Seal-in Circuit', text: 'An auxiliary NO contact wired in parallel with the START button so the contactor keeps itself energized after button release.' },
+                    { label: 'Motor Starter', text: 'A contactor + overload relay combined. Provides both power switching and protection against sustained overcurrent.' },
+                    { label: 'Overload Relay', text: 'Thermal protection that trips on sustained overcurrent (like 110% for 10 seconds). Won\'t trip on brief inrush current.' },
+                    { label: 'Control vs Power Voltage', text: 'Control circuit (low voltage, safe) controls the coil. Power circuit (high voltage, dangerous) carries the motor current.' },
+                    { label: 'Arc Suppression', text: 'When contacts open under load, an arc can form. Contactors use arc chutes and magnetic blowout coils to extinguish it.' }
+                ],
+                formulas: [
+                    { name: 'Motor Starter Coordination', text: 'Overload trip current = Motor full-load current × 1.25' },
+                    { name: 'Coil Power', text: 'P = V × I (coil control voltage × coil current)' }
+                ],
+                tricks: [
+                    { text: '<span class="memory-highlight">NC = Normally Connected (at rest)</span> — When you don\'t energize it, it\'s already making the circuit. Think "it\'s ready to go".' },
+                    { text: '<span class="memory-highlight">Seal-in = Self-hold</span> — The contactor keeps itself powered through its own auxiliary contact. One START button energizes it; it never needs that button again!' },
+                    { text: '<span class="memory-highlight">Think relay = muscle:</span> Energize the coil (flex the muscle) → contacts move. De-energize (relax) → contacts return to normal state.' },
+                    { text: '<span class="memory-highlight">Contactor = beefy relay</span> — Same principle, but designed to handle tons of current without arcing.' }
+                ],
+                mistakes: [
+                    'Confusing NO and NC — NO is open at rest; NC is closed at rest',
+                    'Forgetting the seal-in circuit causes the contactor to drop out when the START button is released',
+                    'Not understanding that the overload relay protects against sustained overcurrent, not short circuits',
+                    'Assuming a relay and contactor are identical — contactors are heavy-duty for power circuits',
+                    'Not protecting against arc formation when opening high-current contacts'
+                ],
+                questions: [
+                    {
+                        q: 'What type of contact does a STOP button use: NO or NC?',
+                        a: 'NC (Normally Closed). STOP buttons must fail-safe — if the wire breaks, the motor stops!'
+                    },
+                    {
+                        q: 'What is the purpose of a seal-in contact?',
+                        a: 'To keep the contactor energized after the START button is released. An auxiliary NO contact wired in parallel with START.'
+                    },
+                    {
+                        q: 'What\'s the difference between a contactor and a relay?',
+                        a: 'A contactor is a heavy-duty relay designed for power circuits (motors, heaters). Relays are smaller and handle lower power.'
+                    },
+                    {
+                        q: 'What does an overload relay protect against?',
+                        a: 'Sustained overcurrent (like 110% of full load for 10 seconds). It protects motors from overheating.'
+                    }
+                ]
+            },
+            'Timers & Smart Relays': {
+                concepts: [
+                    { label: 'On-Delay Timer (TON)', text: 'Coil energizes → timer WAITS for the programmed delay → THEN contacts change. Used when you need to wait before turning something on.' },
+                    { label: 'Off-Delay Timer (TOF)', text: 'Coil energizes → contacts change IMMEDIATELY → when de-energized, timer WAITS before contacts return. Used for cool-down or drainage.' },
+                    { label: 'One-Shot Timer', text: 'Generates a single pulse of fixed duration when triggered. Useful for sending a quick signal.' },
+                    { label: 'Repeat Cycle Timer', text: 'Alternating ON/OFF pattern. For example: 2 seconds ON, 3 seconds OFF, repeat. Used for flashing lights or cycling pumps.' },
+                    { label: 'Timed vs Instantaneous Contacts', text: 'Timed contacts change after the delay period. Instantaneous contacts change immediately when the coil energizes.' },
+                    { label: 'Smart Relay', text: 'A tiny programmable logic device (like Zelio, Logo!, Easy). Replaces multiple timers/relays. Can store logic, timers, counters, scheduling.' },
+                    { label: 'Smart Relay Advantages', text: 'Flexible (reprogram without rewiring), compact, handles complex logic, includes built-in timers/counters/memory.' },
+                    { label: 'IEC 61131-3 Standards', text: 'International standard for PLC/smart relay programming. Two common methods: FBD (Function Block Diagram) and LD (Ladder Diagram).' },
+                    { label: 'Function Block Diagram (FBD)', text: 'Graphical programming: boxes represent logic functions, lines connect them. Intuitive for complex logic.' },
+                    { label: 'Ladder Diagram (LD)', text: 'Looks like electrical circuits. Rungs represent logic; contacts and coils arranged horizontally. Familiar to electricians.' },
+                    { label: 'Weekly/Monthly Scheduling', text: 'Smart relays with built-in real-time clocks can schedule actions: "Turn on lights at 6 PM every weekday" etc.' }
+                ],
+                formulas: [
+                    { name: 'Total Cycle Time (Repeat)', text: 'T<sub>cycle</sub> = T<sub>ON</sub> + T<sub>OFF</sub>' },
+                    { name: 'Delay after Coil De-energizes (TOF)', text: 'Delay starts when input goes FALSE' }
+                ],
+                tricks: [
+                    { text: '<span class="memory-highlight">ON-delay = wait to turn ON. OFF-delay = wait to turn OFF</span> — ON delays the output; OFF delays the release.' },
+                    { text: '<span class="memory-highlight">TDOE = Time Delay On Energize. TDDE = Time Delay De-Energize</span> — These are common abbreviations. TON/TOF are newer.' },
+                    { text: '<span class="memory-highlight">Smart relay = tiny PLC in a relay\'s body</span> — You can program logic, timers, counters, and scheduling without rewiring!' },
+                    { text: '<span class="memory-highlight">FBD = boxes; LD = like circuits</span> — Choose based on what makes sense to you. Both do the same thing.' }
+                ],
+                mistakes: [
+                    'Confusing on-delay and off-delay — TON waits before outputting; TOF waits after input stops',
+                    'Forgetting that instantaneous contacts change immediately, not after the delay',
+                    'Thinking smart relays are hard to program — they\'re actually simpler than wiring 10 relays!',
+                    'Not using repeat cycle timers when you need alternating on/off patterns (flashing, cycling)',
+                    'Assuming all smart relays use the same programming language — actually, Zelio, Logo, Easy are different!'
+                ],
+                questions: [
+                    {
+                        q: 'With an on-delay timer set to 5 seconds, when do the timed contacts change?',
+                        a: '5 seconds AFTER the coil is energized. You energize it at t=0, contacts change at t=5s.'
+                    },
+                    {
+                        q: 'What programming languages does IEC 61131-3 specify for smart relays?',
+                        a: 'FBD (Function Block Diagram — graphical boxes) and LD (Ladder Diagram — looks like circuits).'
+                    },
+                    {
+                        q: 'What\'s the difference between timed and instantaneous contacts on a timer?',
+                        a: 'Timed: change after the delay period. Instantaneous: change immediately when coil energizes.'
+                    },
+                    {
+                        q: 'You want a light to flash on for 1 second, off for 2 seconds, repeating. Which timer?',
+                        a: 'Repeat cycle timer (or two one-shot timers). Repeat cycle: 1s ON + 2s OFF = 3s cycle time.'
+                    }
+                ]
+            },
+            'Pilot & Overcurrent Devices': {
+                concepts: [
+                    { label: 'STOP Buttons', text: 'Use NC (Normally Closed) contacts, wired in SERIES. If ANY stop button is pressed, the circuit breaks and the motor stops. Fail-safe design!' },
+                    { label: 'START Buttons', text: 'Use NO (Normally Open) contacts, wired in PARALLEL. Any one pressed can start the motor. If multiple buttons, any one activates.' },
+                    { label: 'Pilot Devices', text: 'Input devices that trigger control circuits: pushbuttons, selector switches, limit switches, proximity sensors, float switches, temperature sensors.' },
+                    { label: 'Limit Switches', text: 'Mechanically actuated. Machine moves, hits limit switch → contacts change. Used on doors, gates, conveyor stops.' },
+                    { label: 'Proximity Sensors (Inductive)', text: 'Detects ferrous metal objects without touching. Uses coil to sense magnetic field changes. Range: ~0-30mm.' },
+                    { label: 'Proximity Sensors (Capacitive)', text: 'Detects ANY material (metal, plastic, liquid). Senses dielectric changes. Longer range than inductive.' },
+                    { label: 'Photoelectric Sensors', text: 'Light beam triggers output. Types: diffuse (sensor and object face each other), retro (beam bounces off mirror).' },
+                    { label: 'Thermocouple', text: 'Two dissimilar metals joined; generates voltage when heated. Seebeck effect. No external power needed!' },
+                    { label: 'RTD (Resistance Temperature Detector)', text: 'Resistance changes with temperature. Platinum is standard (Pt100). Needs power source to measure resistance.' },
+                    { label: 'Thermistor', text: 'Semi-conductor that changes resistance with temperature. More sensitive than RTD, but less stable over time.' },
+                    { label: 'Fuses', text: 'One-time protection. Wire melts when current exceeds rating. Dual-element fuses tolerate brief inrush current but catch sustained shorts.' },
+                    { label: 'AIC (Ampere Interrupting Capacity)', text: 'Maximum fault current a device can safely clear. MUST exceed the available fault current in the circuit!' },
+                    { label: 'Available Fault Current', text: 'Calculated from transformer data: I_fault = (kVA × 1000) / (V × %Z). Must know this to size fuses/breakers properly.' },
+                    { label: 'Circuit Breakers', text: 'Reusable protection with two parts: thermal (handles overload, slow trip) and magnetic (handles short circuit, fast trip).' },
+                    { label: 'Coordination', text: 'Upstream device should NOT trip before downstream device. Fuse sizes and breaker curves must be coordinated.' }
+                ],
+                formulas: [
+                    { name: 'Available Fault Current', text: 'I<sub>fault</sub> = (kVA × 1000) / (V<sub>secondary</sub> × %Z)' },
+                    { name: 'Fuse Size (Motor)', text: 'Fuse = Full-load current × 1.25 to 1.50' },
+                    { name: 'Overload Trip Current', text: 'Trip = Full-load current × 1.15 to 1.25' }
+                ],
+                tricks: [
+                    { text: '<span class="memory-highlight">STOPS in SERIES, STARTS in PARALLEL</span> — The GOLDEN RULE of motor control. Stops kill the circuit; starts need any one to work.' },
+                    { text: '<span class="memory-highlight">If the wire breaks, the motor should STOP</span> — That\'s why STOP is NC and in series. Break the series = open circuit = safe!' },
+                    { text: '<span class="memory-highlight">AIC must be MORE than available fault current</span> — Or the fuse/breaker explodes under a short circuit. Check the label!' },
+                    { text: '<span class="memory-highlight">Dual-element fuse = patient parent</span> — Tolerates brief misbehavior (inrush) but won\'t allow real danger (sustained short).' },
+                    { text: '<span class="memory-highlight">Thermocouple = self-powered</span> — Generates its own voltage (Seebeck effect). RTD and thermistor need an external power source.' }
+                ],
+                mistakes: [
+                    'Wiring STOP buttons in parallel instead of series — if one fails, you can\'t stop!',
+                    'Using NO contacts for STOP buttons instead of NC — loses fail-safe protection',
+                    'Not checking AIC ratings before installation — undersized devices explode on faults!',
+                    'Forgetting the fault current formula components: kVA, voltage, and %Z all matter',
+                    'Not coordinating upstream and downstream overcurrent devices — could cause nuisance trips',
+                    'Confusing thermocouple (generates voltage) with RTD/thermistor (changes resistance)'
+                ],
+                questions: [
+                    {
+                        q: 'STOP buttons are wired in _____ and START buttons in _____?',
+                        a: 'SERIES (any one breaks the circuit to stop safely) and PARALLEL (any one can activate to start).'
+                    },
+                    {
+                        q: 'Available fault current formula?',
+                        a: 'I = (kVA × 1000) / (V × %Z). Example: (100 kVA × 1000) / (480V × 5.75%) = 3,623A'
+                    },
+                    {
+                        q: 'Which temperature sensor generates its own voltage?',
+                        a: 'Thermocouple (Seebeck effect). No external power needed. RTD and thermistor require a power source.'
+                    },
+                    {
+                        q: 'What does AIC stand for and why is it critical?',
+                        a: 'Ampere Interrupting Capacity — max fault current the device can safely clear. Must exceed available fault current or device fails dangerously!'
+                    }
+                ]
+            }
+        };
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            const results = localStorage.getItem('sparty_diagnostic_results');
+
+            if (!results) {
+                showNoDataMessage();
+            } else {
+                const data = JSON.parse(results);
+                generateStudyGuide(data);
+            }
+        });
+
+        // ========== NO DATA MESSAGE ==========
+        function showNoDataMessage() {
+            const container = document.getElementById('mainContainer');
+            container.innerHTML = `
+                <div class="no-data">
+                    <h2>📚 No Assessment Data Found</h2>
+                    <p>Take the diagnostic assessment first to see your personalized study guide with targeted weak areas.</p>
+                    <div class="action-buttons">
+                        <a href="../period2.html" class="btn btn-primary">Go to Period 2 Assessment</a>
+                        <a href="../index.html" class="btn btn-secondary">Back to Home</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========== GENERATE STUDY GUIDE ==========
+        function generateStudyGuide(data) {
+            const container = document.getElementById('mainContainer');
+            let html = '';
+
+            // Header
+            html += generateHeader(data);
+
+            // Score Overview
+            html += generateScoreOverview(data);
+
+            // Study Sections for Weak Areas
+            const weakAreas = data.weakAreas || [];
+            if (weakAreas.length > 0) {
+                weakAreas.forEach(category => {
+                    html += generateStudySection(category, data.categories[category]);
+                });
+            }
+
+            // Recommended Tools, Worksheets & Games
+            html += generateRecommendations(weakAreas);
+
+            // Strong Areas
+            const strongAreas = Object.keys(data.categories || {}).filter(cat => {
+                const score = data.categories[cat];
+                return (score.correct / score.total) * 100 >= 60;
+            });
+            if (strongAreas.length > 0) {
+                html += generateStrongAreas(strongAreas);
+            }
+
+            // Action Buttons
+            html += generateActionButtons();
+
+            container.innerHTML = html;
+
+            // Attach event listeners
+            attachEventListeners();
+        }
+
+        // ========== HEADER ==========
+        function generateHeader(data) {
+            const score = Math.round(data.overall * 10) / 10;
+            const date = new Date(data.lastTaken).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            let message = '🚀 Great work! Keep going!';
+            if (score < 40) {
+                message = '💪 You\'re building a strong foundation. Keep studying!';
+            } else if (score < 60) {
+                message = '📈 You\'re making progress. Focus on weak areas below!';
+            } else if (score < 80) {
+                message = '⚡ Nice! You\'re getting it. Polish up the weak areas!';
+            } else if (score >= 90) {
+                message = '🏆 Outstanding! You\'re ready for the real exam!';
+            }
+
+            return `
+                <div class="header">
+                    <h1>Your Study Guide</h1>
+                    <div class="header-score">${score}%</div>
+                    <div class="header-date">Assessment taken on ${date}</div>
+                    <div class="header-message">${message}</div>
+                </div>
+            `;
+        }
+
+        // ========== SCORE OVERVIEW ==========
+        function generateScoreOverview(data) {
+            let html = '<div class="score-overview"><h2>📊 Your Performance</h2><div class="category-bars">';
+
+            Object.keys(data.categories || {}).forEach(category => {
+                const score = data.categories[category];
+                const pct = Math.round((score.correct / score.total) * 100);
+                const isWeak = pct < 60;
+
+                html += `
+                    <div class="category-bar">
+                        <div class="category-label">${category}</div>
+                        <div class="bar-container">
+                            <div class="bar-fill ${isWeak ? 'weak' : ''}" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="bar-percent">${pct}%</div>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+            return html;
+        }
+
+        // ========== STUDY SECTION ==========
+        function generateStudySection(category, categoryData) {
+            const pct = Math.round((categoryData.correct / categoryData.total) * 100);
+            const content = STUDY_CONTENT[category];
+
+            if (!content) return '';
+
+            let html = `<div class="study-section">
+                <div class="section-header collapsed" data-category="${category}">
+                    <div class="section-title">
+                        <span>${category}</span>
+                        <span class="section-score-badge">${pct}%</span>
+                    </div>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content hidden" data-category="${category}">
+            `;
+
+            // Key Concepts
+            html += '<div class="subsection">';
+            html += '<h3>💡 Key Concepts</h3>';
+            html += '<div class="subsection-content"><div class="concepts-list">';
+            content.concepts.forEach(concept => {
+                html += `
+                    <div class="concept">
+                        <div class="concept-icon">●</div>
+                        <div class="concept-text">
+                            <span class="concept-label">${concept.label}:</span>
+                            ${concept.text}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div></div></div>';
+
+            // Essential Formulas
+            html += '<div class="subsection">';
+            html += '<h3>📐 Essential Formulas</h3>';
+            html += '<div class="subsection-content">';
+            content.formulas.forEach(formula => {
+                html += `
+                    <div class="formula-box">
+                        <div class="formula-name">${formula.name}:</div>
+                        ${formula.text}
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+
+            // Memory Tricks
+            html += '<div class="subsection">';
+            html += '<h3>🧠 Memory Tricks & Mnemonics</h3>';
+            html += '<div class="subsection-content"><div class="memory-tricks">';
+            content.tricks.forEach(trick => {
+                html += `
+                    <div class="memory-trick">
+                        <div class="memory-icon">💡</div>
+                        <div class="memory-text">${trick.text}</div>
+                    </div>
+                `;
+            });
+            html += '</div></div></div>';
+
+            // Common Mistakes
+            html += '<div class="subsection">';
+            html += '<h3>⚠️ Common Mistakes to Avoid</h3>';
+            html += '<div class="subsection-content"><div class="mistakes-box"><h4>❌ Watch Out For:</h4><div class="mistakes-list">';
+            content.mistakes.forEach(mistake => {
+                html += `<div class="mistake-item">${mistake}</div>`;
+            });
+            html += '</div></div></div></div>';
+
+            // Practice Questions
+            html += '<div class="subsection">';
+            html += '<h3>✏️ Quick Practice</h3>';
+            html += '<div class="subsection-content"><div class="practice-section"><h4>🎯 Test Your Knowledge:</h4><div class="practice-questions">';
+            content.questions.forEach((q, idx) => {
+                html += `
+                    <div class="question">
+                        <div class="question-text" onclick="toggleAnswer(this)">
+                            <span class="question-number">Q${idx + 1}:</span>
+                            <span>${q.q}</span>
+                            <button class="reveal-btn">Show Answer</button>
+                        </div>
+                        <div class="answer-box">
+                            <div class="answer-label">✓ Answer:</div>
+                            <div class="answer-text">${q.a}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div></div></div></div>';
+
+            html += '</div></div>';
+            return html;
+        }
+
+        // ========== STRONG AREAS ==========
+        function generateStrongAreas(strongAreas) {
+            let html = `
+                <div class="strong-areas">
+                    <h2>⭐ Strong Areas - Keep It Up!</h2>
+                    <div class="strong-categories">
+            `;
+
+            strongAreas.forEach(area => {
+                html += `<span class="strong-badge">${area}</span>`;
+            });
+
+            html += `
+                    </div>
+                    <p class="strong-message">You've mastered these topics. Don't let them slip — review occasionally to maintain your knowledge!</p>
+                </div>
+            `;
+
+            return html;
+        }
+
+        // ========== RECOMMENDATIONS ==========
+        const RECOMMENDATIONS = {
+            'AC Fundamentals': {
+                tools: [
+                    { name: 'AC Waveform Simulator', href: '../tools/ac-waveform.html', desc: 'Visualize frequency, amplitude, and phase' },
+                    { name: 'Impedance Calculator', href: '../tools/impedance-calculator.html', desc: 'Calculate Z with phasor diagrams' },
+                    { name: 'Trig Calculator', href: '../tools/trig-calculator.html', desc: 'Unit circle and trig functions' }
+                ],
+                worksheets: [
+                    { name: 'Reactance Worksheet', href: '../worksheets/reactance.html', desc: 'Practice XL and XC calculations' },
+                    { name: 'Power Worksheet', href: '../worksheets/power.html', desc: 'Power factor and triangle problems' }
+                ],
+                games: [
+                    { name: 'Circuit Connect', href: '../games/circuit-connect.html', desc: 'Rotate tiles to complete AC circuits' },
+                    { name: 'Power Match', href: '../games/power-match.html', desc: 'Match AC formulas and values' }
+                ]
+            },
+            'Properties of L&C': {
+                tools: [
+                    { name: 'Time Constant Calculator', href: '../tools/time-constant.html', desc: 'RC and RL charge/discharge curves' },
+                    { name: 'Impedance Calculator', href: '../tools/impedance-calculator.html', desc: 'See how L and C affect impedance' },
+                    { name: 'Formula Transposing', href: '../tools/formula-transposing.html', desc: 'Practice rearranging L&C formulas' }
+                ],
+                worksheets: [
+                    { name: 'Time Constant Worksheet', href: '../worksheets/time-constant.html', desc: 'RC and RL time constant problems' },
+                    { name: 'Reactance Worksheet', href: '../worksheets/reactance.html', desc: 'Inductive and capacitive reactance' }
+                ],
+                games: [
+                    { name: 'Power Match', href: '../games/power-match.html', desc: 'Match inductor and capacitor properties' },
+                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Spot L&C circuit issues' }
+                ]
+            },
+            'L&C in Circuits': {
+                tools: [
+                    { name: 'AC Waveform Simulator', href: '../tools/ac-waveform.html', desc: 'See L&C effects on waveforms' },
+                    { name: 'Impedance Calculator', href: '../tools/impedance-calculator.html', desc: 'Series and parallel RLC circuits' },
+                    { name: 'Circuit Builder', href: '../tools/circuit-builder.html', desc: 'Build and test L&C circuits' }
+                ],
+                worksheets: [
+                    { name: 'Reactance Worksheet', href: '../worksheets/reactance.html', desc: 'XL, XC, and resonance problems' },
+                    { name: "Ohm's Law Worksheet", href: '../worksheets/ohms-law.html', desc: 'V=IR with reactive components' }
+                ],
+                games: [
+                    { name: 'Circuit Connect', href: '../games/circuit-connect.html', desc: 'Build complete L&C circuits' },
+                    { name: 'Wire Runner', href: '../games/wire-runner.html', desc: 'Navigate through circuit challenges' }
+                ]
+            },
+            'Relays & Contactors': {
+                tools: [
+                    { name: 'Motor Control Simulator', href: '../tools/motor-control.html', desc: 'Start/stop ladder logic with seal-in' },
+                    { name: "Ohm's Law Calculator", href: '../tools/ohms-law.html', desc: 'Coil current calculations' },
+                    { name: 'Circuit Builder', href: '../tools/circuit-builder.html', desc: 'Build relay control circuits' }
+                ],
+                worksheets: [
+                    { name: "Ohm's Law Worksheet", href: '../worksheets/ohms-law.html', desc: 'Relay coil current problems' },
+                    { name: 'Power Worksheet', href: '../worksheets/power.html', desc: 'Contactor power calculations' }
+                ],
+                games: [
+                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Find relay circuit faults' },
+                    { name: 'Circuit Connect', href: '../games/circuit-connect.html', desc: 'Wire up control circuits' }
+                ]
+            },
+            'Timers & Smart Relays': {
+                tools: [
+                    { name: 'Motor Control Simulator', href: '../tools/motor-control.html', desc: 'Timer-based motor control' },
+                    { name: 'Time Constant Calculator', href: '../tools/time-constant.html', desc: 'Timing circuit calculations' }
+                ],
+                worksheets: [
+                    { name: 'Time Constant Worksheet', href: '../worksheets/time-constant.html', desc: 'Timer delay calculations' },
+                    { name: "Ohm's Law Worksheet", href: '../worksheets/ohms-law.html', desc: 'Timer circuit problems' }
+                ],
+                games: [
+                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Find timer circuit errors' },
+                    { name: 'Conduit Tetris', href: '../games/conduit-tetris.html', desc: 'CEC-based stacking game' }
+                ]
+            },
+            'Pilot & Overcurrent Devices': {
+                tools: [
+                    { name: 'Wire Ampacity Lookup', href: '../tools/wire-ampacity.html', desc: 'CEC Table 2 with corrections' },
+                    { name: 'Conductor Sizing', href: '../tools/conductor-sizing.html', desc: 'Size conductors for overcurrent' },
+                    { name: 'Demand Factor Calculator', href: '../tools/demand-factor.html', desc: 'Service and branch calculations' }
+                ],
+                worksheets: [
+                    { name: 'Voltage Drop Worksheet', href: '../worksheets/voltage-drop.html', desc: 'Conductor and protection sizing' },
+                    { name: 'Power Worksheet', href: '../worksheets/power.html', desc: 'Load and protection calculations' }
+                ],
+                games: [
+                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Spot CEC code violations' },
+                    { name: 'Conduit Tetris', href: '../games/conduit-tetris.html', desc: 'CEC conduit fill rules' }
+                ]
+            }
+        };
+
+        function generateRecommendations(weakAreas) {
+            if (weakAreas.length === 0) return '';
+
+            let html = `<div class="recommendations" style="margin:2rem 0;padding:2rem;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);">
+                <h2 style="font-size:1.5rem;margin-bottom:1.5rem;color:var(--accent);">🎯 Recommended For You</h2>
+                <p style="color:var(--muted);margin-bottom:1.5rem;">Based on your diagnostic results, here are the tools, worksheets, and games that will help you improve in your weak areas:</p>`;
+
+            weakAreas.forEach(area => {
+                const recs = RECOMMENDATIONS[area];
+                if (!recs) return;
+
+                html += `<div style="margin-bottom:2rem;padding:1.5rem;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+                    <h3 style="color:var(--text);margin-bottom:1rem;">${area}</h3>`;
+
+                // Tools
+                html += `<div style="margin-bottom:1rem;">
+                    <h4 style="color:var(--accent2);font-size:0.9rem;margin-bottom:0.5rem;">🔧 Recommended Simulators</h4>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">`;
+                recs.tools.forEach(t => {
+                    html += `<a href="${t.href}" style="display:inline-block;padding:0.5rem 1rem;background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.2);border-radius:6px;color:var(--accent2);text-decoration:none;font-size:0.85rem;transition:all 0.2s;" title="${t.desc}">${t.name}</a>`;
+                });
+                html += '</div></div>';
+
+                // Worksheets
+                html += `<div style="margin-bottom:1rem;">
+                    <h4 style="color:var(--green);font-size:0.9rem;margin-bottom:0.5rem;">📝 Practice Worksheets</h4>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">`;
+                recs.worksheets.forEach(w => {
+                    html += `<a href="${w.href}" style="display:inline-block;padding:0.5rem 1rem;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:6px;color:var(--green);text-decoration:none;font-size:0.85rem;transition:all 0.2s;" title="${w.desc}">${w.name}</a>`;
+                });
+                html += '</div></div>';
+
+                // Games
+                html += `<div>
+                    <h4 style="color:var(--accent);font-size:0.9rem;margin-bottom:0.5rem;">🎮 Fun Practice Games</h4>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">`;
+                recs.games.forEach(g => {
+                    html += `<a href="${g.href}" style="display:inline-block;padding:0.5rem 1rem;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:6px;color:var(--accent);text-decoration:none;font-size:0.85rem;transition:all 0.2s;" title="${g.desc}">${g.name}</a>`;
+                });
+                html += '</div></div>';
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // ========== ACTION BUTTONS ==========
+        function generateActionButtons() {
+            return `
+                <div class="action-buttons">
+                    <a href="diagnostic-assessment.html" class="btn btn-primary">📋 Retake Assessment</a>
+                    <a href="../dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+                    <a href="../tools.html" class="btn btn-tertiary">🔧 All Simulators</a>
+                    <a href="../worksheets.html" class="btn btn-tertiary">📝 Worksheets</a>
+                    <a href="../games.html" class="btn btn-tertiary">🎮 Games</a>
+                </div>
+            `;
+        }
+
+        // ========== EVENT LISTENERS ==========
+        function attachEventListeners() {
+            // Toggle sections
+            document.querySelectorAll('.section-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    const content = document.querySelector(`.section-content[data-category="${category}"]`);
+
+                    this.classList.toggle('collapsed');
+                    content.classList.toggle('hidden');
+                });
+            });
+        }
+
+        // ========== TOGGLE ANSWER ==========
+        function toggleAnswer(questionElement) {
+            const answerBox = questionElement.parentElement.querySelector('.answer-box');
+            if (answerBox) {
+                answerBox.classList.toggle('revealed');
+                const btn = questionElement.querySelector('.reveal-btn');
+                if (btn) {
+                    btn.textContent = answerBox.classList.contains('revealed') ? 'Hide Answer' : 'Show Answer';
+                }
+            }
+        }
+    </script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

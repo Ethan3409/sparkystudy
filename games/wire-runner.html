@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wire Runner - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e0e7ff;
+            overflow: hidden;
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 2px solid #f59e0b;
+            padding: 0.75rem 0;
+            position: relative;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .nav-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #f59e0b;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #f59e0b;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            background: none;
+            border: none;
+            cursor: pointer;
+            gap: 0.4rem;
+        }
+
+        .mobile-menu-btn span {
+            width: 25px;
+            height: 2px;
+            background: #f59e0b;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+        }
+
+        /* Game Container */
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 70px);
+            background: #0f172a;
+        }
+
+        #gameContainer {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(15, 23, 42, 1),
+                    rgba(15, 23, 42, 1) 2px,
+                    rgba(30, 41, 59, 0.3) 2px,
+                    rgba(30, 41, 59, 0.3) 4px
+                );
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            image-rendering: crisp-edges;
+        }
+
+        /* HUD Styles */
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #10b981;
+            font-weight: 600;
+            font-size: 1.1rem;
+            z-index: 50;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .hud-item {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .heart {
+            color: #ef4444;
+            font-size: 1.3rem;
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+
+        .pause-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid #f59e0b;
+            color: #f59e0b;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            z-index: 50;
+        }
+
+        .pause-btn:hover {
+            background: rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Screen Overlays */
+        .screen-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(2px);
+        }
+
+        .screen-overlay.hidden {
+            display: none;
+        }
+
+        .screen-content {
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .screen-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .screen-subtitle {
+            font-size: 1.3rem;
+            color: #cbd5e1;
+            margin-bottom: 3rem;
+        }
+
+        .level-theme {
+            font-size: 1rem;
+            color: #10b981;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .stat-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid #f59e0b;
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #f59e0b;
+        }
+
+        .stars {
+            font-size: 3rem;
+            margin: 1rem 0;
+            letter-spacing: 0.5rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            border: 2px solid #f59e0b;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        .animated-electron {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.6));
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .tap-instruction {
+            color: #cbd5e1;
+            margin-top: 2rem;
+            font-size: 0.95rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .instruction-text {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            max-width: 400px;
+        }
+    </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="game-wrapper">
+        <div id="gameContainer">
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- HUD -->
+            <div class="hud">
+                <div class="hud-item">
+                    <span>Level:</span>
+                    <span id="levelDisplay">1</span>
+                </div>
+                <div class="hud-item">
+                    <span>Distance:</span>
+                    <span id="distanceDisplay">0m</span>
+                </div>
+                <div class="hud-item" id="livesDisplay">
+                    <span>Lives:</span>
+                    <span class="heart">❤️❤️❤️</span>
+                </div>
+                <div class="hud-item">
+                    <span>Score:</span>
+                    <span id="scoreDisplay">0</span>
+                </div>
+            </div>
+
+            <button class="pause-btn" id="pauseBtn">PAUSE</button>
+
+            <!-- Start Screen -->
+            <div id="startScreen" class="screen-overlay">
+                <div class="screen-content">
+                    <div class="animated-electron">⚡</div>
+                    <div class="screen-title">Wire Runner</div>
+                    <div class="screen-subtitle">An electrical adventure through circuits</div>
+                    <p class="instruction-text">Help the electron navigate through circuits, jump over obstacles, and collect power-ups!</p>
+                    <button class="btn" onclick="game.startGame()">TAP TO START</button>
+                    <div class="tap-instruction">🔌 Press SPACE or UP ARROW to jump | TAP or CLICK to jump</div>
+                </div>
+            </div>
+
+            <!-- Level Intro Screen -->
+            <div id="levelIntroScreen" class="screen-overlay hidden">
+                <div class="screen-content">
+                    <div class="animated-electron">⚡</div>
+                    <div class="screen-title" id="levelTitle">Level 1</div>
+                    <p class="level-theme" id="levelTheme">Ohm's Law Basics</p>
+                    <p class="instruction-text" id="levelDescription">Learn the fundamentals of electrical circuits</p>
+                    <button class="btn" onclick="game.startLevel()">BEGIN LEVEL</button>
+                </div>
+            </div>
+
+            <!-- Pause Screen -->
+            <div id="pauseScreen" class="screen-overlay hidden">
+                <div class="screen-content">
+                    <div class="screen-title">PAUSED</div>
+                    <p class="instruction-text">Resume your electrical journey</p>
+                    <button class="btn" onclick="game.resumeGame()">RESUME</button>
+                    <button class="btn btn-secondary" onclick="game.goToStart()">MAIN MENU</button>
+                </div>
+            </div>
+
+            <!-- Level Complete Screen -->
+            <div id="levelCompleteScreen" class="screen-overlay hidden">
+                <div class="screen-content">
+                    <div class="screen-title">Level Complete!</div>
+                    <div class="stars" id="starsDisplay">★★★</div>
+                    <div class="game-stats">
+                        <div class="stat-box">
+                            <div class="stat-label">Score</div>
+                            <div class="stat-value" id="completeScore">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Distance</div>
+                            <div class="stat-value" id="completeDistance">0m</div>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="game.nextLevel()">NEXT LEVEL</button>
+                </div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="gameOverScreen" class="screen-overlay hidden">
+                <div class="screen-content">
+                    <div class="screen-title">Game Over!</div>
+                    <div class="game-stats">
+                        <div class="stat-box">
+                            <div class="stat-label">Final Score</div>
+                            <div class="stat-value" id="finalScore">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Level Reached</div>
+                            <div class="stat-value" id="finalLevel">1</div>
+                        </div>
+                    </div>
+                    <p class="instruction-text" id="gameOverMessage">Great effort! Try again to reach new heights.</p>
+                    <button class="btn" onclick="game.goToStart()">TRY AGAIN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LEVELS = [
+            {
+                name: "Ohm's Law Basics",
+                theme: "Simple wire path, obstacles are resistors",
+                description: "Learn the fundamentals of electrical circuits",
+                goalDistance: 500,
+                baseSpeed: 4,
+                obstacleSpawnRate: 0.015,
+                collectibleSpawnRate: 0.008,
+                obstacleTypes: ['resistor'],
+                difficulty: 1
+            },
+            {
+                name: "Series Circuits",
+                theme: "Wire goes through components in a line",
+                description: "Obstacles are blown fuses",
+                goalDistance: 600,
+                baseSpeed: 5,
+                obstacleSpawnRate: 0.018,
+                collectibleSpawnRate: 0.009,
+                obstacleTypes: ['fuse'],
+                difficulty: 1.2
+            },
+            {
+                name: "Parallel Circuits",
+                theme: "Wire splits into paths",
+                description: "Jump between upper and lower paths",
+                goalDistance: 700,
+                baseSpeed: 5.5,
+                obstacleSpawnRate: 0.02,
+                collectibleSpawnRate: 0.01,
+                obstacleTypes: ['resistor', 'fuse'],
+                difficulty: 1.4
+            },
+            {
+                name: "Magnetism",
+                theme: "Moving magnetic fields",
+                description: "Dodge magnetic forces that push you around",
+                goalDistance: 800,
+                baseSpeed: 6,
+                obstacleSpawnRate: 0.022,
+                collectibleSpawnRate: 0.011,
+                obstacleTypes: ['magnet'],
+                difficulty: 1.6
+            },
+            {
+                name: "Faraday's Law",
+                theme: "Induced EMF and coils",
+                description: "Navigate through electromagnetic wind effects",
+                goalDistance: 900,
+                baseSpeed: 6.5,
+                obstacleSpawnRate: 0.025,
+                collectibleSpawnRate: 0.012,
+                obstacleTypes: ['resistor', 'fuse', 'magnet'],
+                difficulty: 1.8
+            },
+            {
+                name: "Conductor Sizing",
+                theme: "Wire gets thinner",
+                description: "The wire narrows - stay in the safe zones",
+                goalDistance: 1000,
+                baseSpeed: 7,
+                obstacleSpawnRate: 0.028,
+                collectibleSpawnRate: 0.013,
+                obstacleTypes: ['resistor', 'fuse', 'magnet'],
+                difficulty: 2
+            },
+            {
+                name: "Conduit Fill",
+                theme: "Run through conduit tubes",
+                description: "Dodge overfilled sections of the conduit",
+                goalDistance: 1100,
+                baseSpeed: 7.5,
+                obstacleSpawnRate: 0.03,
+                collectibleSpawnRate: 0.014,
+                obstacleTypes: ['resistor', 'fuse', 'magnet'],
+                difficulty: 2.2
+            },
+            {
+                name: "Demand Factors",
+                theme: "Power surges everywhere",
+                description: "Manage the chaos of electrical demand",
+                goalDistance: 1200,
+                baseSpeed: 8,
+                obstacleSpawnRate: 0.032,
+                collectibleSpawnRate: 0.015,
+                obstacleTypes: ['resistor', 'fuse', 'magnet'],
+                difficulty: 2.4
+            },
+            {
+                name: "Voltage Drop",
+                theme: "The electron slows down",
+                description: "Collect boosters to maintain your speed",
+                goalDistance: 1300,
+                baseSpeed: 8.5,
+                obstacleSpawnRate: 0.035,
+                collectibleSpawnRate: 0.016,
+                obstacleTypes: ['resistor', 'fuse', 'magnet'],
+                difficulty: 2.6
+            },
+            {
+                name: "Final Exam",
+                theme: "Everything combined",
+                description: "Face the ultimate electrical challenge",
+                goalDistance: 1500,
+                baseSpeed: 9,
+                obstacleSpawnRate: 0.04,
+                collectibleSpawnRate: 0.018,
+                obstacleTypes: ['resistor', 'fuse', 'magnet'],
+                difficulty: 3
+            }
+        ];
+
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.gameState = 'start'; // start, levelIntro, playing, paused, levelComplete, gameOver
+                this.currentLevel = 0;
+                this.score = 0;
+                this.lives = 3;
+                this.distance = 0;
+                this.particles = [];
+                this.gameRunning = false;
+                this.gamePaused = false;
+
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.gameLoop();
+            }
+
+            setupCanvas() {
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+                window.addEventListener('resize', () => this.handleResize());
+            }
+
+            handleResize() {
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+            }
+
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' || e.code === 'ArrowUp') {
+                        e.preventDefault();
+                        if (this.gameState === 'playing' && !this.gamePaused) {
+                            this.electron?.jump();
+                        }
+                    }
+                    if (e.code === 'KeyP' && this.gameState === 'playing') {
+                        this.togglePause();
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (this.gameState === 'playing' && !this.gamePaused && e.target === this.canvas) {
+                        this.electron?.jump();
+                    }
+                });
+
+                this.canvas.addEventListener('touchstart', () => {
+                    if (this.gameState === 'playing' && !this.gamePaused) {
+                        this.electron?.jump();
+                    }
+                });
+
+                document.getElementById('pauseBtn').addEventListener('click', () => {
+                    if (this.gameState === 'playing') {
+                        this.togglePause();
+                    }
+                });
+            }
+
+            startGame() {
+                this.currentLevel = 0;
+                this.score = 0;
+                this.lives = 3;
+                this.distance = 0;
+                this.showLevelIntro();
+            }
+
+            showLevelIntro() {
+                this.gameState = 'levelIntro';
+                const level = LEVELS[this.currentLevel];
+                document.getElementById('levelTitle').textContent = `Level ${this.currentLevel + 1}`;
+                document.getElementById('levelTheme').textContent = level.name;
+                document.getElementById('levelDescription').textContent = level.theme;
+                this.setScreenVisible('levelIntroScreen', true);
+            }
+
+            startLevel() {
+                this.setScreenVisible('levelIntroScreen', false);
+                this.gameState = 'playing';
+                this.gamePaused = false;
+                this.distance = 0;
+
+                const level = LEVELS[this.currentLevel];
+                this.electron = new Electron(this, level);
+                this.obstacles = [];
+                this.collectibles = [];
+                this.levelStartTime = Date.now();
+
+                this.updateHUD();
+            }
+
+            togglePause() {
+                this.gamePaused = !this.gamePaused;
+                this.setScreenVisible('pauseScreen', this.gamePaused);
+                document.getElementById('pauseBtn').textContent = this.gamePaused ? 'RESUME' : 'PAUSE';
+            }
+
+            resumeGame() {
+                this.gamePaused = false;
+                this.setScreenVisible('pauseScreen', false);
+                document.getElementById('pauseBtn').textContent = 'PAUSE';
+            }
+
+            goToStart() {
+                this.gameState = 'start';
+                this.electron = null;
+                this.obstacles = [];
+                this.collectibles = [];
+                this.particles = [];
+                this.setScreenVisible('startScreen', true);
+                this.setScreenVisible('pauseScreen', false);
+                this.setScreenVisible('levelCompleteScreen', false);
+                this.setScreenVisible('gameOverScreen', false);
+                document.getElementById('pauseBtn').textContent = 'PAUSE';
+            }
+
+            nextLevel() {
+                this.currentLevel++;
+                if (this.currentLevel >= LEVELS.length) {
+                    this.gameOver(true);
+                } else {
+                    this.showLevelIntro();
+                }
+            }
+
+            addScore(points) {
+                this.score += points;
+                this.createParticles(this.electron.x, this.electron.y, points, '#fbbf24');
+            }
+
+            loseLife() {
+                this.lives--;
+                if (this.lives <= 0) {
+                    this.gameOver(false);
+                }
+                this.updateHUD();
+            }
+
+            gameOver(won) {
+                this.gameState = 'gameOver';
+                const finalScore = this.score;
+                const finalLevel = this.currentLevel + 1;
+
+                document.getElementById('finalScore').textContent = finalScore;
+                document.getElementById('finalLevel').textContent = finalLevel;
+
+                if (won) {
+                    document.getElementById('gameOverMessage').textContent = `🎉 Congratulations! You've completed all levels!`;
+                } else {
+                    document.getElementById('gameOverMessage').textContent = `Great effort! You reached Level ${finalLevel}. Try again to go further!`;
+                }
+
+                this.setScreenVisible('gameOverScreen', true);
+            }
+
+            levelComplete() {
+                this.gameState = 'levelComplete';
+                const score = this.score;
+                const distance = this.distance;
+                const stars = Math.min(3, Math.max(1, Math.floor(distance / (LEVELS[this.currentLevel].goalDistance / 3))));
+
+                document.getElementById('completeScore').textContent = score;
+                document.getElementById('completeDistance').textContent = Math.floor(distance) + 'm';
+                document.getElementById('starsDisplay').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+
+                this.setScreenVisible('levelCompleteScreen', true);
+            }
+
+            updateHUD() {
+                document.getElementById('levelDisplay').textContent = this.currentLevel + 1;
+                document.getElementById('distanceDisplay').textContent = Math.floor(this.distance) + 'm';
+                document.getElementById('scoreDisplay').textContent = this.score;
+
+                const hearts = '❤️'.repeat(Math.max(0, this.lives));
+                const emptyHearts = '🖤'.repeat(Math.max(0, 3 - this.lives));
+                document.getElementById('livesDisplay').innerHTML = `
+                    <span>Lives:</span>
+                    <span class="heart">${hearts}${emptyHearts}</span>
+                `;
+            }
+
+            setScreenVisible(id, visible) {
+                const screen = document.getElementById(id);
+                if (visible) {
+                    screen.classList.remove('hidden');
+                } else {
+                    screen.classList.add('hidden');
+                }
+            }
+
+            createParticles(x, y, amount, color) {
+                for (let i = 0; i < amount; i++) {
+                    this.particles.push({
+                        x, y,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8 - 2,
+                        life: 1,
+                        size: 4 + Math.random() * 4,
+                        color
+                    });
+                }
+            }
+
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            update() {
+                if (this.gameState !== 'playing' || this.gamePaused) return;
+
+                const level = LEVELS[this.currentLevel];
+
+                // Update electron
+                this.electron.update();
+                this.distance += this.electron.currentSpeed / 60;
+
+                // Spawn obstacles
+                if (Math.random() < level.obstacleSpawnRate) {
+                    this.spawnObstacle();
+                }
+
+                // Spawn collectibles
+                if (Math.random() < level.collectibleSpawnRate) {
+                    this.spawnCollectible();
+                }
+
+                // Update obstacles
+                this.obstacles = this.obstacles.filter(obstacle => {
+                    obstacle.update(this.electron.currentSpeed);
+                    if (obstacle.x < -100) return false;
+
+                    if (this.electron.collidesWith(obstacle)) {
+                        this.createParticles(this.electron.x, this.electron.y, 10, '#ef4444');
+                        this.loseLife();
+                        return false;
+                    }
+                    return true;
+                });
+
+                // Update collectibles
+                this.collectibles = this.collectibles.filter(collectible => {
+                    collectible.update(this.electron.currentSpeed);
+                    if (collectible.x < -100) return false;
+
+                    if (this.electron.collidesWith(collectible)) {
+                        this.addScore(10);
+                        return false;
+                    }
+                    return true;
+                });
+
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.2;
+                    p.life -= 0.02;
+                    return p.life > 0;
+                });
+
+                // Check level complete
+                if (this.distance >= level.goalDistance) {
+                    this.levelComplete();
+                }
+
+                this.updateHUD();
+            }
+
+            spawnObstacle() {
+                const level = LEVELS[this.currentLevel];
+                const type = level.obstacleTypes[Math.floor(Math.random() * level.obstacleTypes.length)];
+                this.obstacles.push(new Obstacle(this.canvas.width, this.electron.groundY, type));
+            }
+
+            spawnCollectible() {
+                const y = this.electron.groundY - 30 - Math.random() * 80;
+                this.collectibles.push(new Collectible(this.canvas.width, y));
+            }
+
+            render() {
+                this.ctx.fillStyle = '#0f172a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw circuit grid
+                this.ctx.strokeStyle = 'rgba(30, 41, 59, 0.3)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x < this.canvas.width; x += 40) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+
+                // Draw wire
+                if (this.electron) {
+                    this.ctx.strokeStyle = '#10b981';
+                    this.ctx.lineWidth = 8;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, this.electron.groundY);
+
+                    // Make wire wavy
+                    for (let x = 0; x < this.canvas.width; x += 30) {
+                        const offset = Math.sin(this.electron.y / 50 + Date.now() / 2000) * 5;
+                        this.ctx.lineTo(x, this.electron.groundY + offset);
+                    }
+                    this.ctx.lineTo(this.canvas.width, this.electron.groundY);
+                    this.ctx.stroke();
+                    this.ctx.shadowColor = 'transparent';
+                }
+
+                // Draw collectibles
+                this.collectibles.forEach(collectible => collectible.draw(this.ctx));
+
+                // Draw obstacles
+                this.obstacles.forEach(obstacle => obstacle.draw(this.ctx));
+
+                // Draw electron
+                if (this.electron) {
+                    this.electron.draw(this.ctx);
+                }
+
+                // Draw particles
+                this.particles.forEach(p => {
+                    this.ctx.fillStyle = p.color.replace(')', `, ${p.life})`).replace('rgb', 'rgba');
+                    this.ctx.shadowColor = p.color;
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                this.ctx.shadowColor = 'transparent';
+            }
+        }
+
+        class Electron {
+            constructor(game, level) {
+                this.game = game;
+                this.level = level;
+                this.x = 100;
+                this.groundY = game.canvas.height - 120;
+                this.y = this.groundY;
+                this.width = 20;
+                this.height = 20;
+                this.velocityY = 0;
+                this.gravity = 0.6;
+                this.jumpPower = -13;
+                this.currentSpeed = level.baseSpeed;
+                this.baseSpeed = level.baseSpeed;
+                this.isJumping = false;
+                this.canJump = true;
+                this.canDoubleJump = true;
+                this.trail = [];
+                this.glowIntensity = 0;
+                this.isDucking = false;
+            }
+
+            jump() {
+                if (this.canJump) {
+                    this.velocityY = this.jumpPower;
+                    this.isJumping = true;
+                    this.canJump = false;
+                    this.game.createParticles(this.x, this.y, 5, '#f59e0b');
+                } else if (this.canDoubleJump) {
+                    this.velocityY = this.jumpPower * 0.75;
+                    this.canDoubleJump = false;
+                    this.game.createParticles(this.x, this.y, 5, '#f59e0b');
+                }
+            }
+
+            update() {
+                // Gradually increase speed
+                const speedIncrease = (this.level.difficulty * 0.1) * (this.game.distance / 1000);
+                this.currentSpeed = this.baseSpeed + speedIncrease;
+
+                this.velocityY += this.gravity;
+                this.y += this.velocityY;
+
+                // Ground collision
+                if (this.y >= this.groundY) {
+                    this.y = this.groundY;
+                    this.velocityY = 0;
+                    this.isJumping = false;
+                    this.canJump = true;
+                    this.canDoubleJump = true;
+                }
+
+                // Update trail
+                this.trail.push({ x: this.x, y: this.y, life: 1 });
+                if (this.trail.length > 15) {
+                    this.trail.shift();
+                }
+                this.trail.forEach(t => t.life -= 0.07);
+
+                this.glowIntensity = 0.5 + Math.sin(Date.now() / 200) * 0.3;
+            }
+
+            collidesWith(object) {
+                return !(this.x + this.width < object.x ||
+                         this.x > object.x + object.width ||
+                         this.y + this.height < object.y ||
+                         this.y > object.y + object.height);
+            }
+
+            draw(ctx) {
+                // Draw trail
+                this.trail.forEach(t => {
+                    ctx.fillStyle = `rgba(245, 158, 11, ${t.life * 0.3})`;
+                    ctx.shadowColor = `rgba(245, 158, 11, ${t.life * 0.5})`;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Draw electron
+                ctx.fillStyle = '#f59e0b';
+                ctx.shadowColor = `rgba(245, 158, 11, ${0.5 + this.glowIntensity})`;
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw outer glow
+                ctx.strokeStyle = `rgba(245, 158, 11, ${this.glowIntensity * 0.5})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.shadowColor = 'transparent';
+            }
+        }
+
+        class Obstacle {
+            constructor(x, groundY, type) {
+                this.x = x;
+                this.groundY = groundY;
+                this.type = type;
+                this.width = 30;
+                this.height = 40;
+                this.y = groundY - this.height;
+
+                // Vary size slightly
+                if (Math.random() > 0.5) {
+                    this.height = 60;
+                    this.y = groundY - this.height;
+                }
+            }
+
+            update(speed) {
+                this.x -= speed;
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = '#ef4444';
+                ctx.shadowColor = 'rgba(239, 68, 68, 0.6)';
+                ctx.shadowBlur = 15;
+
+                if (this.type === 'resistor') {
+                    // Zig-zag resistor shape
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y + this.height * 0.3);
+                    ctx.lineTo(this.x + this.width * 0.2, this.y);
+                    ctx.lineTo(this.x + this.width * 0.4, this.y + this.height * 0.3);
+                    ctx.lineTo(this.x + this.width * 0.6, this.y - this.height * 0.1);
+                    ctx.lineTo(this.x + this.width * 0.8, this.y + this.height * 0.3);
+                    ctx.lineTo(this.x + this.width, this.y);
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                } else if (this.type === 'fuse') {
+                    // Fuse shape
+                    ctx.fillRect(this.x + 5, this.y, this.width - 10, this.height);
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fillRect(this.x + 8, this.y + 8, this.width - 16, this.height - 16);
+                } else if (this.type === 'magnet') {
+                    // Magnet shape
+                    ctx.fillRect(this.x, this.y, this.width / 2, this.height);
+                    ctx.fillStyle = '#3b82f6';
+                    ctx.fillRect(this.x + this.width / 2, this.y, this.width / 2, this.height);
+                }
+
+                ctx.shadowColor = 'transparent';
+            }
+        }
+
+        class Collectible {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 15;
+                this.height = 15;
+                this.rotation = 0;
+                this.bobOffset = 0;
+            }
+
+            update(speed) {
+                this.x -= speed;
+                this.rotation += 0.1;
+                this.bobOffset = Math.sin(this.rotation * 2) * 3;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y + this.bobOffset);
+                ctx.rotate(this.rotation);
+
+                ctx.fillStyle = '#3b82f6';
+                ctx.shadowColor = 'rgba(59, 130, 246, 0.8)';
+                ctx.shadowBlur = 15;
+
+                // Draw star
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * 4 * Math.PI) / 5;
+                    const x = Math.cos(angle - Math.PI / 2) * 8;
+                    const y = Math.sin(angle - Math.PI / 2) * 8;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.shadowColor = 'transparent';
+                ctx.restore();
+            }
+        }
+
+        // Initialize game
+        const game = new Game();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

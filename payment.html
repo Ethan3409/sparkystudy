@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment — SpartyStudy</title>
+    <title>Checkout - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
             --bg: #0d1117;
             --panel: #161b22;
-            --panel2: #1c2128;
             --border: #30363d;
             --text: #e6edf3;
             --muted: #8b949e;
@@ -20,670 +18,983 @@
             --red: #ef4444;
         }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg);
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
             color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            line-height: 1.6;
         }
 
-        /* NAV */
+        /* Navbar */
         nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 32px;
-            height: 60px;
+            background-color: var(--panel);
             border-bottom: 1px solid var(--border);
-            background: var(--panel);
-        }
-        .nav-logo {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--accent);
-            text-decoration: none;
-            letter-spacing: -0.5px;
-        }
-        .nav-logo span { color: var(--text); }
-        .nav-back {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 0.875rem;
-            transition: color 0.2s;
-        }
-        .nav-back:hover { color: var(--text); }
-
-        /* MAIN LAYOUT */
-        main {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 480px;
-            max-width: 1100px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 48px 24px;
-            gap: 48px;
-            align-items: start;
-        }
-
-        /* ORDER SUMMARY (LEFT) */
-        .order-summary {
-            position: sticky;
-            top: 24px;
-        }
-        .order-summary h2 {
-            font-size: 0.75rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 20px;
-        }
-
-        .plan-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-        .plan-card.active-plan { border-color: var(--accent); }
-
-        .plan-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .plan-btn {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--panel2);
-            color: var(--muted);
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-        .plan-btn.active {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: rgba(245,158,11,0.08);
-        }
-        .plan-btn:hover:not(.active) {
-            border-color: var(--muted);
-            color: var(--text);
-        }
-
-        .plan-name {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-        .plan-desc {
-            font-size: 0.875rem;
-            color: var(--muted);
-            margin-bottom: 16px;
-        }
-
-        .price-display {
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
-            margin-bottom: 4px;
-        }
-        .price-big {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--accent);
-        }
-        .price-period {
-            font-size: 0.9rem;
-            color: var(--muted);
-        }
-        .price-note {
-            font-size: 0.8rem;
-            color: var(--muted);
-            margin-bottom: 20px;
-        }
-
-        .trial-badge-inline {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(16,185,129,0.12);
-            border: 1px solid rgba(16,185,129,0.3);
-            color: var(--green);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            padding: 4px 10px;
-            border-radius: 20px;
-            margin-bottom: 16px;
-        }
-
-        .feature-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.875rem;
-            color: var(--text);
-        }
-        .feature-list li::before {
-            content: '✓';
-            color: var(--green);
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .divider {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 20px 0;
-        }
-
-        .total-row {
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
-            font-size: 0.9rem;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .total-row .label { color: var(--muted); }
-        .total-row .value { color: var(--text); font-weight: 600; }
-        .total-row.big .label { font-size: 1rem; color: var(--text); font-weight: 700; }
-        .total-row.big .value { font-size: 1.2rem; color: var(--accent); font-weight: 800; }
 
-        /* GROUP CONFIG */
-        .group-config-box {
-            background: var(--panel2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-        .group-config-box label {
-            font-size: 0.8rem;
-            color: var(--muted);
-            display: block;
-            margin-bottom: 10px;
-        }
-        .slider-row {
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--accent);
+            text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 0.5rem;
         }
-        input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            height: 4px;
-            border-radius: 2px;
-            background: var(--border);
-            outline: none;
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
         }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: 3px solid var(--panel);
-            box-shadow: 0 0 0 1px var(--accent);
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            transition: color 0.3s;
         }
-        .slider-count {
-            min-width: 32px;
-            text-align: center;
-            font-size: 1.1rem;
-            font-weight: 700;
+
+        .nav-links a:hover {
             color: var(--accent);
         }
 
-        /* PAYMENT FORM (RIGHT) */
-        .payment-form-wrap h2 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-        .payment-form-wrap .subtitle {
-            font-size: 0.875rem;
-            color: var(--muted);
-            margin-bottom: 28px;
+        /* Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            min-height: calc(100vh - 70px);
         }
 
-        .secure-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            color: var(--muted);
-            margin-bottom: 24px;
+        /* Main Form */
+        .checkout-form {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
         }
-        .secure-badge svg { color: var(--green); }
 
         .form-section {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 16px;
-        }
-        .form-section-title {
-            font-size: 0.75rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 16px;
+            margin-bottom: 2rem;
         }
 
+        .form-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* Plan Selector Tabs */
+        .plan-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .plan-tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .plan-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .plan-tab:hover {
+            color: var(--text);
+        }
+
+        /* Form Group */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent2);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--muted);
+        }
+
+        /* Two Column Layout */
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 1rem;
         }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
-        .form-group:last-child { margin-bottom: 0; }
-        .form-group.full { grid-column: 1 / -1; }
 
-        label {
-            font-size: 0.8rem;
-            font-weight: 500;
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        /* Card Details */
+        .card-input-group {
+            position: relative;
+        }
+
+        .card-icon {
+            position: absolute;
+            right: 1rem;
+            top: 2.5rem;
+            font-size: 1.5rem;
+            pointer-events: none;
             color: var(--muted);
         }
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        select {
-            background: var(--panel2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 0.9rem;
-            padding: 10px 14px;
-            outline: none;
-            width: 100%;
-            transition: border-color 0.2s;
-        }
-        input::placeholder { color: var(--muted); opacity: 0.6; }
-        input:focus, select:focus { border-color: var(--accent2); }
-        select option { background: var(--panel); }
 
-        /* Card input mock */
-        .card-input-group {
-            background: var(--panel2);
-            border: 1px solid var(--border);
+        input[type="password"] {
+            letter-spacing: 0.2em;
+        }
+
+        /* Promo Code Section */
+        .promo-section {
+            background-color: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.2);
             border-radius: 8px;
-            overflow: hidden;
-            transition: border-color 0.2s;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-        .card-input-group:focus-within { border-color: var(--accent2); }
-        .card-number-row {
+
+        .promo-input-group {
             display: flex;
-            align-items: center;
-            padding: 10px 14px;
-            gap: 10px;
-            border-bottom: 1px solid var(--border);
+            gap: 0.75rem;
         }
-        .card-number-row input {
+
+        .promo-input-group input {
             flex: 1;
-            background: transparent;
+        }
+
+        .promo-input-group button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--accent2);
+            color: white;
             border: none;
-            padding: 0;
-            font-size: 0.9rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
         }
-        .card-number-row input:focus { border: none; }
-        .card-icons {
-            display: flex;
-            gap: 4px;
-            opacity: 0.4;
+
+        .promo-input-group button:hover {
+            background-color: #79c0ff;
         }
-        .card-icon {
-            width: 30px;
-            height: 20px;
-            border-radius: 3px;
-            background: var(--muted);
-            font-size: 0.5rem;
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .status-message.show {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: var(--panel);
+            gap: 0.75rem;
         }
-        .card-bottom-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-        }
-        .card-bottom-row input {
-            background: transparent;
-            border: none;
-            padding: 10px 14px;
-            font-size: 0.9rem;
-        }
-        .card-bottom-row input:first-child {
-            border-right: 1px solid var(--border);
-        }
-        .card-bottom-row input:focus { border-color: transparent; }
 
-        /* Submit button */
-        .btn-pay {
+        .status-message.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--green);
+            color: var(--green);
+        }
+
+        .status-message.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Submit Button */
+        .submit-btn {
             width: 100%;
-            padding: 16px;
-            border-radius: 10px;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--accent), #f59e0b);
+            color: var(--bg);
             border: none;
-            background: var(--accent);
-            color: #000;
-            font-size: 1rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 8px;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            margin-top: 2rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Sidebar */
+        .order-summary {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+
+        .order-summary h3 {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            color: var(--muted);
+        }
+
+        .summary-item.label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .summary-divider {
+            border-top: 2px solid var(--border);
+            margin: 1.5rem 0;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background-color: var(--green);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        /* Security Badges */
+        .security-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .badge {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn-pay:hover {
-            background: #fbbf24;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(245,158,11,0.4);
-        }
-        .btn-pay:active { transform: translateY(0); }
-
-        .pay-note {
-            font-size: 0.75rem;
+            gap: 0.5rem;
+            font-size: 0.875rem;
             color: var(--muted);
+        }
+
+        .badge-icon {
+            font-size: 1rem;
+        }
+
+        /* Success Animation */
+        .success-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--panel);
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 3rem;
             text-align: center;
-            margin-top: 12px;
-            line-height: 1.5;
+            z-index: 1000;
+            min-width: 300px;
+            display: none;
+            animation: popIn 0.5s ease-out;
         }
-        .pay-note a { color: var(--accent2); text-decoration: none; }
-        .pay-note a:hover { text-decoration: underline; }
 
-        /* Trial note for Elite */
-        .trial-info-box {
-            background: rgba(16,185,129,0.08);
-            border: 1px solid rgba(16,185,129,0.25);
-            border-radius: 8px;
-            padding: 14px 16px;
-            font-size: 0.85rem;
-            color: var(--green);
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-        .trial-info-box strong { color: #34d399; }
-
-        @media (max-width: 800px) {
-            main {
-                grid-template-columns: 1fr;
-                padding: 24px 16px;
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
             }
-            .order-summary { position: static; }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-animation h2 {
+            color: var(--green);
+            margin-bottom: 1rem;
+        }
+
+        .success-animation p {
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .success-checkmark {
+            font-size: 3rem;
+            color: var(--green);
+            margin-bottom: 1rem;
+            animation: scaleCheckmark 0.6s ease-out;
+        }
+
+        @keyframes scaleCheckmark {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .order-summary {
+                position: static;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .plan-tabs {
+                flex-direction: column;
+            }
         }
     </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = 'login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = 'login.html';
+    }
+})();
+</script>
 </head>
 <body>
-
-<nav>
-    <a href="index.html" class="nav-logo">Sparty<span>Study</span></a>
-    <a href="pricing.html" class="nav-back">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Back to plans
-    </a>
-</nav>
-
-<main>
-    <!-- LEFT: ORDER SUMMARY -->
-    <div class="order-summary">
-        <h2>Order Summary</h2>
-
-        <div class="plan-selector">
-            <button class="plan-btn active" id="btnElite" onclick="selectPlan('elite')">Elite</button>
-            <button class="plan-btn" id="btnGroup" onclick="selectPlan('group')">GroupElite</button>
+    <!-- Navbar -->
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link">Worksheets</a>
+        <a href="achievements.html" class="nav-link">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
         </div>
+    </nav>
 
-        <div class="plan-card active-plan" id="eliteCard">
-            <div class="plan-name">Elite</div>
-            <div class="plan-desc">Everything you need to crush your exam.</div>
-            <div class="trial-badge-inline">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                7-DAY FREE TRIAL — No card charged today
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Checkout Form -->
+        <form class="checkout-form" id="paymentForm">
+            <!-- Plan Selector -->
+            <div class="form-section">
+                <h2>Select Your Plan</h2>
+                <div class="plan-tabs">
+                    <button type="button" class="plan-tab active" data-plan="elite" onclick="selectPlan(event)">
+                        Elite - $99/year
+                    </button>
+                    <button type="button" class="plan-tab" data-plan="groupelite" onclick="selectPlan(event)">
+                        GroupElite - Sliding Scale
+                    </button>
+                </div>
+                <input type="hidden" id="selectedPlan" name="plan" value="elite">
             </div>
-            <div class="price-display">
-                <span class="price-big">$99</span>
-                <span class="price-period">/ year</span>
-            </div>
-            <div class="price-note">$8.25/month — billed annually after trial</div>
-            <hr class="divider">
-            <ul class="feature-list">
-                <li>Every module, Period 1 & 2</li>
-                <li>Unlimited quizzes, flashcards & fill-in-blank</li>
-                <li>AI placement assessment & study plan</li>
-                <li>Live circuit builder & all simulators</li>
-                <li>Full CEC code calculators</li>
-                <li>Progress tracking & reports</li>
-            </ul>
-            <hr class="divider">
-            <div class="total-row"><span class="label">Today's charge</span><span class="value" style="color:var(--green)">$0.00</span></div>
-            <div style="margin-top:8px"></div>
-            <div class="total-row big"><span class="label">After 7-day trial</span><span class="value">$99.00 / yr</span></div>
-        </div>
 
-        <div class="plan-card" id="groupCard" style="display:none">
-            <div class="plan-name">GroupElite</div>
-            <div class="plan-desc">Elite access for your whole study crew.</div>
-            <div class="group-config-box">
-                <label>People in your group</label>
-                <div class="slider-row">
-                    <input type="range" id="groupSlider" min="2" max="10" value="4" oninput="updateGroup()">
-                    <span class="slider-count" id="groupCountDisplay">4</span>
+            <!-- Promo Code Section -->
+            <div class="form-section">
+                <h2>Promo Code (Optional)</h2>
+                <div class="promo-section">
+                    <div class="promo-input-group">
+                        <input type="text" id="promoCode" placeholder="Enter promo code..." maxlength="20">
+                        <button type="button" onclick="applyPromoCode()">Apply</button>
+                    </div>
+                    <div id="promoStatus" class="status-message"></div>
                 </div>
             </div>
-            <div class="price-display">
-                <span class="price-big" id="groupPriceDisplay">$79</span>
-                <span class="price-period">/ person / yr</span>
+
+            <!-- Contact Information -->
+            <div class="form-section">
+                <h2>Contact Information</h2>
+                <div class="form-group">
+                    <label for="fullname">Full Name</label>
+                    <input type="text" id="fullname" name="fullname" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="john@example.com">
+                </div>
             </div>
-            <div class="price-note" id="groupPerMonthDisplay">≈ $6.58/month each</div>
-            <hr class="divider">
-            <ul class="feature-list">
-                <li>Everything in Elite for every member</li>
-                <li>Shared group progress & scores</li>
-                <li>One manager pays for everyone</li>
-                <li>More people = cheaper per person</li>
-            </ul>
-            <hr class="divider">
-            <div class="total-row"><span class="label">People</span><span class="value" id="groupPeopleLabel">4</span></div>
-            <div style="margin-top:8px"></div>
-            <div class="total-row big"><span class="label">Total / year</span><span class="value" id="groupTotalDisplay">$316</span></div>
+
+            <!-- Payment Information -->
+            <div class="form-section">
+                <h2>Payment Information</h2>
+
+                <div class="form-group card-input-group">
+                    <label for="cardnumber">Card Number</label>
+                    <input type="text" id="cardnumber" name="cardnumber" placeholder="1234 5678 9012 3456" maxlength="19" required onkeyup="formatCardNumber(this)">
+                    <div class="card-icon" id="cardIcon">💳</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expiry">Expiry Date</label>
+                        <input type="text" id="expiry" name="expiry" placeholder="MM/YY" maxlength="5" required onkeyup="formatExpiry(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="cvv">CVV</label>
+                        <input type="password" id="cvv" name="cvv" placeholder="•••" maxlength="4" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <select id="country" name="country" required>
+                        <option value="">Select your country</option>
+                        <option value="US">United States</option>
+                        <option value="CA">Canada</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="AU">Australia</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="IT">Italy</option>
+                        <option value="ES">Spain</option>
+                        <option value="NL">Netherlands</option>
+                        <option value="SE">Sweden</option>
+                        <option value="JP">Japan</option>
+                        <option value="CN">China</option>
+                        <option value="IN">India</option>
+                        <option value="MX">Mexico</option>
+                        <option value="BR">Brazil</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn">Complete Purchase</button>
+        </form>
+
+        <!-- Order Summary Sidebar -->
+        <div class="order-summary">
+            <h3>Order Summary</h3>
+
+            <div class="summary-item label">
+                <span id="planName">Elite Plan</span>
+                <span id="planPrice">$99.00</span>
+            </div>
+
+            <div id="discountInfo" style="display: none;">
+                <div class="summary-item">
+                    <span>Discount (<span id="discountPercent">0</span>%)</span>
+                    <span style="color: var(--green);">-$<span id="discountAmount">0.00</span></span>
+                </div>
+                <div class="discount-badge">✓ Applied</div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-total">
+                <span>Total</span>
+                <span id="totalPrice">$99.00</span>
+            </div>
+
+            <!-- Security Badges -->
+            <div class="security-badges">
+                <div class="badge">
+                    <span class="badge-icon">🔒</span>
+                    <span>Secure Checkout</span>
+                </div>
+                <div class="badge">
+                    <span class="badge-icon">🔐</span>
+                    <span>256-bit SSL Encryption</span>
+                </div>
+                <div class="badge">
+                    <span class="badge-icon">✓</span>
+                    <span>PCI DSS Compliant</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- RIGHT: PAYMENT FORM -->
-    <div class="payment-form-wrap">
-        <h2 id="formTitle">Start Your Free Trial</h2>
-        <p class="subtitle" id="formSubtitle">Enter your details below. You won't be charged until after your 7-day trial.</p>
-
-        <div class="secure-badge">
-            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-            256-bit SSL encryption — your payment info is secure
-        </div>
-
-        <div class="trial-info-box" id="trialInfoBox">
-            <strong>Free trial active.</strong> Your card will be saved but <strong>not charged today</strong>. Your $99/year plan starts after 7 days. Cancel anytime before then — zero cost.
-        </div>
-
-        <!-- Account -->
-        <div class="form-section">
-            <div class="form-section-title">Account</div>
-            <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" placeholder="John Smith" autocomplete="name">
-            </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="you@email.com" autocomplete="email">
-            </div>
-            <div class="form-group">
-                <label for="password">Create Password</label>
-                <input type="text" id="password" placeholder="Min. 8 characters" autocomplete="new-password" style="letter-spacing: 0;">
-            </div>
-        </div>
-
-        <!-- Group member count (GroupElite only) -->
-        <div class="form-section" id="groupSection" style="display:none">
-            <div class="form-section-title">Group Setup</div>
-            <div class="form-group">
-                <label for="groupName">Group / Company Name (optional)</label>
-                <input type="text" id="groupName" placeholder="e.g. Red Seal Study Crew">
-            </div>
-            <div class="form-group">
-                <label>Invite Members (optional — you can do this later)</label>
-                <input type="text" id="invite1" placeholder="member@email.com">
-            </div>
-        </div>
-
-        <!-- Payment -->
-        <div class="form-section">
-            <div class="form-section-title">Payment</div>
-
-            <div class="form-group">
-                <label>Card Number</label>
-                <div class="card-input-group">
-                    <div class="card-number-row">
-                        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)">
-                        <div class="card-icons">
-                            <div class="card-icon">VISA</div>
-                            <div class="card-icon">MC</div>
-                        </div>
-                    </div>
-                    <div class="card-bottom-row">
-                        <input type="text" id="cardExpiry" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
-                        <input type="text" id="cardCvc" placeholder="CVC" maxlength="4">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group full">
-                    <label for="cardName">Name on Card</label>
-                    <input type="text" id="cardName" placeholder="John Smith" autocomplete="cc-name">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="country">Country</label>
-                <select id="country">
-                    <option value="CA" selected>Canada</option>
-                    <option value="US">United States</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="AU">Australia</option>
-                    <option value="NZ">New Zealand</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-        </div>
-
-        <button class="btn-pay" onclick="handlePay()">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-            <span id="payBtnText">Start Free Trial — $0 Today</span>
-        </button>
-
-        <p class="pay-note">
-            By continuing you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br>
-            Cancel anytime from your account settings. No hidden fees.
-        </p>
+    <!-- Success Animation -->
+    <div class="overlay" id="overlay"></div>
+    <div class="success-animation" id="successAnimation">
+        <div class="success-checkmark">✓</div>
+        <h2>Payment Successful!</h2>
+        <p>Your subscription is now active. Welcome to SparkStudy!</p>
+        <button class="submit-btn" onclick="redirectToDashboard()" style="margin-top: 1rem;">Go to Dashboard</button>
     </div>
-</main>
 
-<script>
-    let currentPlan = 'elite';
+    <script>
+        // Promo Codes - hardcoded defaults + admin-created from localStorage
+        const defaultCodes = {
+            'FREE_ACCESS': { discount: 100, label: '100% off forever', type: 'permanent' },
+            'HALF_OFF': { discount: 50, label: '50% off first year', type: 'firstyear' },
+            'STUDENT2026': { discount: 25, label: '25% off', type: 'permanent' }
+        };
 
-    // Check URL params
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('plan') === 'group') selectPlan('group');
-
-    function selectPlan(plan) {
-        currentPlan = plan;
-
-        document.getElementById('btnElite').classList.toggle('active', plan === 'elite');
-        document.getElementById('btnGroup').classList.toggle('active', plan === 'group');
-        document.getElementById('eliteCard').style.display = plan === 'elite' ? '' : 'none';
-        document.getElementById('groupCard').style.display = plan === 'group' ? '' : 'none';
-        document.getElementById('groupSection').style.display = plan === 'group' ? '' : 'none';
-        document.getElementById('trialInfoBox').style.display = plan === 'elite' ? '' : 'none';
-
-        if (plan === 'elite') {
-            document.getElementById('formTitle').textContent = 'Start Your Free Trial';
-            document.getElementById('formSubtitle').textContent = "Enter your details below. You won't be charged until after your 7-day trial.";
-            document.getElementById('payBtnText').textContent = 'Start Free Trial — $0 Today';
-        } else {
-            updateGroup();
-            document.getElementById('formTitle').textContent = 'Get GroupElite';
-            document.getElementById('formSubtitle').textContent = 'Enter your details below. You\'ll be billed annually for all members.';
+        // Merge admin-created promo codes
+        function getPromoCodes() {
+            const codes = Object.assign({}, defaultCodes);
+            try {
+                const adminCodes = JSON.parse(localStorage.getItem('sparty_promo_codes') || '[]');
+                adminCodes.forEach(c => {
+                    if (c.active !== false && (!c.maxUses || c.uses < c.maxUses)) {
+                        codes[c.code] = { discount: c.discount, label: c.discount + '% off', type: 'permanent' };
+                    }
+                });
+            } catch(e) {}
+            return codes;
         }
+        const promoCodes = getPromoCodes();
+
+        // Plan Pricing
+        const planPrices = {
+            'elite': 99.00,
+            'groupelite': 89.00
+        };
+
+        let currentPlan = 'elite';
+        let appliedPromo = null;
+        let attemptsData = JSON.parse(localStorage.getItem('paymentAttempts')) || { count: 0, timestamp: 0 };
+
+        // Auth Guard
+        function checkAuth() {
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) {
+                window.location.href = '/login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Get plan from URL
+        function getUrlParam(param) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(param) || 'elite';
+        }
+
+        // Select Plan
+        function selectPlan(e) {
+            e.preventDefault();
+            const plan = e.target.getAttribute('data-plan');
+            currentPlan = plan;
+
+            document.querySelectorAll('.plan-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            e.target.classList.add('active');
+
+            document.getElementById('selectedPlan').value = plan;
+            updatePricing();
+        }
+
+        // Format Card Number
+        function formatCardNumber(input) {
+            let value = input.value.replace(/\s/g, '');
+            if (!/^\d*$/.test(value)) {
+                input.value = input.value.slice(0, -1);
+                return;
+            }
+
+            let formatted = value.replace(/(\d{4})/g, '$1 ').trim();
+            input.value = formatted;
+
+            // Detect card type
+            const firstDigit = value[0];
+            const icon = document.getElementById('cardIcon');
+            if (firstDigit === '4') {
+                icon.textContent = '💳 Visa';
+            } else if (firstDigit === '5') {
+                icon.textContent = '💳 Mastercard';
+            } else if (firstDigit === '3') {
+                icon.textContent = '💳 Amex';
+            } else {
+                icon.textContent = '💳';
+            }
+        }
+
+        // Format Expiry
+        function formatExpiry(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            input.value = value;
+        }
+
+        // Validate Luhn Algorithm
+        function validateCardNumber(cardNumber) {
+            const digits = cardNumber.replace(/\s/g, '');
+            if (!/^\d{13,19}$/.test(digits)) return false;
+
+            let sum = 0;
+            let isEven = false;
+
+            for (let i = digits.length - 1; i >= 0; i--) {
+                let digit = parseInt(digits[i], 10);
+
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) {
+                        digit -= 9;
+                    }
+                }
+
+                sum += digit;
+                isEven = !isEven;
+            }
+
+            return (sum % 10) === 0;
+        }
+
+        // Validate Expiry Date
+        function validateExpiry(expiry) {
+            const [month, year] = expiry.split('/').map(x => parseInt(x, 10));
+            if (!month || !year || month < 1 || month > 12) return false;
+
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear() % 100;
+            const currentMonth = currentDate.getMonth() + 1;
+
+            if (year < currentYear) return false;
+            if (year === currentYear && month < currentMonth) return false;
+
+            return true;
+        }
+
+        // Apply Promo Code
+        function applyPromoCode() {
+            const code = document.getElementById('promoCode').value.toUpperCase().trim();
+            const statusDiv = document.getElementById('promoStatus');
+
+            if (!code) {
+                showStatus(statusDiv, 'Please enter a promo code', 'error');
+                return;
+            }
+
+            if (!(code in promoCodes)) {
+                showStatus(statusDiv, 'Invalid promo code', 'error');
+                return;
+            }
+
+            appliedPromo = code;
+            const promoData = promoCodes[code];
+            updatePricing();
+            showStatus(statusDiv, `${code}: ${promoData.label}`, 'success');
+        }
+
+        // Update Pricing
+        function updatePricing() {
+            const basePrice = planPrices[currentPlan];
+            let finalPrice = basePrice;
+            let discount = 0;
+            let discountPercent = 0;
+
+            if (appliedPromo) {
+                const promoData = promoCodes[appliedPromo];
+                discountPercent = promoData.discount;
+                discount = (basePrice * promoData.discount) / 100;
+                finalPrice = basePrice - discount;
+            }
+
+            document.getElementById('planName').textContent = currentPlan === 'elite' ? 'Elite Plan' : 'GroupElite Plan';
+            document.getElementById('planPrice').textContent = '$' + basePrice.toFixed(2);
+            document.getElementById('totalPrice').textContent = '$' + finalPrice.toFixed(2);
+
+            const discountInfo = document.getElementById('discountInfo');
+            if (appliedPromo) {
+                discountInfo.style.display = 'block';
+                document.getElementById('discountPercent').textContent = discountPercent;
+                document.getElementById('discountAmount').textContent = discount.toFixed(2);
+            } else {
+                discountInfo.style.display = 'none';
+            }
+        }
+
+        // Show Status Message
+        function showStatus(element, message, type) {
+            element.textContent = message;
+            element.className = 'status-message show ' + type;
+            setTimeout(() => {
+                element.classList.remove('show');
+            }, 5000);
+        }
+
+        // Rate Limiting
+        function checkRateLimit() {
+            const now = Date.now();
+            const fiveMinutes = 5 * 60 * 1000;
+
+            if (now - attemptsData.timestamp > fiveMinutes) {
+                attemptsData.count = 0;
+            }
+
+            if (attemptsData.count >= 3) {
+                return false;
+            }
+
+            attemptsData.count++;
+            attemptsData.timestamp = now;
+            localStorage.setItem('paymentAttempts', JSON.stringify(attemptsData));
+            return true;
+        }
+
+        // Form Submission
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!checkRateLimit()) {
+                alert('Too many payment attempts. Please try again in 5 minutes.');
+                return;
+            }
+
+            const cardNumber = document.getElementById('cardnumber').value;
+            const expiry = document.getElementById('expiry').value;
+            const cvv = document.getElementById('cvv').value;
+            const fullname = document.getElementById('fullname').value;
+            const email = document.getElementById('email').value;
+            const country = document.getElementById('country').value;
+
+            // Validation
+            if (!fullname || !email || !country) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            if (!validateCardNumber(cardNumber)) {
+                alert('Invalid card number. Please check and try again.');
+                return;
+            }
+
+            if (!validateExpiry(expiry)) {
+                alert('Invalid expiry date. Please use MM/YY format with a future date.');
+                return;
+            }
+
+            if (!cvv || !/^\d{3,4}$/.test(cvv)) {
+                alert('Invalid CVV. Please enter 3-4 digits.');
+                return;
+            }
+
+            // Mock Payment Processing
+            document.querySelector('.submit-btn').disabled = true;
+            document.querySelector('.submit-btn').textContent = 'Processing...';
+
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Show success animation
+            showSuccessAnimation();
+        });
+
+        function showSuccessAnimation() {
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('successAnimation').style.display = 'block';
+
+            // Mark user as paid
+            try {
+                var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+                auth.paid = true;
+                auth.paidAt = new Date().toISOString();
+                auth.plan = currentPlan;
+                auth.promoUsed = appliedPromo || null;
+                localStorage.setItem('sparty_auth', JSON.stringify(auth));
+
+                // Update user record
+                var users = JSON.parse(localStorage.getItem('sparty_users') || '[]');
+                var idx = users.findIndex(u => u.email === auth.email);
+                if (idx >= 0) {
+                    users[idx].paid = true;
+                    users[idx].paidAt = new Date().toISOString();
+                    users[idx].plan = currentPlan;
+                    users[idx].promoUsed = appliedPromo || null;
+                    localStorage.setItem('sparty_users', JSON.stringify(users));
+                }
+
+                // Track promo code usage
+                if (appliedPromo) {
+                    var adminCodes = JSON.parse(localStorage.getItem('sparty_promo_codes') || '[]');
+                    var codeIdx = adminCodes.findIndex(c => c.code === appliedPromo);
+                    if (codeIdx >= 0) {
+                        adminCodes[codeIdx].uses = (adminCodes[codeIdx].uses || 0) + 1;
+                        if (!adminCodes[codeIdx].usedBy) adminCodes[codeIdx].usedBy = [];
+                        adminCodes[codeIdx].usedBy.push({ email: auth.email, date: new Date().toISOString() });
+                        localStorage.setItem('sparty_promo_codes', JSON.stringify(adminCodes));
+                    }
+                }
+            } catch(e) { console.warn('Error updating payment records:', e); }
+        }
+
+        function redirectToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Initialize
+        function init() {
+            if (!checkAuth()) return;
+
+            const plan = getUrlParam('plan');
+            currentPlan = plan;
+
+            document.querySelectorAll('.plan-tab').forEach(tab => {
+                if (tab.getAttribute('data-plan') === plan) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            document.getElementById('selectedPlan').value = plan;
+            updatePricing();
+
+            // Update nav links
+            document.getElementById('auth-link').textContent = 'Dashboard';
+            document.getElementById('auth-link').href = '/dashboard.html';
+        }
+
+        init();
+    </script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = 'login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
     }
-
-    function updateGroup() {
-        const count = parseInt(document.getElementById('groupSlider').value);
-        document.getElementById('groupCountDisplay').textContent = count;
-        document.getElementById('groupPeopleLabel').textContent = count;
-
-        // Pricing tiers
-        let pricePerPerson;
-        if (count >= 8) pricePerPerson = 52;
-        else if (count >= 5) pricePerPerson = 74;
-        else pricePerPerson = 79;
-
-        const total = pricePerPerson * count;
-        const perMonth = (pricePerPerson / 12).toFixed(2);
-
-        document.getElementById('groupPriceDisplay').textContent = '$' + pricePerPerson;
-        document.getElementById('groupPerMonthDisplay').textContent = '≈ $' + perMonth + '/month each';
-        document.getElementById('groupTotalDisplay').textContent = '$' + total;
-        document.getElementById('payBtnText').textContent = 'Get GroupElite — $' + total + '/yr';
-    }
-
-    function formatCard(input) {
-        let val = input.value.replace(/\D/g, '').substring(0, 16);
-        input.value = val.replace(/(.{4})/g, '$1 ').trim();
-    }
-
-    function formatExpiry(input) {
-        let val = input.value.replace(/\D/g, '').substring(0, 4);
-        if (val.length >= 2) val = val.substring(0, 2) + ' / ' + val.substring(2);
-        input.value = val;
-    }
-
-    function handlePay() {
-        const btn = document.querySelector('.btn-pay');
-        btn.disabled = true;
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Processing…';
-
-        // Demo: reset after 2s
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg><span id="payBtnText">' +
-                (currentPlan === 'elite' ? 'Start Free Trial — $0 Today' : document.getElementById('payBtnText').textContent) +
-                '</span>';
-        }, 2000);
-    }
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voltage Drop Worksheet - SparkStudy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f1419; --bg-secondary: #1a1f2e; --bg-tertiary: #252d3d;
+            --border-color: #3d4655; --text-primary: #e4e6eb; --text-secondary: #a0a6b8;
+            --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-green: #10b981;
+            --accent-yellow: #f59e0b; --accent-red: #ef4444;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        nav { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+        nav .container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        nav .logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav .links { display: flex; gap: 2rem; list-style: none; }
+        nav a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        nav a:hover, nav a.active { color: var(--accent-blue); }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .worksheet-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .worksheet-header h1 { font-size: 2rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-controls { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .difficulty-selector, .show-answers-toggle, .generate-btn, .print-btn { padding: 0.75rem 1.25rem; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.95rem; }
+        .difficulty-selector { padding: 0.75rem; min-width: 150px; }
+        .generate-btn:hover, .print-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
+        .show-answers-toggle.active { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+        .progress-section { margin-bottom: 2rem; }
+        .progress-info { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .progress-bar { width: 100%; height: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; overflow: hidden; border: 1px solid var(--border-color); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); transition: width 0.3s; }
+        .problems-container { display: flex; flex-direction: column; gap: 2rem; margin-bottom: 2rem; }
+        .problem { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.75rem; transition: all 0.3s; }
+        .problem.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.05); }
+        .problem.incorrect { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.05); }
+        .problem-number { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+        .problem-text { font-size: 1.1rem; margin-bottom: 1.25rem; line-height: 1.6; }
+        .problem-input-group { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .problem-input { flex: 1; min-width: 150px; padding: 0.75rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.35rem; font-size: 1rem; }
+        .problem-input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .problem-unit { display: flex; align-items: center; padding: 0.75rem 1rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 0.35rem; color: var(--text-secondary); font-weight: 600; }
+        .check-btn { padding: 0.75rem 1.5rem; background: var(--accent-blue); color: white; border: none; border-radius: 0.35rem; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .check-btn:hover { background: var(--accent-purple); transform: translateY(-2px); }
+        .check-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
+        .result { margin-top: 1rem; padding: 1rem; border-radius: 0.35rem; display: none; }
+        .result.show { display: block; }
+        .result.correct { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--accent-green); color: var(--accent-green); }
+        .result.incorrect { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--accent-red); color: var(--accent-red); }
+        .result-text { font-weight: 600; margin-bottom: 0.5rem; }
+        .result-details { font-size: 0.9rem; margin-top: 0.5rem; }
+        .summary-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 2rem; text-align: center; display: none; }
+        .summary-section.show { display: block; }
+        .summary-grade { font-size: 3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
+        .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .summary-stat { padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; }
+        .summary-stat-value { font-size: 1.75rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem; }
+        .summary-stat-label { color: var(--text-secondary); font-size: 0.9rem; }
+        .summary-button { padding: 0.875rem 2rem; background: var(--accent-blue); color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s; }
+        .summary-button:hover { background: var(--accent-purple); transform: translateY(-2px); }
+        @media print {
+            nav, .worksheet-header, .progress-section, .header-controls, .check-btn, .summary-section { display: none !important; }
+            body { background: white; color: black; }
+            .problem { page-break-inside: avoid; border: 1px solid black; background: white; }
+        }
+        @media (max-width: 768px) {
+            .worksheet-header { flex-direction: column; align-items: flex-start; }
+            .header-controls { width: 100%; }
+            .difficulty-selector, .generate-btn, .print-btn { flex: 1; min-width: 100px; }
+            .problem-input-group { flex-direction: column; }
+            .problem-unit { width: 100%; }
+            .container { padding: 1rem; }
+            nav .links { gap: 1rem; font-size: 0.9rem; }
+        }
+        @media (max-width: 480px) {
+            .worksheet-header h1 { font-size: 1.5rem; }
+            nav .links { display: none; }
+            .header-controls { width: 100%; }
+            .summary-stats { grid-template-columns: 1fr; }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="worksheet-header">
+            <h1>↓ Voltage Drop Worksheet</h1>
+            <div class="header-controls">
+                <select id="difficultySelect" class="difficulty-selector">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <button id="showAnswersBtn" class="show-answers-toggle">Show Answers</button>
+                <button id="generateBtn" class="generate-btn">Generate New Set</button>
+                <button id="printBtn" class="print-btn">🖨️ Print</button>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-info">
+                <span>Progress</span>
+                <span><span id="completedCount">0</span>/10 completed</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="problems-container" id="problemsContainer"></div>
+
+        <div class="summary-section" id="summarySection">
+            <div class="summary-grade" id="summaryGrade">0%</div>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statCorrect">0</div>
+                    <div class="summary-stat-label">Correct</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statWrong">0</div>
+                    <div class="summary-stat-label">Incorrect</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statTime">0:00</div>
+                    <div class="summary-stat-label">Time Taken</div>
+                </div>
+            </div>
+            <button id="generateNewBtn" class="summary-button">Generate New Set</button>
+        </div>
+    </div>
+
+    <script>
+        function checkAuth() {
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) window.location.href = '../login.html';
+        }
+        checkAuth();
+
+        let currentProblems = [];
+        let startTime = Date.now();
+        let showAnswers = false;
+
+        function generateProblems(difficulty) {
+            if (difficulty === 'easy') {
+                return shuffleArray([
+                    { question: 'VD = 2×I×R×L/1000. I=10A, R=2Ω/1000ft, L=100ft. Find VD', answer: 4, unit: 'V', explanation: 'VD = 2 × 10 × 2 × 100 / 1000 = 4V' },
+                    { question: 'I=5A, R=1Ω/1000ft, L=50ft. Find VD', answer: 0.5, unit: 'V', explanation: 'VD = 2 × 5 × 1 × 50 / 1000 = 0.5V' },
+                    { question: 'I=20A, R=2Ω/1000ft, L=200ft. Find VD', answer: 16, unit: 'V', explanation: 'VD = 2 × 20 × 2 × 200 / 1000 = 16V' },
+                    { question: 'I=8A, R=1.5Ω/1000ft, L=75ft. Find VD', answer: 1.8, unit: 'V', explanation: 'VD = 2 × 8 × 1.5 × 75 / 1000 = 1.8V' },
+                    { question: 'I=15A, R=2Ω/1000ft, L=150ft. Find VD', answer: 9, unit: 'V', explanation: 'VD = 2 × 15 × 2 × 150 / 1000 = 9V' },
+                    { question: 'I=3A, R=1Ω/1000ft, L=100ft. Find VD', answer: 0.6, unit: 'V', explanation: 'VD = 2 × 3 × 1 × 100 / 1000 = 0.6V' },
+                    { question: 'I=12A, R=2Ω/1000ft, L=120ft. Find VD', answer: 5.76, unit: 'V', explanation: 'VD = 2 × 12 × 2 × 120 / 1000 = 5.76V' },
+                    { question: 'I=25A, R=1.5Ω/1000ft, L=100ft. Find VD', answer: 7.5, unit: 'V', explanation: 'VD = 2 × 25 × 1.5 × 100 / 1000 = 7.5V' },
+                    { question: 'I=6A, R=2Ω/1000ft, L=80ft. Find VD', answer: 1.92, unit: 'V', explanation: 'VD = 2 × 6 × 2 × 80 / 1000 = 1.92V' },
+                    { question: 'I=18A, R=1Ω/1000ft, L=200ft. Find VD', answer: 7.2, unit: 'V', explanation: 'VD = 2 × 18 × 1 × 200 / 1000 = 7.2V' },
+                ]).slice(0, 10);
+
+            } else if (difficulty === 'medium') {
+                return shuffleArray([
+                    { question: 'VD = 2×I×R×L/1000. I=32A, copper 12 AWG (R=1.93), L=250ft. Find VD', answer: 30.88, unit: 'V', explanation: 'VD = 2 × 32 × 1.93 × 250 / 1000 = 30.88V' },
+                    { question: 'I=48A, aluminum 10 AWG (R=3.15), L=150ft. Find VD', answer: 45.36, unit: 'V', explanation: 'VD = 2 × 48 × 3.15 × 150 / 1000 = 45.36V' },
+                    { question: 'I=30A, copper 14 AWG (R=3.07), L=100ft. Find VD', answer: 18.42, unit: 'V', explanation: 'VD = 2 × 30 × 3.07 × 100 / 1000 = 18.42V' },
+                    { question: '240V feeder, max 3% VD allowed. I=40A, L=300ft, R=?', answer: 0.45, unit: 'Ω/1000ft', explanation: 'Max VD = 240 × 0.03 = 7.2V. R = 7.2×1000/(2×40×300) = 0.45Ω/1000ft' },
+                    { question: 'I=60A, copper 8 AWG (R=0.778), L=400ft. Find VD', answer: 18.67, unit: 'V', explanation: 'VD = 2 × 60 × 0.778 × 400 / 1000 = 18.67V' },
+                    { question: '120V circuit, 20A load, 3% max VD, max length?', answer: 31.2, unit: 'ft', explanation: 'VD = 120 × 0.03 = 3.6V. L = 3.6×1000/(2×20×R), for 14AWG (R=3.07): L = 29.3ft' },
+                    { question: 'I=45A, copper 10 AWG (R=1.23), L=200ft. Find VD', answer: 22.14, unit: 'V', explanation: 'VD = 2 × 45 × 1.23 × 200 / 1000 = 22.14V' },
+                    { question: 'Motor circuit: 480V, I=35A, L=500ft, 10 AWG copper (R=1.23). VD %?', answer: 3.58, unit: '%', explanation: 'VD = 2 × 35 × 1.23 × 500 / 1000 = 17.2V. % = (17.2/480)×100 = 3.58%' },
+                    { question: 'I=25A, aluminum 12 AWG (R=3.15), L=175ft. Find VD', answer: 27.56, unit: 'V', explanation: 'VD = 2 × 25 × 3.15 × 175 / 1000 = 27.56V' },
+                    { question: '277V load, I=18A, copper 12 AWG (R=1.93), L=350ft. VD in %?', answer: 8.58, unit: '%', explanation: 'VD = 2 × 18 × 1.93 × 350 / 1000 = 23.8V. % = (23.8/277)×100 = 8.58%' },
+                ]).slice(0, 10);
+
+            } else {
+                return shuffleArray([
+                    { question: 'Combination feeder+branch: Total 4% max, feeder 3%, branch max?', answer: 1, unit: '%', explanation: 'Total = feeder + branch. 4% = 3% + 1% (branch limited to 1%)' },
+                    { question: 'Three-phase line, I=50A, L=600ft, copper 8 AWG (R=0.778). VD 3-phase?', answer: 11.67, unit: 'V', explanation: 'For 3-phase: VD = √3×I×R×L/1000 = 1.732×50×0.778×600/1000 = 40.5V. Per phase: 11.67V' },
+                    { question: 'Dual conductors (parallel): I=60A total (30A each), same run. VD reduction?', answer: 75, unit: '%', explanation: 'With parallel conductors, effective R halves: VD reduces by 50% (or becomes 25% of original reference)' },
+                    { question: 'High-rise feeder: 480V, I=200A, 500ft, 2/0 copper (R=0.194). VD% and max branch?', answer: 4.05, unit: '%', explanation: 'VD = 2×200×0.194×500/1000 = 38.8V, % = 38.8/480 = 8.08% (exceeds 3% - undersized wire)' },
+                    { question: 'Load growth: Current increased 25%, same wire/distance. VD increase?', answer: 25, unit: '%', explanation: 'Since VD = 2×I×R×L/1000, VD is proportional to I. 25% increase in I = 25% increase in VD' },
+                    { question: 'Outdoor run: I=80A, L=1000ft, copper 6 AWG (R=0.410), temperature factor 1.17. Actual R?', answer: 0.48, unit: 'Ω/1000ft', explanation: 'Actual R = 0.410 × 1.17 = 0.48Ω/1000ft (adjusted for temperature)' },
+                    { question: 'Conduit fill with cable: I=100A, multi-conductor cable in duct, derating factor 0.8. Effective current?', answer: 80, unit: 'A', explanation: 'Effective I for VD = 100A × 0.8 = 80A (use 80A in VD formula)' },
+                    { question: 'AC vs DC feeder: AC (same wire) adds reactance effect. Total impedance vs VD only?', answer: 110, unit: '%', explanation: 'AC impedance (R+X) ≈ 1.1×R for 12 AWG, so VD increases ~10% vs DC' },
+                    { question: 'Harmonics effect: THD 15% on feeder. Current RMS 50A. Effective current for heating?', answer: 51.2, unit: 'A', explanation: 'I_rms with harmonics ≈ √(50² + (50×0.15)²) = 51.2A (use for thermal/VD considerations)' },
+                    { question: 'Circuit protection: I=70A, voltage at source 480V, remote load needs min 460V. Max feeder length?', answer: 368, unit: 'ft', explanation: 'Max VD = 20V (480-460). Using 10 AWG: L = 20×1000/(2×70×1.23) = 117ft typical; with optimization up to 368ft with larger wire' },
+                ]).slice(0, 10);
+            }
+        }
+
+        function shuffleArray(arr) {
+            return [...arr].sort(() => Math.random() - 0.5);
+        }
+
+        function renderProblems() {
+            const container = document.getElementById('problemsContainer');
+            container.innerHTML = '';
+            currentProblems.forEach((problem, index) => {
+                const div = document.createElement('div');
+                div.className = 'problem';
+                div.id = `problem-${index}`;
+                div.innerHTML = `
+                    <div class="problem-number">Problem ${index + 1} of 10</div>
+                    <div class="problem-text">${problem.question}</div>
+                    <div class="problem-input-group">
+                        <input type="number" step="0.01" class="problem-input" id="input-${index}" placeholder="Enter answer">
+                        <div class="problem-unit">${problem.unit}</div>
+                        <button class="check-btn" onclick="checkAnswer(${index})">Check</button>
+                    </div>
+                    <div class="result" id="result-${index}"><div class="result-text"></div><div class="result-details"></div></div>
+                    ${showAnswers ? `<div class="result show correct"><div class="result-text">Answer: ${problem.answer} ${problem.unit}</div><div class="result-details">${problem.explanation}</div></div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function checkAnswer(index) {
+            const input = document.getElementById(`input-${index}`);
+            const problem = currentProblems[index];
+            const userAnswer = parseFloat(input.value);
+            const tolerance = Math.max(problem.answer * 0.1, 0.5);
+            const isCorrect = Math.abs(userAnswer - problem.answer) <= tolerance;
+
+            const resultEl = document.getElementById(`result-${index}`);
+            const problemEl = document.getElementById(`problem-${index}`);
+
+            resultEl.classList.add('show');
+            resultEl.querySelector('.result-text').textContent = isCorrect ? `✓ Correct! ${problem.answer}${problem.unit}` : `✗ Incorrect. Correct answer: ${problem.answer}${problem.unit}`;
+            resultEl.querySelector('.result-details').textContent = problem.explanation;
+
+            if (isCorrect) {
+                resultEl.classList.add('correct');
+                resultEl.classList.remove('incorrect');
+                problemEl.classList.add('correct');
+                problemEl.classList.remove('incorrect');
+                input.disabled = true;
+            } else {
+                resultEl.classList.add('incorrect');
+                resultEl.classList.remove('correct');
+                problemEl.classList.add('incorrect');
+                problemEl.classList.remove('correct');
+            }
+
+            updateProgress();
+            checkCompletion();
+        }
+
+        function updateProgress() {
+            let completed = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) completed++;
+            });
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('progressFill').style.width = (completed / 10) * 100 + '%';
+            localStorage.setItem('worksheet_voltage-drop_completed', completed);
+        }
+
+        function checkCompletion() {
+            let completed = 0, correct = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) {
+                    completed++;
+                    if (document.getElementById(`result-${index}`).classList.contains('correct')) correct++;
+                }
+            });
+            if (completed === 10) showSummary(correct);
+        }
+
+        function showSummary(correct) {
+            const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
+            const percentage = Math.round((correct / 10) * 100);
+            document.getElementById('summaryGrade').textContent = percentage + '%';
+            document.getElementById('statCorrect').textContent = correct;
+            document.getElementById('statWrong').textContent = 10 - correct;
+            document.getElementById('statTime').textContent = `${Math.floor(timeElapsed / 60)}:${String(timeElapsed % 60).padStart(2, '0')}`;
+            document.getElementById('summarySection').classList.add('show');
+            localStorage.setItem('worksheet_voltage-drop_attempts', parseInt(localStorage.getItem('worksheet_voltage-drop_attempts') || 0) + 1);
+            localStorage.setItem('worksheet_voltage-drop_score', Math.max(percentage, parseInt(localStorage.getItem('worksheet_voltage-drop_score') || 0)));
+        }
+
+        document.getElementById('difficultySelect').addEventListener('change', (e) => {
+            currentProblems = generateProblems(e.target.value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('showAnswersBtn').addEventListener('click', function() {
+            showAnswers = !showAnswers;
+            this.classList.toggle('active');
+            renderProblems();
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            currentProblems = generateProblems(document.getElementById('difficultySelect').value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('generateNewBtn').addEventListener('click', () => {
+            currentProblems = generateProblems(document.getElementById('difficultySelect').value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+        currentProblems = generateProblems('medium');
+        renderProblems();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

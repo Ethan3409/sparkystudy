@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkStudy - Trade Schools & Institutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            margin: 0 1.5rem;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        .hero {
+            padding: 6rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(88, 166, 255, 0.1) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--muted);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-cta {
+            display: inline-block;
+            background-color: var(--accent);
+            color: #000;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.3s;
+        }
+
+        .hero-cta:hover {
+            opacity: 0.9;
+        }
+
+        .value-props {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .value-props h2 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .props-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .prop-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .prop-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+
+        .prop-card h3 {
+            font-size: 1.25rem;
+            margin: 1rem 0 0.5rem 0;
+            color: var(--accent2);
+        }
+
+        .prop-card p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .prop-icon {
+            font-size: 2.5rem;
+        }
+
+        .pricing {
+            padding: 4rem 2rem;
+            background-color: var(--panel);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing h2 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-note {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 3rem;
+            font-size: 0.95rem;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background-color: var(--bg);
+            border: 2px solid var(--border);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--accent);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent2);
+        }
+
+        .price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 1rem 0;
+        }
+
+        .price-desc {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            text-align: left;
+            margin: 1.5rem 0;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .pricing-card li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing-card li:last-child {
+            border-bottom: none;
+        }
+
+        .discount-banner {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--green);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            color: var(--green);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .demo-section {
+            padding: 4rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .demo-section h2 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-submit {
+            background-color: var(--accent);
+            color: #000;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            width: 100%;
+        }
+
+        .form-submit:hover {
+            opacity: 0.9;
+        }
+
+        .form-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            display: none;
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--green);
+            color: var(--green);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .testimonials {
+            padding: 4rem 2rem;
+            background-color: var(--panel);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .testimonials h2 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 0.75rem;
+        }
+
+        .testimonial-quote {
+            color: var(--muted);
+            font-style: italic;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: var(--accent2);
+        }
+
+        .testimonial-school {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .testimonial-impact {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-left: 3px solid var(--accent2);
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border-radius: 0.25rem;
+            color: var(--accent2);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .faq {
+            padding: 4rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq h2 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .faq-item {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            background-color: var(--panel);
+            padding: 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+
+        .faq-question:hover {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+
+        .faq-toggle {
+            font-size: 1.25rem;
+            transition: transform 0.3s;
+        }
+
+        .faq-item.open .faq-toggle {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            display: none;
+            background-color: rgba(245, 158, 11, 0.05);
+            padding: 1.5rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .faq-item.open .faq-answer {
+            display: block;
+        }
+
+        footer {
+            background-color: var(--panel);
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        footer h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        footer p {
+            margin-bottom: 1rem;
+        }
+
+        .footer-cta {
+            background-color: var(--accent);
+            color: #000;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            transition: opacity 0.3s;
+        }
+
+        .footer-cta:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav a {
+                margin: 0 0.75rem;
+            }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+</head>
+<body>
+    <header>
+        <div class="logo">⚡ SparkStudy</div>
+        <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="tools.html" class="nav-link">Tools</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="worksheets.html" class="nav-link">Worksheets</a>
+        <a href="achievements.html" class="nav-link">Achievements</a>
+        <a href="formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Empower Your Electrician Apprentices</h1>
+        <p>Complete institutional licensing platform built for trade schools. Real-time progress tracking, interactive simulators, and proven results.</p>
+        <a href="#demo" class="hero-cta">Request a Demo</a>
+    </section>
+
+    <section class="value-props" id="value">
+        <h2>Why Trade Schools Choose SparkStudy</h2>
+        <div class="props-grid">
+            <div class="prop-card">
+                <div class="prop-icon">📊</div>
+                <h3>Higher Pass Rates</h3>
+                <p>Schools using SparkStudy see 34% higher licensing exam pass rates on average.</p>
+            </div>
+            <div class="prop-card">
+                <div class="prop-icon">📈</div>
+                <h3>Real-Time Progress Tracking</h3>
+                <p>Monitor every student's progress with detailed analytics and performance insights.</p>
+            </div>
+            <div class="prop-card">
+                <div class="prop-icon">⚙️</div>
+                <h3>16 Interactive Simulators</h3>
+                <p>Hands-on learning with AC Waveform, Time Constant Calculator, Circuit Designer, and more.</p>
+            </div>
+            <div class="prop-card">
+                <div class="prop-icon">📝</div>
+                <h3>Practice Worksheets</h3>
+                <p>500+ worksheets covering all Period 1 and Period 2 concepts with instant feedback.</p>
+            </div>
+            <div class="prop-card">
+                <div class="prop-icon">🎮</div>
+                <h3>Gamified Learning</h3>
+                <p>Achievements, badges, and leaderboards keep students engaged and motivated.</p>
+            </div>
+            <div class="prop-card">
+                <div class="prop-icon">🎯</div>
+                <h3>Placement Assessments</h3>
+                <p>Pre-built diagnostic exams aligned with licensing standards and institution curricula.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <h2>Transparent, Scalable Pricing</h2>
+        <p class="pricing-note">All plans include unlimited simulators, worksheets, and student support</p>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Starter</h3>
+                <div class="price">$60</div>
+                <div class="price-desc">per student/year</div>
+                <div class="price-desc" style="font-size: 0.85rem; color: var(--muted);">1-50 students</div>
+                <ul>
+                    <li>✓ 16 Simulators</li>
+                    <li>✓ 500+ Worksheets</li>
+                    <li>✓ Progress Tracking</li>
+                    <li>✓ Basic Support</li>
+                </ul>
+                <div class="discount-banner">20% off with annual commitment</div>
+            </div>
+            <div class="pricing-card featured">
+                <h3>Professional</h3>
+                <div class="price">$45</div>
+                <div class="price-desc">per student/year</div>
+                <div class="price-desc" style="font-size: 0.85rem; color: var(--muted);">51-150 students</div>
+                <ul>
+                    <li>✓ Everything in Starter</li>
+                    <li>✓ Advanced Analytics</li>
+                    <li>✓ Custom Dashboards</li>
+                    <li>✓ Priority Support</li>
+                </ul>
+                <div class="discount-banner">20% off with annual commitment</div>
+            </div>
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <div class="price">Custom</div>
+                <div class="price-desc">Contact for quote</div>
+                <div class="price-desc" style="font-size: 0.85rem; color: var(--muted);">150+ students</div>
+                <ul>
+                    <li>✓ Everything in Professional</li>
+                    <li>✓ Dedicated Account Manager</li>
+                    <li>✓ Custom Integrations</li>
+                    <li>✓ 24/7 Support</li>
+                </ul>
+                <div class="discount-banner">20% off with annual commitment</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="demo-section" id="demo">
+        <h2>Request Your Demo</h2>
+        <div class="success-message" id="successMessage">
+            ✓ Thank you! We'll be in touch within 24 hours.
+        </div>
+        <form id="demoForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="schoolName">School Name *</label>
+                    <input type="text" id="schoolName" name="schoolName" required>
+                </div>
+                <div class="form-group">
+                    <label for="contactName">Contact Person Name *</label>
+                    <input type="text" id="contactName" name="contactName" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="students">Number of Students *</label>
+                    <select id="students" name="students" required>
+                        <option value="">Select a range</option>
+                        <option value="1-25">1-25 students</option>
+                        <option value="26-50">26-50 students</option>
+                        <option value="51-100">51-100 students</option>
+                        <option value="101-200">101-200 students</option>
+                        <option value="200+">200+ students</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="program">Program Type *</label>
+                    <select id="program" name="program" required>
+                        <option value="">Select program</option>
+                        <option value="period1">Electrician Period 1</option>
+                        <option value="period2">Electrician Period 2</option>
+                        <option value="both">Both Period 1 & 2</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Additional Message</label>
+                <textarea id="message" name="message" placeholder="Tell us about your school's goals..."></textarea>
+            </div>
+
+            <button type="submit" class="form-submit">Request Demo</button>
+        </form>
+    </section>
+
+    <section class="testimonials">
+        <h2>Trusted by Trade Schools</h2>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-quote">"SparkStudy transformed how our students prepare for licensing exams. The interactive simulators make concepts stick."</div>
+                <div class="testimonial-author">Sarah Johnson</div>
+                <div class="testimonial-school">Director, Northern Tech Trade Institute</div>
+                <div class="testimonial-impact">Improved pass rates by 38%</div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-quote">"Our instructors love the real-time analytics. We can now identify struggling students before they fall too far behind."</div>
+                <div class="testimonial-author">Marcus Chen</div>
+                <div class="testimonial-school">Lead Instructor, Pacific Coast Electrical</div>
+                <div class="testimonial-impact">30% reduction in remedial sessions</div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-quote">"The gamification keeps students engaged throughout the course. We've never seen such consistent study streaks."</div>
+                <div class="testimonial-author">Patricia Williams</div>
+                <div class="testimonial-school">Coordinator, Midwest Apprenticeship Center</div>
+                <div class="testimonial-impact">45% increase in completion rate</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq" id="faq">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How does licensing compliance work with your platform?</span>
+                <span class="faq-toggle">▼</span>
+            </div>
+            <div class="faq-answer">
+                SparkStudy is designed by electricians and instructors to align with CEC (Canadian Electrical Code) standards and provincial licensing requirements. Our content and assessments are updated annually to reflect current exam standards. All institutional accounts include licensing documentation and compliance reporting.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How long does setup take?</span>
+                <span class="faq-toggle">▼</span>
+            </div>
+            <div class="faq-answer">
+                Most institutions are up and running within 1-2 weeks. Our onboarding team will help you import student rosters, configure your curriculum, and train your instructors. We handle all the technical setup so your team can focus on teaching.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>Can we manage multiple programs across different locations?</span>
+                <span class="faq-toggle">▼</span>
+            </div>
+            <div class="faq-answer">
+                Yes. SparkStudy supports multi-location management, branch-specific analytics, and centralized or distributed instructor assignments. You can manage Period 1 and Period 2 programs independently or together across your institution.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What kind of support do you offer?</span>
+                <span class="faq-toggle">▼</span>
+            </div>
+            <div class="faq-answer">
+                Starter plans include email support with 24-hour response times. Professional and Enterprise plans include phone support, dedicated account managers, and priority implementation. We also provide instructor training materials and student tutorials.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>How is student data protected?</span>
+                <span class="faq-toggle">▼</span>
+            </div>
+            <div class="faq-answer">
+                We comply with PIPEDA (Personal Information Protection and Electronic Documents Act) and provincial privacy regulations. All data is encrypted in transit and at rest. We never share student data with third parties without explicit consent. You have full control over data retention and export.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">
+                <span>What happens if we want to cancel or switch platforms?</span>
+                <span class="faq-toggle">▼</span>
+            </div>
+            <div class="faq-answer">
+                You can cancel anytime with 30 days notice. We'll provide a complete export of all student data, progress reports, and assessments in standard formats. No lock-in contracts, no hidden fees.
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <h3>Ready to Transform Your Program?</h3>
+        <p>SparkStudy helps trade schools produce better-prepared electricians through interactive learning.</p>
+        <a href="#demo" class="footer-cta">Start Your Free Trial</a>
+        <p style="margin-top: 2rem; font-size: 0.9rem;">© 2026 SparkStudy. All rights reserved. | <a href="#" style="color: var(--accent2); text-decoration: none;">Privacy Policy</a> | <a href="#" style="color: var(--accent2); text-decoration: none;">Terms of Service</a></p>
+    </footer>
+
+    <script>
+        // Demo Form Handler
+        const demoForm = document.getElementById('demoForm');
+        const successMessage = document.getElementById('successMessage');
+
+        demoForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                schoolName: document.getElementById('schoolName').value,
+                contactName: document.getElementById('contactName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                students: document.getElementById('students').value,
+                program: document.getElementById('program').value,
+                message: document.getElementById('message').value,
+                timestamp: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            let requests = JSON.parse(localStorage.getItem('sparty_demo_requests')) || [];
+            requests.push(formData);
+            localStorage.setItem('sparty_demo_requests', JSON.stringify(requests));
+
+            // Show success message
+            successMessage.classList.add('show');
+            demoForm.reset();
+
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 5000);
+        });
+
+        // FAQ Toggle
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', function() {
+                const item = this.closest('.faq-item');
+                item.classList.toggle('open');
+            });
+        });
+    </script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = 'login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

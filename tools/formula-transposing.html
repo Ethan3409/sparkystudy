@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formula Transposing - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #f59e0b; --accent2: #58a6ff; --green: #10b981; --red: #ef4444; --radius: 12px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; }
+        .navbar { background-color: var(--panel); border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.3rem; color: var(--accent); text-decoration: none; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-link { color: var(--text); text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
+        .nav-link:hover, .nav-link.active { color: var(--accent); }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+        .page-title { font-size: 2rem; margin-bottom: 2rem; color: var(--text); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .card { background-color: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+        .card-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--accent2); }
+        .input-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem; }
+        select { width: 100%; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.95rem; cursor: pointer; }
+        select:focus { outline: none; border-color: var(--accent2); }
+        .formula-display { background-color: var(--bg); padding: 1.5rem; border-radius: 6px; border: 2px solid var(--accent2); text-align: center; font-size: 1.8rem; font-weight: 600; margin: 1.5rem 0; font-family: 'Courier New', monospace; }
+        .step-container { background-color: var(--bg); border-radius: 6px; border-left: 4px solid var(--accent); padding: 1rem; margin: 1rem 0; }
+        .step-label { font-size: 0.85rem; color: var(--accent); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+        .step-formula { font-size: 1.3rem; font-family: 'Courier New', monospace; color: var(--text); margin: 0.5rem 0; }
+        .step-description { font-size: 0.9rem; color: var(--muted); }
+        .variable-block { display: inline-block; padding: 0.5rem 0.8rem; margin: 0.25rem; background-color: var(--accent2); color: var(--bg); border-radius: 6px; font-weight: 600; }
+        .mode-toggle { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .mode-btn { flex: 1; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; }
+        .mode-btn.active { background-color: var(--accent2); border-color: var(--accent2); color: var(--bg); }
+        .practice-question { background-color: var(--bg); padding: 1.5rem; border-radius: 6px; border-left: 4px solid var(--accent); margin-bottom: 1.5rem; }
+        .question-text { font-size: 1.1rem; margin-bottom: 1rem; color: var(--text); }
+        .answer-options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+        .option-btn { padding: 1rem; background-color: var(--panel); border: 2px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; text-align: center; font-family: 'Courier New', monospace; font-size: 0.95rem; transition: all 0.2s; }
+        .option-btn:hover { border-color: var(--accent2); }
+        .option-btn.correct { background-color: var(--green); border-color: var(--green); color: var(--bg); }
+        .option-btn.incorrect { background-color: var(--red); border-color: var(--red); color: var(--bg); }
+        .option-btn.disabled { pointer-events: none; opacity: 0.5; }
+        .feedback { padding: 1rem; border-radius: 6px; margin-top: 1rem; font-weight: 600; }
+        .feedback.success { background-color: rgba(16, 185, 129, 0.1); color: var(--green); }
+        .feedback.error { background-color: rgba(239, 68, 68, 0.1); color: var(--red); }
+        .score-display { font-size: 1.3rem; font-weight: 700; color: var(--accent2); margin: 1rem 0; }
+        .nav-practice { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .nav-btn { flex: 1; padding: 0.75rem; background-color: var(--accent2); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background-color 0.2s; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .nav-btn:disabled { background-color: var(--muted); cursor: not-allowed; }
+    </style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">Formula Transposing</h1>
+
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">Formula Transposer</h3>
+
+                <div class="input-group">
+                    <label for="formulaSelect">Select Formula</label>
+                    <select id="formulaSelect" onchange="updateFormula()">
+                        <option value="V=IR">V = I × R (Ohm's Law)</option>
+                        <option value="P=VI">P = V × I (Power)</option>
+                        <option value="P=I2R">P = I² × R (Power)</option>
+                        <option value="P=V2R">P = V² / R (Power)</option>
+                        <option value="XL=2fL">XL = 2πfL (Inductive Reactance)</option>
+                        <option value="XC=1/2fC">XC = 1 / (2πfC) (Capacitive Reactance)</option>
+                        <option value="Z=RX">Z = √(R² + X²) (Impedance)</option>
+                        <option value="tRL">τ = L / R (RL Time Constant)</option>
+                        <option value="tRC">τ = R × C (RC Time Constant)</option>
+                        <option value="TN">N1/N2 = V1/V2 (Transformer Ratio)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="solveFor">Solve For</label>
+                    <select id="solveFor" onchange="updateFormula()">
+                        <option value="">Select variable...</option>
+                    </select>
+                </div>
+
+                <div class="formula-display" id="originalFormula">V = I × R</div>
+
+                <div id="stepsContainer"></div>
+
+                <div class="formula-display" id="resultFormula" style="color: var(--green); border-color: var(--green);">V = I × R</div>
+
+                <div style="color: var(--muted); font-size: 0.9rem; margin-top: 1rem; line-height: 1.8;">
+                    <strong style="color: var(--text);">Steps:</strong> The left column shows each algebraic manipulation step. Follow along to understand the transposition process.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="mode-toggle">
+                    <button class="mode-btn active" onclick="setMode('learn')">Learn</button>
+                    <button class="mode-btn" onclick="setMode('practice')">Practice</button>
+                </div>
+
+                <div id="learnContent" style="display: block;">
+                    <h4 style="color: var(--accent2); margin-bottom: 1rem;">Common Transposition Rules</h4>
+                    <div style="space-y: 1rem; font-size: 0.95rem;">
+                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                            <span style="color: var(--accent); font-weight: 600;">Rule 1:</span> Add/subtract the same value to both sides
+                        </div>
+                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                            <span style="color: var(--accent); font-weight: 600;">Rule 2:</span> Multiply/divide both sides by the same value
+                        </div>
+                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                            <span style="color: var(--accent); font-weight: 600;">Rule 3:</span> Apply square root or square both sides
+                        </div>
+                        <div>
+                            <span style="color: var(--accent); font-weight: 600;">Rule 4:</span> Inverse functions (sin/cos/tan, log, etc.)
+                        </div>
+                    </div>
+                </div>
+
+                <div id="practiceContent" style="display: none;">
+                    <div id="practiceQuestion"></div>
+                    <div class="score-display">Score: <span id="scoreValue">0</span> / 20</div>
+                    <div class="nav-practice">
+                        <button class="nav-btn" id="prevBtn" onclick="previousProblem()">← Previous</button>
+                        <button class="nav-btn" id="nextBtn" onclick="nextProblem()">Next →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formulas = {
+            'V=IR': { original: 'V = I × R', vars: ['V', 'I', 'R'], solutions: { V: 'V = I × R', I: 'I = V / R', R: 'R = V / I' } },
+            'P=VI': { original: 'P = V × I', vars: ['P', 'V', 'I'], solutions: { P: 'P = V × I', V: 'V = P / I', I: 'I = P / V' } },
+            'P=I2R': { original: 'P = I² × R', vars: ['P', 'I', 'R'], solutions: { P: 'P = I² × R', I: 'I = √(P / R)', R: 'R = P / I²' } },
+            'P=V2R': { original: 'P = V² / R', vars: ['P', 'V', 'R'], solutions: { P: 'P = V² / R', V: 'V = √(P × R)', R: 'R = V² / P' } },
+            'XL=2fL': { original: 'XL = 2πfL', vars: ['XL', 'f', 'L'], solutions: { XL: 'XL = 2πfL', f: 'f = XL / (2πL)', L: 'L = XL / (2πf)' } },
+            'XC=1/2fC': { original: 'XC = 1 / (2πfC)', vars: ['XC', 'f', 'C'], solutions: { XC: 'XC = 1 / (2πfC)', f: 'f = 1 / (2π × XC × C)', C: 'C = 1 / (2π × XC × f)' } },
+            'Z=RX': { original: 'Z = √(R² + X²)', vars: ['Z', 'R', 'X'], solutions: { Z: 'Z = √(R² + X²)', R: 'R = √(Z² - X²)', X: 'X = √(Z² - R²)' } },
+            'tRL': { original: 'τ = L / R', vars: ['τ', 'L', 'R'], solutions: { τ: 'τ = L / R', L: 'L = τ × R', R: 'R = L / τ' } },
+            'tRC': { original: 'τ = R × C', vars: ['τ', 'R', 'C'], solutions: { τ: 'τ = R × C', R: 'R = τ / C', C: 'C = τ / R' } },
+            'TN': { original: 'N1/N2 = V1/V2', vars: ['N1', 'N2', 'V1', 'V2'], solutions: { N1: 'N1 = N2 × (V1 / V2)', N2: 'N2 = N1 × (V2 / V1)', V1: 'V1 = V2 × (N1 / N2)', V2: 'V2 = V1 × (N2 / N1)' } }
+        };
+
+        const practiceProblems = [
+            { formula: 'V=IR', target: 'I', correct: 'I = V / R' },
+            { formula: 'P=VI', target: 'V', correct: 'V = P / I' },
+            { formula: 'P=I2R', target: 'I', correct: 'I = √(P / R)' },
+            { formula: 'P=V2R', target: 'R', correct: 'R = V² / P' },
+            { formula: 'XL=2fL', target: 'f', correct: 'f = XL / (2πL)' },
+            { formula: 'XL=2fL', target: 'L', correct: 'L = XL / (2πf)' },
+            { formula: 'XC=1/2fC', target: 'C', correct: 'C = 1 / (2π × XC × f)' },
+            { formula: 'Z=RX', target: 'R', correct: 'R = √(Z² - X²)' },
+            { formula: 'tRL', target: 'L', correct: 'L = τ × R' },
+            { formula: 'tRC', target: 'C', correct: 'C = τ / R' },
+            { formula: 'V=IR', target: 'R', correct: 'R = V / I' },
+            { formula: 'P=VI', target: 'I', correct: 'I = P / V' },
+            { formula: 'P=I2R', target: 'R', correct: 'R = P / I²' },
+            { formula: 'P=V2R', target: 'V', correct: 'V = √(P × R)' },
+            { formula: 'Z=RX', target: 'X', correct: 'X = √(Z² - R²)' },
+            { formula: 'tRL', target: 'R', correct: 'R = L / τ' },
+            { formula: 'tRC', target: 'R', correct: 'R = τ / C' },
+            { formula: 'TN', target: 'V1', correct: 'V1 = V2 × (N1 / N2)' },
+            { formula: 'TN', target: 'N1', correct: 'N1 = N2 × (V1 / V2)' },
+            { formula: 'XC=1/2fC', target: 'f', correct: 'f = 1 / (2π × XC × C)' }
+        ];
+
+        let currentMode = 'learn';
+        let currentProblemIndex = 0;
+        let practiceScore = 0;
+        let answered = new Array(20).fill(false);
+
+        function updateFormula() {
+            const formulaKey = document.getElementById('formulaSelect').value;
+            const formula = formulas[formulaKey];
+            const solveForSelect = document.getElementById('solveFor');
+
+            solveForSelect.innerHTML = '<option value="">Select variable...</option>';
+            formula.vars.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                solveForSelect.appendChild(opt);
+            });
+
+            document.getElementById('originalFormula').textContent = formula.original;
+            updateSteps();
+        }
+
+        function updateSteps() {
+            const formulaKey = document.getElementById('formulaSelect').value;
+            const solveFor = document.getElementById('solveFor').value;
+            const formula = formulas[formulaKey];
+
+            if (!solveFor) {
+                document.getElementById('stepsContainer').innerHTML = '<div style="color: var(--muted); text-align: center; padding: 2rem;">Select a variable to solve for</div>';
+                document.getElementById('resultFormula').textContent = formula.original;
+                return;
+            }
+
+            const result = formula.solutions[solveFor];
+            document.getElementById('resultFormula').textContent = result;
+
+            const steps = generateSteps(formula, solveFor);
+            let stepsHTML = '';
+            steps.forEach((step, idx) => {
+                stepsHTML += `
+                    <div class="step-container">
+                        <div class="step-label">Step ${idx + 1}</div>
+                        <div class="step-description">${step.description}</div>
+                        <div class="step-formula">${step.formula}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('stepsContainer').innerHTML = stepsHTML;
+        }
+
+        function generateSteps(formula, solveFor) {
+            if (formula.original === 'V = I × R') {
+                if (solveFor === 'I') return [
+                    { description: 'Start with the original equation', formula: 'V = I × R' },
+                    { description: 'Divide both sides by R', formula: 'V / R = I × R / R' },
+                    { description: 'Simplify', formula: 'I = V / R' }
+                ];
+                if (solveFor === 'R') return [
+                    { description: 'Start with the original equation', formula: 'V = I × R' },
+                    { description: 'Divide both sides by I', formula: 'V / I = I × R / I' },
+                    { description: 'Simplify', formula: 'R = V / I' }
+                ];
+            }
+            return [{ description: 'Formula transposition', formula: formula.solutions[solveFor] }];
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('learnContent').style.display = mode === 'learn' ? 'block' : 'none';
+            document.getElementById('practiceContent').style.display = mode === 'practice' ? 'block' : 'none';
+
+            if (mode === 'practice') {
+                showPracticeQuestion();
+            }
+        }
+
+        function showPracticeQuestion() {
+            const problem = practiceProblems[currentProblemIndex];
+            const formula = formulas[problem.formula];
+            let options = [problem.correct];
+
+            while (options.length < 4) {
+                const randomFormula = Object.values(formulas)[Math.floor(Math.random() * Object.keys(formulas).length)];
+                const randomVar = randomFormula.vars[Math.floor(Math.random() * randomFormula.vars.length)];
+                const randomOption = randomFormula.solutions[randomVar];
+                if (!options.includes(randomOption)) options.push(randomOption);
+            }
+
+            options = options.sort(() => Math.random() - 0.5);
+
+            let html = `
+                <div class="practice-question">
+                    <div class="question-text">Given: <strong>${formula.original}</strong></div>
+                    <div class="question-text">Solve for: <strong>${problem.target}</strong></div>
+                    <div class="answer-options">
+            `;
+
+            options.forEach(opt => {
+                const isCorrect = opt === problem.correct;
+                html += `<button class="option-btn" onclick="checkAnswer('${opt}', ${isCorrect})">${opt}</button>`;
+            });
+
+            html += `</div><div id="feedbackArea"></div></div>`;
+            document.getElementById('practiceQuestion').innerHTML = html;
+
+            document.getElementById('scoreValue').textContent = practiceScore;
+            document.getElementById('prevBtn').disabled = currentProblemIndex === 0;
+            document.getElementById('nextBtn').disabled = currentProblemIndex === practiceProblems.length - 1;
+        }
+
+        function checkAnswer(answer, correct) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            if (correct) {
+                if (!answered[currentProblemIndex]) {
+                    practiceScore++;
+                    answered[currentProblemIndex] = true;
+                }
+                feedbackArea.innerHTML = '<div class="feedback success">✓ Correct!</div>';
+                document.querySelectorAll('.option-btn').forEach(btn => {
+                    if (btn.textContent === answer) btn.classList.add('correct');
+                    btn.classList.add('disabled');
+                });
+            } else {
+                feedbackArea.innerHTML = '<div class="feedback error">✗ Incorrect. Try again!</div>';
+                event.target.classList.add('incorrect');
+                event.target.disabled = true;
+            }
+            document.getElementById('scoreValue').textContent = practiceScore;
+        }
+
+        function previousProblem() {
+            if (currentProblemIndex > 0) {
+                currentProblemIndex--;
+                showPracticeQuestion();
+            }
+        }
+
+        function nextProblem() {
+            if (currentProblemIndex < practiceProblems.length - 1) {
+                currentProblemIndex++;
+                showPracticeQuestion();
+            }
+        }
+
+        // Initialize
+        updateFormula();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>

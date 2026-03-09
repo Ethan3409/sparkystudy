@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Constants Worksheet - SparkStudy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f1419; --bg-secondary: #1a1f2e; --bg-tertiary: #252d3d;
+            --border-color: #3d4655; --text-primary: #e4e6eb; --text-secondary: #a0a6b8;
+            --accent-blue: #3b82f6; --accent-purple: #8b5cf6; --accent-green: #10b981;
+            --accent-yellow: #f59e0b; --accent-red: #ef4444;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        nav { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+        nav .container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        nav .logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav .links { display: flex; gap: 2rem; list-style: none; }
+        nav a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        nav a:hover, nav a.active { color: var(--accent-blue); }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .worksheet-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .worksheet-header h1 { font-size: 2rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-controls { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .difficulty-selector, .show-answers-toggle, .generate-btn, .print-btn { padding: 0.75rem 1.25rem; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.95rem; }
+        .difficulty-selector { padding: 0.75rem; min-width: 150px; }
+        .generate-btn:hover, .print-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
+        .show-answers-toggle.active { background: var(--accent-green); border-color: var(--accent-green); color: white; }
+        .progress-section { margin-bottom: 2rem; }
+        .progress-info { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .progress-bar { width: 100%; height: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; overflow: hidden; border: 1px solid var(--border-color); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); transition: width 0.3s; }
+        .problems-container { display: flex; flex-direction: column; gap: 2rem; margin-bottom: 2rem; }
+        .problem { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.75rem; transition: all 0.3s; }
+        .problem.correct { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.05); }
+        .problem.incorrect { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.05); }
+        .problem-number { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+        .problem-text { font-size: 1.1rem; margin-bottom: 1.25rem; line-height: 1.6; }
+        .problem-input-group { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .problem-input { flex: 1; min-width: 150px; padding: 0.75rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.35rem; font-size: 1rem; }
+        .problem-input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .problem-unit { display: flex; align-items: center; padding: 0.75rem 1rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 0.35rem; color: var(--text-secondary); font-weight: 600; }
+        .check-btn { padding: 0.75rem 1.5rem; background: var(--accent-blue); color: white; border: none; border-radius: 0.35rem; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .check-btn:hover { background: var(--accent-purple); transform: translateY(-2px); }
+        .check-btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
+        .result { margin-top: 1rem; padding: 1rem; border-radius: 0.35rem; display: none; }
+        .result.show { display: block; }
+        .result.correct { background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--accent-green); color: var(--accent-green); }
+        .result.incorrect { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--accent-red); color: var(--accent-red); }
+        .result-text { font-weight: 600; margin-bottom: 0.5rem; }
+        .result-details { font-size: 0.9rem; margin-top: 0.5rem; }
+        .summary-section { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 2rem; text-align: center; display: none; }
+        .summary-section.show { display: block; }
+        .summary-grade { font-size: 3rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; }
+        .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .summary-stat { padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; }
+        .summary-stat-value { font-size: 1.75rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 0.5rem; }
+        .summary-stat-label { color: var(--text-secondary); font-size: 0.9rem; }
+        .summary-button { padding: 0.875rem 2rem; background: var(--accent-blue); color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s; }
+        .summary-button:hover { background: var(--accent-purple); transform: translateY(-2px); }
+        @media print {
+            nav, .worksheet-header, .progress-section, .header-controls, .check-btn, .summary-section { display: none !important; }
+            body { background: white; color: black; }
+            .problem { page-break-inside: avoid; border: 1px solid black; background: white; }
+        }
+        @media (max-width: 768px) {
+            .worksheet-header { flex-direction: column; align-items: flex-start; }
+            .header-controls { width: 100%; }
+            .difficulty-selector, .generate-btn, .print-btn { flex: 1; min-width: 100px; }
+            .problem-input-group { flex-direction: column; }
+            .problem-unit { width: 100%; }
+            .container { padding: 1rem; }
+            nav .links { gap: 1rem; font-size: 0.9rem; }
+        }
+        @media (max-width: 480px) {
+            .worksheet-header h1 { font-size: 1.5rem; }
+            nav .links { display: none; }
+            .header-controls { width: 100%; }
+            .summary-stats { grid-template-columns: 1fr; }
+        }
+    
+        .nav-link { color: #e6edf3; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #f59e0b; }
+        
+</style>
+<script>
+(function(){
+    var auth = localStorage.getItem('sparty_auth');
+    if (!auth) { window.location.href = '../login.html'; return; }
+    try {
+        var parsed = JSON.parse(auth);
+        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = '../login.html';
+    }
+})();
+</script>
+</head>
+<body>
+    <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
+            SparkStudy
+        </a>
+        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+        <a href="../tools.html" class="nav-link">Tools</a>
+        <a href="../games.html" class="nav-link">Games</a>
+        <a href="../worksheets.html" class="nav-link">Worksheets</a>
+        <a href="../achievements.html" class="nav-link">Achievements</a>
+        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
+        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
+            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="worksheet-header">
+            <h1>⏱️ Time Constants Worksheet</h1>
+            <div class="header-controls">
+                <select id="difficultySelect" class="difficulty-selector">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <button id="showAnswersBtn" class="show-answers-toggle">Show Answers</button>
+                <button id="generateBtn" class="generate-btn">Generate New Set</button>
+                <button id="printBtn" class="print-btn">🖨️ Print</button>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-info">
+                <span>Progress</span>
+                <span><span id="completedCount">0</span>/10 completed</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="problems-container" id="problemsContainer"></div>
+
+        <div class="summary-section" id="summarySection">
+            <div class="summary-grade" id="summaryGrade">0%</div>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statCorrect">0</div>
+                    <div class="summary-stat-label">Correct</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statWrong">0</div>
+                    <div class="summary-stat-label">Incorrect</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value" id="statTime">0:00</div>
+                    <div class="summary-stat-label">Time Taken</div>
+                </div>
+            </div>
+            <button id="generateNewBtn" class="summary-button">Generate New Set</button>
+        </div>
+    </div>
+
+    <script>
+        function checkAuth() {
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) window.location.href = '../login.html';
+        }
+        checkAuth();
+
+        let currentProblems = [];
+        let startTime = Date.now();
+        let showAnswers = false;
+
+        function generateProblems(difficulty) {
+            if (difficulty === 'easy') {
+                return shuffleArray([
+                    { question: 'RC circuit: R = 10kΩ, C = 10μF. Find τ = RC', answer: 0.1, unit: 's', explanation: 'τ = 10000 × 0.00001 = 0.1s' },
+                    { question: 'RL circuit: L = 0.5H, R = 50Ω. Find τ = L/R', answer: 0.01, unit: 's', explanation: 'τ = 0.5 / 50 = 0.01s' },
+                    { question: 'RC circuit: R = 1kΩ, C = 100μF. Find τ', answer: 0.1, unit: 's', explanation: 'τ = 1000 × 0.0001 = 0.1s' },
+                    { question: 'RL circuit: L = 1H, R = 100Ω. Find τ', answer: 0.01, unit: 's', explanation: 'τ = 1 / 100 = 0.01s' },
+                    { question: 'RC circuit: R = 100kΩ, C = 1μF. Find τ', answer: 0.1, unit: 's', explanation: 'τ = 100000 × 0.000001 = 0.1s' },
+                    { question: 'RL circuit: L = 2H, R = 200Ω. Find τ', answer: 0.01, unit: 's', explanation: 'τ = 2 / 200 = 0.01s' },
+                    { question: 'RC circuit: R = 5kΩ, C = 100μF. Find τ', answer: 0.5, unit: 's', explanation: 'τ = 5000 × 0.0001 = 0.5s' },
+                    { question: 'RL circuit: L = 0.1H, R = 10Ω. Find τ', answer: 0.01, unit: 's', explanation: 'τ = 0.1 / 10 = 0.01s' },
+                    { question: 'Five time constants for RC: τ = 0.2s. Find 5τ', answer: 1, unit: 's', explanation: '5τ = 5 × 0.2 = 1s' },
+                    { question: 'Five time constants for RL: τ = 0.05s. Find 5τ', answer: 0.25, unit: 's', explanation: '5τ = 5 × 0.05 = 0.25s' },
+                ]).slice(0, 10);
+
+            } else if (difficulty === 'medium') {
+                return shuffleArray([
+                    { question: 'RC circuit: R = 47kΩ, C = 2.2μF. Find τ in ms', answer: 103.4, unit: 'ms', explanation: 'τ = 47000 × 0.0000022 = 0.1034s = 103.4ms' },
+                    { question: 'RL circuit: L = 0.5H, R = 75Ω. Find τ in ms', answer: 6.67, unit: 'ms', explanation: 'τ = 0.5 / 75 = 0.00667s = 6.67ms' },
+                    { question: 'Charging: 5τ = 1s for RC. Find τ', answer: 0.2, unit: 's', explanation: 'τ = 1s / 5 = 0.2s' },
+                    { question: 'RC circuit: R = 22kΩ, C = 4.7μF. Find τ', answer: 0.1034, unit: 's', explanation: 'τ = 22000 × 0.0000047 = 0.1034s' },
+                    { question: 'RL circuit: L = 1.5H, R = 150Ω. Find τ', answer: 0.01, unit: 's', explanation: 'τ = 1.5 / 150 = 0.01s' },
+                    { question: 'After 1τ, RC capacitor charges to % of source', answer: 63.2, unit: '%', explanation: '63.2% is the standard charge at 1 time constant' },
+                    { question: 'RC settling time (99%): τ = 50ms. Find total time', answer: 230, unit: 'ms', explanation: '99% is approximately 4.6τ = 230ms' },
+                    { question: 'RL de-energize: L = 0.2H, R = 25Ω. Find τ', answer: 0.008, unit: 's', explanation: 'τ = 0.2 / 25 = 0.008s = 8ms' },
+                    { question: 'RC rise: After 2.3τ, % of source voltage?', answer: 90, unit: '%', explanation: 'After 2.3τ, approximately 90% of source voltage' },
+                    { question: 'Pulse width = 5τ for RL with τ=1ms. Pulse width = ?', answer: 5, unit: 'ms', explanation: 'Pulse width = 5 × 1ms = 5ms' },
+                ]).slice(0, 10);
+
+            } else {
+                return shuffleArray([
+                    { question: 'RC filter: f = 1kHz, calculate corner frequency RC value. If C = 100nF, R = ?', answer: 1591.5, unit: 'Ω', explanation: 'fc = 1/(2πRC). At 1kHz: R = 1/(2π×1000×0.0000001) = 1591.5Ω' },
+                    { question: 'First order response: Initial slope at t=0, τ=10ms, V₀=100V. dV/dt = ?', answer: 10, unit: 'V/ms', explanation: 'Initial slope = V₀/τ = 100V / 10ms = 10 V/ms' },
+                    { question: 'Two-pole cascade: τ₁=1ms, τ₂=10ms. Total settling time (5τ_eq)?', answer: 60, unit: 'ms', explanation: 'For cascaded systems, effective response extends settling time' },
+                    { question: 'Double time constant circuit: τ = 100ms. 1% settling at ?τ', answer: 4.6, unit: 'τ', explanation: 'Approximately 4.6 time constants for 99% (or 1% error) settling' },
+                    { question: 'RL-RC combined: L=1H, R=100Ω, C=10μF. Find LC product', answer: 0.01, unit: 's²', explanation: 'LC = 1 × 0.00001 = 0.00001. For resonance, ω₀ = 1/√(LC) = 316.2 rad/s' },
+                    { question: 'Damping: ζ = R/2√(L/C), if R=100Ω, L=1H, C=1μF. Find ζ', answer: 0.0158, unit: '', explanation: 'ζ = 100/(2√(1000000)) = 0.0158 (underdamped)' },
+                    { question: 'Step response peak time: ωn=1000, ζ=0.5. Find tp', answer: 0.00363, unit: 's', explanation: 'tp = π/(ωn√(1-ζ²)) = π/(1000×0.866) = 3.63ms' },
+                    { question: 'Rise time estimate: τ = 50μs, rise time ≈ 2.2τ = ?', answer: 0.00011, unit: 's', explanation: '2.2 × 50μs = 110μs' },
+                    { question: 'Transient energy in RC: V=12V, C=100μF. Energy = ?', answer: 0.0072, unit: 'J', explanation: 'E = ½CV² = 0.5 × 0.0001 × 144 = 0.0072J' },
+                    { question: 'Phase lag at 1 time constant frequency: f = 1/(2πτ). Phase = ?°', answer: 45, unit: '°', explanation: 'At the corner frequency, phase lag = 45°' },
+                ]).slice(0, 10);
+            }
+        }
+
+        function shuffleArray(arr) {
+            return [...arr].sort(() => Math.random() - 0.5);
+        }
+
+        function renderProblems() {
+            const container = document.getElementById('problemsContainer');
+            container.innerHTML = '';
+            currentProblems.forEach((problem, index) => {
+                const div = document.createElement('div');
+                div.className = 'problem';
+                div.id = `problem-${index}`;
+                div.innerHTML = `
+                    <div class="problem-number">Problem ${index + 1} of 10</div>
+                    <div class="problem-text">${problem.question}</div>
+                    <div class="problem-input-group">
+                        <input type="number" step="0.001" class="problem-input" id="input-${index}" placeholder="Enter answer">
+                        <div class="problem-unit">${problem.unit}</div>
+                        <button class="check-btn" onclick="checkAnswer(${index})">Check</button>
+                    </div>
+                    <div class="result" id="result-${index}"><div class="result-text"></div><div class="result-details"></div></div>
+                    ${showAnswers ? `<div class="result show correct"><div class="result-text">Answer: ${problem.answer} ${problem.unit}</div><div class="result-details">${problem.explanation}</div></div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function checkAnswer(index) {
+            const input = document.getElementById(`input-${index}`);
+            const problem = currentProblems[index];
+            const userAnswer = parseFloat(input.value);
+            const tolerance = Math.max(problem.answer * 0.05, 0.1);
+            const isCorrect = Math.abs(userAnswer - problem.answer) <= tolerance;
+
+            const resultEl = document.getElementById(`result-${index}`);
+            const problemEl = document.getElementById(`problem-${index}`);
+
+            resultEl.classList.add('show');
+            resultEl.querySelector('.result-text').textContent = isCorrect ? `✓ Correct! ${problem.answer}${problem.unit}` : `✗ Incorrect. Correct answer: ${problem.answer}${problem.unit}`;
+            resultEl.querySelector('.result-details').textContent = problem.explanation;
+
+            if (isCorrect) {
+                resultEl.classList.add('correct');
+                resultEl.classList.remove('incorrect');
+                problemEl.classList.add('correct');
+                problemEl.classList.remove('incorrect');
+                input.disabled = true;
+            } else {
+                resultEl.classList.add('incorrect');
+                resultEl.classList.remove('correct');
+                problemEl.classList.add('incorrect');
+                problemEl.classList.remove('correct');
+            }
+
+            updateProgress();
+            checkCompletion();
+        }
+
+        function updateProgress() {
+            let completed = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) completed++;
+            });
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('progressFill').style.width = (completed / 10) * 100 + '%';
+            localStorage.setItem('worksheet_time-constant_completed', completed);
+        }
+
+        function checkCompletion() {
+            let completed = 0, correct = 0;
+            currentProblems.forEach((_, index) => {
+                const input = document.getElementById(`input-${index}`);
+                if (input.disabled) {
+                    completed++;
+                    if (document.getElementById(`result-${index}`).classList.contains('correct')) correct++;
+                }
+            });
+            if (completed === 10) showSummary(correct);
+        }
+
+        function showSummary(correct) {
+            const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
+            const percentage = Math.round((correct / 10) * 100);
+            document.getElementById('summaryGrade').textContent = percentage + '%';
+            document.getElementById('statCorrect').textContent = correct;
+            document.getElementById('statWrong').textContent = 10 - correct;
+            document.getElementById('statTime').textContent = `${Math.floor(timeElapsed / 60)}:${String(timeElapsed % 60).padStart(2, '0')}`;
+            document.getElementById('summarySection').classList.add('show');
+            localStorage.setItem('worksheet_time-constant_attempts', parseInt(localStorage.getItem('worksheet_time-constant_attempts') || 0) + 1);
+            localStorage.setItem('worksheet_time-constant_score', Math.max(percentage, parseInt(localStorage.getItem('worksheet_time-constant_score') || 0)));
+        }
+
+        document.getElementById('difficultySelect').addEventListener('change', (e) => {
+            currentProblems = generateProblems(e.target.value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('showAnswersBtn').addEventListener('click', function() {
+            showAnswers = !showAnswers;
+            this.classList.toggle('active');
+            renderProblems();
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            currentProblems = generateProblems(document.getElementById('difficultySelect').value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('generateNewBtn').addEventListener('click', () => {
+            currentProblems = generateProblems(document.getElementById('difficultySelect').value);
+            document.getElementById('summarySection').classList.remove('show');
+            renderProblems();
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('completedCount').textContent = '0';
+            startTime = Date.now();
+        });
+
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+        currentProblems = generateProblems('medium');
+        renderProblems();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+<script>
+function logout() {
+    localStorage.removeItem('sparty_auth');
+    window.location.href = '../login.html';
+}
+function isOwner() {
+    try {
+        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+        return auth.role === 'owner';
+    } catch(e) { return false; }
+}
+// Show admin link for owner
+document.addEventListener('DOMContentLoaded', function() {
+    if (isOwner()) {
+        var adminLinks = document.querySelectorAll('.admin-link-hidden');
+        adminLinks.forEach(function(el) { el.style.display = ''; });
+    }
+});
+</script>
+</body>
+</html>
