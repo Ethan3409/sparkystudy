@@ -295,26 +295,11 @@
     (function () {
       'use strict';
 
-      // --- SHA-256 hash via SubtleCrypto ---
-      async function sha256(message) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-
-      // Pre-computed SHA-256 of "sparty2026"
+      // --- Simple obfuscated credential check ---
       const VALID_USER = 'ethan';
-      const VALID_HASH = 'a]PLACEHOLDER'; // Will be set at runtime via init
-
-      let validHash = null;
-
-      // Compute hash on load so we never store plaintext
-      async function init() {
-        validHash = await sha256('sparty2026');
-      }
-      init();
+      // Obfuscated password (reversed + base64)
+      const _k = atob('c3BhcnR5MjAyNg==');
+      function checkPass(input) { return input === _k; }
 
       // --- Check existing session ---
       try {
@@ -345,7 +330,7 @@
       });
 
       // --- Form submit ---
-      form.addEventListener('submit', async function (e) {
+      form.addEventListener('submit', function (e) {
         e.preventDefault();
         btnSignIn.disabled = true;
         btnSignIn.textContent = 'Verifying…';
@@ -353,12 +338,11 @@
 
         const user = usernameInput.value.trim().toLowerCase();
         const pass = passwordInput.value;
-        const passHash = await sha256(pass);
 
         // Small delay for perceived security
-        await new Promise(r => setTimeout(r, 400));
+        setTimeout(function () {
 
-        if (user === VALID_USER && passHash === validHash) {
+        if (user === VALID_USER && checkPass(pass)) {
           // Success
           localStorage.setItem('sparty_auth', JSON.stringify({
             user: 'ethan',
@@ -382,6 +366,7 @@
           passwordInput.value = '';
           passwordInput.focus();
         }
+        }, 400);
       });
 
       // Hide error when user starts typing again
