@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEC Conductor Sizing Tool | SparkStudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Global Design System
+   ============================================ */
+
+:root {
+    --primary: #f59e0b;
+    --primary-dark: #d97706;
+    --primary-light: #fbbf24;
+    --primary-bg: rgba(245,158,11,0.12);
+    --secondary: #e6edf3;
+    --secondary-light: #30363d;
+    --text: #e6edf3;
+    --text-light: #8b949e;
+    --text-lighter: #8b949e;
+    --bg: #161b22;
+    --bg-alt: #0d1117;
+    --bg-dark: #0d1117;
+    --border: #30363d;
+    --success: #10b981;
+    --success-bg: rgba(16,185,129,0.12);
+    --error: #ef4444;
+    --error-bg: rgba(239,68,68,0.12);
+    --info: #58a6ff;
+    --info-bg: rgba(88,166,255,0.12);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245,158,11,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: #0d1117;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Thin dark scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #30363d transparent;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+a { text-decoration: none; color: inherit; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #30363d;
+    height: 64px;
+}
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+.logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #e6edf3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.logo-icon { font-size: 1.5rem; }
+.nav-links { display: flex; gap: 8px; }
+.nav-link {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #8b949e;
+    transition: var(--transition);
+}
+.nav-link:hover { color: #e6edf3; background: rgba(255,255,255,0.05); }
+.nav-link.active { color: #f59e0b; background: rgba(245,158,11,0.12); }
+.mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+}
+.mobile-menu-btn span {
+    display: block;
+    width: 24px; height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+/* ============================================
+   Page Layout
+   ============================================ */
+
+.page-main {
+    padding-top: 80px;
+    min-height: 100vh;
+    background: #0d1117;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+
+.page-header {
+    padding: 40px 0 32px;
+}
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: #8b949e;
+    margin-bottom: 16px;
+}
+.breadcrumb a { color: #8b949e; }
+.breadcrumb a:hover { color: #f59e0b; text-decoration: underline; }
+.breadcrumb span:last-child { color: #f59e0b; }
+.breadcrumb .sep { color: #30363d; }
+.page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #e6edf3;
+    margin-bottom: 6px;
+}
+.page-header .subtitle {
+    font-size: 1rem;
+    color: #8b949e;
+}
+
+/* ============================================
+   Tool Grid — Two Column
+   ============================================ */
+
+.tool-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+    align-items: start;
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+
+.card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    padding: 20px 24px 0;
+    border-bottom: 1px solid #30363d;
+    padding-bottom: 16px;
+    margin-bottom: 0;
+}
+.card-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e6edf3;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.card-header .card-icon {
+    width: 28px; height: 28px;
+    background: rgba(245,158,11,0.12);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+.card-body { padding: 20px 24px 24px; }
+
+/* ============================================
+   Input Card
+   ============================================ */
+
+.input-group {
+    margin-bottom: 20px;
+}
+.input-group:last-child { margin-bottom: 0; }
+
+.input-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #e6edf3;
+    margin-bottom: 8px;
+}
+.input-label .unit {
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: #8b949e;
+    margin-left: 4px;
+}
+
+input[type="number"],
+select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #30363d;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #e6edf3;
+    background: #0d1117;
+    transition: var(--transition);
+    appearance: none;
+    color-scheme: dark;
+}
+input[type="number"]:focus,
+select:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+/* Slider */
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+input[type="range"] {
+    flex: 1;
+    height: 6px;
+    accent-color: #f59e0b;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    background: #30363d;
+    border-radius: 3px;
+    appearance: none;
+    -webkit-appearance: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+    background: #30363d;
+    height: 6px;
+    border-radius: 3px;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #f59e0b;
+    margin-top: -5px;
+    cursor: pointer;
+    box-shadow: 0 0 0 2px rgba(245,158,11,0.25);
+}
+input[type="range"]::-moz-range-track {
+    background: #30363d;
+    height: 6px;
+    border-radius: 3px;
+}
+input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: none;
+    cursor: pointer;
+}
+.slider-val {
+    min-width: 52px;
+    padding: 6px 10px;
+    background: rgba(245,158,11,0.12);
+    color: #f59e0b;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid rgba(245,158,11,0.25);
+}
+.slider-range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #8b949e;
+    margin-top: 4px;
+    padding: 0 2px;
+}
+
+/* Toggle buttons */
+.toggle-group {
+    display: flex;
+    gap: 8px;
+}
+.toggle-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1.5px solid #30363d;
+    border-radius: var(--radius-sm);
+    background: #0d1117;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+    color: #8b949e;
+}
+.toggle-btn:hover {
+    border-color: rgba(245,158,11,0.5);
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.toggle-btn.active {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+/* ============================================
+   Steps Card
+   ============================================ */
+
+.steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.step-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #30363d;
+    position: relative;
+}
+.step-row:last-child { border-bottom: none; }
+
+.step-num {
+    width: 26px; height: 26px;
+    min-width: 26px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.12);
+    color: #f59e0b;
+    font-weight: 800;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    border: 1.5px solid rgba(245,158,11,0.3);
+}
+
+.step-content {
+    flex: 1;
+}
+.step-desc {
+    font-size: 0.8rem;
+    color: #8b949e;
+    margin-bottom: 2px;
+    font-weight: 500;
+}
+.step-formula {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e6edf3;
+    font-feature-settings: 'tnum';
+}
+.step-formula .val {
+    color: #f59e0b;
+    font-weight: 700;
+}
+.step-formula .muted {
+    color: #8b949e;
+    font-weight: 400;
+}
+
+.step-result-row {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #0d1117;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid #30363d;
+}
+.step-result-row .step-num {
+    background: #f59e0b;
+    color: #0d1117;
+    border-color: #d97706;
+}
+.step-result-row .step-desc {
+    font-size: 0.8rem;
+    color: #10b981;
+    font-weight: 600;
+}
+.step-result-row .step-formula {
+    color: #10b981;
+    font-size: 0.9rem;
+}
+
+/* ============================================
+   Conductor Visual Canvas Card
+   ============================================ */
+
+.visual-card .card-body {
+    padding: 16px 20px 20px;
+}
+
+#conductorCanvas {
+    width: 100%;
+    height: 180px;
+    display: block;
+    border-radius: var(--radius-sm);
+    background: #0d1117;
+    border: 1px solid #30363d;
+}
+
+.canvas-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    justify-content: center;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #8b949e;
+    font-weight: 500;
+}
+.legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+}
+.legend-dot.copper { background: #c2724a; border: 1.5px solid #58a6ff; }
+.legend-dot.aluminum { background: #94a3b8; }
+.legend-dot.highlighted {
+    background: transparent;
+    border: 2px solid #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245,158,11,0.3);
+}
+
+/* ============================================
+   Result Card
+   ============================================ */
+
+.result-card {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.result-card-inner {
+    background: #161b22;
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    position: relative;
+    overflow: hidden;
+}
+.result-card-inner::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.08);
+}
+.result-card-inner::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: -20px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.05);
+}
+
+.result-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8b949e;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 1;
+}
+
+.result-size-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.result-size {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -1px;
+    line-height: 1;
+}
+
+.result-size-unit {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #8b949e;
+}
+
+.result-ampacity {
+    font-size: 0.9rem;
+    color: #8b949e;
+    position: relative;
+    z-index: 1;
+}
+.result-ampacity strong {
+    color: #e6edf3;
+    font-weight: 700;
+}
+
+.result-badges {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+}
+.result-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.05);
+    color: #8b949e;
+    border: 1px solid #30363d;
+}
+.result-badge.primary {
+    background: rgba(245,158,11,0.15);
+    border-color: rgba(245,158,11,0.4);
+    color: #f59e0b;
+}
+
+/* ============================================
+   Ampacity Reference Table
+   ============================================ */
+
+.table-card {
+    margin-bottom: 32px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-sm);
+    border: 1px solid #30363d;
+}
+
+.amp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    background: #0d1117;
+}
+.amp-table thead {
+    background: #161b22;
+}
+.amp-table thead th {
+    padding: 12px 16px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    color: #8b949e;
+}
+.amp-table thead th:first-child { text-align: left; }
+
+.amp-table tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #30363d;
+    text-align: center;
+    color: #e6edf3;
+}
+.amp-table tbody td:first-child {
+    text-align: left;
+    font-weight: 700;
+    color: #e6edf3;
+}
+.amp-table tbody tr:last-child td { border-bottom: none; }
+.amp-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.amp-table tbody tr:hover { background: rgba(245,158,11,0.05); }
+
+.amp-table tbody tr.row-highlighted {
+    background: rgba(245,158,11,0.08) !important;
+    box-shadow: inset 3px 0 0 #f59e0b;
+}
+.amp-table tbody tr.row-highlighted td:first-child {
+    color: #f59e0b;
+}
+
+.table-group-header th {
+    background: #161b22;
+    font-size: 0.72rem;
+    padding: 8px 16px;
+    font-style: italic;
+    letter-spacing: 0.03em;
+    color: #8b949e;
+    opacity: 0.9;
+}
+
+/* ============================================
+   Correction Factors Tables
+   ============================================ */
+
+.factor-tables-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.factor-table {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.factor-table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #30363d;
+}
+.factor-table-header h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 2px;
+}
+.factor-table-header p {
+    font-size: 0.78rem;
+    color: #8b949e;
+}
+
+.factor-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    background: #0d1117;
+}
+.factor-tbl thead th {
+    background: #161b22;
+    padding: 10px 16px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #8b949e;
+    border-bottom: 1px solid #30363d;
+}
+.factor-tbl thead th:first-child { text-align: left; }
+.factor-tbl tbody td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #30363d;
+    text-align: center;
+    color: #e6edf3;
+}
+.factor-tbl tbody td:first-child { text-align: left; font-weight: 600; }
+.factor-tbl tbody tr:last-child td { border-bottom: none; }
+.factor-tbl tbody tr.factor-active {
+    background: rgba(245,158,11,0.08);
+}
+.factor-tbl tbody tr.factor-active td { color: #f59e0b; font-weight: 700; }
+
+/* ============================================
+   Tips Section
+   ============================================ */
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+}
+.tip-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius);
+    padding: 20px;
+    border-left: 4px solid #f59e0b;
+    box-shadow: var(--shadow);
+}
+.tip-card.warn { border-left-color: #ef4444; }
+.tip-card.info { border-left-color: #58a6ff; }
+.tip-card.ok { border-left-color: #10b981; }
+.tip-card-icon { font-size: 1.3rem; margin-bottom: 10px; }
+.tip-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: #e6edf3; }
+.tip-card p { font-size: 0.82rem; color: #8b949e; line-height: 1.55; }
+
+/* ============================================
+   Footer
+   ============================================ */
+
+.footer {
+    background: #0d1117;
+    color: #8b949e;
+    padding: 40px 0 24px;
+    border-top: 1px solid #30363d;
+}
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+}
+.footer-brand {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #e6edf3;
+}
+.footer-brand p {
+    font-size: 0.85rem;
+    color: #8b949e;
+    font-weight: 400;
+    margin-top: 6px;
+    max-width: 280px;
+}
+.footer-links { display: flex; gap: 20px; }
+.footer-links a { color: #8b949e; transition: var(--transition); font-size: 0.9rem; }
+.footer-links a:hover { color: #f59e0b; }
+.footer-bottom {
+    border-top: 1px solid #30363d;
+    padding-top: 20px;
+    font-size: 0.82rem;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 900px) {
+    .tool-grid { grid-template-columns: 1fr; }
+    .factor-tables-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+    .page-header h1 { font-size: 1.6rem; }
+    .result-size { font-size: 2.4rem; }
+    .tips-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .nav-links { display: none; }
+    .mobile-menu-btn { display: flex; }
+    .tips-grid { grid-template-columns: 1fr; }
+}
+    </style>
+</head>
+<body>
+
+<!-- ============================================
+     Navigation
+     ============================================ -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="../index.html" class="logo"><span class="logo-icon">⚡</span> SparkStudy</a>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">Home</a>
+            <a href="../period1.html" class="nav-link">Period 1</a>
+            <a href="../period2.html" class="nav-link">Period 2</a>
+            <a href="../tools.html" class="nav-link active">Tools &amp; Sims</a>
+            <a href="../pricing.html" class="nav-link">Pricing</a>
+        </div>
+        <button class="mobile-menu-btn" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+</nav>
+
+<!-- ============================================
+     Main Content
+     ============================================ -->
+<main class="page-main">
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <span class="sep">/</span>
+            <a href="../tools.html">Tools &amp; Sims</a>
+            <span class="sep">/</span>
+            <span>Conductor Sizing</span>
+        </div>
+        <h1>CEC Conductor Sizing</h1>
+        <p class="subtitle">Select the minimum conductor size per CEC Table 2 — accounting for temperature and bundling correction.</p>
+    </div>
+
+    <!-- ============ TOOL GRID ============ -->
+    <div class="tool-grid">
+
+        <!-- ======= LEFT COLUMN ======= -->
+        <div class="left-col">
+
+            <!-- Inputs Card -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <h2><span class="card-icon">⚙</span> Inputs</h2>
+                </div>
+                <div class="card-body">
+
+                    <!-- Load Current -->
+                    <div class="input-group">
+                        <label class="input-label" for="loadCurrent">
+                            Load Current <span class="unit">(amperes)</span>
+                        </label>
+                        <input type="number" id="loadCurrent" value="40" min="1" max="2000" step="1">
+                    </div>
+
+                    <!-- Ambient Temperature -->
+                    <div class="input-group">
+                        <label class="input-label" for="ambientTemp">
+                            Ambient Temperature <span class="unit">(°C)</span>
+                        </label>
+                        <div class="slider-row">
+                            <input type="range" id="ambientTemp" min="20" max="50" step="5" value="30">
+                            <div class="slider-val"><span id="tempDisplay">30</span>°C</div>
+                        </div>
+                        <div class="slider-range-labels"><span>20°C</span><span>50°C</span></div>
+                    </div>
+
+                    <!-- Number of Conductors -->
+                    <div class="input-group">
+                        <label class="input-label" for="conductorCount">Number of Current-Carrying Conductors</label>
+                        <select id="conductorCount">
+                            <option value="1-2">1–2 conductors</option>
+                            <option value="3" selected>3 conductors</option>
+                            <option value="4-6">4–6 conductors</option>
+                            <option value="7-24">7–24 conductors</option>
+                            <option value="25-42">25–42 conductors</option>
+                        </select>
+                    </div>
+
+                    <!-- Insulation Rating -->
+                    <div class="input-group">
+                        <label class="input-label">Insulation Temperature Rating</label>
+                        <div class="toggle-group">
+                            <button class="toggle-btn" id="btn60" onclick="setInsulation(60)">60°C</button>
+                            <button class="toggle-btn active" id="btn90" onclick="setInsulation(90)">90°C (T90)</button>
+                        </div>
+                    </div>
+
+                    <!-- Material -->
+                    <div class="input-group">
+                        <label class="input-label">Conductor Material</label>
+                        <div class="toggle-group">
+                            <button class="toggle-btn active" id="btnCopper" onclick="setMaterial('copper')">Copper</button>
+                            <button class="toggle-btn" id="btnAluminum" onclick="setMaterial('aluminum')">Aluminum</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Steps Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><span class="card-icon">📐</span> Step-by-Step Calculation</h2>
+                </div>
+                <div class="card-body" style="padding-top: 8px;">
+                    <div class="steps-list">
+
+                        <div class="step-row">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <div class="step-desc">Base load current</div>
+                                <div class="step-formula">
+                                    I<sub>load</sub> = <span class="val" id="s1-current">40</span> A
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-row">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <div class="step-desc">Temperature correction factor — CEC Table 5A</div>
+                                <div class="step-formula">
+                                    At <span class="val" id="s2-temp">30</span>°C
+                                    <span class="muted">(</span><span class="val" id="s2-ins">90</span>°C rated<span class="muted">)</span>:
+                                    T<sub>f</sub> = <span class="val" id="s2-tf">1.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-row">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <div class="step-desc">Bundling correction factor — CEC Table 5C</div>
+                                <div class="step-formula">
+                                    <span class="val" id="s3-count">3</span> conductors:
+                                    B<sub>f</sub> = <span class="val" id="s3-bf">1.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-row">
+                            <div class="step-num">4</div>
+                            <div class="step-content">
+                                <div class="step-desc">Corrected ampacity required</div>
+                                <div class="step-formula">
+                                    <span id="s4-current">40</span> &divide; (<span id="s4-tf">1.00</span> &times; <span id="s4-bf">1.00</span>) = <span class="val" id="s4-required">40</span> A
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-row step-result-row">
+                            <div class="step-num">5</div>
+                            <div class="step-content">
+                                <div class="step-desc">Minimum conductor — first size rated &ge; corrected ampacity</div>
+                                <div class="step-formula">
+                                    <span id="s5-size" class="val" style="font-size:1.05rem;">#8</span>
+                                    <span class="muted"> — rated </span>
+                                    <span id="s5-amp" class="val">55</span> A
+                                    <span class="muted" id="s5-mat"> (90°C copper)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- end left-col -->
+
+        <!-- ======= RIGHT COLUMN ======= -->
+        <div class="right-col" style="display:flex; flex-direction:column; gap:20px;">
+
+            <!-- Conductor Visual -->
+            <div class="card visual-card">
+                <div class="card-header">
+                    <h2><span class="card-icon">⭕</span> Conductor Cross-Section Comparison</h2>
+                </div>
+                <div class="card-body">
+                    <canvas id="conductorCanvas" width="600" height="180"></canvas>
+                    <div class="canvas-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot copper"></div>
+                            Copper
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot aluminum"></div>
+                            Aluminum
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot highlighted"></div>
+                            Recommended
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Card -->
+            <div class="result-card">
+                <div class="result-card-inner">
+                    <div class="result-label">Recommended Conductor</div>
+                    <div class="result-size-row">
+                        <div class="result-size" id="result-size">#8</div>
+                        <div class="result-size-unit" id="result-size-unit">AWG</div>
+                    </div>
+                    <div class="result-ampacity">
+                        Rated <strong id="result-amp">55</strong> A — exceeds corrected requirement of <strong id="result-req">40</strong> A
+                    </div>
+                    <div class="result-badges">
+                        <div class="result-badge primary" id="result-mat-badge">Copper</div>
+                        <div class="result-badge" id="result-ins-badge">90°C</div>
+                        <div class="result-badge" id="result-tf-badge">T<sub>f</sub> 1.00</div>
+                        <div class="result-badge" id="result-bf-badge">B<sub>f</sub> 1.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ampacity Table -->
+            <div class="card table-card" style="margin-bottom:0;">
+                <div class="card-header">
+                    <h2><span class="card-icon">📋</span> CEC Table 2 — Ampacity Reference</h2>
+                </div>
+                <div class="card-body" style="padding: 16px 0 0 0;">
+                    <div class="table-wrapper">
+                        <table class="amp-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="text-align:left; padding-left:16px;">Size</th>
+                                    <th colspan="2">Copper (A)</th>
+                                    <th colspan="2">Aluminum (A)</th>
+                                </tr>
+                                <tr>
+                                    <th>60°C</th>
+                                    <th>90°C</th>
+                                    <th>60°C</th>
+                                    <th>90°C</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ampacityTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- end right-col -->
+
+    </div>
+    <!-- end tool-grid -->
+
+    <!-- ============ CORRECTION FACTOR TABLES ============ -->
+    <div class="factor-tables-grid">
+
+        <!-- Temperature Correction -->
+        <div class="factor-table">
+            <div class="factor-table-header">
+                <h3>Temperature Correction Factors</h3>
+                <p>CEC Table 5A — multiply base ampacity by factor for ambient temp</p>
+            </div>
+            <table class="factor-tbl">
+                <thead>
+                    <tr>
+                        <th>Ambient Temp</th>
+                        <th>60°C Rating</th>
+                        <th>90°C Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="tempFactorBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bundling Correction -->
+        <div class="factor-table">
+            <div class="factor-table-header">
+                <h3>Bundling Correction Factors</h3>
+                <p>CEC Table 5C — conductors in same raceway or cable</p>
+            </div>
+            <table class="factor-tbl">
+                <thead>
+                    <tr>
+                        <th>Number of Conductors</th>
+                        <th>Factor</th>
+                    </tr>
+                </thead>
+                <tbody id="bundleFactorBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- ============ TIPS ============ -->
+    <div class="tips-grid">
+        <div class="tip-card warn">
+            <div class="tip-card-icon">&#x26A0;&#xFE0F;</div>
+            <h4>Always Round Up</h4>
+            <p>If the corrected ampacity falls between two conductor sizes, always select the next larger size. Never round down.</p>
+        </div>
+        <div class="tip-card info">
+            <div class="tip-card-icon">&#x1F321;&#xFE0F;</div>
+            <h4>Termination Ratings</h4>
+            <p>T90 insulation offers higher ampacity but verify all terminals (lugs, breakers) are also rated for 90°C before using those values.</p>
+        </div>
+        <div class="tip-card">
+            <div class="tip-card-icon">&#x1F321;&#xFE0F;</div>
+            <h4>High Ambient Locations</h4>
+            <p>Attics, boiler rooms, and outdoor southern exposures can reach 40–50°C. Always use the maximum expected temperature for that location.</p>
+        </div>
+        <div class="tip-card ok">
+            <div class="tip-card-icon">&#x1F4A1;</div>
+            <h4>Aluminum Considerations</h4>
+            <p>Aluminum conductors require anti-oxidant compound and must use AL-rated connectors. They are typically two sizes larger than copper equivalent.</p>
+        </div>
+    </div>
+
+</div><!-- end container -->
+</main>
+
+<!-- ============================================
+     Footer
+     ============================================ -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div>
+                <div class="footer-brand">⚡ SparkStudy</div>
+                <p>CEC exam preparation tools for Canadian apprentice electricians.</p>
+            </div>
+            <div class="footer-links">
+                <a href="../index.html">Home</a>
+                <a href="../period1.html">Period 1</a>
+                <a href="../period2.html">Period 2</a>
+                <a href="../tools.html">Tools &amp; Sims</a>
+                <a href="../pricing.html">Pricing</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2025 SparkStudy. For study purposes only — always consult the current CEC edition for code compliance.
+        </div>
+    </div>
+</footer>
+
+<script>
+// ============================================================
+//  DATA — extracted from CEC Table 2 (do not modify values)
+// ============================================================
+
+const ampacityData = {
+    copper: {
+        60: {
+            '#14': 15, '#12': 20, '#10': 30, '#8': 40, '#6': 55,
+            '#4': 70, '#3': 80, '#2': 95, '#1': 110, '1/0': 125,
+            '2/0': 145, '3/0': 165, '4/0': 195, '250': 215, '300': 240,
+            '350': 260, '500': 320
+        },
+        90: {
+            '#14': 25, '#12': 30, '#10': 40, '#8': 55, '#6': 75,
+            '#4': 95, '#3': 110, '#2': 130, '#1': 150, '1/0': 170,
+            '2/0': 195, '3/0': 225, '4/0': 260, '250': 290, '300': 320,
+            '350': 350, '500': 430
+        }
+    },
+    aluminum: {
+        60: {
+            '#12': 15, '#10': 25, '#8': 30, '#6': 40, '#4': 55,
+            '#3': 65, '#2': 75, '#1': 85, '1/0': 100, '2/0': 115,
+            '3/0': 130, '4/0': 155, '250': 170, '300': 190, '350': 210,
+            '500': 260
+        },
+        90: {
+            '#12': 25, '#10': 35, '#8': 45, '#6': 60, '#4': 75,
+            '#3': 85, '#2': 100, '#1': 115, '1/0': 135, '2/0': 150,
+            '3/0': 175, '4/0': 205, '250': 230, '300': 255, '350': 280,
+            '500': 345
+        }
+    }
+};
+
+// Ordered conductor sizes (smallest to largest)
+const conductorSizes = [
+    '#14', '#12', '#10', '#8', '#6', '#4', '#3',
+    '#2', '#1', '1/0', '2/0', '3/0', '4/0',
+    '250', '300', '350', '500'
+];
+
+// Approximate cross-sectional areas in mm² (proportional to AWG/kcmil standards)
+// Used for visual canvas only
+const conductorArea = {
+    '#14': 2.08,   '#12': 3.31,  '#10': 5.26,  '#8': 8.37,
+    '#6': 13.3,    '#4': 21.2,   '#3': 26.7,   '#2': 33.6,
+    '#1': 42.4,   '1/0': 53.5,  '2/0': 67.4,  '3/0': 85.0,
+    '4/0': 107.2, '250': 127,   '300': 152,   '350': 177,   '500': 253
+};
+
+// Temperature correction factors — CEC Table 5A
+const tempCorrection = {
+    60: { 20: 1.0, 25: 1.0, 30: 1.0, 35: 0.91, 40: 0.82, 45: 0.71, 50: 0.58 },
+    90: { 20: 1.0, 25: 1.0, 30: 1.0, 35: 0.96, 40: 0.91, 45: 0.87, 50: 0.82 }
+};
+
+// Bundling correction factors — CEC Table 5C
+const bundlingCorrection = {
+    '1-2':  1.0,
+    '3':    1.0,
+    '4-6':  0.8,
+    '7-24': 0.7,
+    '25-42': 0.6
+};
+
+// Canvas display: which sizes to show (subset for clarity)
+const CANVAS_SIZES = ['#14', '#10', '#8', '#6', '#4', '#2', '1/0', '3/0', '4/0', '250', '500'];
+
+// ============================================================
+//  STATE
+// ============================================================
+let currentMaterial = 'copper';
+let currentInsulation = 90;
+
+// ============================================================
+//  INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+    populateAmpacityTable();
+    populateTempFactorTable();
+    populateBundleFactorTable();
+    updateCalculations();
+
+    document.getElementById('loadCurrent').addEventListener('input', updateCalculations);
+    document.getElementById('loadCurrent').addEventListener('change', updateCalculations);
+    document.getElementById('ambientTemp').addEventListener('input', (e) => {
+        document.getElementById('tempDisplay').textContent = e.target.value;
+        updateCalculations();
+    });
+    document.getElementById('conductorCount').addEventListener('change', updateCalculations);
+});
+
+// ============================================================
+//  TOGGLE HANDLERS
+// ============================================================
+function setMaterial(mat) {
+    currentMaterial = mat;
+    document.getElementById('btnCopper').classList.toggle('active', mat === 'copper');
+    document.getElementById('btnAluminum').classList.toggle('active', mat === 'aluminum');
+    updateCalculations();
+}
+
+function setInsulation(ins) {
+    currentInsulation = ins;
+    document.getElementById('btn60').classList.toggle('active', ins === 60);
+    document.getElementById('btn90').classList.toggle('active', ins === 90);
+    updateCalculations();
+}
+
+// ============================================================
+//  CALCULATION
+// ============================================================
+function getTemperatureFactor(temp, insulation) {
+    const factors = tempCorrection[insulation];
+    const keys = Object.keys(factors).map(Number).sort((a, b) => a - b);
+    // Clamp
+    if (temp <= keys[0]) return factors[keys[0]];
+    if (temp >= keys[keys.length - 1]) return factors[keys[keys.length - 1]];
+    // Linear interpolation between two nearest steps
+    for (let i = 0; i < keys.length - 1; i++) {
+        if (temp >= keys[i] && temp <= keys[i + 1]) {
+            const t1 = keys[i], t2 = keys[i + 1];
+            const f1 = factors[t1], f2 = factors[t2];
+            return f1 + (f2 - f1) * (temp - t1) / (t2 - t1);
+        }
+    }
+    return 1.0;
+}
+
+function findMinimumSize(requiredAmpacity, material, insulation) {
+    const data = ampacityData[material][insulation];
+    for (const size of conductorSizes) {
+        if (data[size] !== undefined && data[size] >= requiredAmpacity) {
+            return size;
+        }
+    }
+    return '500'; // largest available
+}
+
+function updateCalculations() {
+    const loadCurrent = parseFloat(document.getElementById('loadCurrent').value) || 0;
+    const ambientTemp = parseFloat(document.getElementById('ambientTemp').value);
+    const conductorCount = document.getElementById('conductorCount').value;
+    const insulation = currentInsulation;
+    const material = currentMaterial;
+
+    // Factors
+    const tf = getTemperatureFactor(ambientTemp, insulation);
+    const bf = bundlingCorrection[conductorCount];
+    const tfRounded = Math.round(tf * 1000) / 1000;
+    const bfRounded = bf;
+
+    // Required ampacity
+    const combined = tf * bf;
+    const requiredAmpacity = combined > 0 ? Math.ceil(loadCurrent / combined) : 0;
+
+    // Find conductor
+    const recommendedSize = findMinimumSize(requiredAmpacity, material, insulation);
+    const ratedAmpacity = ampacityData[material][insulation][recommendedSize] || 0;
+
+    // Conductor count label
+    const countLabel = conductorCount === '1-2' ? '1–2' :
+                       conductorCount === '4-6'  ? '4–6' :
+                       conductorCount === '7-24' ? '7–24' :
+                       conductorCount === '25-42' ? '25–42' : conductorCount;
+
+    // ---- Update Step Display ----
+    document.getElementById('s1-current').textContent = loadCurrent;
+
+    document.getElementById('s2-temp').textContent = ambientTemp;
+    document.getElementById('s2-ins').textContent = insulation;
+    document.getElementById('s2-tf').textContent = tfRounded.toFixed(2);
+
+    document.getElementById('s3-count').textContent = countLabel;
+    document.getElementById('s3-bf').textContent = bfRounded.toFixed(2);
+
+    document.getElementById('s4-current').textContent = loadCurrent;
+    document.getElementById('s4-tf').textContent = tfRounded.toFixed(2);
+    document.getElementById('s4-bf').textContent = bfRounded.toFixed(2);
+    document.getElementById('s4-required').textContent = requiredAmpacity;
+
+    document.getElementById('s5-size').textContent = recommendedSize;
+    document.getElementById('s5-amp').textContent = ratedAmpacity;
+    document.getElementById('s5-mat').textContent = ` (${insulation}°C ${material})`;
+
+    // ---- Update Result Card ----
+    document.getElementById('result-size').textContent = recommendedSize;
+    // Determine unit suffix
+    const isKcmil = !recommendedSize.startsWith('#') && !recommendedSize.includes('/');
+    document.getElementById('result-size-unit').textContent = isKcmil ? 'kcmil' : 'AWG';
+    document.getElementById('result-amp').textContent = ratedAmpacity;
+    document.getElementById('result-req').textContent = requiredAmpacity;
+    document.getElementById('result-mat-badge').textContent = material.charAt(0).toUpperCase() + material.slice(1);
+    document.getElementById('result-ins-badge').textContent = insulation + '°C';
+    document.getElementById('result-tf-badge').innerHTML = `T<sub>f</sub> ${tfRounded.toFixed(2)}`;
+    document.getElementById('result-bf-badge').innerHTML = `B<sub>f</sub> ${bfRounded.toFixed(2)}`;
+
+    // ---- Update Table Highlight ----
+    highlightTableRow(recommendedSize);
+
+    // ---- Update Correction Factor Table Highlights ----
+    highlightTempFactorRow(ambientTemp);
+    highlightBundleFactorRow(conductorCount);
+
+    // ---- Draw Canvas ----
+    drawConductorCanvas(recommendedSize, material);
+}
+
+// ============================================================
+//  POPULATE AMPACITY TABLE
+// ============================================================
+function populateAmpacityTable() {
+    const tbody = document.getElementById('ampacityTableBody');
+    tbody.innerHTML = '';
+
+    conductorSizes.forEach(size => {
+        const cu60  = ampacityData.copper[60][size]    || '—';
+        const cu90  = ampacityData.copper[90][size]    || '—';
+        const al60  = ampacityData.aluminum[60][size]  || '—';
+        const al90  = ampacityData.aluminum[90][size]  || '—';
+
+        const tr = document.createElement('tr');
+        tr.dataset.size = size;
+        tr.innerHTML = `
+            <td>${size}</td>
+            <td>${cu60}</td>
+            <td>${cu90}</td>
+            <td>${al60}</td>
+            <td>${al90}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function highlightTableRow(size) {
+    document.querySelectorAll('#ampacityTableBody tr').forEach(tr => {
+        tr.classList.toggle('row-highlighted', tr.dataset.size === size);
+    });
+    // Scroll highlighted row into view smoothly
+    const highlighted = document.querySelector('#ampacityTableBody tr.row-highlighted');
+    if (highlighted) {
+        highlighted.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+// ============================================================
+//  POPULATE CORRECTION FACTOR TABLES
+// ============================================================
+function populateTempFactorTable() {
+    const tbody = document.getElementById('tempFactorBody');
+    const temps = Object.keys(tempCorrection[60]).map(Number).sort((a, b) => a - b);
+    tbody.innerHTML = temps.map(t => `
+        <tr data-temp="${t}">
+            <td>${t}°C</td>
+            <td>${tempCorrection[60][t].toFixed(2)}</td>
+            <td>${tempCorrection[90][t].toFixed(2)}</td>
+        </tr>
+    `).join('');
+}
+
+function highlightTempFactorRow(temp) {
+    // Highlight nearest row
+    const rows = document.querySelectorAll('#tempFactorBody tr');
+    let closestRow = null, closestDist = Infinity;
+    rows.forEach(tr => {
+        const d = Math.abs(parseInt(tr.dataset.temp) - temp);
+        if (d < closestDist) { closestDist = d; closestRow = tr; }
+    });
+    rows.forEach(tr => tr.classList.remove('factor-active'));
+    if (closestRow) closestRow.classList.add('factor-active');
+}
+
+function populateBundleFactorTable() {
+    const tbody = document.getElementById('bundleFactorBody');
+    const labels = {
+        '1-2':   '1–2',
+        '3':     '3',
+        '4-6':   '4–6',
+        '7-24':  '7–24',
+        '25-42': '25–42'
+    };
+    tbody.innerHTML = Object.entries(bundlingCorrection).map(([key, val]) => `
+        <tr data-key="${key}">
+            <td>${labels[key]}</td>
+            <td>${val.toFixed(2)}</td>
+        </tr>
+    `).join('');
+}
+
+function highlightBundleFactorRow(conductorCount) {
+    document.querySelectorAll('#bundleFactorBody tr').forEach(tr => {
+        tr.classList.toggle('factor-active', tr.dataset.key === conductorCount);
+    });
+}
+
+// ============================================================
+//  CANVAS — Conductor Cross-Section Visual
+// ============================================================
+function drawConductorCanvas(recommendedSize, material) {
+    const canvas = document.getElementById('conductorCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Use device pixel ratio for crisp rendering
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const W = rect.width;
+    const H = rect.height;
+
+    // Background
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, W, H);
+
+    // Filter canvas sizes to those visible in current table
+    const data = ampacityData[material][currentInsulation];
+    const sizesToShow = CANVAS_SIZES.filter(s => data[s] !== undefined);
+
+    if (sizesToShow.length === 0) return;
+
+    // Compute radii proportional to sqrt(area) (radius ~ sqrt(cross-section))
+    const maxArea = Math.max(...sizesToShow.map(s => conductorArea[s]));
+    const MAX_RADIUS = Math.min(H / 2 - 24, 52);
+    const MIN_RADIUS = 8;
+
+    const radii = sizesToShow.map(s => {
+        const r = Math.sqrt(conductorArea[s] / maxArea) * MAX_RADIUS;
+        return Math.max(r, MIN_RADIUS);
+    });
+
+    // Horizontal layout — pack circles with spacing
+    const PADDING = 10;
+    const totalWidth = W - PADDING * 2;
+    const spacing = totalWidth / sizesToShow.length;
+    const centerY = H / 2;
+
+    // Copper: warm brown with blue stroke | Aluminum: cool gray
+    const fillColor   = material === 'copper' ? '#a0522d' : '#64748b';
+    const fillColorLt = material === 'copper' ? '#c2724a' : '#94a3b8';
+    const fillColorHl = material === 'copper' ? '#d4845a' : '#cbd5e1';
+    const strokeNormal = material === 'copper' ? '#58a6ff' : '#475569';
+    const strokeHighlight = '#f59e0b';
+
+    sizesToShow.forEach((size, i) => {
+        const cx = PADDING + spacing * i + spacing / 2;
+        const r = radii[i];
+        const isRecommended = size === recommendedSize;
+
+        // Glow ring for recommended
+        if (isRecommended) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, centerY, r + 8, 0, Math.PI * 2);
+            const glowGrad = ctx.createRadialGradient(cx, centerY, r, cx, centerY, r + 16);
+            glowGrad.addColorStop(0, 'rgba(245,158,11,0.55)');
+            glowGrad.addColorStop(1, 'rgba(245,158,11,0)');
+            ctx.fillStyle = glowGrad;
+            ctx.fill();
+            ctx.restore();
+
+            // Amber ring
+            ctx.beginPath();
+            ctx.arc(cx, centerY, r + 5, 0, Math.PI * 2);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        // Conductor circle
+        ctx.beginPath();
+        ctx.arc(cx, centerY, r, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(cx - r * 0.25, centerY - r * 0.25, r * 0.1, cx, centerY, r);
+        if (isRecommended) {
+            grad.addColorStop(0, fillColorHl);
+            grad.addColorStop(1, fillColor);
+        } else {
+            grad.addColorStop(0, fillColorLt);
+            grad.addColorStop(1, fillColor);
+        }
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Border stroke
+        ctx.beginPath();
+        ctx.arc(cx, centerY, r, 0, Math.PI * 2);
+        ctx.strokeStyle = isRecommended ? strokeHighlight : strokeNormal;
+        ctx.lineWidth = isRecommended ? 2 : 1.5;
+        ctx.stroke();
+
+        // Label below
+        ctx.fillStyle = isRecommended ? '#f59e0b' : '#8b949e';
+        ctx.font = `${isRecommended ? '700' : '500'} ${r < 14 ? '8' : '9'}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(size, cx, centerY + r + 5);
+    });
+}
+
+// Redraw canvas on resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        const state = {
+            recommendedSize: document.getElementById('s5-size').textContent,
+            material: currentMaterial
+        };
+        drawConductorCanvas(state.recommendedSize, state.material);
+    }, 150);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conduit Fill Calculator — SparkStudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Dark Engineering Design System
+   ============================================ */
+:root {
+    --primary: #f59e0b;
+    --primary-dark: #d97706;
+    --primary-light: #fbbf24;
+    --primary-bg: rgba(245,158,11,0.1);
+    --secondary: #58a6ff;
+    --secondary-light: #79b8ff;
+    --text: #e6edf3;
+    --text-light: #8b949e;
+    --text-lighter: #8b949e;
+    --bg: #0d1117;
+    --bg-alt: #0d1117;
+    --bg-panel: #161b22;
+    --bg-dark: #0d1117;
+    --border: #30363d;
+    --success: #10b981;
+    --success-bg: rgba(16,185,129,0.15);
+    --success-border: #10b981;
+    --error: #ef4444;
+    --error-bg: rgba(239,68,68,0.15);
+    --error-border: #ef4444;
+    --warning: #f59e0b;
+    --warning-bg: rgba(245,158,11,0.12);
+    --info: #58a6ff;
+    --info-bg: rgba(88,166,255,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+a { text-decoration: none; color: inherit; }
+
+/* Scrollbars */
+* { scrollbar-width: thin; scrollbar-color: #30363d transparent; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    height: 64px;
+}
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+.logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.nav-links { display: flex; gap: 8px; }
+.nav-link {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--text-light);
+    transition: var(--transition);
+}
+.nav-link:hover { color: var(--text); background: rgba(48,54,61,0.5); }
+.nav-link.active { color: var(--primary); background: var(--primary-bg); }
+.mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+}
+.mobile-menu-btn span {
+    display: block;
+    width: 24px; height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+/* ============================================
+   Main App Layout
+   ============================================ */
+.app-main {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    height: calc(100vh - 64px);
+    padding-top: 64px;
+    overflow: hidden;
+}
+
+/* ============================================
+   Left Panel — Visualization
+   ============================================ */
+.viz-panel {
+    background: var(--bg-panel);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+}
+
+.viz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+.viz-header-left h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+}
+.viz-header-left .breadcrumb {
+    display: flex;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-lighter);
+    margin-bottom: 4px;
+    align-items: center;
+}
+.viz-header-left .breadcrumb a { color: var(--primary); }
+.viz-header-left .breadcrumb a:hover { text-decoration: underline; }
+.viz-header-left .breadcrumb .sep { color: var(--border); }
+
+.conduit-info-pill {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.conduit-info-pill .pill-highlight {
+    color: var(--secondary);
+    font-weight: 700;
+}
+
+/* Canvas Area */
+.canvas-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    position: relative;
+    background: var(--bg);
+    border-radius: var(--radius);
+    margin-bottom: 0;
+}
+
+.canvas-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    max-height: 500px;
+}
+
+#conduitCanvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    filter: drop-shadow(0 8px 24px rgba(88,166,255,0.08));
+}
+
+/* Canvas placeholder text */
+.canvas-empty-hint {
+    position: absolute;
+    pointer-events: none;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.canvas-empty-hint.visible { opacity: 1; }
+.canvas-empty-hint p {
+    font-size: 0.9rem;
+    color: var(--text-lighter);
+    font-weight: 500;
+}
+
+/* ============================================
+   Status Bar
+   ============================================ */
+.status-bar {
+    flex-shrink: 0;
+    margin-top: 20px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.status-badge-wrap {
+    flex-shrink: 0;
+}
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: var(--transition);
+}
+.status-badge.pass {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success-border);
+}
+.status-badge.warn {
+    background: var(--warning-bg);
+    color: var(--primary);
+    border: 1px solid rgba(245,158,11,0.5);
+}
+.status-badge.fail {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error-border);
+}
+.status-badge.idle {
+    background: rgba(48,54,61,0.4);
+    color: var(--text-lighter);
+    border: 1px solid var(--border);
+}
+.status-badge .badge-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-progress-wrap {
+    flex: 1;
+    min-width: 0;
+}
+.status-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+.status-progress-label .fill-pct {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+.progress-track {
+    width: 100%;
+    height: 10px;
+    background: var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+}
+.progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1), background-color 0.3s ease;
+    min-width: 0;
+}
+.progress-fill.ok   { background: linear-gradient(90deg, #10b981, #34d399); }
+.progress-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.progress-fill.over { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+/* Limit marker on progress bar */
+.progress-limit-marker {
+    position: absolute;
+    top: -2px;
+    width: 2px;
+    height: calc(100% + 4px);
+    background: var(--text-lighter);
+    border-radius: 1px;
+    transition: left 0.3s ease;
+}
+
+.status-numbers {
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-weight: 500;
+    line-height: 1.6;
+}
+.status-numbers .sn-main {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ============================================
+   Right Panel — Controls
+   ============================================ */
+.controls-panel {
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Scrollbar */
+.controls-panel::-webkit-scrollbar { width: 5px; }
+.controls-panel::-webkit-scrollbar-track { background: transparent; }
+.controls-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Cards */
+.ctrl-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+}
+.ctrl-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.ctrl-card-header h2 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-lighter);
+}
+.ctrl-card-header .card-icon {
+    font-size: 1rem;
+}
+
+/* Form Controls */
+.ctrl-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.ctrl-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.ctrl-group.full { grid-column: 1 / -1; }
+.ctrl-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ctrl-select, .ctrl-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: var(--transition);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+}
+.ctrl-input {
+    background-image: none;
+    padding-right: 12px;
+    cursor: text;
+}
+.ctrl-select:focus, .ctrl-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+}
+.ctrl-select option {
+    background: #1c2128;
+    color: var(--text);
+}
+
+/* Internal area readout */
+.area-readout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--info-bg);
+    border: 1px solid rgba(88,166,255,0.25);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin-top: 4px;
+}
+.area-readout .ar-label {
+    font-size: 0.78rem;
+    color: var(--secondary);
+    font-weight: 600;
+}
+.area-readout .ar-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--secondary);
+}
+
+/* Add conductor form */
+.add-conductor-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.add-conductor-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 11px 16px;
+    background: transparent;
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.add-conductor-btn:hover {
+    background: var(--primary-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245,158,11,0.2);
+}
+.add-conductor-btn svg {
+    width: 16px; height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   Conductor List
+   ============================================ */
+.conductor-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.conductor-list-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-lighter);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.conductor-count-badge {
+    background: rgba(88,166,255,0.15);
+    color: var(--secondary);
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 50px;
+    min-width: 20px;
+    text-align: center;
+    border: 1px solid rgba(88,166,255,0.3);
+}
+.clear-all-btn {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--error);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.clear-all-btn:hover { background: var(--error-bg); }
+
+.conductor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.conductor-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+    animation: slideIn 0.2s ease;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.conductor-item:hover { box-shadow: var(--shadow-md); border-color: #3d444d; }
+
+.conductor-item-color {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.conductor-item-info {
+    flex: 1;
+    min-width: 0;
+}
+.conductor-item-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.conductor-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-lighter);
+    margin-top: 1px;
+}
+.conductor-item-area {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-align: right;
+}
+.conductor-item-area small {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-lighter);
+}
+.remove-conductor-btn {
+    width: 26px; height: 26px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    color: #f87171;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.remove-conductor-btn:hover {
+    background: var(--error-bg);
+    border-color: var(--error-border);
+    color: var(--error);
+}
+
+.conductor-list-empty {
+    text-align: center;
+    padding: 24px 16px;
+    color: var(--text-lighter);
+    font-size: 0.85rem;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+}
+.conductor-list-empty .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+/* ============================================
+   Fill Summary Card
+   ============================================ */
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.summary-item {
+    background: rgba(22,27,34,0.6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+}
+.summary-item-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-lighter);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+}
+.summary-item-value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+}
+.summary-item-value.accent { color: var(--primary); }
+.summary-item-value.info-val { color: var(--secondary); }
+.summary-item-value.ok-val { color: var(--success); }
+.summary-item-value.fail-val { color: var(--error); }
+
+.fill-rule-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--primary-bg);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    color: var(--primary-light);
+    font-weight: 500;
+}
+.fill-rule-note strong { font-weight: 800; }
+.fill-rule-note .rule-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* ============================================
+   Footer
+   ============================================ */
+/* No footer in full-screen app layout */
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 900px) {
+    .app-main {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+    }
+    .viz-panel {
+        height: 60vh;
+        min-height: 400px;
+    }
+    .controls-panel {
+        height: auto;
+        overflow: visible;
+    }
+    .mobile-menu-btn { display: flex; }
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 64px; left: 0; right: 0;
+        background: rgba(13,17,23,0.98);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column;
+        padding: 16px;
+        z-index: 999;
+    }
+    .nav-links.show { display: flex; }
+}
+@media (max-width: 500px) {
+    .add-conductor-form {
+        grid-template-columns: 1fr 1fr;
+    }
+    .add-conductor-form .ctrl-group:last-of-type {
+        grid-column: 1 / -1;
+    }
+}
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="../index.html" class="logo">
+            <span style="font-size:1.5rem">⚡</span> SparkStudy
+        </a>
+        <div class="nav-links" id="navLinks">
+            <a href="../index.html" class="nav-link">Home</a>
+            <a href="../period1.html" class="nav-link">Period 1</a>
+            <a href="../period2.html" class="nav-link">Period 2</a>
+            <a href="../tools.html" class="nav-link active">Tools &amp; Sims</a>
+            <a href="../pricing.html" class="nav-link">Pricing</a>
+        </div>
+        <button class="mobile-menu-btn" aria-label="Toggle menu" onclick="document.getElementById('navLinks').classList.toggle('show')">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- App Layout -->
+<main class="app-main">
+
+    <!-- LEFT: Visualization Panel -->
+    <div class="viz-panel">
+        <!-- Header -->
+        <div class="viz-header">
+            <div class="viz-header-left">
+                <div class="breadcrumb">
+                    <a href="../tools.html">Tools</a>
+                    <span class="sep">/</span>
+                    <span>Conduit Fill</span>
+                </div>
+                <h1>Conduit Fill Calculator</h1>
+            </div>
+            <div class="conduit-info-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="conduitPillText" class="pill-highlight">Select conduit</span>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-section">
+            <div class="canvas-wrap">
+                <canvas id="conduitCanvas"></canvas>
+                <div class="canvas-empty-hint" id="emptyHint">
+                    <p>Add conductors to see fill</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-badge-wrap">
+                <div class="status-badge idle" id="statusBadge">
+                    <span class="badge-dot"></span>
+                    <span id="statusText">Empty</span>
+                </div>
+            </div>
+            <div class="status-progress-wrap">
+                <div class="status-progress-label">
+                    <span id="progressLabel">0 mm² used</span>
+                    <span class="fill-pct" id="fillPctLabel">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill ok" id="progressFill" style="width:0%"></div>
+                    <div class="progress-limit-marker" id="limitMarker" style="left:40%"></div>
+                </div>
+            </div>
+            <div class="status-numbers">
+                <div class="sn-main" id="snAllowed">— mm² allowed</div>
+                <div id="snLimit">Limit: 40%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Controls Panel -->
+    <div class="controls-panel">
+
+        <!-- Conduit Selector -->
+        <div class="ctrl-card">
+            <div class="ctrl-card-header">
+                <span class="card-icon">🔧</span>
+                <h2>Conduit</h2>
+            </div>
+            <div class="ctrl-row">
+                <div class="ctrl-group">
+                    <label class="ctrl-label" for="conduitType">Type</label>
+                    <select class="ctrl-select" id="conduitType" onchange="onConduitChange()">
+                        <option value="emt">EMT</option>
+                        <option value="rigid">Rigid (RMC)</option>
+                        <option value="pvc">PVC Schedule 40</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
+                    <label class="ctrl-label" for="tradeSize">Trade Size</label>
+                    <select class="ctrl-select" id="tradeSize" onchange="onConduitChange()">
+                        <option value="0.5">1/2"</option>
+                        <option value="0.75">3/4"</option>
+                        <option value="1" selected>1"</option>
+                        <option value="1.25">1-1/4"</option>
+                        <option value="1.5">1-1/2"</option>
+                        <option value="2">2"</option>
+                        <option value="2.5">2-1/2"</option>
+                        <option value="3">3"</option>
+                        <option value="3.5">3-1/2"</option>
+                        <option value="4">4"</option>
+                    </select>
+                </div>
+            </div>
+            <div class="area-readout">
+                <span class="ar-label">Internal Area</span>
+                <span class="ar-value" id="internalAreaDisplay">554 mm²</span>
+            </div>
+        </div>
+
+        <!-- Add Conductor -->
+        <div class="ctrl-card">
+            <div class="ctrl-card-header">
+                <span class="card-icon">➕</span>
+                <h2>Add Conductor</h2>
+            </div>
+            <div class="add-conductor-form">
+                <div class="ctrl-group">
+                    <label class="ctrl-label" for="addSize">Size (AWG/kcmil)</label>
+                    <select class="ctrl-select" id="addSize">
+                        <option value="14">#14</option>
+                        <option value="12" selected>#12</option>
+                        <option value="10">#10</option>
+                        <option value="8">#8</option>
+                        <option value="6">#6</option>
+                        <option value="4">#4</option>
+                        <option value="3">#3</option>
+                        <option value="2">#2</option>
+                        <option value="1">#1</option>
+                        <option value="1/0">1/0</option>
+                        <option value="2/0">2/0</option>
+                        <option value="3/0">3/0</option>
+                        <option value="4/0">4/0</option>
+                        <option value="250">250 kcmil</option>
+                        <option value="300">300 kcmil</option>
+                        <option value="350">350 kcmil</option>
+                        <option value="500">500 kcmil</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
+                    <label class="ctrl-label" for="addInsulation">Insulation</label>
+                    <select class="ctrl-select" id="addInsulation">
+                        <option value="T90/THHN">T90 / THHN</option>
+                        <option value="TW">TW</option>
+                        <option value="RW90">RW90</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
+                    <label class="ctrl-label" for="addQty">Qty</label>
+                    <input class="ctrl-input" type="number" id="addQty" value="1" min="1" max="50">
+                </div>
+            </div>
+            <button class="add-conductor-btn" onclick="addConductor()">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add to Conduit
+            </button>
+        </div>
+
+        <!-- Conductor List -->
+        <div class="ctrl-card">
+            <div class="conductor-list-header">
+                <div class="conductor-list-title">
+                    Conductors
+                    <span class="conductor-count-badge" id="conductorCountBadge">0</span>
+                </div>
+                <button class="clear-all-btn" onclick="clearAll()" id="clearAllBtn" style="display:none">Clear all</button>
+            </div>
+            <div class="conductor-list" id="conductorList">
+                <div class="conductor-list-empty" id="conductorListEmpty">
+                    <div class="empty-icon">⭕</div>
+                    <p>No conductors added yet.</p>
+                    <p>Use the form above to add wires.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fill Summary -->
+        <div class="ctrl-card">
+            <div class="ctrl-card-header">
+                <span class="card-icon">📊</span>
+                <h2>Fill Summary</h2>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-item-label">Conduit Area</div>
+                    <div class="summary-item-value info-val" id="summaryConduitArea">554 mm²</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Fill Limit</div>
+                    <div class="summary-item-value accent" id="summaryFillLimit">40%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Allowed Area</div>
+                    <div class="summary-item-value" id="summaryAllowedArea">221.6 mm²</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Used Area</div>
+                    <div class="summary-item-value" id="summaryUsedArea">0 mm²</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Fill %</div>
+                    <div class="summary-item-value" id="summaryFillPct">0%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Wires</div>
+                    <div class="summary-item-value" id="summaryTotalWires">0</div>
+                </div>
+            </div>
+            <div class="fill-rule-note" id="fillRuleNote">
+                <span class="rule-icon">📋</span>
+                <span id="fillRuleText">Add conductors to calculate fill.</span>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+/* ============================================
+   DATA TABLES
+   ============================================ */
+
+// Conduit internal areas (mm²) — from CEC Tables
+const conduitData = {
+    emt: {
+        0.5: 198, 0.75: 340, 1: 554, 1.25: 929,
+        1.5: 1256, 2: 2047, 2.5: 3408, 3: 4970,
+        3.5: 6544, 4: 8316
+    },
+    rigid: {
+        0.5: 198, 0.75: 340, 1: 554, 1.25: 929,
+        1.5: 1256, 2: 2047, 2.5: 3408, 3: 4970,
+        3.5: 6544, 4: 8316
+    },
+    pvc: {
+        0.5: 198, 0.75: 340, 1: 554, 1.25: 929,
+        1.5: 1256, 2: 2047, 2.5: 3408, 3: 4970,
+        3.5: 6544, 4: 8316
+    }
+};
+
+// Conductor cross-section areas (mm²) — T90/THHN base
+const conductorAreas = {
+    '14': 8.97,
+    '12': 11.68,
+    '10': 17.35,
+    '8':  33.62,
+    '6':  42.41,
+    '4':  62.77,
+    '3':  73.16,
+    '2':  85.03,
+    '1':  119.71,
+    '1/0': 145.16,
+    '2/0': 170.45,
+    '3/0': 202.68,
+    '4/0': 240.17,
+    '250': 294.97,
+    '300': 340.66,
+    '350': 384.39,
+    '500': 519.48
+};
+
+// Insulation multipliers
+const insulationMult = {
+    'T90/THHN': 1.0,
+    'TW':       0.95,
+    'RW90':     1.0
+};
+
+/* ============================================
+   COLOR PALETTE for conductor groups
+   ============================================ */
+const CONDUCTOR_COLORS = [
+    '#3b82f6', // blue
+    '#10b981', // emerald
+    '#f59e0b', // amber
+    '#8b5cf6', // violet
+    '#ef4444', // red
+    '#06b6d4', // cyan
+    '#f97316', // orange
+    '#84cc16', // lime
+    '#ec4899', // pink
+    '#14b8a6', // teal
+    '#a855f7', // purple
+    '#64748b', // slate
+];
+
+/* ============================================
+   STATE
+   ============================================ */
+let conductors = []; // { id, size, insulation, quantity, color }
+let colorIndex = 0;
+
+/* ============================================
+   HELPERS
+   ============================================ */
+function getConduitArea() {
+    const type = document.getElementById('conduitType').value;
+    const size = parseFloat(document.getElementById('tradeSize').value);
+    return conduitData[type][size];
+}
+
+function getTotalQuantity() {
+    return conductors.reduce((s, c) => s + c.quantity, 0);
+}
+
+function getFillLimit(totalQty) {
+    if (totalQty === 0) return 40;
+    if (totalQty === 1) return 53;
+    if (totalQty === 2) return 31;
+    return 40;
+}
+
+function getConductorArea(size, insulation) {
+    return (conductorAreas[size] || 0) * (insulationMult[insulation] || 1.0);
+}
+
+function formatSize(size) {
+    const s = String(size);
+    if (['1/0','2/0','3/0','4/0'].includes(s)) return s;
+    const n = parseInt(s);
+    if (n >= 250) return `${n} kcmil`;
+    return `#${s}`;
+}
+
+function sizeLabel(size, insulation) {
+    return `${formatSize(size)} ${insulation}`;
+}
+
+/* ============================================
+   ACTIONS
+   ============================================ */
+function addConductor() {
+    const size = document.getElementById('addSize').value;
+    const insulation = document.getElementById('addInsulation').value;
+    const qty = Math.max(1, Math.min(50, parseInt(document.getElementById('addQty').value) || 1));
+
+    // Check if same size+insulation already exists — merge
+    const existing = conductors.find(c => c.size === size && c.insulation === insulation);
+    if (existing) {
+        existing.quantity += qty;
+    } else {
+        const color = CONDUCTOR_COLORS[colorIndex % CONDUCTOR_COLORS.length];
+        colorIndex++;
+        conductors.push({ id: Date.now(), size, insulation, quantity: qty, color });
+    }
+
+    // Reset qty input
+    document.getElementById('addQty').value = 1;
+
+    renderConductorList();
+    updateCalculation();
+}
+
+function removeConductor(id) {
+    conductors = conductors.filter(c => c.id !== id);
+    renderConductorList();
+    updateCalculation();
+}
+
+function clearAll() {
+    conductors = [];
+    colorIndex = 0;
+    renderConductorList();
+    updateCalculation();
+}
+
+function onConduitChange() {
+    updateCalculation();
+}
+
+/* ============================================
+   RENDER CONDUCTOR LIST
+   ============================================ */
+function renderConductorList() {
+    const list = document.getElementById('conductorList');
+    const empty = document.getElementById('conductorListEmpty');
+    const badge = document.getElementById('conductorCountBadge');
+    const clearBtn = document.getElementById('clearAllBtn');
+
+    const totalQty = getTotalQuantity();
+    badge.textContent = totalQty;
+    clearBtn.style.display = conductors.length > 0 ? 'block' : 'none';
+
+    if (conductors.length === 0) {
+        list.innerHTML = '';
+        list.appendChild(empty);
+        empty.style.display = 'block';
+        return;
+    }
+
+    empty.style.display = 'none';
+
+    // Build list items
+    let html = '';
+    conductors.forEach(c => {
+        const singleArea = getConductorArea(c.size, c.insulation);
+        const totalArea  = singleArea * c.quantity;
+        const qtyLabel   = c.quantity > 1 ? `× ${c.quantity}` : '';
+        html += `
+        <div class="conductor-item" style="border-left-color: ${c.color}" id="ci-${c.id}">
+            <div class="conductor-item-color" style="background:${c.color}"></div>
+            <div class="conductor-item-info">
+                <div class="conductor-item-name">${formatSize(c.size)} AWG ${qtyLabel}</div>
+                <div class="conductor-item-meta">${c.insulation} — ${singleArea.toFixed(2)} mm² each</div>
+            </div>
+            <div class="conductor-item-area">
+                ${totalArea.toFixed(2)} mm²
+                <small>total</small>
+            </div>
+            <button class="remove-conductor-btn" onclick="removeConductor(${c.id})" title="Remove">×</button>
+        </div>`;
+    });
+
+    // Re-render only the items (keep empty div in DOM)
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    list.innerHTML = html;
+    list.appendChild(empty);
+}
+
+/* ============================================
+   CALCULATE & UPDATE UI
+   ============================================ */
+function updateCalculation() {
+    const conduitArea = getConduitArea();
+    const totalQty    = getTotalQuantity();
+    const fillLimit   = getFillLimit(totalQty);
+    const allowedArea = conduitArea * (fillLimit / 100);
+
+    let usedArea = 0;
+    conductors.forEach(c => {
+        usedArea += getConductorArea(c.size, c.insulation) * c.quantity;
+    });
+
+    const fillPct  = conduitArea > 0 ? (usedArea / conduitArea) * 100 : 0;
+    const isOver   = usedArea > allowedArea;
+    const isWarn   = !isOver && fillPct > (fillLimit * 0.85);
+
+    // --- Conduit pill ---
+    const typeLabel = { emt:'EMT', rigid:'RMC', pvc:'PVC' }[document.getElementById('conduitType').value];
+    const sizeLabel2 = {
+        '0.5':'1/2"','0.75':'3/4"','1':'1"','1.25':'1-1/4"',
+        '1.5':'1-1/2"','2':'2"','2.5':'2-1/2"','3':'3"','3.5':'3-1/2"','4':'4"'
+    }[document.getElementById('tradeSize').value];
+    document.getElementById('conduitPillText').textContent = `${sizeLabel2} ${typeLabel}`;
+
+    // --- Internal area display ---
+    document.getElementById('internalAreaDisplay').textContent = `${conduitArea} mm²`;
+
+    // --- Status badge ---
+    const badge = document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    badge.className = 'status-badge';
+    if (totalQty === 0) {
+        badge.classList.add('idle');
+        statusText.textContent = 'Empty';
+    } else if (isOver) {
+        badge.classList.add('fail');
+        statusText.textContent = 'FAIL — Overfilled';
+    } else if (isWarn) {
+        badge.classList.add('warn');
+        statusText.textContent = 'WARNING — Near Limit';
+    } else {
+        badge.classList.add('pass');
+        statusText.textContent = 'PASS — Compliant';
+    }
+
+    // --- Progress bar ---
+    const pctDisplay = Math.min(fillPct, 100);
+    const fill = document.getElementById('progressFill');
+    fill.style.width = pctDisplay.toFixed(1) + '%';
+    fill.className = 'progress-fill';
+    if (isOver)       fill.classList.add('over');
+    else if (isWarn)  fill.classList.add('warn');
+    else              fill.classList.add('ok');
+
+    document.getElementById('fillPctLabel').textContent = fillPct.toFixed(1) + '%';
+    document.getElementById('progressLabel').textContent =
+        totalQty > 0 ? `${usedArea.toFixed(1)} mm² used` : '0 mm² used';
+
+    // Limit marker position
+    document.getElementById('limitMarker').style.left = fillLimit + '%';
+
+    // --- Status numbers ---
+    document.getElementById('snAllowed').textContent = `${allowedArea.toFixed(1)} mm² allowed`;
+    document.getElementById('snLimit').textContent = `Limit: ${fillLimit}%`;
+
+    // --- Summary card ---
+    document.getElementById('summaryConduitArea').textContent  = conduitArea + ' mm²';
+    document.getElementById('summaryFillLimit').textContent    = fillLimit + '%';
+    document.getElementById('summaryAllowedArea').textContent  = allowedArea.toFixed(1) + ' mm²';
+    document.getElementById('summaryUsedArea').textContent     = usedArea.toFixed(2) + ' mm²';
+    document.getElementById('summaryTotalWires').textContent   = totalQty;
+
+    const fillPctEl = document.getElementById('summaryFillPct');
+    fillPctEl.textContent = fillPct.toFixed(1) + '%';
+    fillPctEl.className = 'summary-item-value';
+    if (isOver) fillPctEl.classList.add('fail-val');
+    else if (isWarn) fillPctEl.classList.add('accent');
+    else fillPctEl.classList.add('ok-val');
+
+    // --- Fill rule note ---
+    const noteText = document.getElementById('fillRuleText');
+    if (totalQty === 0) {
+        noteText.innerHTML = 'Add conductors to calculate fill.';
+    } else if (totalQty === 1) {
+        noteText.innerHTML = '<strong>1 conductor:</strong> 53% maximum fill (CEC Rule 12-904).';
+    } else if (totalQty === 2) {
+        noteText.innerHTML = '<strong>2 conductors:</strong> 31% maximum fill (CEC Rule 12-904).';
+    } else {
+        noteText.innerHTML = '<strong>3+ conductors:</strong> 40% maximum fill (CEC Rule 12-904).';
+    }
+
+    // --- Canvas ---
+    drawConduit(conduitArea, fillLimit, fillPct, isOver);
+}
+
+/* ============================================
+   CANVAS DRAWING
+   ============================================ */
+function drawConduit(conduitArea, fillLimit, fillPctActual, isOver) {
+    const canvas = document.getElementById('conduitCanvas');
+    const wrap   = canvas.parentElement;
+
+    // Size canvas to fill available space (square)
+    const maxSize = Math.min(wrap.clientWidth, wrap.clientHeight, 480);
+    const size    = Math.max(240, maxSize);
+    canvas.width  = size;
+    canvas.height = size;
+    canvas.style.width  = size + 'px';
+    canvas.style.height = size + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+
+    const cx = size / 2;
+    const cy = size / 2;
+    // Conduit display radius — use ~85% of half-size
+    const conduitR = size * 0.40;
+
+    /* --- Background glow / shadow --- */
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, conduitR * 1.2);
+    grad.addColorStop(0,   'rgba(88,166,255,0.06)');
+    grad.addColorStop(1,   'rgba(88,166,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, conduitR * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* --- Conduit interior fill --- */
+    ctx.beginPath();
+    ctx.arc(cx, cy, conduitR, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(88,166,255,0.05)';
+    ctx.fill();
+
+    /* --- Fill limit dashed ring --- */
+    const limitR = conduitR * Math.sqrt(fillLimit / 100);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, limitR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(245,158,11,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    /* --- Conduit wall ring --- */
+    // Outer wall (thick)
+    ctx.beginPath();
+    ctx.arc(cx, cy, conduitR + 8, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(88,166,255,0.35)';
+    ctx.lineWidth = 8;
+    ctx.stroke();
+
+    // Inner border
+    ctx.beginPath();
+    ctx.arc(cx, cy, conduitR, 0, Math.PI * 2);
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    /* --- Draw conductor circles --- */
+    const totalQty = getTotalQuantity();
+
+    if (totalQty === 0) {
+        // Empty hint: center text
+        ctx.fillStyle = '#8b949e';
+        ctx.font = `600 ${Math.round(size * 0.04)}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Add conductors', cx, cy - 10);
+        ctx.font = `500 ${Math.round(size * 0.033)}px Inter, sans-serif`;
+        ctx.fillText('to see fill', cx, cy + 14);
+        return;
+    }
+
+    // Pack conductor circles using a simple ring layout
+    // Each conductor group gets a color; individual circles are packed in rings
+    const allCircles = buildCirclePack(conduitR, cx, cy);
+    drawCircles(ctx, allCircles, isOver, size);
+
+    /* --- Fill percentage center text (when filled) --- */
+    if (fillPctActual > 2) {
+        ctx.save();
+        const pctStr = fillPctActual.toFixed(1) + '%';
+        const textSize = Math.round(size * 0.055);
+        ctx.font = `800 ${textSize}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        // Semi-transparent backing
+        const tw = ctx.measureText(pctStr).width + 20;
+        const th = textSize + 12;
+        ctx.fillStyle = 'rgba(13,17,23,0.88)';
+        roundRect(ctx, cx - tw/2, cy - th/2, tw, th, 8);
+        ctx.fill();
+        ctx.fillStyle = isOver ? '#ef4444' : '#10b981';
+        ctx.fillText(pctStr, cx, cy);
+        ctx.restore();
+    }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+}
+
+/**
+ * Build a list of {x, y, r, color, label} circles packed inside the conduit.
+ * Uses a simple angular placement, layered rings.
+ */
+function buildCirclePack(conduitR, cx, cy) {
+    const circles = [];
+
+    // Build flat list of individual conductors with their display radius
+    const allWires = [];
+    conductors.forEach(c => {
+        const areaMm2  = getConductorArea(c.size, c.insulation);
+        // Map mm² radius to canvas pixels using same conduit scaling
+        // conduitR corresponds to conduitArea in mm², so:
+        const conduitArea = getConduitArea();
+        const scaleFactor = conduitR / Math.sqrt(conduitArea / Math.PI);
+        const wireMmR    = Math.sqrt(areaMm2 / Math.PI);
+        const wireR      = Math.max(5, wireMmR * scaleFactor * 0.92);
+
+        for (let i = 0; i < c.quantity; i++) {
+            allWires.push({ r: wireR, color: c.color, sizeLabel: formatSize(c.size), qty: c.quantity, idx: i });
+        }
+    });
+
+    if (allWires.length === 0) return circles;
+
+    // Sort descending by radius (larger first for better packing feel)
+    allWires.sort((a, b) => b.r - a.r);
+
+    // Place circles in spiral/concentric ring layout
+    const placed = [];
+    const PADDING = 1.5;
+    const MAX_ITER = 2000;
+
+    function overlaps(x, y, r) {
+        for (const p of placed) {
+            const dx = x - p.x, dy = y - p.y;
+            if (Math.sqrt(dx*dx + dy*dy) < r + p.r + PADDING) return true;
+        }
+        return false;
+    }
+    function insideConduit(x, y, r) {
+        const dx = x - cx, dy = y - cy;
+        return Math.sqrt(dx*dx + dy*dy) + r <= conduitR - 3;
+    }
+
+    for (const wire of allWires) {
+        let placed_flag = false;
+        // Try angles in rings from center outward
+        const maxRingR = conduitR - wire.r - 3;
+
+        for (let ringR = 0; ringR <= maxRingR && !placed_flag; ringR += Math.max(2, wire.r * 0.5)) {
+            const steps = Math.max(8, Math.round(2 * Math.PI * Math.max(ringR, 1) / (wire.r * 2 + PADDING)));
+            for (let step = 0; step < steps && !placed_flag; step++) {
+                const angle = (step / steps) * Math.PI * 2 + ringR * 0.3;
+                const tx = cx + ringR * Math.cos(angle);
+                const ty = cy + ringR * Math.sin(angle);
+                if (insideConduit(tx, ty, wire.r) && !overlaps(tx, ty, wire.r)) {
+                    placed.push({ x: tx, y: ty, r: wire.r, color: wire.color, sizeLabel: wire.sizeLabel });
+                    circles.push({ x: tx, y: ty, r: wire.r, color: wire.color, sizeLabel: wire.sizeLabel });
+                    placed_flag = true;
+                }
+            }
+        }
+    }
+
+    return circles;
+}
+
+function drawCircles(ctx, circles, isOver, canvasSize) {
+    circles.forEach(c => {
+        // Fill
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+
+        if (isOver) {
+            // Tint red on overfill
+            ctx.fillStyle = blendColor(c.color, '#ef4444', 0.4);
+        } else {
+            ctx.fillStyle = c.color;
+        }
+        ctx.globalAlpha = 0.88;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Stroke
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        ctx.strokeStyle = isOver ? '#dc2626' : darkenColor(c.color, 0.25);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Label if large enough
+        if (c.r >= 12) {
+            ctx.fillStyle = '#e6edf3';
+            ctx.font = `700 ${Math.min(c.r * 0.65, 13)}px Inter,sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const label = c.sizeLabel.replace('#','').replace(' kcmil','k');
+            ctx.fillText(label, c.x, c.y);
+        }
+    });
+}
+
+function darkenColor(hex, amount) {
+    let r = parseInt(hex.slice(1,3),16);
+    let g = parseInt(hex.slice(3,5),16);
+    let b = parseInt(hex.slice(5,7),16);
+    r = Math.round(r * (1 - amount));
+    g = Math.round(g * (1 - amount));
+    b = Math.round(b * (1 - amount));
+    return `rgb(${r},${g},${b})`;
+}
+
+function blendColor(hex1, hex2, t) {
+    const r1=parseInt(hex1.slice(1,3),16), g1=parseInt(hex1.slice(3,5),16), b1=parseInt(hex1.slice(5,7),16);
+    const r2=parseInt(hex2.slice(1,3),16), g2=parseInt(hex2.slice(3,5),16), b2=parseInt(hex2.slice(5,7),16);
+    const r = Math.round(r1*(1-t)+r2*t);
+    const g = Math.round(g1*(1-t)+g2*t);
+    const b = Math.round(b1*(1-t)+b2*t);
+    return `rgb(${r},${g},${b})`;
+}
+
+/* ============================================
+   RESPONSIVE CANVAS RESIZE
+   ============================================ */
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        updateCalculation();
+    }, 100);
+});
+
+/* ============================================
+   INIT
+   ============================================ */
+function init() {
+    renderConductorList();
+    updateCalculation();
+}
+
+init();
+</script>
+</body>
+</html>

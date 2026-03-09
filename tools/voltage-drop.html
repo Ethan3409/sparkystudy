@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEC Voltage Drop Calculator | SparkStudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Global Styles
+   ============================================ */
+
+:root {
+    --primary: #f59e0b;
+    --primary-dark: #f59e0b;
+    --primary-light: #fbbf24;
+    --primary-bg: rgba(245,158,11,0.15);
+    --secondary: #e6edf3;
+    --secondary-light: #8b949e;
+    --text: #e6edf3;
+    --text-light: #8b949e;
+    --text-lighter: #8b949e;
+    --bg: #161b22;
+    --bg-alt: #0d1117;
+    --bg-dark: #0d1117;
+    --border: #30363d;
+    --success: #10b981;
+    --success-bg: rgba(16,185,129,0.15);
+    --error: #ef4444;
+    --error-bg: rgba(239,68,68,0.15);
+    --info: #58a6ff;
+    --info-bg: rgba(88,166,255,0.1);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245,158,11,0.15);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: #0d1117;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Thin dark scrollbars */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #30363d transparent;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 99px; }
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #30363d;
+    height: 64px;
+}
+
+.nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #e6edf3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.logo-icon { font-size: 1.5rem; }
+
+.nav-links { display: flex; gap: 8px; }
+
+.nav-link {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #8b949e;
+    transition: var(--transition);
+}
+
+.nav-link:hover { color: #e6edf3; background: #161b22; }
+.nav-link.active { color: #f59e0b; background: rgba(245,158,11,0.1); }
+
+/* ============================================
+   Page Layout
+   ============================================ */
+
+.page-main {
+    padding-top: 80px;
+    min-height: 100vh;
+    background: #0d1117;
+}
+
+.page-header {
+    padding: 32px 0 24px;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #8b949e;
+    margin-bottom: 12px;
+}
+
+.breadcrumb a { color: #f59e0b; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb-sep { color: #8b949e; }
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #e6edf3;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    color: #8b949e;
+}
+
+/* ============================================
+   Tool Grid (2-column)
+   ============================================ */
+
+.tool-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 24px;
+    padding-bottom: 48px;
+    align-items: start;
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+
+.card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: rgba(245,158,11,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.card-body { padding: 24px; }
+
+/* ============================================
+   Form Controls
+   ============================================ */
+
+.form-group { margin-bottom: 20px; }
+.form-group:last-child { margin-bottom: 0; }
+
+label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #e6edf3;
+    background: #0d1117;
+    border: 1.5px solid #30363d;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.form-control:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+select.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+/* Input with unit toggle */
+.input-with-unit {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.input-with-unit .form-control {
+    flex: 1;
+}
+
+/* Toggle button group */
+.toggle-group {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid #30363d;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #0d1117;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 9px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    background: transparent;
+    color: #8b949e;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.toggle-btn + .toggle-btn {
+    border-left: 1.5px solid #30363d;
+}
+
+.toggle-btn.active {
+    background: rgba(245,158,11,0.15);
+    color: #f59e0b;
+    border-color: #f59e0b;
+}
+
+.toggle-btn:hover:not(.active) {
+    background: rgba(245,158,11,0.07);
+    color: #f59e0b;
+}
+
+/* Unit toggle button (standalone small) */
+.unit-btn {
+    padding: 9px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: inherit;
+    border: 1.5px solid #30363d;
+    border-radius: var(--radius-sm);
+    background: #0d1117;
+    color: #8b949e;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    min-width: 52px;
+    text-align: center;
+}
+
+.unit-btn:hover {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: rgba(245,158,11,0.1);
+}
+
+.unit-btn.active-unit {
+    border-color: #f59e0b;
+    background: rgba(245,158,11,0.15);
+    color: #f59e0b;
+}
+
+/* ============================================
+   Canvas Card
+   ============================================ */
+
+.canvas-card .card-body {
+    padding: 0;
+    background: #0d1117;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+#vizCanvas {
+    display: block;
+    width: 100%;
+    height: 200px;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ============================================
+   Results Card
+   ============================================ */
+
+.results-card { margin-top: 24px; }
+
+/* Compliance Badge */
+.badge-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #30363d;
+}
+
+.compliance-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 3px solid transparent;
+    transition: var(--transition);
+}
+
+.compliance-badge .badge-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.compliance-badge.pass {
+    background: rgba(16,185,129,0.15);
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.compliance-badge.warning {
+    background: rgba(245,158,11,0.15);
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.compliance-badge.fail {
+    background: rgba(239,68,68,0.15);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.badge-details { flex: 1; }
+
+.badge-vd-percent {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #e6edf3;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.badge-vd-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.badge-message {
+    font-size: 0.88rem;
+    color: #8b949e;
+}
+
+/* VD bar */
+.vd-bar-section { padding: 16px 24px; border-bottom: 1px solid #30363d; }
+
+.vd-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.vd-bar-track {
+    height: 10px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #10b981 0%, #10b981 33%, #f59e0b 33%, #f59e0b 55%, #ef4444 55%, #ef4444 100%);
+    position: relative;
+    overflow: visible;
+}
+
+.vd-bar-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #e6edf3;
+    border: 3px solid #0d1117;
+    box-shadow: 0 0 0 2px #e6edf3;
+    transition: left 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+/* Key metrics grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-bottom: 1px solid #30363d;
+}
+
+.metric-cell {
+    padding: 16px 20px;
+    border-right: 1px solid #30363d;
+    text-align: center;
+    background: #0d1117;
+}
+
+.metric-cell:last-child { border-right: none; }
+
+.metric-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #e6edf3;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 3px;
+}
+
+/* ============================================
+   Comparison Table
+   ============================================ */
+
+.comparison-section { padding: 0 24px 24px; }
+
+.comparison-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 16px 0 10px;
+    border-top: 1px solid #30363d;
+    margin-top: 0;
+}
+
+.comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.comp-table th {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid #30363d;
+    background: #0d1117;
+}
+
+.comp-table td {
+    padding: 8px 10px;
+    color: #e6edf3;
+    border-bottom: 1px solid #30363d;
+    vertical-align: middle;
+    background: #0d1117;
+}
+
+.comp-table tr:last-child td { border-bottom: none; }
+
+.comp-table tr:hover:not(.selected-row) td {
+    background: #161b22;
+}
+
+.comp-table tr.selected-row td {
+    background: rgba(245,158,11,0.08);
+    font-weight: 700;
+    color: #e6edf3;
+}
+
+.comp-table tr.selected-row td:first-child {
+    border-left: 3px solid #f59e0b;
+}
+
+.vd-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.vd-pill.pass { background: rgba(16,185,129,0.15); color: #10b981; }
+.vd-pill.warning { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.vd-pill.fail { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+/* ============================================
+   Formula Note
+   ============================================ */
+
+.formula-note {
+    padding: 12px 24px;
+    background: rgba(245,158,11,0.05);
+    border-top: 1px solid rgba(245,158,11,0.2);
+    font-size: 0.8rem;
+    color: #8b949e;
+    font-style: italic;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+
+.site-footer {
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    color: #8b949e;
+    padding: 32px 0;
+    margin-top: 0;
+}
+
+.footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.footer-brand {
+    font-weight: 700;
+    color: #e6edf3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.1rem;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+    font-size: 0.875rem;
+}
+
+.footer-links a:hover { color: #e6edf3; }
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 900px) {
+    .tool-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .page-title { font-size: 1.5rem; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .metric-cell:last-child { border-top: 1px solid #30363d; grid-column: span 2; }
+}
+
+    </style>
+</head>
+<body>
+
+<!-- ============================================
+     Navigation
+     ============================================ -->
+<nav class="navbar">
+    <div class="container nav-container">
+        <a href="../index.html" class="logo"><span class="logo-icon">⚡</span> SparkStudy</a>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">Home</a>
+            <a href="../period1.html" class="nav-link">Period 1</a>
+            <a href="../period2.html" class="nav-link">Period 2</a>
+            <a href="../tools.html" class="nav-link active">Tools &amp; Sims</a>
+            <a href="../pricing.html" class="nav-link">Pricing</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ============================================
+     Main Content
+     ============================================ -->
+<main class="page-main">
+    <div class="container">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="breadcrumb">
+                <a href="../tools.html">Tools &amp; Sims</a>
+                <span class="breadcrumb-sep">›</span>
+                <span>Voltage Drop Calculator</span>
+            </div>
+            <h1 class="page-title">Voltage Drop Calculator</h1>
+            <p class="page-subtitle">CEC Table 2 — Verify conductor compliance per 8-102(1) &amp; 8-102(3)</p>
+        </div>
+
+        <!-- Tool Grid -->
+        <div class="tool-grid">
+
+            <!-- LEFT: Inputs -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-header-icon">⚙️</div>
+                        <div class="card-title">Circuit Parameters</div>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- System Voltage -->
+                        <div class="form-group">
+                            <label for="voltage">System Voltage</label>
+                            <select id="voltage" class="form-control" onchange="calculate()">
+                                <option value="120">120 V</option>
+                                <option value="208">208 V</option>
+                                <option value="240" selected>240 V</option>
+                                <option value="347">347 V</option>
+                                <option value="480">480 V</option>
+                                <option value="600">600 V</option>
+                            </select>
+                        </div>
+
+                        <!-- Phase -->
+                        <div class="form-group">
+                            <label>Phase</label>
+                            <div class="toggle-group">
+                                <button class="toggle-btn active" id="btn-single" onclick="setPhase('single')">Single Phase</button>
+                                <button class="toggle-btn" id="btn-three" onclick="setPhase('three')">Three Phase</button>
+                            </div>
+                        </div>
+
+                        <!-- Material -->
+                        <div class="form-group">
+                            <label>Conductor Material</label>
+                            <div class="toggle-group">
+                                <button class="toggle-btn active" id="btn-copper" onclick="setMaterial('copper')">Copper</button>
+                                <button class="toggle-btn" id="btn-aluminum" onclick="setMaterial('aluminum')">Aluminum</button>
+                            </div>
+                        </div>
+
+                        <!-- Conductor Size -->
+                        <div class="form-group">
+                            <label for="conductor">Conductor Size</label>
+                            <select id="conductor" class="form-control" onchange="calculate()">
+                                <option value="#14">14 AWG</option>
+                                <option value="#12">12 AWG</option>
+                                <option value="#10">10 AWG</option>
+                                <option value="#8" selected>8 AWG</option>
+                                <option value="#6">6 AWG</option>
+                                <option value="#4">4 AWG</option>
+                                <option value="#3">3 AWG</option>
+                                <option value="#2">2 AWG</option>
+                                <option value="#1">1 AWG</option>
+                                <option value="1/0">1/0 AWG</option>
+                                <option value="2/0">2/0 AWG</option>
+                                <option value="3/0">3/0 AWG</option>
+                                <option value="4/0">4/0 AWG</option>
+                                <option value="250">250 kcmil</option>
+                                <option value="300">300 kcmil</option>
+                                <option value="350">350 kcmil</option>
+                                <option value="500">500 kcmil</option>
+                            </select>
+                        </div>
+
+                        <!-- Load Current -->
+                        <div class="form-group">
+                            <label for="current">Load Current</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="current" class="form-control" value="40" min="1" max="500" oninput="calculate()">
+                                <span class="unit-btn" style="cursor:default;">A</span>
+                            </div>
+                        </div>
+
+                        <!-- One-way Distance -->
+                        <div class="form-group">
+                            <label for="distance">One-Way Distance</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="distance" class="form-control" value="30" min="1" max="5000" oninput="calculate()">
+                                <button class="unit-btn" id="unitBtn" onclick="toggleUnit()" title="Click to switch units">m</button>
+                            </div>
+                        </div>
+
+                    </div><!-- /card-body -->
+                </div><!-- /card -->
+            </div><!-- /left -->
+
+            <!-- RIGHT: Canvas + Results -->
+            <div>
+
+                <!-- Canvas Card -->
+                <div class="card canvas-card">
+                    <div class="card-header" style="background:#161b22; border-bottom:1px solid #30363d;">
+                        <div class="card-header-icon" style="background:rgba(245,158,11,0.1);">🔌</div>
+                        <div class="card-title" style="color:#8b949e;">Circuit Visualization</div>
+                    </div>
+                    <div class="card-body" style="padding:0; background:#0d1117;">
+                        <canvas id="vizCanvas" width="800" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Results Card -->
+                <div class="card results-card">
+
+                    <!-- Badge + VD% headline -->
+                    <div class="badge-section">
+                        <div class="compliance-badge pass" id="complianceBadge">
+                            <div class="badge-icon" id="badgeIcon">✓</div>
+                            <div id="badgeLabel">PASS</div>
+                        </div>
+                        <div class="badge-details">
+                            <div class="badge-vd-label">Voltage Drop</div>
+                            <div class="badge-vd-percent" id="vdPercent">—</div>
+                            <div class="badge-message" id="badgeMessage">Enter parameters to calculate.</div>
+                        </div>
+                    </div>
+
+                    <!-- VD bar -->
+                    <div class="vd-bar-section">
+                        <div class="vd-bar-label">
+                            <span>0%</span>
+                            <span style="color:#10b981;">3% max (CEC)</span>
+                            <span style="color:#f59e0b;">5% warning</span>
+                            <span>10%</span>
+                        </div>
+                        <div class="vd-bar-track">
+                            <div class="vd-bar-thumb" id="vdBarThumb" style="left:0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Key Metrics -->
+                    <div class="metrics-grid">
+                        <div class="metric-cell">
+                            <div class="metric-value" id="metricVD">—</div>
+                            <div class="metric-label">Voltage Drop</div>
+                        </div>
+                        <div class="metric-cell">
+                            <div class="metric-value" id="metricEndV">—</div>
+                            <div class="metric-label">End Voltage</div>
+                        </div>
+                        <div class="metric-cell">
+                            <div class="metric-value" id="metricResistance">—</div>
+                            <div class="metric-label">Ω/km</div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Table -->
+                    <div class="comparison-section">
+                        <div class="comparison-title">Conductor Size Comparison</div>
+                        <table class="comp-table">
+                            <thead>
+                                <tr>
+                                    <th>Size</th>
+                                    <th>Ω/km</th>
+                                    <th>Voltage Drop</th>
+                                    <th>VD %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compTableBody">
+                                <tr><td colspan="5" style="text-align:center; color:#8b949e; padding:16px;">Calculating…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Formula note -->
+                    <div class="formula-note" id="formulaNote">
+                        Single-phase: VD = 2 × I × R × d &nbsp;|&nbsp; Three-phase: VD = √3 × I × R × d
+                    </div>
+
+                </div><!-- /results-card -->
+
+            </div><!-- /right -->
+        </div><!-- /tool-grid -->
+    </div><!-- /container -->
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+    <div class="container footer-inner">
+        <div class="footer-brand"><span class="logo-icon">⚡</span> SparkStudy</div>
+        <div class="footer-links">
+            <a href="../index.html">Home</a>
+            <a href="../tools.html">Tools &amp; Sims</a>
+            <a href="../pricing.html">Pricing</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* ============================================
+   Data — CEC Table 2, 75°C, Ω/km
+   ============================================ */
+const copperResistance = {
+    '#14': 10.1,
+    '#12': 6.35,
+    '#10': 3.99,
+    '#8':  2.56,
+    '#6':  1.61,
+    '#4':  1.01,
+    '#3':  0.802,
+    '#2':  0.634,
+    '#1':  0.505,
+    '1/0': 0.399,
+    '2/0': 0.317,
+    '3/0': 0.253,
+    '4/0': 0.201,
+    '250': 0.171,
+    '300': 0.144,
+    '350': 0.123,
+    '500': 0.0869
+};
+
+const aluminumResistance = Object.fromEntries(
+    Object.entries(copperResistance).map(([k, v]) => [k, +(v * 1.6).toFixed(4)])
+);
+
+const conductorSizes = ['#14','#12','#10','#8','#6','#4','#3','#2','#1','1/0','2/0','3/0','4/0','250','300','350','500'];
+
+const sizeLabels = {
+    '#14':'14 AWG','#12':'12 AWG','#10':'10 AWG','#8':'8 AWG','#6':'6 AWG',
+    '#4':'4 AWG','#3':'3 AWG','#2':'2 AWG','#1':'1 AWG','1/0':'1/0 AWG',
+    '2/0':'2/0 AWG','3/0':'3/0 AWG','4/0':'4/0 AWG',
+    '250':'250 kcmil','300':'300 kcmil','350':'350 kcmil','500':'500 kcmil'
+};
+
+/* ============================================
+   State
+   ============================================ */
+let phase    = 'single';
+let material = 'copper';
+let useMetric = true;   // true = metres, false = feet
+
+/* ============================================
+   Toggle helpers
+   ============================================ */
+function setPhase(p) {
+    phase = p;
+    document.getElementById('btn-single').classList.toggle('active', p === 'single');
+    document.getElementById('btn-three').classList.toggle('active',  p === 'three');
+    calculate();
+}
+
+function setMaterial(m) {
+    material = m;
+    document.getElementById('btn-copper').classList.toggle('active',   m === 'copper');
+    document.getElementById('btn-aluminum').classList.toggle('active', m === 'aluminum');
+    calculate();
+}
+
+function toggleUnit() {
+    useMetric = !useMetric;
+    const btn = document.getElementById('unitBtn');
+    btn.textContent = useMetric ? 'm' : 'ft';
+    btn.classList.toggle('active-unit', !useMetric);
+    // Convert displayed value
+    const distInput = document.getElementById('distance');
+    const val = parseFloat(distInput.value) || 0;
+    if (!useMetric) {
+        distInput.value = Math.round(val * 3.28084 * 10) / 10;
+    } else {
+        distInput.value = Math.round(val / 3.28084 * 10) / 10;
+    }
+    calculate();
+}
+
+/* ============================================
+   Core Calculation
+   ============================================ */
+function getDistanceMetres() {
+    const raw = parseFloat(document.getElementById('distance').value) || 0;
+    return useMetric ? raw : raw / 3.28084;
+}
+
+function getResistancePerKm(size) {
+    const table = material === 'copper' ? copperResistance : aluminumResistance;
+    return table[size] || 0;
+}
+
+function calcVD(current, rPerKm, distM) {
+    const distKm = distM / 1000;
+    if (phase === 'single') {
+        return 2 * current * rPerKm * distKm;
+    } else {
+        return Math.sqrt(3) * current * rPerKm * distKm;
+    }
+}
+
+function getStatus(vdPct) {
+    if (vdPct <= 3)  return 'pass';
+    if (vdPct <= 5)  return 'warning';
+    return 'fail';
+}
+
+let lastResult = null;
+
+function calculate() {
+    const voltage   = parseFloat(document.getElementById('voltage').value)    || 240;
+    const conductor = document.getElementById('conductor').value;
+    const current   = parseFloat(document.getElementById('current').value)    || 0;
+    const distM     = getDistanceMetres();
+
+    if (!current || !distM) {
+        lastResult = null;
+        renderResults(null, voltage, conductor);
+        return;
+    }
+
+    const rPerKm = getResistancePerKm(conductor);
+    const vd     = calcVD(current, rPerKm, distM);
+    const vdPct  = (vd / voltage) * 100;
+    const endV   = voltage - vd;
+    const status = getStatus(vdPct);
+
+    lastResult = { voltage, conductor, current, distM, rPerKm, vd, vdPct, endV, status };
+    renderResults(lastResult, voltage, conductor);
+    renderComparisonTable(voltage, conductor, current, distM);
+    drawCanvas(lastResult);
+}
+
+/* ============================================
+   Render Results
+   ============================================ */
+function renderResults(r, voltage, conductor) {
+    const badge   = document.getElementById('complianceBadge');
+    const icon    = document.getElementById('badgeIcon');
+    const lbl     = document.getElementById('badgeLabel');
+    const pctEl   = document.getElementById('vdPercent');
+    const msgEl   = document.getElementById('badgeMessage');
+    const thumb   = document.getElementById('vdBarThumb');
+    const metVD   = document.getElementById('metricVD');
+    const metEV   = document.getElementById('metricEndV');
+    const metR    = document.getElementById('metricResistance');
+    const fNote   = document.getElementById('formulaNote');
+
+    if (!r) {
+        pctEl.textContent = '—';
+        metVD.textContent = '—';
+        metEV.textContent = '—';
+        metR.textContent  = '—';
+        msgEl.textContent = 'Enter valid current and distance.';
+        thumb.style.left  = '0%';
+        return;
+    }
+
+    // Badge
+    badge.className = `compliance-badge ${r.status}`;
+    if (r.status === 'pass') {
+        icon.textContent = '✓';
+        lbl.textContent  = 'PASS';
+        msgEl.textContent = `Voltage drop is within the CEC 3% recommended maximum.`;
+    } else if (r.status === 'warning') {
+        icon.textContent = '!';
+        lbl.textContent  = 'WARNING';
+        msgEl.textContent = `VD exceeds 3% CEC recommendation. Consider a larger conductor.`;
+    } else {
+        icon.textContent = '✕';
+        lbl.textContent  = 'FAIL';
+        msgEl.textContent = `VD exceeds 5%. Upsize the conductor to maintain safe performance.`;
+    }
+
+    // Percent display
+    pctEl.textContent = r.vdPct.toFixed(2) + '%';
+
+    // Bar thumb — clamp 0–10%
+    const pct = Math.min(r.vdPct, 10);
+    thumb.style.left = (pct / 10 * 100).toFixed(1) + '%';
+
+    // Metrics
+    metVD.textContent = r.vd.toFixed(2) + ' V';
+    metEV.textContent = r.endV.toFixed(1) + ' V';
+    metR.textContent  = r.rPerKm.toFixed(4);
+
+    // Formula note
+    const phaseStr = phase === 'single'
+        ? `VD = 2 × ${r.current}A × ${r.rPerKm.toFixed(4)} Ω/km × ${(r.distM/1000).toFixed(4)} km = ${r.vd.toFixed(3)} V`
+        : `VD = √3 × ${r.current}A × ${r.rPerKm.toFixed(4)} Ω/km × ${(r.distM/1000).toFixed(4)} km = ${r.vd.toFixed(3)} V`;
+    fNote.textContent = phaseStr;
+}
+
+/* ============================================
+   Comparison Table
+   ============================================ */
+function renderComparisonTable(voltage, conductor, current, distM) {
+    const idx = conductorSizes.indexOf(conductor);
+    const start = Math.max(0, idx - 3);
+    const end   = Math.min(conductorSizes.length - 1, idx + 3);
+
+    const tbody = document.getElementById('compTableBody');
+    tbody.innerHTML = '';
+
+    for (let i = start; i <= end; i++) {
+        const sz = conductorSizes[i];
+        const r  = getResistancePerKm(sz);
+        const vd = calcVD(current, r, distM);
+        const pct = (vd / voltage) * 100;
+        const st = getStatus(pct);
+        const isSelected = sz === conductor;
+
+        const tr = document.createElement('tr');
+        if (isSelected) tr.classList.add('selected-row');
+
+        tr.innerHTML = `
+            <td>${sizeLabels[sz]}${isSelected ? ' <span style="font-size:0.7rem;color:#f59e0b;">◀ selected</span>' : ''}</td>
+            <td>${r.toFixed(4)}</td>
+            <td>${vd.toFixed(2)} V</td>
+            <td>${pct.toFixed(2)}%</td>
+            <td><span class="vd-pill ${st}">${st.toUpperCase()}</span></td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+/* ============================================
+   Canvas Animation
+   ============================================ */
+const canvas = document.getElementById('vizCanvas');
+const ctx    = canvas.getContext('2d');
+
+// Particles
+const particles = Array.from({length: 18}, (_, i) => ({
+    x: Math.random(),   // 0..1 fraction along wire
+    speed: 0.0008 + Math.random() * 0.0004
+}));
+
+let animFrame = null;
+let lastTime  = 0;
+
+function drawCanvas(r) {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    animLoop(performance.now(), r);
+}
+
+function animLoop(now, r) {
+    const dt = now - lastTime;
+    lastTime = now;
+
+    // Resize canvas to its CSS display size for sharpness
+    const dpr = window.devicePixelRatio || 1;
+    const displayW = canvas.clientWidth;
+    const displayH = canvas.clientHeight;
+    if (canvas.width !== displayW * dpr || canvas.height !== displayH * dpr) {
+        canvas.width  = displayW * dpr;
+        canvas.height = displayH * dpr;
+        ctx.scale(dpr, dpr);
+    }
+
+    const W = displayW;
+    const H = displayH;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, W, H);
+
+    // Layout constants
+    const boxW = 96, boxH = 56;
+    const srcX = 40, srcY = H / 2 - boxH / 2;
+    const ldX  = W - 40 - boxW, ldY = H / 2 - boxH / 2;
+    const wireY_top = H / 2 - 24;
+    const wireY_bot = H / 2 + 24;
+    const wireXStart = srcX + boxW;
+    const wireXEnd   = ldX;
+
+    // ---- Wire gradient (top wire) ----
+    const vdRatio = r ? Math.min(r.vdPct / 10, 1) : 0;
+
+    const topGrad = ctx.createLinearGradient(wireXStart, 0, wireXEnd, 0);
+    topGrad.addColorStop(0,          '#f59e0b');   // source: amber
+    topGrad.addColorStop(1 - vdRatio * 0.65, '#f59e0b');
+    topGrad.addColorStop(1,           lerpColor('#f59e0b', '#475569', vdRatio));
+
+    // Top wire shadow/glow
+    ctx.save();
+    ctx.shadowColor = '#f59e0b';
+    ctx.shadowBlur  = 6;
+    ctx.beginPath();
+    ctx.moveTo(wireXStart, wireY_top);
+    ctx.lineTo(wireXEnd,   wireY_top);
+    ctx.strokeStyle = topGrad;
+    ctx.lineWidth   = 3;
+    ctx.stroke();
+    ctx.restore();
+
+    // Bottom wire (return neutral — muted blue)
+    const botGrad = ctx.createLinearGradient(wireXEnd, 0, wireXStart, 0);
+    botGrad.addColorStop(0, '#334155');
+    botGrad.addColorStop(1, '#475569');
+    ctx.beginPath();
+    ctx.moveTo(wireXEnd,   wireY_bot);
+    ctx.lineTo(wireXStart, wireY_bot);
+    ctx.strokeStyle = botGrad;
+    ctx.lineWidth   = 3;
+    ctx.stroke();
+
+    // Vertical connectors (source box to wires)
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(srcX + boxW, wireY_top);
+    ctx.lineTo(srcX + boxW, wireY_bot);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(ldX, wireY_top);
+    ctx.lineTo(ldX, wireY_bot);
+    ctx.stroke();
+
+    // ---- Source Box ----
+    drawBox(ctx, srcX, srcY, boxW, boxH, '#1e3a5f', '#3b82f6', '#93c5fd',
+        '⚡ SOURCE',
+        r ? `${r.voltage} V` : '— V');
+
+    // ---- Load Box ----
+    const endVStr = r ? `${r.endV.toFixed(1)} V` : '— V';
+    const loadColor = r
+        ? (r.status === 'pass' ? '#065f46' : r.status === 'warning' ? '#78350f' : '#7f1d1d')
+        : '#1e3a5f';
+    const loadBorder = r
+        ? (r.status === 'pass' ? '#10b981' : r.status === 'warning' ? '#f59e0b' : '#ef4444')
+        : '#3b82f6';
+    const loadText = r
+        ? (r.status === 'pass' ? '#6ee7b7' : r.status === 'warning' ? '#fcd34d' : '#fca5a5')
+        : '#93c5fd';
+
+    drawBox(ctx, ldX, ldY, boxW, boxH, loadColor, loadBorder, loadText,
+        '🔌 LOAD',
+        endVStr);
+
+    // ---- Center label (VD annotation) ----
+    const midX = (wireXStart + wireXEnd) / 2;
+    if (r) {
+        const label = `${r.vd.toFixed(2)} V  (${r.vdPct.toFixed(2)}%)`;
+        ctx.font      = 'bold 12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = r.status === 'pass' ? '#6ee7b7' : r.status === 'warning' ? '#fcd34d' : '#fca5a5';
+
+        // Background pill
+        const tw = ctx.measureText(label).width + 20;
+        roundRect(ctx, midX - tw/2, wireY_top - 26, tw, 20, 6);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = r.status === 'pass' ? '#10b981' : r.status === 'warning' ? '#f59e0b' : '#ef4444';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = r.status === 'pass' ? '#6ee7b7' : r.status === 'warning' ? '#fcd34d' : '#fca5a5';
+        ctx.font      = 'bold 11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('VD = ' + label, midX, wireY_top - 12);
+
+        // Arrow line from label to wire
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth   = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(midX, wireY_top - 6);
+        ctx.lineTo(midX, wireY_top - 1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // ---- Particles (flow along top wire, left → right) ----
+    const speed = r ? Math.max(0.0004, Math.min(r.current / 500 * 0.003, 0.004)) : 0.001;
+
+    for (const p of particles) {
+        p.x += speed * (dt || 16);
+        if (p.x > 1) p.x -= 1;
+
+        const px = wireXStart + p.x * (wireXEnd - wireXStart);
+
+        // Particle glow
+        const grd = ctx.createRadialGradient(px, wireY_top, 0, px, wireY_top, 5);
+        grd.addColorStop(0,   'rgba(251, 191, 36, 0.9)');
+        grd.addColorStop(0.5, 'rgba(245, 158, 11, 0.5)');
+        grd.addColorStop(1,   'rgba(245, 158, 11, 0)');
+        ctx.beginPath();
+        ctx.arc(px, wireY_top, 5, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(px, wireY_top, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+    }
+
+    animFrame = requestAnimationFrame(t => animLoop(t, r || lastResult));
+}
+
+function drawBox(ctx, x, y, w, h, bg, border, textColor, line1, line2) {
+    ctx.save();
+    ctx.shadowColor = border;
+    ctx.shadowBlur  = 10;
+    roundRect(ctx, x, y, w, h, 8);
+    ctx.fillStyle = bg;
+    ctx.fill();
+    ctx.strokeStyle = border;
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle  = textColor;
+    ctx.font       = 'bold 10px Inter, sans-serif';
+    ctx.textAlign  = 'center';
+    ctx.fillText(line1, x + w/2, y + h/2 - 6);
+
+    ctx.font       = 'bold 13px Inter, sans-serif';
+    ctx.fillStyle  = '#fff';
+    ctx.fillText(line2, x + w/2, y + h/2 + 10);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+function lerpColor(a, b, t) {
+    const ah = parseInt(a.slice(1), 16);
+    const bh = parseInt(b.slice(1), 16);
+    const ar = (ah >> 16) & 0xff, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+    const br = (bh >> 16) & 0xff, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+    const rr = Math.round(ar + (br - ar) * t);
+    const rg = Math.round(ag + (bg - ag) * t);
+    const rb = Math.round(ab + (bb - ab) * t);
+    return `rgb(${rr},${rg},${rb})`;
+}
+
+/* ============================================
+   Init
+   ============================================ */
+calculate();
+
+// Handle window resize — redraw canvas
+window.addEventListener('resize', () => {
+    if (lastResult) drawCanvas(lastResult);
+    else drawCanvas(null);
+});
+
+</script>
+</body>
+</html>

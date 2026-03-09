@@ -1,0 +1,840 @@
+=== PAGE 1 ===
+LEARNING RESOURCES 030205h
+e e @ FoR'skitted tRabEs
+
+ELECTRICIAN
+
+Class 1 and Class 2
+Circuits
+
+@ 2" Edition
+
+Second Period
+
+Canadian Electrical Code (CE Code) / Plans and Diagrams
+
+
+
+=== PAGE 2 ===
+The outcomes and objectives in this module align to the Electrician 2024 AIT Curriculum Guide.
+
+© 2025, Northern Alberta Institute of Technology (NAIT) and Souther Alberta Institute of Technology (SAIT).
+
+All Rights Reserved. No part of this publication may be reproduced, stored in or introduced into a retrieval system,
+transmitted or communicated in any form or by any means (electronic, mechanical, photocopying, recording or
+otherwise) without the prior written permission of the publishers, NAIT and SAIT, except as permitted by law. For
+Permission requests, please contact: support@ilmlearning.ca.
+
+NAIT and NAIT’s logos are registered trademarks of NAIT and may not be used without the prior written permission
+of NAIT. SAIT and SAIT’s logos are registered trademarks of SAIT and may not be used without the prior written
+Permission of SAIT. Other logos, trademarks, registered trademarks and tradenames depicted herein are the
+probally oftheir respective owners. Use of them does not imply any afflation with or endorsement by them Al
+reasonable efforts have been made to ensure that this publication is accurate, reliable and free from error at tte
+
+of Publication; however, there may be instances where information contained herein is not current. To the fulles!
+
+extent permissible under applicable law, NAIT and SAIT disclaim any and all warranties and conditions respecting
+
+this publication, whether e
+
+xpressed, implied, statutory, or otherwise.
+
+
+
+=== PAGE 3 ===
+Tabl
+poaeeN le of Contents
+Section 16 Circuit
+Objective One Activity
+Objective Two.
+Class | and Class 2 Circuit Requii
+Objective Two Activity ee
+Self-Test...
+Objective One Activity Answers
+Objective Two Activity Answer:
+Self-Test Answers...
+
+fe are depend in Seetien 1Gres. ¢
+E waotactog dt hx Gace
+
+fialins
+
+
+
+=== PAGE 4 ===
+Class 1 and Class 2 Circuits
+
+Rationale
+Why is it important, (for you to learn this skill?
+
+Some circuits do not have the same wiring requirements as li ighting and power branch
+circuits. The circuits described in Section 16 of the Canadian Electrical Code (CE Code)
+can be supplied by conductors smaller than No. 14 AWG or with less restrictive wiring
+methods. This is permitted because the circuit current and/or voltage values are limited to
+levels that do not normally present serious shock or fire hazards,
+
+Although No. 14 AWG is the minimum conductor size for most types of circuits, you
+may be permitted to install conductors smaller than No. 14 AWG for certain circuits.
+These circuits include a thermostat, doorbell, or security system when wiring a house;
+heating, ventilation, air conditioning, and refrigeration (HVAC/R); or motor control
+wiring in a commercial or industrial setting.
+
+Outcome
+
+When you have completed this module, you will be able to
+
+Determine CE Code requirements for Class 1 and Class 2 circuits.
+
+Objectives
+
+Introduction
+
+The circuits discussed in this module are described in Section 16 Class 1 and Class 2
+circuits. The classifications of these circuits are determined by their source limitations.
+This module provides a description of these circuits and their installation requirements.
+
+NOTES
+
+
+
+=== PAGE 5 ===
+Prerequisites
+To fully understand the requirements of Class | and Class 2 circuits, you
+complete the following modules: * OU MUst first
+© —030104e: Switching Circuits
+© —030104g: Extra Low Voltage Switching
+© 030105d: Service and Grounding Requirements
+
+Resources
+* Canadian Electrical Code, Part I (26th Edition)
+¢ Alberta Electrical STANDATA
+
+\)
+
+
+
+=== PAGE 6 ===
+LL ET
+
+Objective One
+
+When you have completed this objective, you will be able to
+
+Section 16 Circuits
+
+Read Rule 16-000 Scope (see Appendix B) and take notice of the specific circuits that
+are classified as Class 1 and Class 2. Cross reference the circuit types with the definitions
+found in Section 0 under “Circuit.”
+
+|
+| Although Section 16 includes five different types of circuits, this module will focus
+
+on four:
+|
+
+For more information on Class 2 power and data communication circuits, review the
+Extra-Low Voltage Switching module from your First Period training.
+
+Remote Control Circuits
+
+Read the definition of remote control circuit in Section 0 and briefly summarize it in
+your own words.
+
+@ A Citrit Yo Cantfol4 ont
+CCtyiy wikw a Prreoy
+
+Figure | is a simple example of a remote control circuit, which may be a Class | or
+Class 2 circuit. A remote control circuit has a relay as part of its components.
+
+a
+Float
+Switch
+
+Coil Contact
+
+Figure 1 - Remote control circuit.
+
+030205h02.docx
+
+
+
+=== PAGE 7 ===
+Signal Circuits ;
+Read the definition of signal circuit in Section 0 and briefly summ
+own words.
+
+Aut th ale
+MO OVNe C 4 : Emenee
+
+Figure 2 is a simple example of a signal circuit, which may be a Class 1 of
+
+Class 2 circuit.
+
+ee +
+Push
+Button
+
+arize it in yous
+
+a _ Signa
+
+uy
+
+Bell
+u
+
+Figure 2 - Signal circuit.
+
+Extra-Low Voltage Power Circuits
+
+Read the definition of extra-low voltage
+
+power circuit in Seetion 0 and briefly
+summarize it in your own words.
+
+Figure 3 is a sim
+
+ple example of an extra-low voltage power circuit. This circuit is
+Class 1 only.
+
+L,
+
+e alas
+30.V Maximum “IS
+Class 1 Float Bot wave
+olen
+1000 VAMaximum Switch ete
+y
+
+Figure 3 - Class 1 extra-low voltage Power circuit.
+
+
+
+=== PAGE 8 ===
+6
+
+Low-Energy Power Circuits
+
+Read the definition of fon-enerey power circuit in Sect i i
+01
+igre n 0 and briefly summarize it in
+
+Figure 4 is a simple example of a low-energy Power circuit. This circuit is Class 2 only.
+
+= Sa |;
+100 VA Maximum DS
+Class 2 Float Water Valve
+150 V Maximum Switch Poloneid
+L
+
+Figure 4 - Class 2 low-energy power ci
+
+NOTE
+
+The only circuits covered by the Section 16 rules are those listed
+in Rule 16-000.
+
+030205h02.docx_
+
+
+
+=== PAGE 9 ===
+Objective One Activity
+
+1. Which type of circuit controls a second circuit through a relay or equivalent dey;
+ice?
+
+ry
+
+2. A communication circuit is classed as a signal circuit.
+
+a) True
+b) False
+
+3. What is the maximum voltage of an extra-low voltage power circuit?
+
+4. A low-energy power circuit is not a remote control circuit or a signal circuit.
+a) True Pi
+b) False
+
+5. Which type of circuit would supply a code-calling system?
+
+
+
+=== PAGE 10 ===
+ive Two
+
+object
+when you have completed this objective, you will be able to
+
+ermine the requirem
+
+class 1 and Class 2 Circuit Requirements
+
+Conductors smaller than No. 14 AWG are permitted for the circuits listed in Section 16
+pecause these circuits are supplied from devices that place limits on the power or energy
+prailable to the circuit. They can generally be considered less hazardous than other
+circuits not included in Section 16.
+
+ents for Class 1 and Class 2 circuil
+Ba ni and Class 2 circuits.
+
+deals with Class 1 and Class 2 circuits and their grounding requirements.
+determined according to the limitations placed on their power supply.
+The power supplies for Class 2 circuits have more restrictive limits than those for Class |
+circuits. As a result, the installation requirements for Class 2 circuit conductors are less
+
+1 those for circuits of higher power levels.
+
+This objective
+These circuits are
+
+restrictive than
+
+To further understand Class 1 and Class 2 circuits, you need to understand the CE Code
+requirements for each classification including
+
+The circuit limitations and overcurrent protection and
+
+The circuit conductors and wiring methods.
+
+Class 1 Circuits
+‘The 16-100s are the set of rules that pertain specifically to Class 1 circuits
+
+Circuit Limitations and Overcurrent Protection
+Read Rule 16-100 Limitations of Class 1 circuits.
+
+‘cular power or voltage restrictions for specific situations:
+
+Class | circuits have parti
+maximum of 30 V and
+
+Class 1 extra-low voltage power circuits are restricted to a
+a maximum power level of 1000 VA (volt-amps).
+
+Class 1 remote control and signal circuits are restricted to a maximum
+
+of 600 V and are also restricted to current levels that are determined by the
+allowable ampacities of the conductors used.
+
+Read Rule 16-104 Overcurrent protection of Class 1 circuits.
+
+Similar to power or lighting circuits, overcurrent protection is required for the conductors
+of Class 1 circuits. A maximum rating of 5 A shall be used to protect No. 18 AWG
+
+conductors in a Class 1 circuit.
+
+urrent device shall be used for a No. 16 AWG
+
+k Table 12 for the maximum allowable ampacities
+that you have chosen to use. Ensure that the
+ed in Rule 16-104, does not exceed the values
+
+‘A maximum rating of a 10 A overet
+conductor in a Class 1 circuit. Chee
+for the flexible cord or equipment wire
+maximum overcurrent device, as outlin
+in the table.
+
+S 030205h02.doex
+
+
+
+=== PAGE 11 ===
+Circuit Conductors and Wiring Methods
+
+Read Rules je 9
+© 16-102 Methods of installation for Class 1 circuits, €
+* 16-110 Conductor material and sizes, and
+* 16-112 Insulated conductors for Class 1 wiring.
+
+Class | circuits are wired according to Section 12, with a couple of exceptions:
+© Conductors may be smaller than No. 14 AWG and ‘
+© Equipment wires, such as the ones shown in Figure 5, may be used in a race
+
+way
+for Class 1 circuits.
+TEW GTF SEW
+Figure 5 - Equipment wire. r)
+Since No. 18 AWG conductors have a relatively low tensile strength, they can be
+
+damaged by pulling them into a raceway. Rule 16-110 2) requires that No. 18 AWG
+Conductors are either laid in a raceway (such as a gutter or wireway) or installed as a
+cable with at least two conductors.
+
+Read Rule 16-114 Conductors of different circuits in the same enclosure,
+raceway.
+
+cable, or
+Power circuit conductors and Class 1 circuit conductors are not permitted in the same
+enclosure, cable, or raceway unless the conductors are connected to the same equipment
+
+and all the conductors have the same voltage rating. Otherwise, Class 1 circuit conductors
+and power conductors are required to be separate.
+
+(030205h02.docx
+
+
+
+=== PAGE 12 ===
+re 6 illustrates an example of a Class 1 remote c f
+e The control circuit voltage does not exceed 600 V ik er Ral
+«Since the No. 16 AWG conductors extend beyond the mot penne
+enclosure, they must be protected by an overcurrent daveb Haat
+than10 A. See Rule 16-104 1) b), Ba ae
+
+© The overcurrent protection is often achieved with a fuse i
+ith a fus si
+starter enclosure, as per Rule 16-106 2). cE eee ane
+
+e The No. 16 AWG conductors are pulled into electri i
+lectrical g IT); sec
+Rule 16-110 1) a) and Rule 16-110 2) a). SS oaayl meant ere
+ TEW conductors are used in accordance with Rule 16-
+112 =
+) and Table 11. 2 Ee ee
+«The Class 1 circuit conductors are permitted to enter the motor starter enclosure,
+as per Rule 16-114 2), if they are insulated to the same voltage as the power
+conductors. Table D1 in Appendix D indicates that TEW conductors are
+available with either 300 V or 600 V insulation.
+
+tallation.
+
+Remote 240 V
+StarvStop Combination
+Station Starter
+
+EMT with Class 1 240 V
+Remote Control Circuit
+(Three No. 16 AWG TEW)
+
+Figure 6 - Motor starter remote control circuit.
+
+
+
+=== PAGE 13 ===
+meee
+
+Class 2 Circuits
+The 16-200s are the set of rules that pertain specifi
+
+cally to Class 2 Circuit
+its,
+Circuit Limitations and Overcurrent Protection
+
+Read Rule 16-200 Limitations of Class 2 circuits (see Appendix B) 4
+
+A circuit can be considered a Class 2 circuit if tw.
+¢ The voltage of the circuit must be 150 Vv
+¢ The maximum power output of the circui
+
+apparent power of 100 VA.
+
+© conditions a,
+or less, and
+
+it supply must be Testricteg
+0 an
+
+Te met;
+
+The power level may be limited by using
+¢ An overcurrent device,
+* An approved Class 2 transformer, or
+* Other devices with energy-limiting characteristics,
+
+Recall that S'= £ x J, the unit measurements are VA=\V x
+
+A. For the follow;
+calculations, the formula is transposed to calculate for curr Ollowing
+
+ent. Th
+a he formula becomes
+ress,
+E
+Example 2.1
+Determine the maximum rating of overcurrent device for a 24 V, Class 2 Circuit.
+Solution
+The overcurrent device for a 24 V, Class 2 circuit must limit the Power to 100 VA B)
+7 ~100VA
+24V
+=4.16A
+
+The maximum rating of overcurrent device for this circuit is 4.16 A,
+
+Example 2.2
+Determine the maximum rating of overcurrent device for a 54 V, Class 2 circuit.
+
+Solution
+The maximum rating of overcurrent device for a 54 V, Class 2 circuit must limit the
+power to 100 VA.
+_100VA
+54V
+=185A
+
+It
+
+The maximum rating of overcurrent device for this circuit is 1.85 A.
+
+ts the supply
+Transformers that have an output limited to 100 VA or less are often used a i a Re
+‘or Class 2 circuits, An overcurrent device is not required in the Class 2 cir
+
+situation. The operation of transformers will be discussed in later years of Yo P)
+technical training,
+
+030205h02.doex
+
+—
+
+
+=== PAGE 14 ===
+pead Rule 16-206 Overcurrent protection for Class 2 circuits,
+
+Fuses must be the non-interchangeable type if they are used to limit the energy toa
+
+- cuit. This is accomplished by using a combinati hi
+jass 2 circu! eee bination of differer
+ne polders that prevent the use of the wrong fuse rating, pi se vedi biie anc
+
+circuit Conductors and Wiring Methods
+
+ormal conditions, the 100 VA power level limit in Class 2 circuits does not
+fire hazard; therefore, the CE Code allows less restrictive wiring methods than
+Class | circuits.
+
+Jn most n
+resent @
+it does for
+
+Read Rule 16-210 Conductors for Class 2 circuit wiring (see Appendix B).
+
+The benefits of limiting a circuit to Class 2 are as follows:
+You are permitted to use conductors smaller than No. 14 AWG, and
+«The circuits often have less restrictive wiring methods. For example, an outlet
+box is not required when terminating Class 2 wiring at a thermostat or door
+chime button.
+
+The rules in Section 12 do not normally apply to Class 2 circuits, except as required by
+Rule 16-226. The CE Code allows you to use Table 19 conductors or equipment wires
+
+listed in Table 11.
+
+Table 19 lists several conductors available in sizes smaller than No. 14 AWG (see
+Table D1 for cable construction and available sizes). Of particular interest to you are
+low-voltage thermostat (LVT) and extra-low voltage cables (ELC). The use of these
+cables is restricted to Class 2 circuits operating at 30 V or less. Other features of these
+cables you should take note of include the following:
+« LVThas a non-metallic sheath, as depicted in Figure 7, and is acceptable for use
+in heating control circuits.
+ELCs often called bell wire. It does not have a sheath over the twisted
+conductors. According to Rule 16-210 3), ELC must not be used for heating
+control or fire safety circuits.
+
+2-Conductor — 5-Conductor
+Cable Cable
+
+Figure 7- LVT cables.
+
+030205h02.doex
+
+mt
+
+
+
+=== PAGE 15 ===
+NOTES
+
+As with Class 1 circuits, smaller conductors can be damaged by pullin;
+raceway. Rule 16-210 4) indicates which conductors B them into g
+© Can be pulled into a raceway,
+© Must be laid in a raceway, and
+© Must be incorporated into a cable.
+
+Rule 16-210 Subrule 6) directs you to Table 57 for allowable ampacitie,
+factors for conductors smaller than No. 16 AWG used in Class 2 ciety pa Correction
+
+Example 2.3
+Determine the allowable ampacity of a No. 18 AWG, 2-conductor LVT caby
+le.
+
+Solution
+Referring to Table 57, a No. 18 AWG cable has an allowable ampacity of 5 x
+
+Example 2.4
+Determine the allowable ampacity of a No. 16 AWG, 4-conductor LVT cable.
+
+Solution
+
+Referring to Table 57, a No. 16 AWG cable has an allowable ampacity of 10 A.
+
+Hoes when aa are more than three conductors, the asterisk symbol (*) indie te
+jat the ampacity of the cable must be de-rated. Fi | ie
+
+ea ‘or a 4-conductor cable, the derating
+
+10Ax0.8=8A
+Therefore, the allowable ampacity of a No. 16 AWG, 4-conductor LVT. cable is 8 A.
+
+
+
+=== PAGE 16 ===
+_ ee
+
+le 46-212 Separation of Class 2 circuits from other circuits.
+
+read Rw
+«ce the wiring methods for Class 2 circuits are less restrictive than other types of
+) since ~ accidental contact between the circuits can pose a fire or shock facaed : AS a
+
+circu minimum spacings required between the wiri
+: e wiring for Class 2 circuits a
+results power, and Class | circuits. Cekalicall ut.
+
+the wit
+
+fere are" n
+ing for lighting,
+y be required to keep Class 2 wiring separate from lighting, power, and
+
+riers MAY
+AS 1 conductors where they enter the same enclosure, as pictured in Figure 8
+
+Lighting
+Circuits
+
+Metal Barrier
+
+Ss
+
+Class 2
+Circuits
+
+Figure 8 - Lighting relay enclosure with metal barrier.
+
+930205h02.docx
+
+
+
+=== PAGE 17 ===
+Figure 9 portrays an example of a Class 2 signal circuit for a door chime
+unit. Note the following requirements for this installation. oa
+© The Class 2 transformer converts 120 V to 16 V and is limited in aCCordang,
+with Rule 16-200 1) b) ii). A common rating for doorbell transformers is if 9
+* The Class 2 transformer is protected by a 15 A overcurrent device on he (0 VA.
+primary (120 V) side, as per Rule 16-2022).
+* A 2-conductor, No. 18 AWG LVT cable is used in accordance with Rule 16
+Rule 12-102 3), and Table 19. -210,
+© The typical method of mounting a door chime transformer to the side ofa
+junction box provides the conductor separation required by Rule 16-212,
+
+ina dwelling
+
+120 V Power Supply
+a
+
+Class 2
+Transformer
+Va
+
+Rear Door Button
+-- (Normally Open)
+
+“S.No. 18 AWG LVT
+
+Front Door Button
+(Normally Open)
+
+YW
+Plungers
+
+Figure 9 - Door chime wiring diagram.
+
+v)
+
+14
+© SRD
+
+
+
+=== PAGE 18 ===
+for Section 16 Circuits
+
+Gi nding
+i Rule 40-206 AC systems required to be solidly grounded
+ea x
+ires a Class 1 or Class 2 circuit rated
+prule 1) requ - at ated over 30 V te of
+Sul 3) requires a Class 1 or Class 2 circuit rated 30 V or feat aCe ed i
+Bs ret grounded if
+a un overhead outside,
+
+supplied by @ transformer with a primary voltage gi
+
+Sin 50 volts-to-ground, oF Oe
+
+supplied by @ transformer with an ungrounded primary.
+
+030205h02.doex 15
+
+
+
+=== PAGE 19 ===
+Objective Two Activity
+
+i install the wiring for a Class 1 ac cine:
+1. Which condition must be satisfied to install ig circuit and g
+Class 1 de circuit in the same raceway Q
+
+Rule
+
+2. What isthe smallest AWG size of Class I circuit conductor that can be pulled inty
+a raceway?
+
+Rule
+
+3. What is the smallest AWG size of Class 2 circuit conductor that can be laid in
+a raceway?
+
+Rule _
+
+4. What is the allowable ampacity of a No. 20 AWG, 3-conductor TEW equipment wire
+used in a Class 2 circuit?
+
+Table__
+
+5. What is the maximum VA rating for a 120 V, Class 2 circuit?
+
+Rule
+
+A Class 2 circuit conductor and a 120 V lighting conductor are considered adequately
+
+separated if they are at least mm apart.
+
+Rule
+
+m ®
+
+030205h02,doex
+
+
+
+=== PAGE 20 ===
+ib
+
+petest
+
+js the maxim
+
+um overcurrent device rating that can be used to protect a Class |
+
+* t wired with No. 16 AWG conductors?
+
+what control circu
+
+ft
+sy GS
+
+js the maximum voltage that a Class 1 signal circuit can operate at?
+i J
+
+which conductor is acceptable for a Class 1 signal circuit if EMT is the wiring
+nod and the overcurrent protection is 5 A?
+
+me No. 18 AWG coppet
+
+b) No. 18 AWG aluminum
+
+¢) No. 16 AWG aluminum
+
+4) No. 16 AWG copper
+
+Which of the following is an acceptable method of limiting the current ofa Class 2
+remote control circuit rated at 24 V?
+
+a) ASA fuse.
+b) A20A circuit breaker.
+c) Apower supply that is limited to an output of 100 VA under normal or
+
+fault conditions.
+ada rechargeable battery that has a maximum short-circuit current of 5A
+
+after one minute.
+
+What is the maximum overcurrent protection on the primary side of a 24 V, 80 VA
+
+Class 2 transformer?
+a) 3.3A
+b) ISA
+c) 20A
+d) 30A
+
+What is the maximum allowable ampacity of a No. 19 AWG Class 2 conductor when
+installed in a raceway containing a total of six conductors?
+
+a) 2.8A
+
+b) 3.2A
+
+c) 40A
+
+d) 5.0A
+
+30205h02.docx
+
+17
+
+
+
+=== PAGE 21 ===
+aes See
+
+Objective One Activity Answers
+
+1. Remote control circuit (see Section 0 under “Circuit”)
+
+2. b) False; communication circuits are not signal circuits (see Section 0 under
+“Circuit”.
+
+30 V; see Section 0 under “Circuit” or Rule 16-100 1).
+
+4. a) True; a low-energy power circuit is not a remote control circuit or a signal circuit
+
+(see Section 0 under “Circuit”).
+
+5. A signal circuit (see Section 0 under “Circuit”)
+
+Objective Two Activity Answers
+
+1. All conductors must be insulated for the highest voltage of any of the conductors in
+the raceway.
+Rule 16-114 1)
+2. No. 16 AWG
+Rule 16-110 2) a)
+3. No. 19 AWG
+Rule 16-210 4) b)
+4, 3.54
+Table 57 6
+5. 100VA
+Rule 16-200 1) d)
+6. 50mm
+Rule 16-212 1)
+
+Self-Test Answers
+
+c) 10A
+
+d) 600V
+
+d) No. 16 AWG copper
+
+c) A power supply that is limited to an output of 100 VA under normal or
+fault conditions
+
+Rene
+
+) Ai
+b) 3.2A
+
+030205h02.docx
+

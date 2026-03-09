@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demand Factor Calculator | SparkStudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Dark Engineering Design System
+   ============================================ */
+:root {
+    --primary: #f59e0b;
+    --primary-dark: #d97706;
+    --primary-light: #fbbf24;
+    --primary-bg: rgba(245,158,11,0.08);
+    --secondary: #161b22;
+    --secondary-light: #21262d;
+    --text: #e6edf3;
+    --text-light: #8b949e;
+    --text-lighter: #6e7681;
+    --bg: #0d1117;
+    --bg-alt: #0d1117;
+    --bg-panel: #161b22;
+    --border: #30363d;
+    --success: #10b981;
+    --success-bg: rgba(16,185,129,0.1);
+    --error: #ef4444;
+    --error-bg: rgba(239,68,68,0.1);
+    --info: #58a6ff;
+    --info-bg: rgba(88,166,255,0.1);
+    --purple: #a78bfa;
+    --orange: #f97316;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.25);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.2);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: #0d1117;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+a { text-decoration: none; color: inherit; }
+
+/* Thin scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #30363d;
+    height: 64px;
+}
+.nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+.logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.nav-links { display: flex; gap: 8px; }
+.nav-link {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #8b949e;
+    transition: var(--transition);
+}
+.nav-link:hover { color: var(--text); background: #161b22; }
+.nav-link.active { color: #f59e0b; background: rgba(245,158,11,0.08); }
+.mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+}
+.mobile-menu-btn span {
+    display: block;
+    width: 24px; height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+.page-header {
+    padding: 88px 0 24px;
+    background: #0d1117;
+    border-bottom: 1px solid #30363d;
+}
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #8b949e;
+    margin-bottom: 12px;
+}
+.breadcrumb a { color: #f59e0b; font-weight: 500; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { color: #6e7681; }
+
+.header-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.header-title h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #e6edf3;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+.header-title p {
+    color: #8b949e;
+    font-size: 0.95rem;
+}
+
+/* Preset Buttons */
+.preset-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.preset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(245,158,11,0.08);
+    border: 2px solid rgba(245,158,11,0.2);
+    border-radius: var(--radius-sm);
+    color: #f59e0b;
+    font-size: 0.875rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.preset-btn:hover {
+    background: rgba(245,158,11,0.15);
+    border-color: rgba(245,158,11,0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245,158,11,0.15);
+}
+.preset-btn .preset-icon { font-size: 1rem; }
+
+/* ============================================
+   Main Layout
+   ============================================ */
+main {
+    background: #0d1117;
+    padding: 28px 0 60px;
+}
+.tool-grid {
+    display: grid;
+    grid-template-columns: 460px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* ============================================
+   Input Cards (Left Column)
+   ============================================ */
+.input-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+}
+.input-card:last-child { margin-bottom: 0; }
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8b949e;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #30363d;
+}
+.card-title-icon {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    background: rgba(245,158,11,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+/* Form Controls */
+.ctrl-group { margin-bottom: 14px; }
+.ctrl-group:last-child { margin-bottom: 0; }
+.ctrl-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e6edf3;
+    margin-bottom: 6px;
+}
+.ctrl-sublabel {
+    font-size: 0.78rem;
+    color: #8b949e;
+    margin-bottom: 6px;
+    display: block;
+}
+.ctrl-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 2px solid #30363d;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #0d1117;
+    color: #e6edf3;
+    transition: var(--transition);
+}
+.ctrl-input:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+}
+
+/* Unit Toggle */
+.unit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.unit-label { font-size: 0.85rem; font-weight: 600; color: #e6edf3; }
+.toggle-pills {
+    display: flex;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 3px;
+    gap: 2px;
+}
+.toggle-pill {
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #8b949e;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+.toggle-pill.active {
+    background: rgba(245,158,11,0.12);
+    color: #f59e0b;
+    border-color: rgba(245,158,11,0.3);
+}
+
+/* Dynamic Rows */
+.dynamic-list { margin-bottom: 10px; }
+.dyn-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+.dyn-row input {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: #0d1117;
+    color: #e6edf3;
+    transition: var(--transition);
+}
+.dyn-row input:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245,158,11,0.15);
+}
+.dyn-row-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #8b949e;
+    white-space: nowrap;
+    min-width: 70px;
+}
+.btn-remove {
+    width: 28px; height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+.btn-remove:hover { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.4); }
+
+.btn-add-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 9px;
+    background: transparent;
+    border: 2px dashed #30363d;
+    border-radius: var(--radius-sm);
+    color: #8b949e;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+.btn-add-row:hover {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: rgba(245,158,11,0.05);
+}
+
+/* Two-column inputs inside a card */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* ============================================
+   Results Dashboard (Right Column)
+   ============================================ */
+.results-col { position: sticky; top: 84px; }
+
+/* Service Size Hero Card */
+.service-card {
+    background: #161b22;
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.06);
+}
+.service-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -30px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(88,166,255,0.03);
+}
+.service-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    display: block;
+}
+.service-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #8b949e;
+    margin-bottom: 6px;
+}
+.service-size {
+    font-size: 3.8rem;
+    font-weight: 900;
+    color: #f59e0b;
+    line-height: 1;
+    margin-bottom: 6px;
+    transition: var(--transition);
+}
+.service-sub {
+    font-size: 0.88rem;
+    color: #8b949e;
+    margin-bottom: 16px;
+}
+.service-kw {
+    display: inline-block;
+    background: rgba(245,158,11,0.12);
+    color: #fbbf24;
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* Stats Row */
+.stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.stat-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+}
+.stat-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #58a6ff;
+    line-height: 1.1;
+}
+.stat-val.amber { color: #f59e0b; }
+.stat-unit { font-size: 0.85rem; color: #8b949e; font-weight: 500; }
+.stat-lbl {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8b949e;
+    margin-top: 4px;
+}
+
+/* Breakdown Chart Card */
+.chart-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+}
+.chart-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8b949e;
+    margin-bottom: 14px;
+}
+.stacked-bar {
+    display: flex;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    margin-bottom: 16px;
+}
+.bar-seg {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: default;
+    overflow: hidden;
+    white-space: nowrap;
+    min-width: 0;
+}
+.bar-seg:hover { filter: brightness(0.85); }
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+.legend-dot {
+    width: 10px; height: 10px;
+    min-width: 10px;
+    border-radius: 3px;
+}
+.legend-name { color: #8b949e; }
+.legend-watts { font-weight: 700; color: #e6edf3; }
+.legend-pct { color: #6e7681; font-size: 0.75rem; }
+
+/* Steps Card */
+.steps-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+}
+.steps-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8b949e;
+    margin-bottom: 14px;
+}
+.calc-step {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #30363d;
+    font-size: 0.875rem;
+    align-items: flex-start;
+}
+.calc-step:last-child { border-bottom: none; }
+.step-num {
+    width: 22px; height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.12);
+    color: #f59e0b;
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    border: 1px solid rgba(245,158,11,0.25);
+}
+.step-body { flex: 1; line-height: 1.5; }
+.step-name {
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 1px;
+    display: block;
+}
+.step-detail { color: #8b949e; font-size: 0.82rem; }
+.step-val {
+    font-weight: 800;
+    color: #f59e0b;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    margin-top: 2px;
+}
+.step-total {
+    background: rgba(16,185,129,0.06);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-top: 8px;
+    border: 1px solid rgba(16,185,129,0.2);
+}
+.step-total-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #10b981;
+    margin-bottom: 4px;
+}
+.step-total-eq {
+    font-size: 0.82rem;
+    color: #8b949e;
+    line-height: 1.6;
+}
+.step-total-val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #10b981;
+    margin-top: 4px;
+}
+
+/* Footer */
+.footer {
+    background: #0d1117;
+    border-top: 1px solid #30363d;
+    color: #8b949e;
+    padding: 40px 0 20px;
+}
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+.footer-brand { font-size: 1.2rem; font-weight: 700; color: #e6edf3; }
+.footer-brand p { font-size: 0.85rem; color: #8b949e; font-weight: 400; margin-top: 6px; max-width: 280px; }
+.footer-links { display: flex; gap: 20px; }
+.footer-links a { color: #8b949e; font-size: 0.9rem; transition: var(--transition); }
+.footer-links a:hover { color: #f59e0b; }
+.footer-bottom { border-top: 1px solid #30363d; padding-top: 20px; font-size: 0.82rem; }
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 1000px) {
+    .tool-grid { grid-template-columns: 1fr; }
+    .results-col { position: static; }
+}
+@media (max-width: 768px) {
+    .header-row { flex-direction: column; align-items: flex-start; }
+    .preset-row { width: 100%; }
+    .preset-btn { flex: 1; justify-content: center; }
+    .two-col { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 64px; left: 0; right: 0;
+        background: rgba(13,17,23,0.98);
+        border-bottom: 1px solid #30363d;
+        flex-direction: column;
+        padding: 16px;
+    }
+    .nav-links.show { display: flex; }
+    .mobile-menu-btn { display: flex; }
+    .footer-content { flex-direction: column; gap: 20px; }
+}
+@media (max-width: 480px) {
+    .header-title h1 { font-size: 1.55rem; }
+    .service-size { font-size: 3rem; }
+    .stats-row { grid-template-columns: 1fr; }
+    .legend-grid { grid-template-columns: 1fr; }
+}
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="container nav-container">
+        <a href="../index.html" class="logo">⚡ SparkStudy</a>
+        <div class="nav-links" id="navLinks">
+            <a href="../index.html" class="nav-link">Home</a>
+            <a href="../period1.html" class="nav-link">Period 1</a>
+            <a href="../period2.html" class="nav-link">Period 2</a>
+            <a href="../tools.html" class="nav-link active">Tools &amp; Sims</a>
+            <a href="../pricing.html" class="nav-link">Pricing</a>
+        </div>
+        <button class="mobile-menu-btn" onclick="document.getElementById('navLinks').classList.toggle('show')" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../index.html">Home</a>
+            <span class="sep">›</span>
+            <a href="../tools.html">Tools &amp; Sims</a>
+            <span class="sep">›</span>
+            <span>Demand Factor Calculator</span>
+        </div>
+        <div class="header-row">
+            <div class="header-title">
+                <h1>Demand Factor Calculator</h1>
+                <p>CEC residential service sizing — live dashboard view</p>
+            </div>
+            <div class="preset-row">
+                <button class="preset-btn" onclick="loadPreset('small')">
+                    <span class="preset-icon">🏠</span> Small Home
+                </button>
+                <button class="preset-btn" onclick="loadPreset('average')">
+                    <span class="preset-icon">🏡</span> Average Home
+                </button>
+                <button class="preset-btn" onclick="loadPreset('large')">
+                    <span class="preset-icon">🏘️</span> Large Home
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main -->
+<main>
+    <div class="container">
+        <div class="tool-grid">
+
+            <!-- ===== LEFT: INPUTS ===== -->
+            <div class="inputs-col">
+
+                <!-- Basic Load Card -->
+                <div class="input-card">
+                    <div class="card-title">
+                        <div class="card-title-icon">📐</div>
+                        Basic Load — Floor Area
+                    </div>
+                    <div class="unit-row">
+                        <span class="unit-label">Floor area unit:</span>
+                        <div class="toggle-pills">
+                            <button class="toggle-pill active" id="pillSqft" onclick="setUnit(false)">sq ft</button>
+                            <button class="toggle-pill" id="pillM2" onclick="setUnit(true)">m²</button>
+                        </div>
+                    </div>
+                    <div class="ctrl-group">
+                        <label class="ctrl-label">Floor Area (<span id="unitSpan">sq ft</span>)</label>
+                        <span class="ctrl-sublabel">Total finished floor area of the dwelling</span>
+                        <input class="ctrl-input" type="number" id="floorArea" value="1800" min="1" step="50" oninput="calc()">
+                    </div>
+                </div>
+
+                <!-- Fixed Loads Card -->
+                <div class="input-card">
+                    <div class="card-title">
+                        <div class="card-title-icon">🔌</div>
+                        Fixed Loads
+                    </div>
+                    <div class="two-col">
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Water Heater (W)</label>
+                            <span class="ctrl-sublabel">0 if gas or none</span>
+                            <input class="ctrl-input" type="number" id="waterHeater" value="0" min="0" step="500" oninput="calc()">
+                        </div>
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">A/C Load (W)</label>
+                            <span class="ctrl-sublabel">0 if no A/C</span>
+                            <input class="ctrl-input" type="number" id="acLoad" value="0" min="0" step="500" oninput="calc()">
+                        </div>
+                    </div>
+                    <div class="ctrl-group">
+                        <label class="ctrl-label">Electric Heating Load (W)</label>
+                        <span class="ctrl-sublabel">0 if gas or no electric heat — only the larger of A/C or Heat is counted</span>
+                        <input class="ctrl-input" type="number" id="heatingLoad" value="0" min="0" step="500" oninput="calc()">
+                    </div>
+                </div>
+
+                <!-- Ranges Card -->
+                <div class="input-card">
+                    <div class="card-title">
+                        <div class="card-title-icon">🍳</div>
+                        Electric Ranges / Ovens
+                    </div>
+                    <div class="dynamic-list" id="rangeList"></div>
+                    <button class="btn-add-row" onclick="addRange()">+ Add Range</button>
+                </div>
+
+                <!-- Dryers Card -->
+                <div class="input-card">
+                    <div class="card-title">
+                        <div class="card-title-icon">👔</div>
+                        Electric Dryers
+                    </div>
+                    <div class="dynamic-list" id="dryerList"></div>
+                    <button class="btn-add-row" onclick="addDryer()">+ Add Dryer</button>
+                </div>
+
+                <!-- Other Appliances Card -->
+                <div class="input-card">
+                    <div class="card-title">
+                        <div class="card-title-icon">⚙️</div>
+                        Other Fixed Appliances
+                    </div>
+                    <div class="dynamic-list" id="otherList"></div>
+                    <button class="btn-add-row" onclick="addOther()">+ Add Appliance</button>
+                </div>
+
+            </div><!-- /inputs-col -->
+
+            <!-- ===== RIGHT: RESULTS ===== -->
+            <div class="results-col">
+
+                <!-- Service Size Hero -->
+                <div class="service-card">
+                    <span class="service-icon">⚡</span>
+                    <div class="service-label">Recommended Service</div>
+                    <div class="service-size" id="serviceSize">100 A</div>
+                    <div class="service-sub">Service Panel Size</div>
+                    <div class="service-kw" id="serviceKw">5,000 W total demand @ 240V</div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-val amber" id="statDemandW">5,000 <span class="stat-unit">W</span></div>
+                        <div class="stat-lbl">Total Demand</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val" id="statAmps">20.8 <span class="stat-unit">A</span></div>
+                        <div class="stat-lbl">Calculated Amps @ 240V</div>
+                    </div>
+                </div>
+
+                <!-- Breakdown Chart -->
+                <div class="chart-card">
+                    <div class="chart-card-title">Load Breakdown</div>
+                    <div class="stacked-bar" id="stackedBar"></div>
+                    <div class="legend-grid" id="chartLegend"></div>
+                </div>
+
+                <!-- Step-by-Step -->
+                <div class="steps-card">
+                    <div class="steps-card-title">Step-by-Step Calculation</div>
+                    <div id="stepList"></div>
+                </div>
+
+            </div><!-- /results-col -->
+
+        </div><!-- /tool-grid -->
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-brand">⚡ SparkStudy<p>Alberta Electrician Apprenticeship exam prep.</p></div>
+            <div class="footer-links">
+                <a href="../period1.html">Period 1</a>
+                <a href="../period2.html">Period 2</a>
+                <a href="../tools.html">Tools &amp; Sims</a>
+                <a href="../pricing.html">Pricing</a>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>&copy; 2026 SparkStudy. All rights reserved.</p></div>
+    </div>
+</footer>
+
+<script>
+// ============================================================
+//  State
+// ============================================================
+let useMetric = false;
+
+const state = {
+    ranges: [],
+    dryers: [],
+    other:  []
+};
+
+// CEC segment colours
+const SEG_COLORS = {
+    basic:   '#f59e0b',   // amber
+    range:   '#10b981',   // green
+    dryer:   '#3b82f6',   // blue
+    water:   '#8b5cf6',   // purple
+    hvac:    '#ef4444',   // red
+    other:   '#64748b'    // slate
+};
+
+// ============================================================
+//  Unit toggle
+// ============================================================
+function setUnit(metric) {
+    useMetric = metric;
+    document.getElementById('pillSqft').classList.toggle('active', !metric);
+    document.getElementById('pillM2').classList.toggle('active', metric);
+    document.getElementById('unitSpan').textContent = metric ? 'm²' : 'sq ft';
+    calc();
+}
+
+// ============================================================
+//  Dynamic Rows — Ranges
+// ============================================================
+function addRange() {
+    state.ranges.push({ watts: 6000 });
+    renderRanges();
+}
+function removeRange(i) {
+    state.ranges.splice(i, 1);
+    renderRanges();
+}
+function renderRanges() {
+    const el = document.getElementById('rangeList');
+    el.innerHTML = '';
+    if (state.ranges.length === 0) {
+        el.innerHTML = '<p style="font-size:0.82rem;color:var(--text-light);margin-bottom:8px;">No ranges added — click below to add one.</p>';
+    }
+    state.ranges.forEach((r, i) => {
+        const row = document.createElement('div');
+        row.className = 'dyn-row';
+        row.innerHTML = `
+            <span class="dyn-row-label">Range ${i + 1}</span>
+            <input type="number" value="${r.watts}" min="1000" step="500" placeholder="Watts"
+                oninput="state.ranges[${i}].watts = +this.value || 0; calc();">
+            <span style="font-size:0.78rem;color:#8b949e;white-space:nowrap;">W rated</span>
+            <button class="btn-remove" onclick="removeRange(${i})" title="Remove">×</button>
+        `;
+        el.appendChild(row);
+    });
+    calc();
+}
+
+// ============================================================
+//  Dynamic Rows — Dryers
+// ============================================================
+function addDryer() {
+    state.dryers.push({ watts: 3500 });
+    renderDryers();
+}
+function removeDryer(i) {
+    state.dryers.splice(i, 1);
+    renderDryers();
+}
+function renderDryers() {
+    const el = document.getElementById('dryerList');
+    el.innerHTML = '';
+    if (state.dryers.length === 0) {
+        el.innerHTML = '<p style="font-size:0.82rem;color:#8b949e;margin-bottom:8px;">No dryers added — click below to add one.</p>';
+    }
+    state.dryers.forEach((d, i) => {
+        const row = document.createElement('div');
+        row.className = 'dyn-row';
+        row.innerHTML = `
+            <span class="dyn-row-label">Dryer ${i + 1}</span>
+            <input type="number" value="${d.watts}" min="1000" step="500" placeholder="Watts"
+                oninput="state.dryers[${i}].watts = +this.value || 0; calc();">
+            <span style="font-size:0.78rem;color:#8b949e;white-space:nowrap;">W rated</span>
+            <button class="btn-remove" onclick="removeDryer(${i})" title="Remove">×</button>
+        `;
+        el.appendChild(row);
+    });
+    calc();
+}
+
+// ============================================================
+//  Dynamic Rows — Other Appliances
+// ============================================================
+function addOther() {
+    state.other.push({ name: 'Appliance', watts: 1000 });
+    renderOther();
+}
+function removeOther(i) {
+    state.other.splice(i, 1);
+    renderOther();
+}
+function renderOther() {
+    const el = document.getElementById('otherList');
+    el.innerHTML = '';
+    if (state.other.length === 0) {
+        el.innerHTML = '<p style="font-size:0.82rem;color:#8b949e;margin-bottom:8px;">No other appliances added.</p>';
+    }
+    state.other.forEach((a, i) => {
+        const row = document.createElement('div');
+        row.className = 'dyn-row';
+        row.innerHTML = `
+            <input type="text" value="${escHtml(a.name)}" placeholder="Name" style="flex:1.5;"
+                oninput="state.other[${i}].name = this.value; calc();">
+            <input type="number" value="${a.watts}" min="0" step="100" placeholder="Watts"
+                oninput="state.other[${i}].watts = +this.value || 0; calc();">
+            <span style="font-size:0.78rem;color:#8b949e;white-space:nowrap;">W</span>
+            <button class="btn-remove" onclick="removeOther(${i})" title="Remove">×</button>
+        `;
+        el.appendChild(row);
+    });
+    calc();
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+//  Presets
+// ============================================================
+function loadPreset(type) {
+    if (type === 'small') {
+        document.getElementById('floorArea').value = 850;
+        document.getElementById('waterHeater').value = 0;
+        document.getElementById('acLoad').value = 0;
+        document.getElementById('heatingLoad').value = 0;
+        state.ranges = [];
+        state.dryers = [];
+        state.other  = [];
+    } else if (type === 'average') {
+        document.getElementById('floorArea').value = 1800;
+        document.getElementById('waterHeater').value = 4500;
+        document.getElementById('acLoad').value = 3500;
+        document.getElementById('heatingLoad').value = 0;
+        state.ranges = [{ watts: 6000 }];
+        state.dryers = [{ watts: 3500 }];
+        state.other  = [];
+    } else if (type === 'large') {
+        document.getElementById('floorArea').value = 3500;
+        document.getElementById('waterHeater').value = 4500;
+        document.getElementById('acLoad').value = 6000;
+        document.getElementById('heatingLoad').value = 12000;
+        state.ranges = [{ watts: 6000 }, { watts: 6000 }];
+        state.dryers = [{ watts: 3500 }];
+        state.other  = [{ name: 'Hot Tub', watts: 5000 }];
+    }
+    renderRanges();
+    renderDryers();
+    renderOther();
+    calc();
+}
+
+// ============================================================
+//  Core Calculation (CEC Demand Factor Rules)
+// ============================================================
+function calc() {
+    // --- Inputs ---
+    let area = parseFloat(document.getElementById('floorArea').value) || 0;
+    const waterW    = parseFloat(document.getElementById('waterHeater').value) || 0;
+    const acW       = parseFloat(document.getElementById('acLoad').value) || 0;
+    const heatW     = parseFloat(document.getElementById('heatingLoad').value) || 0;
+
+    // Convert to m² if in sq ft
+    const areaM2 = useMetric ? area : area / 10.764;
+
+    // --- Step 1: Basic load (first 90 m²) ---
+    const basicW = 5000;
+
+    // --- Step 2: Additional area load (1000 W per additional 90 m²) ---
+    let addW = 0;
+    let addM2 = 0;
+    let addChunks = 0;
+    if (areaM2 > 90) {
+        addM2 = areaM2 - 90;
+        addChunks = Math.ceil(addM2 / 90);
+        addW = addChunks * 1000;
+    }
+
+    // --- Step 3: Range demand (CEC Table 62) ---
+    // 1 range = 6000 W, 2 = 11000, 3 = 14500, 4+ = 17500 + 1000 per additional
+    const numRanges = state.ranges.length;
+    let rangeW = 0;
+    if      (numRanges === 1) rangeW = 6000;
+    else if (numRanges === 2) rangeW = 11000;
+    else if (numRanges === 3) rangeW = 14500;
+    else if (numRanges >= 4)  rangeW = 17500 + (numRanges - 4) * 1000;
+
+    // --- Step 4: Dryer demand (3500 W each) ---
+    const dryerW = state.dryers.length * 3500;
+
+    // --- Step 5: A/C vs Heating (use larger — thermal diversity) ---
+    const hvacW = Math.max(acW, heatW);
+
+    // --- Step 6: Other appliances (full load) ---
+    const otherW = state.other.reduce((s, a) => s + (a.watts || 0), 0);
+
+    // --- Total ---
+    const totalW = basicW + addW + rangeW + dryerW + waterW + hvacW + otherW;
+    const totalA = totalW / 240;
+
+    // --- Service size (minimum 100 A per CEC) ---
+    let service = 100;
+    if      (totalA <= 100) service = 100;
+    else if (totalA <= 125) service = 125;
+    else if (totalA <= 150) service = 150;
+    else if (totalA <= 200) service = 200;
+    else                     service = Math.ceil(totalA / 100) * 100;
+
+    // ---- Update Dashboard ----
+    document.getElementById('serviceSize').textContent = service + ' A';
+    document.getElementById('serviceKw').textContent = fmt(totalW) + ' W total demand @ 240V';
+    document.getElementById('statDemandW').innerHTML = fmtBig(totalW) + ' <span class="stat-unit">W</span>';
+    document.getElementById('statAmps').innerHTML = fmtBig(totalA, 1) + ' <span class="stat-unit">A</span>';
+
+    updateChart(basicW, addW, rangeW, dryerW, waterW, hvacW, otherW, totalW);
+    updateSteps(areaM2, addM2, addChunks, basicW, addW, numRanges, rangeW, dryerW, waterW, acW, heatW, hvacW, otherW, totalW, totalA, service);
+}
+
+function fmt(n)       { return Math.round(n).toLocaleString(); }
+function fmtBig(n, d) {
+    if (d) return n.toFixed(d);
+    return Math.round(n).toLocaleString();
+}
+
+// ============================================================
+//  Stacked Bar Chart
+// ============================================================
+function updateChart(basicW, addW, rangeW, dryerW, waterW, hvacW, otherW, totalW) {
+    const segs = [
+        { key: 'basic', label: 'Basic Load',  value: basicW, color: SEG_COLORS.basic  },
+        { key: 'add',   label: 'Add. Area',   value: addW,   color: '#fb923c'          },
+        { key: 'range', label: 'Ranges',       value: rangeW, color: SEG_COLORS.range  },
+        { key: 'dryer', label: 'Dryers',       value: dryerW, color: SEG_COLORS.dryer  },
+        { key: 'water', label: 'Water Htr',    value: waterW, color: SEG_COLORS.water  },
+        { key: 'hvac',  label: 'HVAC',         value: hvacW,  color: SEG_COLORS.hvac   },
+        { key: 'other', label: 'Other',        value: otherW, color: SEG_COLORS.other  }
+    ].filter(s => s.value > 0);
+
+    const bar = document.getElementById('stackedBar');
+    bar.innerHTML = '';
+    segs.forEach(s => {
+        const pct = totalW > 0 ? (s.value / totalW * 100) : 0;
+        const div = document.createElement('div');
+        div.className = 'bar-seg';
+        div.style.width = pct.toFixed(2) + '%';
+        div.style.background = s.color;
+        div.title = `${s.label}: ${fmt(s.value)} W (${pct.toFixed(1)}%)`;
+        // Only show label if segment is wide enough
+        div.textContent = pct >= 8 ? pct.toFixed(0) + '%' : '';
+        bar.appendChild(div);
+    });
+
+    // Legend
+    const leg = document.getElementById('chartLegend');
+    leg.innerHTML = '';
+    segs.forEach(s => {
+        const pct = totalW > 0 ? (s.value / totalW * 100) : 0;
+        const item = document.createElement('div');
+        item.className = 'legend-row';
+        item.innerHTML = `
+            <div class="legend-dot" style="background:${s.color}"></div>
+            <span class="legend-name">${s.label}</span>
+            <span class="legend-watts">${fmt(s.value)} W</span>
+            <span class="legend-pct">${pct.toFixed(1)}%</span>
+        `;
+        leg.appendChild(item);
+    });
+}
+
+// ============================================================
+//  Step-by-Step Breakdown
+// ============================================================
+function updateSteps(areaM2, addM2, addChunks, basicW, addW, numRanges, rangeW, dryerW, waterW, acW, heatW, hvacW, otherW, totalW, totalA, service) {
+    const el = document.getElementById('stepList');
+    const steps = [];
+
+    // Step 1 — Basic Load
+    steps.push({
+        num: 1,
+        name: 'Basic Load',
+        detail: `First 90 m² of floor area`,
+        val: fmt(basicW) + ' W'
+    });
+
+    // Step 2 — Additional Area
+    steps.push({
+        num: 2,
+        name: 'Additional Area Load',
+        detail: areaM2 <= 90
+            ? `${areaM2.toFixed(1)} m² ≤ 90 m² — no additional load`
+            : `${areaM2.toFixed(1)} m² − 90 m² = ${addM2.toFixed(1)} m² extra → ⌈${addM2.toFixed(1)} ÷ 90⌉ = ${addChunks} chunk(s) × 1,000 W`,
+        val: fmt(addW) + ' W'
+    });
+
+    // Step 3 — Ranges
+    const rangeTable = ['–', '6,000', '11,000', '14,500'];
+    const rangeNote = numRanges === 0 ? 'No ranges'
+        : numRanges <= 3 ? `${numRanges} range(s) → CEC Table 62: ${rangeTable[numRanges]} W`
+        : `${numRanges} ranges → 17,500 W + ${numRanges - 4} × 1,000 W`;
+    steps.push({
+        num: 3,
+        name: 'Range / Oven Demand',
+        detail: rangeNote,
+        val: fmt(rangeW) + ' W'
+    });
+
+    // Step 4 — Dryers
+    steps.push({
+        num: 4,
+        name: 'Dryer Demand',
+        detail: state.dryers.length === 0
+            ? 'No dryers'
+            : `${state.dryers.length} dryer(s) × 3,500 W each`,
+        val: fmt(dryerW) + ' W'
+    });
+
+    // Step 5 — Water Heater
+    steps.push({
+        num: 5,
+        name: 'Water Heater',
+        detail: waterW === 0 ? 'None / gas — 0 W' : `Full load added`,
+        val: fmt(waterW) + ' W'
+    });
+
+    // Step 6 — HVAC
+    const hvacWinner = hvacW === acW && acW > 0 ? 'A/C wins'
+        : hvacW === heatW && heatW > 0 ? 'Heating wins'
+        : 'No thermal load';
+    steps.push({
+        num: 6,
+        name: 'A/C vs Heating (larger only)',
+        detail: `A/C: ${fmt(acW)} W | Heating: ${fmt(heatW)} W → ${hvacWinner}`,
+        val: fmt(hvacW) + ' W'
+    });
+
+    // Step 7 — Other
+    if (state.other.length > 0) {
+        const breakdown = state.other.map(a => `${a.name || 'App'}: ${fmt(a.watts)} W`).join(', ');
+        steps.push({
+            num: 7,
+            name: 'Other Fixed Appliances',
+            detail: breakdown,
+            val: fmt(otherW) + ' W'
+        });
+    }
+
+    let html = steps.map(s => `
+        <div class="calc-step">
+            <div class="step-num">${s.num}</div>
+            <div class="step-body">
+                <span class="step-name">${s.name}</span>
+                <span class="step-detail">${s.detail}</span>
+            </div>
+            <div class="step-val">${s.val}</div>
+        </div>
+    `).join('');
+
+    // Total block
+    const addends = [basicW, addW, rangeW, dryerW, waterW, hvacW, otherW]
+        .filter(v => v > 0)
+        .map(v => fmt(v) + ' W')
+        .join(' + ');
+
+    html += `
+        <div class="step-total">
+            <div class="step-total-label">Total Calculated Demand</div>
+            <div class="step-total-eq">${addends} = <strong>${fmt(totalW)} W</strong></div>
+            <div class="step-total-val">${fmt(totalW)} W ÷ 240V = ${totalA.toFixed(1)} A → <strong style="color:#10b981">${service} A Service</strong></div>
+        </div>
+    `;
+
+    el.innerHTML = html;
+}
+
+// ============================================================
+//  Init
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    renderRanges();
+    renderDryers();
+    renderOther();
+    calc();
+});
+</script>
+</body>
+</html>

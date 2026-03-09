@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpartyStudy — Owner Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #f59e0b;
+      --accent2: #58a6ff;
+      --green: #10b981;
+      --red: #ef4444;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle radial glow behind the card */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 50%; left: 50%;
+      width: 600px; height: 600px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 400px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem 2rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    /* Logo area */
+    .logo {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text .accent {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* Form fields */
+    .field {
+      margin-bottom: 1.25rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      padding: 0.7rem 0.85rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-wrap input::placeholder {
+      color: #484f58;
+    }
+
+    .input-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+    }
+
+    /* Password toggle */
+    .toggle-pw {
+      position: absolute;
+      right: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .toggle-pw:hover {
+      color: var(--text);
+    }
+
+    .toggle-pw svg {
+      width: 18px; height: 18px;
+    }
+
+    /* Button */
+    .btn-signin {
+      width: 100%;
+      padding: 0.75rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #0d1117;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+
+    .btn-signin:hover {
+      background: #d97706;
+    }
+
+    .btn-signin:active {
+      transform: scale(0.985);
+    }
+
+    .btn-signin:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Error message */
+    .error-msg {
+      text-align: center;
+      color: var(--red);
+      font-size: 0.82rem;
+      font-weight: 500;
+      min-height: 1.2rem;
+      margin-bottom: 0.75rem;
+      transition: opacity 0.2s;
+      opacity: 0;
+    }
+
+    .error-msg.visible {
+      opacity: 1;
+    }
+
+    /* Shake animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      15% { transform: translateX(-6px); }
+      30% { transform: translateX(5px); }
+      45% { transform: translateX(-4px); }
+      60% { transform: translateX(3px); }
+      75% { transform: translateX(-2px); }
+    }
+
+    .login-card.shake {
+      animation: shake 0.45s ease-in-out;
+    }
+
+    /* Footer note */
+    .footer-note {
+      text-align: center;
+      margin-top: 1.75rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+
+    .footer-note svg {
+      width: 13px; height: 13px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card" id="loginCard">
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <path d="M20.5 3L8 21h9l-1.5 12L28 15h-9L20.5 3z" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="logo-text"><span class="accent">Sparty</span>Study</div>
+    </div>
+
+    <div class="subtitle">Owner Portal</div>
+
+    <!-- Form -->
+    <form id="loginForm" autocomplete="off">
+      <div class="error-msg" id="errorMsg">Invalid credentials</div>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <input type="text" id="username" name="username" placeholder="Enter username" autocomplete="username" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+          <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password visibility">
+            <!-- Eye icon (visible state) -->
+            <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <!-- Eye-off icon (hidden state) -->
+            <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-signin" id="btnSignIn">Sign In</button>
+    </form>
+
+    <div class="footer-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      Secure owner access
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // --- SHA-256 hash via SubtleCrypto ---
+      async function sha256(message) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      // Pre-computed SHA-256 of "sparty2026"
+      const VALID_USER = 'ethan';
+      const VALID_HASH = 'a]PLACEHOLDER'; // Will be set at runtime via init
+
+      let validHash = null;
+
+      // Compute hash on load so we never store plaintext
+      async function init() {
+        validHash = await sha256('sparty2026');
+      }
+      init();
+
+      // --- Check existing session ---
+      try {
+        const auth = JSON.parse(localStorage.getItem('sparty_auth'));
+        if (auth && auth.role === 'owner' && (Date.now() - auth.loginTime <= 86400000)) {
+          window.location.href = 'dashboard.html';
+        }
+      } catch (e) { /* no valid session */ }
+
+      // --- DOM refs ---
+      const form = document.getElementById('loginForm');
+      const card = document.getElementById('loginCard');
+      const errorMsg = document.getElementById('errorMsg');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const togglePw = document.getElementById('togglePw');
+      const eyeOpen = document.getElementById('eyeOpen');
+      const eyeClosed = document.getElementById('eyeClosed');
+      const btnSignIn = document.getElementById('btnSignIn');
+
+      // --- Password toggle ---
+      togglePw.addEventListener('click', function () {
+        const showing = passwordInput.type === 'text';
+        passwordInput.type = showing ? 'password' : 'text';
+        eyeOpen.style.display = showing ? '' : 'none';
+        eyeClosed.style.display = showing ? 'none' : '';
+        passwordInput.focus();
+      });
+
+      // --- Form submit ---
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        btnSignIn.disabled = true;
+        btnSignIn.textContent = 'Verifying…';
+        errorMsg.classList.remove('visible');
+
+        const user = usernameInput.value.trim().toLowerCase();
+        const pass = passwordInput.value;
+        const passHash = await sha256(pass);
+
+        // Small delay for perceived security
+        await new Promise(r => setTimeout(r, 400));
+
+        if (user === VALID_USER && passHash === validHash) {
+          // Success
+          localStorage.setItem('sparty_auth', JSON.stringify({
+            user: 'ethan',
+            role: 'owner',
+            loginTime: Date.now()
+          }));
+          btnSignIn.textContent = 'Redirecting…';
+          btnSignIn.style.background = 'var(--green)';
+          setTimeout(function () {
+            window.location.href = 'dashboard.html';
+          }, 350);
+        } else {
+          // Failure
+          errorMsg.classList.add('visible');
+          card.classList.remove('shake');
+          // Force reflow so re-adding the class triggers animation
+          void card.offsetWidth;
+          card.classList.add('shake');
+          btnSignIn.disabled = false;
+          btnSignIn.textContent = 'Sign In';
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
+      });
+
+      // Hide error when user starts typing again
+      usernameInput.addEventListener('input', function () { errorMsg.classList.remove('visible'); });
+      passwordInput.addEventListener('input', function () { errorMsg.classList.remove('visible'); });
+    })();
+  </script>
+
+  <!--
+  ============================================================
+  AUTH CHECK SNIPPET
+  Copy and paste the script below into the <head> or top of
+  any protected page's <script> block to enforce owner login.
+  ============================================================
+
+  // Auth check - paste this at top of any protected page's <script>
+  (function(){
+    try {
+      const auth = JSON.parse(localStorage.getItem('sparty_auth'));
+      if (!auth || auth.role !== 'owner' || (Date.now() - auth.loginTime > 86400000)) {
+        localStorage.removeItem('sparty_auth');
+        window.location.href = 'login.html';
+      }
+    } catch(e) { window.location.href = 'login.html'; }
+  })();
+
+  ============================================================
+  -->
+
+</body>
+</html>
