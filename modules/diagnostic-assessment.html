@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Period 2 Diagnostic Assessment — SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Global Styles (Dark Theme)
+   ============================================ */
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #f59e0b;
+    --accent2: #58a6ff;
+    --green: #10b981;
+    --red: #ef4444;
+    --accent-bg: rgba(245,158,11,0.1);
+    --accent2-bg: rgba(88,166,255,0.1);
+    --green-bg: rgba(16,185,129,0.1);
+    --red-bg: rgba(239,68,68,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+a { text-decoration: none; color: inherit; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    height: 64px;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.logo-icon { font-size: 1.5rem; }
+
+.nav-links { display: flex; gap: 8px; align-items: center; }
+
+.nav-link {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--muted);
+    transition: var(--transition);
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+.owner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-logout {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.btn-logout:hover { color: var(--red); border-color: var(--red); }
+
+/* ============================================
+   Main Container
+   ============================================ */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    padding-top: 88px;
+    padding-bottom: 60px;
+}
+
+/* ============================================
+   Screens
+   ============================================ */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.4s ease; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.8); }
+    70% { transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes countUp {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ============================================
+   Welcome Screen
+   ============================================ */
+.welcome-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px 40px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.welcome-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    line-height: 1.2;
+}
+
+.welcome-title span { color: var(--accent); }
+
+.welcome-desc {
+    color: var(--muted);
+    font-size: 1.05rem;
+    max-width: 520px;
+    margin: 0 auto 32px;
+}
+
+.welcome-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+}
+
+.welcome-stat {
+    text-align: center;
+}
+
+.welcome-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent2);
+}
+
+.welcome-stat-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.welcome-categories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 520px;
+    margin: 0 auto 36px;
+    text-align: left;
+}
+
+.welcome-cat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: var(--radius-sm);
+}
+
+.welcome-cat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 14px 36px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-primary:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(245,158,11,0.3);
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--accent2);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    border: 1px solid var(--accent2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-secondary:hover {
+    background: var(--accent2-bg);
+}
+
+.btn-study {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--green);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    border: 1px solid var(--green);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-study:hover {
+    background: var(--green-bg);
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+.progress-section {
+    margin-bottom: 28px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.progress-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.progress-count {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #fbbf24);
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+}
+
+/* ============================================
+   Question Card
+   ============================================ */
+.question-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px 32px;
+    box-shadow: var(--shadow-md);
+    animation: slideIn 0.35s ease;
+}
+
+.question-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.category-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cat-1 { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.cat-2 { background: rgba(88,166,255,0.15); color: #79c0ff; }
+.cat-3 { background: rgba(16,185,129,0.15); color: #34d399; }
+.cat-4 { background: rgba(168,85,247,0.15); color: #c084fc; }
+.cat-5 { background: rgba(236,72,153,0.15); color: #f472b6; }
+.cat-6 { background: rgba(251,113,133,0.15); color: #fb923c; }
+
+.question-number {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.question-timer {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.question-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 28px;
+}
+
+/* ============================================
+   Answer Options
+   ============================================ */
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.98rem;
+    user-select: none;
+}
+
+.option-card:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+}
+
+.option-letter {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    background: var(--border);
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.option-card:hover:not(.disabled) .option-letter {
+    background: var(--accent);
+    color: #000;
+}
+
+.option-card.correct {
+    border-color: var(--green);
+    background: var(--green-bg);
+}
+.option-card.correct .option-letter {
+    background: var(--green);
+    color: #fff;
+}
+
+.option-card.incorrect {
+    border-color: var(--red);
+    background: var(--red-bg);
+}
+.option-card.incorrect .option-letter {
+    background: var(--red);
+    color: #fff;
+}
+
+.option-card.show-correct {
+    border-color: var(--green);
+    background: var(--green-bg);
+    opacity: 0.7;
+}
+.option-card.show-correct .option-letter {
+    background: var(--green);
+    color: #fff;
+}
+
+.option-card.disabled { cursor: default; opacity: 0.6; }
+.option-card.correct.disabled,
+.option-card.incorrect.disabled,
+.option-card.show-correct.disabled { opacity: 1; }
+
+/* ============================================
+   Feedback
+   ============================================ */
+.feedback {
+    margin-top: 24px;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    animation: popIn 0.3s ease;
+    display: none;
+}
+
+.feedback.show { display: block; }
+
+.feedback.correct-feedback {
+    background: var(--green-bg);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: #6ee7b7;
+}
+
+.feedback.incorrect-feedback {
+    background: var(--red-bg);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+}
+
+.feedback-icon {
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+/* ============================================
+   Next Button
+   ============================================ */
+.next-section {
+    margin-top: 24px;
+    text-align: right;
+    display: none;
+}
+
+.next-section.show { display: block; animation: fadeIn 0.3s ease; }
+
+.btn-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-next:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+}
+
+/* ============================================
+   Results Screen
+   ============================================ */
+.results-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.results-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.results-subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+}
+
+/* Circular Progress */
+.score-ring-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 36px;
+}
+
+.score-ring-wrapper {
+    position: relative;
+    width: 180px;
+    height: 180px;
+}
+
+.score-ring-svg {
+    transform: rotate(-90deg);
+    width: 180px;
+    height: 180px;
+}
+
+.score-ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 10;
+}
+
+.score-ring-fill {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    stroke-dashoffset: 440;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.score-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.score-percent {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.score-fraction {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+}
+
+.summary-stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+}
+
+.summary-stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.summary-stat-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Category Breakdown */
+.breakdown-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 28px;
+}
+
+.breakdown-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.breakdown-item {
+    margin-bottom: 18px;
+}
+
+.breakdown-item:last-child { margin-bottom: 0; }
+
+.breakdown-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.breakdown-cat-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.breakdown-cat-score {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.breakdown-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.breakdown-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+}
+
+/* Weak Areas */
+.weak-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 28px;
+}
+
+.weak-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--red);
+}
+
+.weak-item {
+    padding: 14px 16px;
+    background: var(--red-bg);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weak-item:last-child { margin-bottom: 0; }
+
+.weak-item-icon {
+    color: var(--red);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.weak-item-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.weak-item-tip {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-top: 2px;
+}
+
+/* Wrong Answers Review */
+.wrong-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 28px;
+}
+
+.wrong-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wrong-item {
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+}
+
+.wrong-item:last-child { margin-bottom: 0; }
+
+.wrong-q-num {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.wrong-q-text {
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.wrong-answers {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+}
+
+.wrong-your-answer {
+    color: var(--red);
+}
+
+.wrong-correct-answer {
+    color: var(--green);
+}
+
+/* Motivational message */
+.motivation-card {
+    background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(88,166,255,0.1));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.motivation-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+
+.motivation-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.motivation-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* Action buttons */
+.results-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   Mobile
+   ============================================ */
+@media (max-width: 640px) {
+    .container { padding: 0 16px; padding-top: 80px; }
+    .welcome-card { padding: 32px 24px; }
+    .welcome-title { font-size: 1.5rem; }
+    .welcome-categories { grid-template-columns: 1fr; }
+    .question-card { padding: 24px 20px; }
+    .question-text { font-size: 1.05rem; }
+    .summary-stats { grid-template-columns: 1fr; }
+    .score-ring-wrapper { width: 150px; height: 150px; }
+    .score-ring-svg { width: 150px; height: 150px; }
+    .score-percent { font-size: 2rem; }
+    .nav-links { display: none; }
+    .results-actions { flex-direction: column; }
+}
+    </style>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="../index.html" class="logo">
+            <span class="logo-icon">&#9889;</span> SparkStudy
+        </a>
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">Home</a>
+            <a href="../period1.html" class="nav-link">Period 1</a>
+            <a href="../period2.html" class="nav-link">Period 2</a>
+            <a href="../dashboard.html" class="nav-link">Dashboard</a>
+            <span class="owner-badge">&#9733; Owner</span>
+            <button class="btn-logout" onclick="localStorage.removeItem('sparty_auth');window.location.href='../login.html';">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<!-- ========== WELCOME SCREEN ========== -->
+<div class="container">
+    <div id="welcome-screen" class="screen active">
+        <div class="welcome-card">
+            <div class="welcome-badge">&#127919; DIAGNOSTIC ASSESSMENT</div>
+            <h1 class="welcome-title">Period 2 Combined Diagnostic<br><span>6-Module Assessment</span></h1>
+            <p class="welcome-desc">This diagnostic covers all 6 modules to find your weak spots. Answer honestly — guessing won't help you learn!</p>
+            <div class="welcome-stats">
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value">36</div>
+                    <div class="welcome-stat-label">Questions</div>
+                </div>
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value">6</div>
+                    <div class="welcome-stat-label">Modules</div>
+                </div>
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value">15-25</div>
+                    <div class="welcome-stat-label">Minutes</div>
+                </div>
+            </div>
+            <div class="welcome-categories">
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#fbbf24"></span> AC Fundamentals</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#79c0ff"></span> Properties of L &amp; C</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#34d399"></span> L &amp; C in Circuits</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#c084fc"></span> Relays &amp; Contactors</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#f472b6"></span> Timers &amp; Smart Relays</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#fb923c"></span> Pilot &amp; Overcurrent</div>
+            </div>
+            <button class="btn-primary" onclick="startAssessment()">Start Diagnostic &#8594;</button>
+        </div>
+    </div>
+
+    <!-- ========== QUESTION SCREEN ========== -->
+    <div id="question-screen" class="screen">
+        <div class="progress-section">
+            <div class="progress-header">
+                <span class="progress-label" id="progress-label">Question 1 of 36</span>
+                <span class="progress-count" id="progress-percent">0%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        <div class="question-card" id="question-card">
+            <div class="question-meta">
+                <span class="category-badge" id="category-badge">CATEGORY</span>
+                <span class="question-number" id="question-number">Q1</span>
+                <span class="question-timer" id="question-timer">0:00</span>
+            </div>
+            <div class="question-text" id="question-text">Question goes here</div>
+            <div class="options-grid" id="options-grid"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="next-section" id="next-section">
+                <button class="btn-next" onclick="nextQuestion()">Next Question &#8594;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== RESULTS SCREEN ========== -->
+    <div id="results-screen" class="screen">
+        <div class="results-header">
+            <h1 class="results-title" id="results-title">Assessment Complete!</h1>
+            <p class="results-subtitle">Here's how you did across all 6 modules</p>
+        </div>
+
+        <div class="score-ring-container">
+            <div class="score-ring-wrapper">
+                <svg class="score-ring-svg" viewBox="0 0 160 160">
+                    <circle class="score-ring-bg" cx="80" cy="80" r="70"/>
+                    <circle class="score-ring-fill" id="score-ring" cx="80" cy="80" r="70"/>
+                </svg>
+                <div class="score-ring-text">
+                    <div class="score-percent" id="score-percent">0%</div>
+                    <div class="score-fraction" id="score-fraction">0/36</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-stats">
+            <div class="summary-stat">
+                <div class="summary-stat-value" id="stat-correct" style="color:var(--green)">0</div>
+                <div class="summary-stat-label">Correct</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-value" id="stat-wrong" style="color:var(--red)">0</div>
+                <div class="summary-stat-label">Incorrect</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-value" id="stat-time" style="color:var(--accent2)">0:00</div>
+                <div class="summary-stat-label">Total Time</div>
+            </div>
+        </div>
+
+        <div class="motivation-card" id="motivation-card">
+            <div class="motivation-emoji" id="motivation-emoji"></div>
+            <div class="motivation-text" id="motivation-text"></div>
+            <div class="motivation-sub" id="motivation-sub"></div>
+        </div>
+
+        <div class="breakdown-section">
+            <h3 class="breakdown-title">Module Breakdown</h3>
+            <div id="breakdown-list"></div>
+        </div>
+
+        <div class="weak-section" id="weak-section">
+            <h3 class="weak-title">&#9888; Weak Areas — Focus Your Study Here</h3>
+            <div id="weak-list"></div>
+        </div>
+
+        <div class="wrong-section" id="wrong-section">
+            <h3 class="wrong-title">&#128270; Review Incorrect Answers</h3>
+            <div id="wrong-list"></div>
+        </div>
+
+        <div class="results-actions">
+            <button class="btn-study" id="btn-study-weak" onclick="studyWeakAreas()">&#128218; Study Weak Areas</button>
+            <button class="btn-primary" onclick="resetAssessment()">&#8635; Retake Test</button>
+            <button class="btn-secondary" onclick="window.location.href='../period2.html'">&#8592; Back to Period 2</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auth check
+(function(){
+    try {
+        const auth = JSON.parse(localStorage.getItem('sparty_auth'));
+        if (!auth || auth.user !== 'ethan' || (Date.now() - auth.loginTime > 86400000)) {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = '../login.html';
+        }
+    } catch(e) { window.location.href = '../login.html'; }
+})();
+
+/* ============================================
+   QUESTION DATA — 36 Questions, 6 per module
+   ============================================ */
+const questions = [
+  // ===== Category 1: AC Fundamentals (6 questions) =====
+  {
+    id: 1, category: 1, catName: "AC Fundamentals", catClass: "cat-1",
+    text: "How is AC voltage generated in a basic alternator?",
+    options: [
+        "By passing DC through a transformer",
+        "By rotating a conductor in a magnetic field",
+        "By connecting capacitors in series with a DC source",
+        "By using a rectifier to convert DC to AC"
+    ],
+    answer: 1,
+    explanation: "AC voltage is generated by rotating a conductor (or coil) within a magnetic field. As the conductor cuts through magnetic lines of flux, an EMF is induced per Faraday's law."
+  },
+  {
+    id: 2, category: 1, catName: "AC Fundamentals", catClass: "cat-1",
+    text: "One complete cycle of a sine wave corresponds to how many electrical degrees?",
+    options: ["90\u00b0", "180\u00b0", "270\u00b0", "360\u00b0"],
+    answer: 3,
+    explanation: "One full cycle of a sine wave spans 360 electrical degrees \u2014 from zero, to positive peak, back through zero, to negative peak, and returning to zero."
+  },
+  {
+    id: 3, category: 1, catName: "AC Fundamentals", catClass: "cat-1",
+    text: "A 4-pole alternator spins at 1800 RPM. What is the frequency of the generated AC?",
+    options: ["30 Hz", "60 Hz", "120 Hz", "90 Hz"],
+    answer: 1,
+    explanation: "Using f = (p \u00d7 n) / 120 = (4 \u00d7 1800) / 120 = 60 Hz. This is standard North American power frequency."
+  },
+  {
+    id: 4, category: 1, catName: "AC Fundamentals", catClass: "cat-1",
+    text: "If the peak voltage of a sine wave is 170 V, what is the RMS (effective) voltage?",
+    options: ["108.3 V", "120.2 V", "141.4 V", "170.0 V"],
+    answer: 1,
+    explanation: "E_rms = 0.707 \u00d7 E_peak = 0.707 \u00d7 170 = 120.19 V \u2248 120.2 V. This is why household 120 V actually has a peak of about 170 V."
+  },
+  {
+    id: 5, category: 1, catName: "AC Fundamentals", catClass: "cat-1",
+    text: "What is the instantaneous voltage at 30\u00b0 if the peak voltage is 340 V?",
+    options: ["170 V", "240 V", "294 V", "340 V"],
+    answer: 0,
+    explanation: "e = Em \u00d7 sin(\u03b8) = 340 \u00d7 sin(30\u00b0) = 340 \u00d7 0.5 = 170 V."
+  },
+  {
+    id: 6, category: 1, catName: "AC Fundamentals", catClass: "cat-1",
+    text: "If the frequency of an AC signal is 50 Hz, what is its period?",
+    options: ["0.01 s", "0.02 s", "0.05 s", "0.10 s"],
+    answer: 1,
+    explanation: "Period T = 1/f = 1/50 = 0.02 seconds (20 milliseconds)."
+  },
+
+  // ===== Category 2: Properties of Inductors and Capacitors (6 questions) =====
+  {
+    id: 7, category: 2, catName: "Properties of L & C", catClass: "cat-2",
+    text: "Faraday's law states that a voltage is induced in a conductor when:",
+    options: [
+        "It carries a steady current",
+        "It is placed in a static magnetic field",
+        "There is a changing magnetic field around it",
+        "It is connected to a capacitor"
+    ],
+    answer: 2,
+    explanation: "Faraday's law of electromagnetic induction states that a voltage (EMF) is induced whenever there is a change in the magnetic flux linking a conductor."
+  },
+  {
+    id: 8, category: 2, catName: "Properties of L & C", catClass: "cat-2",
+    text: "According to Lenz's law, the direction of an induced EMF is such that it:",
+    options: [
+        "Aids the change causing it",
+        "Opposes the change causing it",
+        "Is perpendicular to the magnetic field",
+        "Is always in the same direction as current flow"
+    ],
+    answer: 1,
+    explanation: "Lenz's law states that the induced EMF always opposes the change in magnetic flux that produces it. This is the basis for counter-EMF in motors and inductors."
+  },
+  {
+    id: 9, category: 2, catName: "Properties of L & C", catClass: "cat-2",
+    text: "Which of the following is NOT a factor affecting the inductance of a coil?",
+    options: [
+        "Number of turns",
+        "Core permeability",
+        "Voltage applied across the coil",
+        "Cross-sectional area of the core"
+    ],
+    answer: 2,
+    explanation: "Inductance depends on the number of turns, core permeability, cross-sectional area, and core length. The applied voltage does not change the inductance value itself."
+  },
+  {
+    id: 10, category: 2, catName: "Properties of L & C", catClass: "cat-2",
+    text: "When a transformer induces voltage in a secondary winding from the primary's changing current, this is an example of:",
+    options: [
+        "Self-induction",
+        "Mutual induction",
+        "Counter-EMF",
+        "Capacitive coupling"
+    ],
+    answer: 1,
+    explanation: "Mutual induction occurs when a changing current in one coil induces a voltage in a nearby coil. This is the fundamental operating principle of transformers."
+  },
+  {
+    id: 11, category: 2, catName: "Properties of L & C", catClass: "cat-2",
+    text: "Which type of capacitor is polarized and must be connected with correct polarity?",
+    options: [
+        "Ceramic disc",
+        "Mica",
+        "Electrolytic",
+        "Plastic film"
+    ],
+    answer: 2,
+    explanation: "Electrolytic capacitors (and tantalum capacitors) are polarized. Connecting them with reversed polarity can cause failure or even explosion."
+  },
+  {
+    id: 12, category: 2, catName: "Properties of L & C", catClass: "cat-2",
+    text: "Which factor does NOT affect the capacitance of a capacitor?",
+    options: [
+        "Plate area",
+        "Distance between plates",
+        "Dielectric constant of the insulator",
+        "Frequency of the applied AC"
+    ],
+    answer: 3,
+    explanation: "Capacitance is determined by plate area, distance between plates, and the dielectric constant. Frequency affects capacitive reactance (Xc) but not the capacitance value itself."
+  },
+
+  // ===== Category 3: Inductors & Capacitors in Circuits (6 questions) =====
+  {
+    id: 13, category: 3, catName: "L & C in Circuits", catClass: "cat-3",
+    text: "What is the inductive time constant for a 5 H inductor in series with a 250 \u03a9 resistor?",
+    options: ["0.002 s", "0.02 s", "0.2 s", "50 s"],
+    answer: 1,
+    explanation: "\u03c4 = L/R = 5/250 = 0.02 seconds (20 ms). After one time constant, current reaches 63.2% of its final value."
+  },
+  {
+    id: 14, category: 3, catName: "L & C in Circuits", catClass: "cat-3",
+    text: "A 10 \u00b5F capacitor is charged through a 100 k\u03a9 resistor. How many seconds to reach steady state (fully charged)?",
+    options: ["1 s", "5 s", "10 s", "50 s"],
+    answer: 1,
+    explanation: "\u03c4 = R \u00d7 C = 100,000 \u00d7 0.00001 = 1 second. It takes 5 time constants to reach steady state: 5 \u00d7 1 = 5 seconds."
+  },
+  {
+    id: 15, category: 3, catName: "L & C in Circuits", catClass: "cat-3",
+    text: "In an inductive AC circuit, current _____ voltage by 90\u00b0. Which memory aid helps remember this?",
+    options: [
+        "Current LEADS voltage \u2014 'ICE'",
+        "Current LAGS voltage \u2014 'ELI'",
+        "Current LEADS voltage \u2014 'ELI'",
+        "Current LAGS voltage \u2014 'ICE'"
+    ],
+    answer: 1,
+    explanation: "'ELI the ICE man': In an inductor (L), E leads I (voltage leads current), meaning current LAGS voltage by 90\u00b0."
+  },
+  {
+    id: 16, category: 3, catName: "L & C in Circuits", catClass: "cat-3",
+    text: "What is the capacitive reactance of a 50 \u00b5F capacitor at 60 Hz?",
+    options: ["53.1 \u03a9", "26.5 \u03a9", "106.1 \u03a9", "18.8 \u03a9"],
+    answer: 0,
+    explanation: "Xc = 1/(2\u03c0fC) = 1/(2 \u00d7 3.1416 \u00d7 60 \u00d7 0.00005) = 1/0.01885 = 53.1 \u03a9."
+  },
+  {
+    id: 17, category: 3, catName: "L & C in Circuits", catClass: "cat-3",
+    text: "What is the inductive reactance of a 0.5 H inductor at 60 Hz?",
+    options: ["30 \u03a9", "94.2 \u03a9", "188.5 \u03a9", "377 \u03a9"],
+    answer: 2,
+    explanation: "XL = 2\u03c0fL = 2 \u00d7 3.1416 \u00d7 60 \u00d7 0.5 = 188.5 \u03a9."
+  },
+  {
+    id: 18, category: 3, catName: "L & C in Circuits", catClass: "cat-3",
+    text: "Why are discharge resistors installed across large inductors?",
+    options: [
+        "To increase the inductance value",
+        "To safely dissipate stored energy and prevent voltage spikes when de-energized",
+        "To improve the power factor of the circuit",
+        "To reduce the inductive reactance at high frequencies"
+    ],
+    answer: 1,
+    explanation: "When an inductor is suddenly de-energized, its collapsing magnetic field can generate dangerously high voltage spikes. A discharge resistor provides a safe path to dissipate the stored energy."
+  },
+
+  // ===== Category 4: Relays and Contactors (6 questions) =====
+  {
+    id: 19, category: 4, catName: "Relays & Contactors", catClass: "cat-4",
+    text: "What is the purpose of a shading coil on an AC relay or contactor?",
+    options: [
+        "To increase the contact current rating",
+        "To prevent armature chatter caused by AC zero-crossings",
+        "To reduce the coil voltage requirement",
+        "To provide overcurrent protection"
+    ],
+    answer: 1,
+    explanation: "On AC relays/contactors, the magnetic field drops to zero 120 times per second (at 60 Hz). Shading coils create a delayed flux that keeps the armature pulled in, preventing chatter and buzzing."
+  },
+  {
+    id: 20, category: 4, catName: "Relays & Contactors", catClass: "cat-4",
+    text: "A 'Form C' contact configuration provides:",
+    options: [
+        "A normally open (NO) contact only",
+        "A normally closed (NC) contact only",
+        "A break-before-make (NO + NC) changeover contact",
+        "Two NO contacts with overlap"
+    ],
+    answer: 2,
+    explanation: "Form C is a changeover contact: it has both NO and NC contacts. It 'breaks before making,' meaning the NC contact opens before the NO contact closes."
+  },
+  {
+    id: 21, category: 4, catName: "Relays & Contactors", catClass: "cat-4",
+    text: "What is the approximate seal-in voltage for a relay coil rated at 120 V?",
+    options: ["60 V", "85 V", "102 V", "120 V"],
+    answer: 2,
+    explanation: "Seal-in voltage is approximately 85% of the rated coil voltage. For 120 V: 120 \u00d7 0.85 = 102 V. Below this, the relay may not hold in reliably."
+  },
+  {
+    id: 22, category: 4, catName: "Relays & Contactors", catClass: "cat-4",
+    text: "Why are relay and contactor cores made with laminations?",
+    options: [
+        "To increase the magnetic field strength",
+        "To reduce eddy current losses and heating",
+        "To make the device lighter weight",
+        "To allow the core to be easily disassembled"
+    ],
+    answer: 1,
+    explanation: "Laminations break up the core into thin insulated layers, which greatly reduces eddy currents (circulating currents in the core) and the resulting I\u00b2R heating losses."
+  },
+  {
+    id: 23, category: 4, catName: "Relays & Contactors", catClass: "cat-4",
+    text: "At approximately what percentage of rated voltage will a typical relay drop out (release)?",
+    options: ["25%", "50%", "75%", "85%"],
+    answer: 1,
+    explanation: "Drop-out voltage is approximately 50% of the rated coil voltage. Below this level, the magnetic force can no longer hold the armature, and the spring returns it to the de-energized position."
+  },
+  {
+    id: 24, category: 4, catName: "Relays & Contactors", catClass: "cat-4",
+    text: "Bridge contacts are used in contactors primarily because they:",
+    options: [
+        "Require less coil voltage to operate",
+        "Provide double-break action for faster arc suppression",
+        "Allow the contactor to handle only DC loads",
+        "Eliminate the need for an arc chute"
+    ],
+    answer: 1,
+    explanation: "Bridge contacts create two breaks per pole when the contactor opens. This double-break action splits the arc into two smaller arcs, which extinguish faster and reduce contact wear."
+  },
+
+  // ===== Category 5: Timers and Smart Relays (6 questions) =====
+  {
+    id: 25, category: 5, catName: "Timers & Smart Relays", catClass: "cat-5",
+    text: "A TDOE (Time Delay On Energization) timer is also commonly called a(n):",
+    options: [
+        "Off-delay timer",
+        "On-delay timer",
+        "Interval timer",
+        "Repeat cycle timer"
+    ],
+    answer: 1,
+    explanation: "TDOE = Time Delay On Energization = on-delay. The timer starts timing when energized and the contacts change state after the set delay elapses."
+  },
+  {
+    id: 26, category: 5, catName: "Timers & Smart Relays", catClass: "cat-5",
+    text: "Which timing method uses a small bellows and needle valve to control timing?",
+    options: [
+        "Electronic timing",
+        "Spring-wound mechanism",
+        "Pneumatic timing",
+        "Dashpot timing"
+    ],
+    answer: 2,
+    explanation: "Pneumatic timers use a bellows (air chamber) and an adjustable needle valve. Air flows in or out of the bellows at a controlled rate, providing the time delay."
+  },
+  {
+    id: 27, category: 5, catName: "Timers & Smart Relays", catClass: "cat-5",
+    text: "In a TDOD (off-delay) timer, when does the timing period begin?",
+    options: [
+        "When the coil is energized",
+        "When the coil is de-energized",
+        "When the contact closes",
+        "When power is first applied to the circuit"
+    ],
+    answer: 1,
+    explanation: "TDOD = Time Delay On De-energization = off-delay. The contacts change immediately when energized, but the timer delays their return when the coil is de-energized."
+  },
+  {
+    id: 28, category: 5, catName: "Timers & Smart Relays", catClass: "cat-5",
+    text: "A repeat cycle timer is best described as a timer that:",
+    options: [
+        "Times one event and stops",
+        "Alternates continuously between on and off states",
+        "Operates only once when triggered",
+        "Delays turn-on but not turn-off"
+    ],
+    answer: 1,
+    explanation: "A repeat cycle timer continuously alternates between on and off states for set durations. It is used for applications like flashing lights or periodic pump activation."
+  },
+  {
+    id: 29, category: 5, catName: "Timers & Smart Relays", catClass: "cat-5",
+    text: "Smart relays (micro PLCs) can typically be programmed using which two languages?",
+    options: [
+        "C++ and Python",
+        "Function block diagrams and ladder logic",
+        "SQL and HTML",
+        "Assembly and BASIC"
+    ],
+    answer: 1,
+    explanation: "Smart relays are commonly programmed using function block diagrams (FBD) and ladder logic (LD). These are IEC 61131-3 standard programming languages for PLCs."
+  },
+  {
+    id: 30, category: 5, catName: "Timers & Smart Relays", catClass: "cat-5",
+    text: "Which built-in function would you use in a smart relay to turn on a parking lot light every weekday at 6 PM?",
+    options: [
+        "TDOE function",
+        "Repeat cycle function",
+        "Weekly scheduling function",
+        "Interval timing function"
+    ],
+    answer: 2,
+    explanation: "Smart relays include weekly/monthly scheduling functions that can activate outputs at specific days and times, making them ideal for recurring time-based control like lighting schedules."
+  },
+
+  // ===== Category 6: Pilot & Overcurrent Devices (6 questions) =====
+  {
+    id: 31, category: 6, catName: "Pilot & Overcurrent Devices", catClass: "cat-6",
+    text: "In a standard stop/start motor control circuit, the STOP button uses which contact type?",
+    options: [
+        "Normally Open (NO)",
+        "Normally Closed (NC)",
+        "Form C changeover",
+        "Form X with overlap"
+    ],
+    answer: 1,
+    explanation: "The STOP button uses a Normally Closed (NC) contact. When pressed, it breaks the circuit. This is a safety design \u2014 if the wire breaks, the motor also stops (fail-safe)."
+  },
+  {
+    id: 32, category: 6, catName: "Pilot & Overcurrent Devices", catClass: "cat-6",
+    text: "When wiring multiple stop/start stations, the stops are wired in _____ and the starts in _____.",
+    options: [
+        "Parallel; series",
+        "Series; parallel",
+        "Series; series",
+        "Parallel; parallel"
+    ],
+    answer: 1,
+    explanation: "STOP buttons wire in SERIES (any one can break the circuit), and START buttons wire in PARALLEL (any one can energize the coil). This is fundamental motor control wiring."
+  },
+  {
+    id: 33, category: 6, catName: "Pilot & Overcurrent Devices", catClass: "cat-6",
+    text: "Which type of temperature sensor generates its own small voltage from two dissimilar metals?",
+    options: [
+        "RTD (Resistance Temperature Detector)",
+        "Thermistor",
+        "Thermocouple",
+        "Bimetallic strip"
+    ],
+    answer: 2,
+    explanation: "A thermocouple generates a small voltage (millivolts) at the junction of two dissimilar metals. The voltage changes with temperature (Seebeck effect)."
+  },
+  {
+    id: 34, category: 6, catName: "Pilot & Overcurrent Devices", catClass: "cat-6",
+    text: "A dual-element (time-delay) fuse is designed to:",
+    options: [
+        "Open instantly on any overcurrent",
+        "Handle temporary inrush/overloads but still protect against short circuits",
+        "Only protect against ground faults",
+        "Replace circuit breakers in all applications"
+    ],
+    answer: 1,
+    explanation: "Dual-element fuses have a thermal element that tolerates temporary overloads (like motor starting inrush) and a fast-acting element that clears short circuits instantly."
+  },
+  {
+    id: 35, category: 6, catName: "Pilot & Overcurrent Devices", catClass: "cat-6",
+    text: "What does the 'interrupting rating' of a fuse or breaker specify?",
+    options: [
+        "The maximum continuous current it can carry",
+        "The maximum fault current it can safely interrupt",
+        "The time it takes to trip under overload",
+        "The voltage drop across the device"
+    ],
+    answer: 1,
+    explanation: "Interrupting rating (AIC \u2014 Ampere Interrupting Capacity) is the maximum fault current the device can safely clear without catastrophic failure. It must exceed the available fault current at its location."
+  },
+  {
+    id: 36, category: 6, catName: "Pilot & Overcurrent Devices", catClass: "cat-6",
+    text: "Which three factors determine the available fault current at a transformer secondary?",
+    options: [
+        "Wire gauge, conduit size, and ambient temperature",
+        "kVA rating, secondary voltage, and percent impedance",
+        "Primary voltage, fuse size, and grounding method",
+        "Breaker type, panel rating, and demand factor"
+    ],
+    answer: 1,
+    explanation: "Available fault current = (kVA \u00d7 1000) / (secondary voltage \u00d7 %Z). The transformer's kVA rating, secondary voltage, and percent impedance (%Z) are the three key factors."
+  }
+];
+
+const categoryNames = {
+    1: "AC Fundamentals",
+    2: "Properties of L & C",
+    3: "L & C in Circuits",
+    4: "Relays & Contactors",
+    5: "Timers & Smart Relays",
+    6: "Pilot & Overcurrent Devices"
+};
+
+const categoryColors = {
+    1: "#fbbf24",
+    2: "#79c0ff",
+    3: "#34d399",
+    4: "#c084fc",
+    5: "#f472b6",
+    6: "#fb923c"
+};
+
+const studyTips = {
+    1: "Review sine wave anatomy, the frequency formula f = (p \u00d7 n) / 120, and RMS vs peak conversions.",
+    2: "Focus on Faraday's law, Lenz's law, and the factors that affect inductance and capacitance values.",
+    3: "Practice time constant calculations (\u03c4 = L/R and \u03c4 = RC), reactance formulas, and the ELI the ICE man mnemonic.",
+    4: "Review contact configurations (Form A/B/C), shading coils, seal-in/drop-out voltages, and lamination purpose.",
+    5: "Distinguish TDOE vs TDOD, learn the timing methods, and understand smart relay programming languages.",
+    6: "Master stop/start wiring rules, sensor types, and the difference between continuous rating vs interrupting rating."
+};
+
+/* ============================================
+   STATE
+   ============================================ */
+let shuffledQuestions = [];
+let currentQ = 0;
+let answers = [];
+let questionStartTime = 0;
+let totalStartTime = 0;
+let questionTimerInterval = null;
+let totalTimerInterval = null;
+let answered = false;
+
+/* ============================================
+   SHUFFLE
+   ============================================ */
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startAssessment() {
+    shuffledQuestions = shuffleArray(questions);
+    currentQ = 0;
+    answers = [];
+    totalStartTime = Date.now();
+    showScreen('question-screen');
+    renderQuestion();
+}
+
+function resetAssessment() {
+    currentQ = 0;
+    answers = [];
+    clearInterval(totalTimerInterval);
+    showScreen('welcome-screen');
+}
+
+/* ============================================
+   QUESTION RENDERING
+   ============================================ */
+function renderQuestion() {
+    answered = false;
+    const q = shuffledQuestions[currentQ];
+    const total = shuffledQuestions.length;
+    const pct = Math.round((currentQ / total) * 100);
+
+    // Progress
+    document.getElementById('progress-label').textContent = `Question ${currentQ + 1} of ${total}`;
+    document.getElementById('progress-percent').textContent = `${pct}%`;
+    document.getElementById('progress-fill').style.width = `${pct}%`;
+
+    // Meta
+    document.getElementById('category-badge').textContent = q.catName;
+    document.getElementById('category-badge').className = `category-badge ${q.catClass}`;
+    document.getElementById('question-number').textContent = `Q${currentQ + 1}`;
+
+    // Question text
+    document.getElementById('question-text').textContent = q.text;
+
+    // Options
+    const grid = document.getElementById('options-grid');
+    grid.innerHTML = '';
+    const letters = ['A', 'B', 'C', 'D'];
+    q.options.forEach((opt, i) => {
+        const card = document.createElement('div');
+        card.className = 'option-card';
+        card.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+        card.addEventListener('click', () => selectAnswer(i));
+        grid.appendChild(card);
+    });
+
+    // Hide feedback & next
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('next-section').className = 'next-section';
+
+    // Re-animate card
+    const card = document.getElementById('question-card');
+    card.style.animation = 'none';
+    card.offsetHeight; // trigger reflow
+    card.style.animation = 'slideIn 0.35s ease';
+
+    // Start question timer
+    questionStartTime = Date.now();
+    clearInterval(questionTimerInterval);
+    updateTimer();
+    questionTimerInterval = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+    const elapsed = Math.floor((Date.now() - totalStartTime) / 1000);
+    const min = Math.floor(elapsed / 60);
+    const sec = elapsed % 60;
+    document.getElementById('question-timer').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+/* ============================================
+   ANSWER SELECTION
+   ============================================ */
+function selectAnswer(index) {
+    if (answered) return;
+    answered = true;
+    clearInterval(questionTimerInterval);
+
+    const q = shuffledQuestions[currentQ];
+    const isCorrect = index === q.answer;
+    const timeTaken = Date.now() - questionStartTime;
+
+    answers.push({
+        questionId: q.id,
+        category: q.category,
+        selected: index,
+        correct: q.answer,
+        isCorrect: isCorrect,
+        time: timeTaken
+    });
+
+    // Highlight options
+    const options = document.querySelectorAll('.option-card');
+    options.forEach((opt, i) => {
+        opt.classList.add('disabled');
+        if (i === q.answer && i === index) {
+            opt.classList.add('correct');
+        } else if (i === index && !isCorrect) {
+            opt.classList.add('incorrect');
+        } else if (i === q.answer && !isCorrect) {
+            opt.classList.add('show-correct');
+        }
+    });
+
+    // Feedback
+    const fb = document.getElementById('feedback');
+    if (isCorrect) {
+        fb.className = 'feedback correct-feedback show';
+        fb.innerHTML = `<span class="feedback-icon">&#10003;</span> Correct! ${q.explanation}`;
+    } else {
+        fb.className = 'feedback incorrect-feedback show';
+        fb.innerHTML = `<span class="feedback-icon">&#10007;</span> Not quite. ${q.explanation}`;
+    }
+
+    // Show next
+    const ns = document.getElementById('next-section');
+    ns.className = 'next-section show';
+
+    // Update button text
+    const btn = ns.querySelector('.btn-next');
+    if (currentQ === shuffledQuestions.length - 1) {
+        btn.innerHTML = 'See Results &#8594;';
+    } else {
+        btn.innerHTML = 'Next Question &#8594;';
+    }
+}
+
+function nextQuestion() {
+    currentQ++;
+    if (currentQ >= shuffledQuestions.length) {
+        showResults();
+    } else {
+        renderQuestion();
+    }
+}
+
+/* ============================================
+   RESULTS
+   ============================================ */
+function showResults() {
+    clearInterval(questionTimerInterval);
+    showScreen('results-screen');
+
+    const totalCorrect = answers.filter(a => a.isCorrect).length;
+    const totalWrong = shuffledQuestions.length - totalCorrect;
+    const pctScore = Math.round((totalCorrect / shuffledQuestions.length) * 100);
+    const totalTime = Date.now() - totalStartTime;
+    const totalMin = Math.floor(totalTime / 60000);
+    const totalSec = Math.floor((totalTime % 60000) / 1000);
+
+    // Score ring animation
+    const ring = document.getElementById('score-ring');
+    const circumference = 2 * Math.PI * 70;
+    ring.style.strokeDasharray = circumference;
+    ring.style.strokeDashoffset = circumference;
+
+    let ringColor = pctScore >= 80 ? 'var(--green)' : pctScore >= 60 ? 'var(--accent)' : 'var(--red)';
+    ring.style.stroke = ringColor;
+
+    setTimeout(() => {
+        const offset = circumference - (pctScore / 100) * circumference;
+        ring.style.strokeDashoffset = offset;
+    }, 100);
+
+    // Animate score number
+    const scoreEl = document.getElementById('score-percent');
+    const fractionEl = document.getElementById('score-fraction');
+    animateNumber(scoreEl, 0, pctScore, 1200, '%');
+    fractionEl.textContent = `${totalCorrect}/${shuffledQuestions.length}`;
+
+    // Stats
+    document.getElementById('stat-correct').textContent = totalCorrect;
+    document.getElementById('stat-wrong').textContent = totalWrong;
+    document.getElementById('stat-time').textContent = `${totalMin}:${totalSec.toString().padStart(2, '0')}`;
+
+    // Motivation
+    const me = document.getElementById('motivation-emoji');
+    const mt = document.getElementById('motivation-text');
+    const ms = document.getElementById('motivation-sub');
+
+    if (pctScore >= 90) {
+        me.textContent = '\uD83D\uDD25'; mt.textContent = "Outstanding! You're crushing it!";
+        ms.textContent = "You have a strong grasp of all 6 modules. Review any missed questions for perfection.";
+    } else if (pctScore >= 80) {
+        me.textContent = '\uD83D\uDCAA'; mt.textContent = "Strong performance! Almost there!";
+        ms.textContent = "Solid foundation across the board. Focus on the weak modules below and you'll be exam-ready.";
+    } else if (pctScore >= 60) {
+        me.textContent = '\uD83D\uDCA1'; mt.textContent = "Good effort! Room to grow.";
+        ms.textContent = "You know the basics. Concentrate on your weak areas tonight and you'll see big improvements.";
+    } else if (pctScore >= 40) {
+        me.textContent = '\uD83D\uDCDA'; mt.textContent = "Time to buckle down!";
+        ms.textContent = "Focus on the modules with the lowest scores. Re-read the key concepts and try again.";
+    } else {
+        me.textContent = '\uD83C\uDFAF'; mt.textContent = "Everyone starts somewhere!";
+        ms.textContent = "This diagnostic shows you exactly what to study. Take it one module at a time.";
+    }
+
+    // Category breakdown
+    const breakdownList = document.getElementById('breakdown-list');
+    breakdownList.innerHTML = '';
+
+    const catCounts = {};
+    for (let c = 1; c <= 6; c++) {
+        catCounts[c] = { total: 0, correct: 0 };
+    }
+    answers.forEach(a => {
+        catCounts[a.category].total++;
+        if (a.isCorrect) catCounts[a.category].correct++;
+    });
+
+    for (let c = 1; c <= 6; c++) {
+        const data = catCounts[c];
+        const catPct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+        const barColor = catPct >= 80 ? 'var(--green)' : catPct >= 60 ? 'var(--accent)' : 'var(--red)';
+
+        const item = document.createElement('div');
+        item.className = 'breakdown-item';
+        item.innerHTML = `
+            <div class="breakdown-item-header">
+                <span class="breakdown-cat-name" style="color:${categoryColors[c]}">${categoryNames[c]}</span>
+                <span class="breakdown-cat-score" style="color:${barColor}">${data.correct}/${data.total} (${catPct}%)</span>
+            </div>
+            <div class="breakdown-bar-track">
+                <div class="breakdown-bar-fill" style="background:${barColor}" data-width="${catPct}"></div>
+            </div>
+        `;
+        breakdownList.appendChild(item);
+    }
+
+    // Animate bars
+    setTimeout(() => {
+        document.querySelectorAll('.breakdown-bar-fill').forEach(bar => {
+            bar.style.width = bar.dataset.width + '%';
+        });
+    }, 200);
+
+    // Weak areas (below 60%)
+    const weakList = document.getElementById('weak-list');
+    const weakSection = document.getElementById('weak-section');
+    weakList.innerHTML = '';
+
+    const categoryResults = {};
+    const weakAreas = [];
+
+    for (let c = 1; c <= 6; c++) {
+        const d = catCounts[c];
+        const p = d.total > 0 ? Math.round((d.correct / d.total) * 100) : 0;
+        categoryResults[categoryNames[c]] = { correct: d.correct, total: d.total, pct: p };
+        if (p < 60) weakAreas.push(categoryNames[c]);
+    }
+
+    if (weakAreas.length === 0) {
+        weakSection.style.display = 'none';
+        document.getElementById('btn-study-weak').style.display = 'none';
+    } else {
+        weakSection.style.display = 'block';
+        document.getElementById('btn-study-weak').style.display = 'inline-flex';
+        weakAreas.forEach(name => {
+            const catNum = Object.keys(categoryNames).find(k => categoryNames[k] === name);
+            const item = document.createElement('div');
+            item.className = 'weak-item';
+            item.innerHTML = `
+                <span class="weak-item-icon">&#9888;</span>
+                <div>
+                    <div class="weak-item-name">${name}</div>
+                    <div class="weak-item-tip">${studyTips[catNum]}</div>
+                </div>
+            `;
+            weakList.appendChild(item);
+        });
+    }
+
+    // Save results to localStorage
+    const diagResults = {
+        lastTaken: Date.now(),
+        overall: pctScore,
+        categories: categoryResults,
+        weakAreas: weakAreas
+    };
+    localStorage.setItem('sparty_diagnostic_results', JSON.stringify(diagResults));
+    const diagCount = parseInt(localStorage.getItem('sparty_diagnostic_count') || '0') + 1;
+    localStorage.setItem('sparty_diagnostic_count', String(diagCount));
+    localStorage.setItem('sparty_last_study', String(Date.now()));
+
+    // Wrong answers
+    const wrongSection = document.getElementById('wrong-section');
+    const wrongList = document.getElementById('wrong-list');
+    wrongList.innerHTML = '';
+
+    const wrongAnswers = answers.filter(a => !a.isCorrect);
+    if (wrongAnswers.length === 0) {
+        wrongSection.style.display = 'none';
+    } else {
+        wrongSection.style.display = 'block';
+        wrongAnswers.forEach(a => {
+            const q = questions.find(qq => qq.id === a.questionId);
+            const letters = ['A', 'B', 'C', 'D'];
+            const item = document.createElement('div');
+            item.className = 'wrong-item';
+            item.innerHTML = `
+                <div class="wrong-q-num">Question ${q.id} &mdash; ${q.catName}</div>
+                <div class="wrong-q-text">${q.text}</div>
+                <div class="wrong-answers">
+                    <span class="wrong-your-answer">Your answer: ${letters[a.selected]}. ${q.options[a.selected]}</span>
+                    <span class="wrong-correct-answer">Correct: ${letters[a.correct]}. ${q.options[a.correct]}</span>
+                </div>
+            `;
+            wrongList.appendChild(item);
+        });
+    }
+
+    // Update title based on score
+    const titleEl = document.getElementById('results-title');
+    if (pctScore >= 90) titleEl.textContent = "Outstanding!";
+    else if (pctScore >= 80) titleEl.textContent = "Great Job!";
+    else if (pctScore >= 60) titleEl.textContent = "Solid Effort!";
+    else if (pctScore >= 40) titleEl.textContent = "Keep Studying!";
+    else titleEl.textContent = "Let's Review!";
+}
+
+function animateNumber(el, start, end, duration, suffix) {
+    const startTime = Date.now();
+    function update() {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(start + (end - start) * eased);
+        el.textContent = current + (suffix || '');
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+function studyWeakAreas() {
+    window.location.href = '../period2.html';
+}
+
+/* ============================================
+   KEYBOARD SHORTCUTS
+   ============================================ */
+document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('question-screen').classList.contains('active')) return;
+
+    const keyMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, '1': 0, '2': 1, '3': 2, '4': 3 };
+    const key = e.key.toLowerCase();
+
+    if (key in keyMap && !answered) {
+        const q = shuffledQuestions[currentQ];
+        if (keyMap[key] < q.options.length) {
+            selectAnswer(keyMap[key]);
+        }
+    }
+
+    if ((e.key === 'Enter' || e.key === ' ') && answered) {
+        e.preventDefault();
+        nextQuestion();
+    }
+});
+</script>
+
+</body>
+</html>

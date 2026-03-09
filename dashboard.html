@@ -448,15 +448,15 @@ a { color: inherit; text-decoration: none; }
 
     <!-- QUICK ACTIONS -->
     <div class="quick-actions">
-        <a href="modules/class1-class2-assessment.html" class="qa-card amber">
+        <a href="modules/diagnostic-assessment.html" class="qa-card amber">
             <div class="qa-icon">&#127919;</div>
             <div class="qa-label">Take Diagnostic</div>
         </a>
-        <a href="modules/class1-class2-concepts.html" class="qa-card blue">
+        <a href="modules/concepts.html" class="qa-card blue">
             <div class="qa-icon">&#128214;</div>
             <div class="qa-label">Study Concepts</div>
         </a>
-        <a href="modules/class1-class2-flashcards.html" class="qa-card green">
+        <a href="modules/flashcards.html" class="qa-card green">
             <div class="qa-icon">&#127139;</div>
             <div class="qa-label">Flashcards</div>
         </a>
@@ -486,30 +486,52 @@ a { color: inherit; text-decoration: none; }
         <div class="section-desc">Study materials organized by topic.</div>
         <div class="mod-grid">
             <div class="mod-card">
-                <div class="mod-card-title">Class 1 &amp; Class 2 Circuits</div>
-                <div class="mod-card-sub">CEC Section 16 &mdash; Voltage limits, wiring methods, separation rules</div>
+                <div class="mod-card-title">Fundamentals of AC</div>
+                <div class="mod-card-sub">Sine waves, frequency, peak/RMS/average, instantaneous voltage</div>
                 <div class="mod-card-links">
-                    <a href="modules/class1-class2-assessment.html" class="mod-link">Assessment</a>
-                    <a href="modules/class1-class2-concepts.html" class="mod-link">Concepts</a>
-                    <a href="modules/class1-class2-flashcards.html" class="mod-link">Flashcards</a>
+                    <a href="modules/diagnostic-assessment.html" class="mod-link">Assessment</a>
+                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
+                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
                 </div>
             </div>
-            <div class="mod-card locked">
-                <div class="mod-card-title">Overcurrent Protection</div>
-                <div class="mod-card-sub">Fuses, breakers, and coordination</div>
+            <div class="mod-card">
+                <div class="mod-card-title">Properties of Inductors &amp; Capacitors</div>
+                <div class="mod-card-sub">Faraday's law, Lenz's law, inductance &amp; capacitance factors</div>
                 <div class="mod-card-links">
-                    <span class="mod-link">Assessment</span>
-                    <span class="mod-link">Concepts</span>
-                    <span class="mod-link">Flashcards</span>
+                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
+                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
                 </div>
             </div>
-            <div class="mod-card locked">
-                <div class="mod-card-title">Motor Circuits</div>
-                <div class="mod-card-sub">Starters, controls, and protection</div>
+            <div class="mod-card">
+                <div class="mod-card-title">Inductors &amp; Capacitors in Circuits</div>
+                <div class="mod-card-sub">Time constants, ELI the ICE man, reactance, phasors</div>
                 <div class="mod-card-links">
-                    <span class="mod-link">Assessment</span>
-                    <span class="mod-link">Concepts</span>
-                    <span class="mod-link">Flashcards</span>
+                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
+                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
+                </div>
+            </div>
+            <div class="mod-card">
+                <div class="mod-card-title">Relays &amp; Contactors</div>
+                <div class="mod-card-sub">Contact forms, seal-in/drop-out, shading coils, laminations</div>
+                <div class="mod-card-links">
+                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
+                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
+                </div>
+            </div>
+            <div class="mod-card">
+                <div class="mod-card-title">Timers &amp; Smart Relays</div>
+                <div class="mod-card-sub">TDOE, TDOD, timing functions, smart relay programming</div>
+                <div class="mod-card-links">
+                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
+                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
+                </div>
+            </div>
+            <div class="mod-card">
+                <div class="mod-card-title">Pilot &amp; Overcurrent Devices</div>
+                <div class="mod-card-sub">Stop/start circuits, fuses, breakers, fault currents</div>
+                <div class="mod-card-links">
+                    <a href="modules/concepts.html" class="mod-link">Concepts</a>
+                    <a href="modules/flashcards.html" class="mod-link">Flashcards</a>
                 </div>
             </div>
         </div>
@@ -568,19 +590,21 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
 
 /* ---- CATEGORY DATA ---- */
 const CATEGORIES = [
-    "Circuit Types & Definitions",
-    "Class 1 Circuit Limitations",
-    "Class 2 Circuit Limitations",
-    "Conductors & Wiring Methods",
-    "Separation, Grounding & Installation"
+    "AC Fundamentals",
+    "Properties of Inductors & Capacitors",
+    "Inductors & Capacitors in Circuits",
+    "Relays & Contactors",
+    "Timers & Smart Relays",
+    "Pilot & Overcurrent Devices"
 ];
 
 const STUDY_TIPS = {
-    "Circuit Types & Definitions": "Review the 4 circuit types, remember Remote=Relay, Signal=Sound, know which are Class 1 only vs Class 2 only",
-    "Class 1 Circuit Limitations": "Drill the numbers: 30V/1000VA for extra-low voltage, 600V for signal/control, 5A for No.18, 10A for No.16",
-    "Class 2 Circuit Limitations": "Master the formula I = 100VA \u00f7 V, practice calculations at different voltages, know the 3 ways to limit power",
-    "Conductors & Wiring Methods": "Know TEW vs LVT vs ELC, memorize Table 57 ampacities, remember derating \u00d70.8 for >3 conductors",
-    "Separation, Grounding & Installation": "50mm separation rule, grounding rules for over/under 30V, door chime example"
+    "AC Fundamentals": "Review sine wave generation, drill f = pn/120, memorize 0.707 for RMS, practice instantaneous voltage calculations with e = Em\u00d7sin(\u03b8)",
+    "Properties of Inductors & Capacitors": "Know Faraday's and Lenz's laws, TPAL mnemonic for inductance factors, capacitor types (especially electrolytic polarity!)",
+    "Inductors & Capacitors in Circuits": "Master ELI the ICE man, drill time constant formulas (\u03c4=L/R and \u03c4=RC), practice XL and Xc calculations, remember 5 time constants to steady state",
+    "Relays & Contactors": "Know contact forms (A=NO, B=NC, C=changeover), seal-in ~85% and drop-out ~50%, understand why AC coils need laminations and shading coils",
+    "Timers & Smart Relays": "TDOE = on-delay (delay after energize), TDOD = off-delay (delay after de-energize), know interval vs one-shot vs repeat cycle timing",
+    "Pilot & Overcurrent Devices": "Stop SERIES, Start PARALLEL, know maintained vs momentary, fuse types (single vs dual element), breaker types (instantaneous vs inverse-time)"
 };
 
 /* ---- KNOWLEDGE MAP ---- */
@@ -609,7 +633,7 @@ function renderKnowledgeMap() {
                 '<div class="km-bar-track"><div class="km-bar-fill" style="width:0"></div></div>' +
                 '<div class="km-meta">' +
                     '<span class="km-score muted">Not tested</span>' +
-                    '<a href="modules/class1-class2-concepts.html" class="km-link">Study This &rarr;</a>' +
+                    '<a href="modules/concepts.html" class="km-link">Study This &rarr;</a>' +
                 '</div>';
         } else {
             var pct = catData.pct;
@@ -619,7 +643,7 @@ function renderKnowledgeMap() {
                 '<div class="km-bar-track"><div class="km-bar-fill ' + colorClass + '" data-width="' + pct + '"></div></div>' +
                 '<div class="km-meta">' +
                     '<span class="km-score ' + colorClass + '">' + pct + '%</span>' +
-                    '<a href="modules/class1-class2-concepts.html" class="km-link">Study This &rarr;</a>' +
+                    '<a href="modules/concepts.html" class="km-link">Study This &rarr;</a>' +
                 '</div>';
         }
 
@@ -675,7 +699,7 @@ function renderStudyPlan() {
                     '<span class="sp-card-score ' + scoreClass + '">' + item.pct + '%</span>' +
                 '</div>' +
                 '<div class="sp-card-tips">' + STUDY_TIPS[item.name] + '</div>' +
-                '<a href="modules/class1-class2-flashcards.html" class="sp-practice-btn">Practice This &rarr;</a>' +
+                '<a href="modules/flashcards.html" class="sp-practice-btn">Practice This &rarr;</a>' +
             '</div>';
     });
     html += '</div>';

@@ -1435,22 +1435,94 @@ a {
         <div class="container">
             <div class="module-grid" id="period2Modules">
 
-                <!-- Module: Class 1 and Class 2 Circuits -->
-                <div class="module-card" style="cursor:default;">
+                <!-- Combined Diagnostic Test -->
+                <div class="module-card" style="cursor:default; grid-column: 1 / -1; border-color: rgba(245,158,11,0.4); background: linear-gradient(135deg, #161b22 0%, rgba(245,158,11,0.04) 100%);">
                     <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
-                        <div class="module-number" style="background:var(--primary-bg); color:var(--primary); width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0;">S16</div>
+                        <div class="module-number" style="background:rgba(245,158,11,0.15); color:#f59e0b; width:56px; height:56px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.5rem; flex-shrink:0;">&#127919;</div>
                         <div class="module-info">
-                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2px;">Class 1 &amp; Class 2 Circuits</h3>
-                            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">CEC Section 16 &bull; CE Code / Plans &amp; Diagrams</p>
+                            <h3 style="font-size:1.2rem; font-weight:800; color:var(--text); margin-bottom:2px;">Combined Diagnostic Assessment</h3>
+                            <p style="font-size:0.85rem; color:var(--text-light); margin:0;">36 Questions &bull; All 6 Modules &bull; Find Your Weak Spots</p>
                         </div>
-                        <span class="module-badge in-progress" style="margin-left:auto;">Active</span>
+                        <span class="module-badge in-progress" style="margin-left:auto; font-size:0.8rem; padding:4px 12px;">START HERE</span>
                     </div>
-                    <p style="font-size:0.85rem; color:var(--text-light); margin-bottom:16px; line-height:1.5;">Remote control, signal, extra-low voltage power &amp; low-energy power circuits. Conductor sizing, overcurrent protection, wiring methods &amp; separation rules.</p>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <a href="modules/class1-class2-assessment.html" style="flex:1; min-width:120px; padding:10px 14px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); border-radius:8px; color:#f59e0b; font-size:0.8rem; font-weight:600; text-align:center; text-decoration:none; transition:all 0.2s;">🎯 Diagnostic Test</a>
-                        <a href="modules/class1-class2-concepts.html" style="flex:1; min-width:120px; padding:10px 14px; background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.25); border-radius:8px; color:#58a6ff; font-size:0.8rem; font-weight:600; text-align:center; text-decoration:none; transition:all 0.2s;">📖 Key Concepts</a>
-                        <a href="modules/class1-class2-flashcards.html" style="flex:1; min-width:120px; padding:10px 14px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:8px; color:#10b981; font-size:0.8rem; font-weight:600; text-align:center; text-decoration:none; transition:all 0.2s;">🃏 Flashcards &amp; Quiz</a>
+                    <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:16px; line-height:1.6;">Test your knowledge across AC Fundamentals, Inductors &amp; Capacitors, Relays, Timers, and Pilot Devices. Get a personalized study plan based on your results.</p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <a href="modules/diagnostic-assessment.html" style="flex:1; min-width:180px; padding:12px 20px; background:var(--primary); border:none; border-radius:8px; color:#0d1117; font-size:0.9rem; font-weight:700; text-align:center; text-decoration:none; transition:all 0.2s; box-shadow:0 2px 8px rgba(245,158,11,0.3);">Take Diagnostic Test</a>
+                        <a href="modules/concepts.html" style="flex:1; min-width:140px; padding:12px 20px; background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.25); border-radius:8px; color:#58a6ff; font-size:0.9rem; font-weight:600; text-align:center; text-decoration:none; transition:all 0.2s;">Study Concepts</a>
+                        <a href="modules/flashcards.html" style="flex:1; min-width:140px; padding:12px 20px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:8px; color:#10b981; font-size:0.9rem; font-weight:600; text-align:center; text-decoration:none; transition:all 0.2s;">Flashcards &amp; Quiz</a>
                     </div>
+                </div>
+
+                <!-- Module 1: AC Fundamentals -->
+                <div class="module-card" style="cursor:default;">
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                        <div class="module-number" style="background:rgba(88,166,255,0.12); color:#58a6ff; width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0;">01</div>
+                        <div class="module-info">
+                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2px;">Fundamentals of AC</h3>
+                            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">AC Fundamentals</p>
+                        </div>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:12px; line-height:1.5;">Sine waves, frequency, peak/RMS/average values, f = pn/120, instantaneous voltage.</p>
+                </div>
+
+                <!-- Module 2: Properties of Inductors & Capacitors -->
+                <div class="module-card" style="cursor:default;">
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                        <div class="module-number" style="background:rgba(88,166,255,0.12); color:#58a6ff; width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0;">02</div>
+                        <div class="module-info">
+                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2px;">Properties of Inductors &amp; Capacitors</h3>
+                            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">AC Fundamentals</p>
+                        </div>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:12px; line-height:1.5;">Faraday's &amp; Lenz's law, inductance factors, CEMF, capacitor types, capacitance factors.</p>
+                </div>
+
+                <!-- Module 3: Inductors & Capacitors in Circuits -->
+                <div class="module-card" style="cursor:default;">
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                        <div class="module-number" style="background:rgba(88,166,255,0.12); color:#58a6ff; width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0;">03</div>
+                        <div class="module-info">
+                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2px;">Inductors &amp; Capacitors in Circuits</h3>
+                            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">AC Fundamentals</p>
+                        </div>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:12px; line-height:1.5;">Time constants (L/R, RC), ELI the ICE man, reactance (XL, Xc), phasor diagrams.</p>
+                </div>
+
+                <!-- Module 4: Relays & Contactors -->
+                <div class="module-card" style="cursor:default;">
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                        <div class="module-number" style="background:rgba(168,85,247,0.12); color:#a855f7; width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0;">04</div>
+                        <div class="module-info">
+                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2px;">Relays &amp; Contactors</h3>
+                            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">Controls &amp; Switching</p>
+                        </div>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:12px; line-height:1.5;">Coils, cores, contact forms (A/B/C/X/Y), seal-in/drop-out voltage, shading coils, bridge contacts.</p>
+                </div>
+
+                <!-- Module 5: Timers & Smart Relays -->
+                <div class="module-card" style="cursor:default;">
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                        <div class="module-number" style="background:rgba(168,85,247,0.12); color:#a855f7; width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0;">05</div>
+                        <div class="module-info">
+                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2px;">Timers &amp; Smart Relays</h3>
+                            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">Controls &amp; Switching</p>
+                        </div>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:12px; line-height:1.5;">TDOE, TDOD, interval/one-shot/repeat cycle timing, smart relay functions &amp; applications.</p>
+                </div>
+
+                <!-- Module 6: Pilot & Overcurrent Devices -->
+                <div class="module-card" style="cursor:default;">
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                        <div class="module-number" style="background:rgba(168,85,247,0.12); color:#a855f7; width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0;">06</div>
+                        <div class="module-info">
+                            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2px;">Pilot &amp; Overcurrent Devices</h3>
+                            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">Controls &amp; Switching</p>
+                        </div>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:12px; line-height:1.5;">Stop/start circuits, pilot devices, fuses, circuit breakers, overcurrent protection, fault currents.</p>
                 </div>
 
             </div>
