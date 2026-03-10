@@ -4,571 +4,377 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Circuit Connect - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #f59e0b;
-            --secondary: #1e293b;
-            --dark-bg: #0f172a;
-            --tile-bg: #1e293b;
-            --border-color: #334155;
-            --text-light: #e2e8f0;
-            --success: #10b981;
-            --error: #ef4444;
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --border: #334155;
+            --amber: #f59e0b;
+            --amber-dim: rgba(245, 158, 11, 0.15);
+            --amber-glow: rgba(245, 158, 11, 0.4);
+            --green: #10b981;
+            --green-dim: rgba(16, 185, 129, 0.15);
+            --green-glow: rgba(16, 185, 129, 0.4);
+            --red: #ef4444;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
         }
 
         html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            width: 100%; height: 100%;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1a1f35 100%);
-            color: var(--text-light);
-        }
-
-        /* Navbar Styles */
-        .navbar {
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .nav-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logo-icon {
-            font-size: 1.8rem;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
         }
 
         .nav-link {
-            color: var(--text-light);
+            color: #e6edf3;
             text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-link:hover { color: #f59e0b; }
+
+        /* ===== SCREENS ===== */
+        .screen { display: none; }
+        .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+        /* ===== LEVEL SELECT ===== */
+        #levelSelect {
+            padding: 2rem 1rem;
+            min-height: calc(100vh - 60px);
+        }
+
+        .ls-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--amber), #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+        }
+
+        .ls-subtitle {
+            color: var(--text-dim);
             font-size: 0.95rem;
-            transition: color 0.3s;
-            position: relative;
+            margin-bottom: 2rem;
         }
 
-        .nav-link:hover {
-            color: var(--primary);
-        }
-
-        .nav-link.active {
-            color: var(--primary);
-        }
-
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary);
-        }
-
-        .mobile-menu-btn {
-            display: none;
-            flex-direction: column;
+        .ls-back {
+            align-self: flex-start;
+            max-width: 700px;
+            width: 100%;
+            margin-bottom: 1.5rem;
             background: none;
-            border: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
             cursor: pointer;
-            gap: 4px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: all 0.2s;
         }
-
-        .mobile-menu-btn span {
-            width: 25px;
-            height: 3px;
-            background: var(--text-light);
-            border-radius: 2px;
-            transition: 0.3s;
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-            .mobile-menu-btn {
-                display: flex;
-            }
-        }
-
-        /* Main Game Container */
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 70px);
-            overflow: hidden;
-        }
-
-        /* Level Select Screen */
-        .level-select-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem 2rem;
-            overflow-y: auto;
-        }
-
-        .level-select-screen h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
+        .ls-back:hover { border-color: var(--amber); color: var(--amber); }
 
         .level-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 1.5rem;
-            max-width: 600px;
-            margin: 3rem 0;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 1rem;
+            max-width: 700px;
+            width: 100%;
         }
 
-        .level-btn {
-            width: 80px;
-            height: 80px;
-            border: 2px solid var(--border-color);
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: var(--text-light);
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 1.2rem;
+        .level-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1rem;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.25s;
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .level-btn:hover:not(.locked):not(.completed) {
-            border-color: var(--primary);
-            background: linear-gradient(135deg, #1e293b 0%, #1a1f35 100%);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .level-btn.locked {
-            opacity: 0.4;
-            cursor: not-allowed;
-            border-color: var(--border-color);
-        }
-
-        .level-btn.locked::after {
-            content: '🔒';
-            font-size: 1.5rem;
-            position: absolute;
-        }
-
-        .level-btn.completed {
-            border-color: var(--success);
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-        }
-
-        .level-btn.completed .stars {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            font-size: 0.8rem;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid var(--border-color);
-            color: var(--text-light);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .back-btn:hover {
-            border-color: var(--primary);
-            background: rgba(30, 41, 59, 1);
-        }
-
-        /* Game Screen */
-        .game-screen {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            padding: 2rem;
-        }
-
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .game-info {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .info-label {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .info-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .game-controls {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, var(--primary), #f97316);
-            border: none;
-            color: #000;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
-        }
-
-        .btn.secondary {
-            background: rgba(100, 116, 139, 0.3);
-            color: var(--text-light);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn.secondary:hover {
-            background: rgba(100, 116, 139, 0.5);
-            border-color: var(--primary);
-        }
-
-        /* Game Board */
-        .game-board-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             overflow: hidden;
         }
-
-        .game-board {
-            display: grid;
-            gap: 8px;
-            padding: 2rem;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            aspect-ratio: 1;
-            max-width: 80vh;
-            max-height: 80vh;
+        .level-card:hover:not(.locked) {
+            border-color: var(--amber);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(245,158,11,0.15);
+        }
+        .level-card.locked {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .level-card .level-num {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--amber);
+        }
+        .level-card.locked .level-num { color: var(--text-muted); }
+        .level-card .level-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 0.15rem;
+        }
+        .level-card .stars-display {
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+        }
+        .star-on { color: var(--amber); }
+        .star-off { color: var(--text-muted); opacity: 0.3; }
+        .level-card .lock-icon {
+            font-size: 1.4rem;
+            color: var(--text-muted);
+        }
+        .level-card .grid-size {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
         }
 
-        .tile {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 2px solid var(--border-color);
+        /* ===== GAME SCREEN ===== */
+        #gameScreen {
+            padding: 1rem;
+            min-height: calc(100vh - 60px);
+            justify-content: flex-start;
+        }
+
+        .game-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 1rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 0.75rem; }
+        .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+
+        .btn-icon {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 38px; height: 38px;
             border-radius: 8px;
             cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { border-color: var(--amber); color: var(--amber); }
+
+        .level-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .move-counter {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--amber);
+        }
+        .move-counter span { color: var(--text-dim); font-weight: 400; }
+
+        .optimal-hint {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: -0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ===== SVG GRID ===== */
+        .grid-wrapper {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            transition: all 0.15s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
 
-        .tile:hover:not(.source):not(.load) {
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        .grid-svg {
+            display: block;
+            max-width: 100%;
+            height: auto;
         }
 
-        .tile.source {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border-color: #10b981;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        .tile-bg {
+            fill: #0f172a;
+            stroke: var(--border);
+            stroke-width: 1;
+            rx: 4;
+            ry: 4;
         }
 
-        .tile.load {
-            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-            border-color: #334155;
+        .tile-group {
+            cursor: pointer;
+        }
+        .tile-group:hover .tile-bg { fill: #162033; }
+        .tile-group.empty { cursor: default; }
+        .tile-group.empty:hover .tile-bg { fill: #0f172a; }
+        .tile-group.source .tile-bg {
+            fill: var(--green-dim);
+            stroke: var(--green);
+            stroke-width: 1.5;
+        }
+        .tile-group.load .tile-bg {
+            fill: var(--amber-dim);
+            stroke: var(--amber);
+            stroke-width: 1.5;
         }
 
-        .tile.load.active {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            border-color: #f59e0b;
-            box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+        .pipe-line {
+            stroke: #475569;
+            stroke-width: 5;
+            stroke-linecap: round;
+            fill: none;
+            transition: stroke 0.3s, filter 0.3s;
         }
 
-        .tile svg {
-            width: 90%;
-            height: 90%;
-            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.5));
-            transition: transform 0.15s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        .tile-group.connected .pipe-line {
+            stroke: var(--amber);
+            filter: drop-shadow(0 0 4px var(--amber-glow));
+        }
+        .tile-group.source.connected .pipe-line {
+            stroke: var(--green);
+            filter: drop-shadow(0 0 4px var(--green-glow));
         }
 
-        .tile.rotating svg {
-            transform: rotate(90deg);
+        .pipe-dot {
+            fill: #475569;
+            transition: fill 0.3s;
         }
+        .tile-group.connected .pipe-dot { fill: var(--amber); }
+        .tile-group.source.connected .pipe-dot { fill: var(--green); }
 
-        .tile.connected {
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
-        }
-
-        .tile.disconnected {
-            opacity: 0.7;
-        }
-
-        /* Connection Visualization */
-        .connection-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .source-icon, .load-icon {
+            font-size: 14px;
+            font-weight: 700;
+            dominant-baseline: central;
+            text-anchor: middle;
             pointer-events: none;
-            z-index: 10;
+        }
+        .source-icon { fill: var(--green); }
+        .load-icon { fill: var(--amber); }
+
+        /* Rotation animation */
+        .tile-group .pipe-container {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
         }
 
-        /* Completion Modal */
-        .modal {
+        /* Flow particles */
+        @keyframes flowPulse {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .flow-particle {
+            fill: var(--amber);
+            opacity: 0;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            inset: 0;
+            background: rgba(0,0,0,0.7);
             z-index: 1000;
-            justify-content: center;
             align-items: center;
-        }
-
-        .modal.show {
-            display: flex;
+            justify-content: center;
+            backdrop-filter: blur(4px);
             animation: fadeIn 0.3s;
         }
+        .modal-overlay.active { display: flex; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes popIn { from { transform: scale(0.85); opacity:0 } to { transform: scale(1); opacity:1 } }
 
-        .modal-content {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            padding: 3rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+        .modal-box {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
             text-align: center;
-            max-width: 400px;
-            animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 380px;
+            width: 90%;
+            animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .modal-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, var(--amber), #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .modal-content h2 {
-            font-size: 2rem;
+        .modal-stars {
+            font-size: 2.5rem;
+            letter-spacing: 6px;
+            margin: 1rem 0;
+        }
+
+        .modal-stats {
+            color: var(--text-dim);
+            font-size: 0.9rem;
             margin-bottom: 1.5rem;
+            line-height: 1.6;
         }
 
-        .stars-display {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin: 1.5rem 0;
+        .modal-btn {
+            display: inline-block;
+            padding: 0.65rem 1.5rem;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            margin: 0.25rem;
         }
-
-        .star {
-            font-size: 2rem;
-            filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5));
-            animation: starPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        .modal-btn-primary {
+            background: linear-gradient(135deg, var(--amber), #d97706);
+            color: #0f172a;
         }
-
-        .star:nth-child(2) {
-            animation-delay: 0.1s;
+        .modal-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px var(--amber-glow); }
+        .modal-btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
         }
+        .modal-btn-secondary:hover { border-color: var(--text-dim); color: var(--text); }
 
-        .star:nth-child(3) {
-            animation-delay: 0.2s;
-        }
-
-        @keyframes starPop {
-            0% {
-                transform: scale(0) rotate(-180deg);
-                opacity: 0;
-            }
-            100% {
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
-            }
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            justify-content: center;
-        }
-
-        .modal-buttons .btn {
-            flex: 1;
-        }
-
-        /* Particles */
-        .particle {
-            position: fixed;
-            pointer-events: none;
-            z-index: 999;
-        }
-
-        /* Current Flow Animation */
-        @keyframes flowPulse {
-            0%, 100% {
-                stroke-width: 3px;
-                opacity: 0.6;
-                filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.5));
-            }
-            50% {
-                stroke-width: 4px;
-                opacity: 1;
-                filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.8));
-            }
-        }
-
-        .circuit-path {
-            animation: flowPulse 0.8s ease-in-out infinite;
-        }
-
-        /* Hint Effect */
-        @keyframes hint {
-            0%, 100% {
-                box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
-            }
-            50% {
-                box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
-            }
-        }
-
-        .tile.hint {
-            animation: hint 1s ease-in-out 3;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .game-screen {
-                padding: 1rem;
-            }
-
-            .game-header {
-                margin-bottom: 1rem;
-            }
-
-            .game-board {
-                gap: 6px;
-                padding: 1rem;
-            }
-
-            .game-info {
-                gap: 1rem;
-                font-size: 0.9rem;
-            }
-
-            .info-value {
-                font-size: 1.4rem;
-            }
-
-            .btn {
-                padding: 0.6rem 1.2rem;
-                font-size: 0.85rem;
-            }
-        }
-
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #f97316;
+        /* ===== MOBILE ===== */
+        @media (max-width: 500px) {
+            .level-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.75rem; }
+            .level-card { padding: 1rem 0.5rem; }
+            .grid-wrapper { padding: 0.75rem; border-radius: 12px; }
+            .ls-title { font-size: 1.5rem; }
+            .game-topbar { padding: 0 0.25rem; }
+            .modal-box { padding: 2rem 1.5rem; }
         }
     </style>
 <script>
@@ -607,1168 +413,771 @@
         </div>
     </nav>
 
-    <!-- Game Container -->
-    <div class="game-container">
-        <!-- Level Select Screen -->
-        <div id="levelSelectScreen" class="level-select-screen">
-            <button class="back-btn" onclick="goBack()">← Back to Games</button>
-            <h1>Circuit Connect</h1>
-            <p style="color: #94a3b8; margin-bottom: 1rem;">Connect the power source to the load by rotating circuit tiles</p>
-            <div class="level-grid" id="levelGrid"></div>
-        </div>
+    <!-- Level Select Screen -->
+    <div id="levelSelect" class="screen active">
+        <button class="ls-back" onclick="window.location.href='../games.html'">&#8592; Back to Games</button>
+        <div class="ls-title">Circuit Connect</div>
+        <div class="ls-subtitle">Rotate pipes to connect power to the load</div>
+        <div class="level-grid" id="levelGrid"></div>
+    </div>
 
-        <!-- Game Screen -->
-        <div id="gameScreen" class="game-screen" style="display: none;">
-            <div class="game-header">
-                <button class="back-btn" onclick="backToLevels()">← Back</button>
-                <div class="game-info">
-                    <div class="info-item">
-                        <div class="info-label">Level</div>
-                        <div class="info-value" id="levelNumber">1</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Time</div>
-                        <div class="info-value" id="timer">0:00</div>
-                    </div>
-                </div>
-                <div class="game-controls">
-                    <button class="btn secondary" onclick="resetPuzzle()">Reset</button>
-                    <button class="btn secondary" onclick="showHint()">💡 Hint</button>
-                </div>
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <div class="game-topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="btnBack" title="Level Select">&#8592;</button>
+                <div class="level-title" id="levelTitle">Level 1</div>
             </div>
-            <div class="game-board-container">
-                <div class="game-board" id="gameBoard">
-                    <canvas id="connectionCanvas" class="connection-canvas"></canvas>
-                </div>
+            <div class="topbar-right">
+                <div class="move-counter"><span>Moves: </span><span id="moveCount">0</span></div>
+                <button class="btn-icon" id="btnReset" title="Reset Level">&#8634;</button>
             </div>
+        </div>
+        <div class="optimal-hint" id="optimalHint"></div>
+        <div class="grid-wrapper">
+            <svg id="gridSvg" class="grid-svg"></svg>
         </div>
     </div>
 
-    <!-- Completion Modal -->
-    <div id="completionModal" class="modal">
-        <div class="modal-content">
-            <h2>🎉 Level Complete!</h2>
-            <div class="stars-display" id="starsDisplay"></div>
+    <!-- Win Modal -->
+    <div class="modal-overlay" id="winModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Level Complete!</div>
+            <div class="modal-stars" id="modalStars"></div>
+            <div class="modal-stats" id="modalStats"></div>
             <div>
-                <p style="color: #94a3b8; margin-top: 1rem;">
-                    Completed in <span id="finalTime">0:00</span>
-                </p>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn secondary" onclick="resetPuzzle()">Retry</button>
-                <button class="btn" onclick="nextLevel()">Next Level →</button>
+                <button class="modal-btn modal-btn-secondary" id="modalReplay">Replay</button>
+                <button class="modal-btn modal-btn-primary" id="modalNext">Next Level</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // Game State
-        let gameState = {
-            currentLevel: 1,
-            selectedLevel: null,
-            levelProgress: {},
-            startTime: null,
-            timerInterval: null,
-            tiles: [],
-            gridSize: 4,
-            isConnected: false,
-            hintUsed: false,
-        };
+<script>
+// ===================================================================
+// CIRCUIT CONNECT - A Pipe Rotation Puzzle Game
+// ===================================================================
+(function() {
+    'use strict';
 
-        // Component Types
-        const COMPONENTS = {
-            STRAIGHT: 'straight',
-            CORNER: 'corner',
-            TJUNCTION: 'tjunction',
-            CROSS: 'cross',
-            RESISTOR: 'resistor',
-            SWITCH: 'switch',
-            FUSE: 'fuse',
-        };
+    // --- TILE TYPES & CONNECTION MAPS ---
+    // Connections: [top, right, bottom, left] - true means pipe connects in that direction
+    // Rotation 0 = default orientation
+    const TILE_TYPES = {
+        EMPTY:    { id: 'empty',    conns: [false, false, false, false] },
+        STRAIGHT: { id: 'straight', conns: [false, true,  false, true ] }, // horizontal
+        CORNER:   { id: 'corner',   conns: [true,  true,  false, false] }, // top-right
+        TEE:      { id: 'tee',      conns: [true,  true,  false, true ] }, // T open top, right, left
+        CROSS:    { id: 'cross',    conns: [true,  true,  true,  true ] }, // all four
+    };
 
-        // Connection Points (0=top, 1=right, 2=bottom, 3=left)
-        const CONNECTIONS = {
-            [COMPONENTS.STRAIGHT]: [
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-            ],
-            [COMPONENTS.CORNER]: [
-                [1, 1, 0, 0],
-                [0, 1, 1, 0],
-                [0, 0, 1, 1],
-                [1, 0, 0, 1],
-            ],
-            [COMPONENTS.TJUNCTION]: [
-                [1, 1, 1, 0],
-                [0, 1, 1, 1],
-                [1, 0, 1, 1],
-                [1, 1, 0, 1],
-            ],
-            [COMPONENTS.CROSS]: [
-                [1, 1, 1, 1],
-                [1, 1, 1, 1],
-                [1, 1, 1, 1],
-                [1, 1, 1, 1],
-            ],
-            [COMPONENTS.RESISTOR]: [
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-            ],
-            [COMPONENTS.SWITCH]: [
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-            ],
-            [COMPONENTS.FUSE]: [
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-            ],
-        };
+    // Rotate connections by `r` steps clockwise (each step = 90 degrees)
+    function rotateConns(base, r) {
+        const c = [...base];
+        const n = ((r % 4) + 4) % 4;
+        const out = new Array(4);
+        for (let i = 0; i < 4; i++) out[(i + n) % 4] = c[i];
+        return out;
+    }
 
-        // Level Definitions
-        const LEVELS = [
-            // Level 1-3: Simple 4x4, straight and corner
-            {
-                number: 1,
-                gridSize: 4,
-                tiles: [
-                    ['source', 'straight', 'corner', 'load'],
-                    ['empty', 'empty', 'corner', 'empty'],
-                    ['empty', 'empty', 'empty', 'empty'],
-                    ['empty', 'empty', 'empty', 'empty'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null],
-                    [null, null, null, null],
-                    [null, null, null, null],
-                    [null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 2,
-                gridSize: 4,
-                tiles: [
-                    ['source', 'corner', 'empty', 'empty'],
-                    ['empty', 'corner', 'straight', 'load'],
-                    ['empty', 'empty', 'empty', 'empty'],
-                    ['empty', 'empty', 'empty', 'empty'],
-                ],
-                components: [
-                    [null, COMPONENTS.CORNER, null, null],
-                    [null, COMPONENTS.CORNER, COMPONENTS.STRAIGHT, null],
-                    [null, null, null, null],
-                    [null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 3,
-                gridSize: 4,
-                tiles: [
-                    ['source', 'straight', 'straight', 'corner'],
-                    ['empty', 'empty', 'empty', 'corner'],
-                    ['empty', 'empty', 'empty', 'straight'],
-                    ['empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.STRAIGHT, COMPONENTS.CORNER],
-                    [null, null, null, COMPONENTS.CORNER],
-                    [null, null, null, COMPONENTS.STRAIGHT],
-                    [null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                ],
-            },
-            // Level 4-6: 4x4 with T-junctions, 2 bulbs
-            {
-                number: 4,
-                gridSize: 4,
-                tiles: [
-                    ['source', 'straight', 'tjunction', 'straight'],
-                    ['empty', 'empty', 'corner', 'load'],
-                    ['empty', 'empty', 'empty', 'empty'],
-                    ['empty', 'empty', 'empty', 'empty'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT],
-                    [null, null, COMPONENTS.CORNER, null],
-                    [null, null, null, null],
-                    [null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 5,
-                gridSize: 4,
-                tiles: [
-                    ['source', 'corner', 'empty', 'empty'],
-                    ['empty', 'tjunction', 'straight', 'load'],
-                    ['empty', 'corner', 'empty', 'empty'],
-                    ['empty', 'empty', 'empty', 'empty'],
-                ],
-                components: [
-                    [null, COMPONENTS.CORNER, null, null],
-                    [null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, null],
-                    [null, COMPONENTS.CORNER, null, null],
-                    [null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 6,
-                gridSize: 4,
-                tiles: [
-                    ['source', 'straight', 'straight', 'corner'],
-                    ['empty', 'tjunction', 'empty', 'corner'],
-                    ['empty', 'corner', 'empty', 'straight'],
-                    ['empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.STRAIGHT, COMPONENTS.CORNER],
-                    [null, COMPONENTS.TJUNCTION, null, COMPONENTS.CORNER],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.STRAIGHT],
-                    [null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                ],
-            },
-            // Levels 7-15: Increasing complexity (5x5, 6x6, 8x8)
-            {
-                number: 7,
-                gridSize: 5,
-                tiles: [
-                    ['source', 'straight', 'corner', 'empty', 'empty'],
-                    ['empty', 'empty', 'tjunction', 'straight', 'corner'],
-                    ['empty', 'empty', 'corner', 'empty', 'tjunction'],
-                    ['empty', 'empty', 'empty', 'empty', 'corner'],
-                    ['empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null, null],
-                    [null, null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER],
-                    [null, null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION],
-                    [null, null, null, null, COMPONENTS.CORNER],
-                    [null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 8,
-                gridSize: 5,
-                tiles: [
-                    ['source', 'corner', 'empty', 'empty', 'empty'],
-                    ['empty', 'tjunction', 'straight', 'corner', 'empty'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'straight'],
-                    ['empty', 'empty', 'empty', 'corner', 'empty'],
-                    ['empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.CORNER, null, null, null],
-                    [null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT],
-                    [null, null, null, COMPONENTS.CORNER, null],
-                    [null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 9,
-                gridSize: 5,
-                tiles: [
-                    ['source', 'straight', 'tjunction', 'straight', 'corner'],
-                    ['empty', 'empty', 'corner', 'empty', 'tjunction'],
-                    ['empty', 'empty', 'straight', 'empty', 'corner'],
-                    ['empty', 'empty', 'corner', 'empty', 'straight'],
-                    ['empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER],
-                    [null, null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION],
-                    [null, null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER],
-                    [null, null, COMPONENTS.CORNER, null, COMPONENTS.STRAIGHT],
-                    [null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 10,
-                gridSize: 5,
-                tiles: [
-                    ['source', 'tjunction', 'straight', 'corner', 'empty'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'straight'],
-                    ['empty', 'straight', 'empty', 'corner', 'empty'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'corner'],
-                    ['empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT],
-                    [null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER, null],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, COMPONENTS.CORNER],
-                    [null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 11,
-                gridSize: 5,
-                tiles: [
-                    ['source', 'straight', 'corner', 'empty', 'empty'],
-                    ['empty', 'tjunction', 'empty', 'straight', 'corner'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'empty'],
-                    ['empty', 'straight', 'empty', 'corner', 'straight'],
-                    ['empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null, null],
-                    [null, COMPONENTS.TJUNCTION, null, COMPONENTS.STRAIGHT, COMPONENTS.CORNER],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, null],
-                    [null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER, COMPONENTS.STRAIGHT],
-                    [null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 12,
-                gridSize: 5,
-                tiles: [
-                    ['source', 'corner', 'empty', 'empty', 'empty'],
-                    ['empty', 'tjunction', 'straight', 'corner', 'empty'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'straight'],
-                    ['empty', 'straight', 'empty', 'corner', 'tjunction'],
-                    ['empty', 'empty', 'empty', 'straight', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.CORNER, null, null, null],
-                    [null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT],
-                    [null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER, COMPONENTS.TJUNCTION],
-                    [null, null, null, COMPONENTS.STRAIGHT, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 13,
-                gridSize: 6,
-                tiles: [
-                    ['source', 'straight', 'corner', 'empty', 'empty', 'empty'],
-                    ['empty', 'tjunction', 'empty', 'straight', 'corner', 'empty'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'empty', 'straight'],
-                    ['empty', 'straight', 'empty', 'corner', 'empty', 'tjunction'],
-                    ['empty', 'corner', 'empty', 'straight', 'empty', 'corner'],
-                    ['empty', 'empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null, null, null],
-                    [null, COMPONENTS.TJUNCTION, null, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, null, COMPONENTS.STRAIGHT],
-                    [null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER],
-                    [null, null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 14,
-                gridSize: 6,
-                tiles: [
-                    ['source', 'corner', 'empty', 'empty', 'empty', 'empty'],
-                    ['empty', 'tjunction', 'straight', 'corner', 'empty', 'empty'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'straight', 'corner'],
-                    ['empty', 'straight', 'empty', 'corner', 'empty', 'tjunction'],
-                    ['empty', 'corner', 'empty', 'straight', 'empty', 'corner'],
-                    ['empty', 'empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.CORNER, null, null, null, null],
-                    [null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER, null, null],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER],
-                    [null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER],
-                    [null, null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ],
-            },
-            {
-                number: 15,
-                gridSize: 6,
-                tiles: [
-                    ['source', 'straight', 'tjunction', 'corner', 'empty', 'empty'],
-                    ['empty', 'corner', 'empty', 'tjunction', 'straight', 'corner'],
-                    ['empty', 'straight', 'empty', 'corner', 'empty', 'tjunction'],
-                    ['empty', 'tjunction', 'empty', 'straight', 'empty', 'corner'],
-                    ['empty', 'corner', 'empty', 'corner', 'empty', 'straight'],
-                    ['empty', 'empty', 'empty', 'empty', 'empty', 'load'],
-                ],
-                components: [
-                    [null, COMPONENTS.STRAIGHT, COMPONENTS.TJUNCTION, COMPONENTS.CORNER, null, null],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION, COMPONENTS.STRAIGHT, COMPONENTS.CORNER],
-                    [null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER, null, COMPONENTS.TJUNCTION],
-                    [null, COMPONENTS.TJUNCTION, null, COMPONENTS.STRAIGHT, null, COMPONENTS.CORNER],
-                    [null, COMPONENTS.CORNER, null, COMPONENTS.CORNER, null, COMPONENTS.STRAIGHT],
-                    [null, null, null, null, null, null],
-                ],
-                rotations: [
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0],
-                ],
-            },
-        ];
+    // Direction offsets: 0=top, 1=right, 2=bottom, 3=left
+    const DIR_DR = [-1, 0, 1, 0];
+    const DIR_DC = [0, 1, 0, -1];
+    const OPPOSITE = [2, 3, 0, 1];
 
-        // Draw Component
-        function drawComponent(ctx, type, rotation, x, y, size) {
-            const centerX = x + size / 2;
-            const centerY = y + size / 2;
-            const radius = size / 2 - 4;
+    // --- LEVEL DEFINITIONS ---
+    // Each level defines: rows, cols, source (row,col), load (row,col), grid of {type, solveRot}
+    // solveRot = rotation in the solved state (0-3)
+    // E=empty, S=straight, C=corner, T=tee, X=cross
+    // Rotation notation: type + rotation e.g. S0=straight horizontal, S1=straight vertical
 
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate((rotation * Math.PI) / 2);
-            ctx.translate(-centerX, -centerY);
+    function t(type, rot) { return { type, solveRot: rot }; }
+    const E = t(TILE_TYPES.EMPTY, 0);
+    const S0 = t(TILE_TYPES.STRAIGHT, 0); // horizontal
+    const S1 = t(TILE_TYPES.STRAIGHT, 1); // vertical
+    const C0 = t(TILE_TYPES.CORNER, 0);   // top-right
+    const C1 = t(TILE_TYPES.CORNER, 1);   // right-bottom
+    const C2 = t(TILE_TYPES.CORNER, 2);   // bottom-left
+    const C3 = t(TILE_TYPES.CORNER, 3);   // left-top
+    const T0 = t(TILE_TYPES.TEE, 0);      // top, right, left
+    const T1 = t(TILE_TYPES.TEE, 1);      // top, right, bottom
+    const T2 = t(TILE_TYPES.TEE, 2);      // right, bottom, left
+    const T3 = t(TILE_TYPES.TEE, 3);      // top, bottom, left
+    const X0 = t(TILE_TYPES.CROSS, 0);    // all
 
-            ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 2;
-            ctx.fillStyle = 'none';
+    // LEVEL DESIGNS - all paths verified
+    // Connection reference:
+    // S0: left+right | S1: top+bottom
+    // C0: top+right | C1: right+bottom | C2: bottom+left | C3: top+left
+    // T0: top+right+left | T1: top+right+bottom | T2: right+bottom+left | T3: top+bottom+left
+    // X0: all four
 
-            switch (type) {
-                case COMPONENTS.STRAIGHT:
-                    ctx.beginPath();
-                    ctx.moveTo(x + size / 2, y + 3);
-                    ctx.lineTo(x + size / 2, y + size - 3);
-                    ctx.stroke();
-                    break;
-                case COMPONENTS.CORNER:
-                    ctx.beginPath();
-                    ctx.moveTo(x + size / 2, y + 3);
-                    ctx.lineTo(x + size / 2, y + size / 2);
-                    ctx.lineTo(x + size - 3, y + size / 2);
-                    ctx.stroke();
-                    break;
-                case COMPONENTS.TJUNCTION:
-                    ctx.beginPath();
-                    ctx.moveTo(x + size / 2, y + 3);
-                    ctx.lineTo(x + size / 2, y + size - 3);
-                    ctx.moveTo(x + 3, y + size / 2);
-                    ctx.lineTo(x + size - 3, y + size / 2);
-                    ctx.stroke();
-                    break;
-                case COMPONENTS.CROSS:
-                    ctx.beginPath();
-                    ctx.moveTo(x + size / 2, y + 3);
-                    ctx.lineTo(x + size / 2, y + size - 3);
-                    ctx.moveTo(x + 3, y + size / 2);
-                    ctx.lineTo(x + size - 3, y + size / 2);
-                    ctx.stroke();
-                    break;
-                case COMPONENTS.RESISTOR:
-                    ctx.beginPath();
-                    ctx.moveTo(x + size / 2, y + 3);
-                    ctx.lineTo(x + size / 2, y + size / 3);
-                    ctx.lineTo(x + size / 2 + 3, y + size / 3 + 3);
-                    ctx.lineTo(x + size / 2 - 3, y + size / 2 - 3);
-                    ctx.lineTo(x + size / 2 + 3, y + size / 2 + 3);
-                    ctx.lineTo(x + size / 2 - 3, y + 2 * size / 3 - 3);
-                    ctx.lineTo(x + size / 2, y + 2 * size / 3);
-                    ctx.lineTo(x + size / 2, y + size - 3);
-                    ctx.stroke();
-                    break;
-                case COMPONENTS.SWITCH:
-                    ctx.beginPath();
-                    ctx.moveTo(x + size / 2, y + 3);
-                    ctx.lineTo(x + size / 2, y + size / 2 - 2);
-                    ctx.arc(x + size / 2, y + size / 2, 3, 0, Math.PI * 2);
-                    ctx.moveTo(x + size / 2, y + size / 2 + 2);
-                    ctx.lineTo(x + size / 2, y + size - 3);
-                    ctx.stroke();
-                    break;
-                case COMPONENTS.FUSE:
-                    ctx.beginPath();
-                    ctx.rect(x + size / 2 - 2, y + size / 3, 4, size / 3);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(x + size / 2, y + 3);
-                    ctx.lineTo(x + size / 2, y + size / 3);
-                    ctx.moveTo(x + size / 2, y + 2 * size / 3);
-                    ctx.lineTo(x + size / 2, y + size - 3);
-                    ctx.stroke();
-                    break;
-            }
+    const LEVELS = [
+        // Level 1: 3x3 - straight horizontal line
+        // Path: (1,0)->right->(1,1)->right->(1,2)
+        {
+            rows: 3, cols: 3,
+            source: [1, 0], load: [1, 2],
+            optimal: 2,
+            grid: [
+                [E,  E,  E ],
+                [S0, S0, S0],
+                [E,  E,  E ],
+            ]
+        },
+        // Level 2: 3x3 - L-shaped path
+        // Path: (1,0)->right->(1,1)->bottom->(2,1)->right->(2,2)
+        // (1,1) needs left+bottom=C2, (2,1) needs top+right=C0
+        {
+            rows: 3, cols: 3,
+            source: [1, 0], load: [2, 2],
+            optimal: 3,
+            grid: [
+                [E,  E,  E ],
+                [S0, C2, E ],
+                [E,  C0, S0],
+            ]
+        },
+        // Level 3: 4x4 - S-curve
+        // Path: (1,0)->right->(1,1)->right->(1,2)->bottom->(2,2)->left->(2,1)->bottom->(3,1)->right->(3,2)->right->(3,3)
+        // (1,2): left+bottom=C2, (2,2): top+left=C3, (2,1): right+bottom=C1, (3,1): top+right=C0
+        {
+            rows: 4, cols: 4,
+            source: [1, 0], load: [3, 3],
+            optimal: 5,
+            grid: [
+                [E,  E,  E,  E ],
+                [S0, S0, C2, E ],
+                [E,  C1, C3, E ],
+                [E,  C0, S0, S0],
+            ]
+        },
+        // Level 4: 4x4 - with T-junctions
+        // Path: (0,0)->right->(0,1)->right->(0,2)->bottom->(1,2)->bottom->(2,2)->right->(2,3)
+        // (0,1)T2=right+bottom+left, (0,2) needs left+bottom=C2, (1,2) top+bottom=S1, (2,2) top+right=C0
+        {
+            rows: 4, cols: 4,
+            source: [0, 0], load: [2, 3],
+            optimal: 5,
+            grid: [
+                [S0, T2, C2, E ],
+                [E,  E,  S1, E ],
+                [E,  E,  C0, S0],
+                [E,  E,  E,  E ],
+            ]
+        },
+        // Level 5: 5x5 - winding path
+        // Path: (2,0)->right->(2,1)->top->(1,1)->right->(1,2)->right->(1,3)->bottom->(2,3)->right->(2,4)
+        {
+            rows: 5, cols: 5,
+            source: [2, 0], load: [2, 4],
+            optimal: 6,
+            grid: [
+                [E,  E,  E,  E,  E ],
+                [E,  C1, S0, C2, E ],
+                [S0, C3, E,  C0, S0],
+                [E,  E,  E,  E,  E ],
+                [E,  E,  E,  E,  E ],
+            ]
+        },
+        // Level 6: 5x5 - complex with T-junctions
+        // Path: (0,0)->bottom->(1,0)->right->(1,1)->right->(1,2)->bottom->(2,2)->right->(2,3)->right->(2,4)
+        // Alt:  (0,0)->bottom->(1,0)->bottom->(2,0)->right->(2,1)->right->(2,2)->...
+        // (0,0) bottom=C1, (1,0) top+right+bottom=T1, (1,1) left+right=S0, (1,2) left+bottom=C2
+        // (2,0) top+right=C0, (2,1) left+right=S0, (2,2) top+right+left=T0, (2,3) left+right=S0
+        {
+            rows: 5, cols: 5,
+            source: [0, 0], load: [2, 4],
+            optimal: 7,
+            grid: [
+                [C1, E,  E,  E,  E ],
+                [T1, S0, C2, E,  E ],
+                [C0, S0, T0, S0, S0],
+                [E,  E,  E,  E,  E ],
+                [E,  E,  E,  E,  E ],
+            ]
+        },
+        // Level 7: 5x5 with empty blockers
+        // Path: (0,0)->bottom->(1,0)->bottom->(2,0)->right->(2,1)->bottom->(3,1)->bottom->(4,1)->right->(4,2)->right->(4,3)->top->(3,3)->top->(2,3)->right->(2,4)
+        // (2,1) left+bottom=C2, (3,1) top+bottom=S1, (4,1) top+right=C0
+        // (4,2) left+right=S0, (4,3) left+top=C3, (3,3) top+bottom=S1, (2,3) bottom+right... wait
+        // (4,3) top from (3,3), left from (4,2). C3=top+left. Good.
+        // (3,3) bottom to (4,3), top from (2,3). S1=top+bottom. Good.
+        // (2,3) bottom to (3,3), right to (2,4). C1=right+bottom. Good.
+        {
+            rows: 5, cols: 5,
+            source: [0, 0], load: [2, 4],
+            optimal: 8,
+            grid: [
+                [C1, E,  E,  E,  E ],
+                [S1, E,  E,  E,  E ],
+                [C0, C2, E,  C1, S0],
+                [E,  S1, E,  S1, E ],
+                [E,  C0, S0, C3, E ],
+            ]
+        },
+        // Level 8: 5x5 complex multi-path
+        // Path: (2,0)->right->(2,1)->top->(1,1)->top->(0,1)->right->(0,2)->right->(0,3)->right->(0,4)->bottom->(1,4)->bottom->(2,4)
+        // (0,1) bottom+right=C1, (0,4) left+bottom=C2, (2,4) top=C3
+        {
+            rows: 5, cols: 5,
+            source: [2, 0], load: [2, 4],
+            optimal: 8,
+            grid: [
+                [E,  C1, S0, S0, C2],
+                [E,  S1, E,  E,  S1],
+                [S0, C3, E,  E,  C3],
+                [E,  E,  E,  E,  E ],
+                [E,  E,  E,  E,  E ],
+            ]
+        },
+        // Level 9: 6x6
+        // Path: (2,0)->right->(2,1)->bottom->(3,1)->right->(3,2)->right->(3,3)->top->(2,3)->top->(1,3)->right->(1,4)->right->(1,5)->bottom->(2,5)->bottom->(3,5)
+        // (2,1) left+bottom=C2, (3,3) left+top=C3, (2,3) bottom+top=S1
+        // (1,3) bottom+right=C1, (1,5) left+bottom=C2, (3,5) top=C3
+        {
+            rows: 6, cols: 6,
+            source: [2, 0], load: [3, 5],
+            optimal: 10,
+            grid: [
+                [E,  E,  E,  E,  E,  E ],
+                [E,  E,  E,  C1, S0, C2],
+                [S0, C2, E,  S1, E,  S1],
+                [E,  C0, S0, C3, E,  C3],
+                [E,  E,  E,  E,  E,  E ],
+                [E,  E,  E,  E,  E,  E ],
+            ]
+        },
+        // Level 10: 6x6 grand finale - serpentine
+        // Row 0: right across -> (0,5) turn down
+        // Row 1: left across <- (1,0) turn down
+        // Row 2: right across -> (2,5) turn down
+        // Row 3: left across <- (3,0) turn down
+        // Row 4: right across -> (4,5) turn down
+        // Row 5: left across <- to (5,5)
+        // C0=top+right, C1=right+bottom, C2=bottom+left, C3=top+left
+        {
+            rows: 6, cols: 6,
+            source: [0, 0], load: [5, 5],
+            optimal: 14,
+            grid: [
+                [S0, S0, S0, S0, S0, C2],
+                [C1, S0, S0, S0, S0, C3],
+                [C0, S0, S0, S0, S0, C2],
+                [C1, S0, S0, S0, S0, C3],
+                [C0, S0, S0, S0, S0, C2],
+                [E,  E,  E,  E,  E,  C3],
+            ]
+        },
+    ];
 
-            ctx.restore();
-        }
+    // --- GAME STATE ---
+    let currentLevel = -1;
+    let grid = [];   // [{type, rotation, solveRot, row, col}]
+    let rows = 0, cols = 0;
+    let sourcePos, loadPos;
+    let moves = 0;
+    let solved = false;
+    let progress = loadProgress(); // { [levelIndex]: { stars, bestMoves } }
 
-        // Check Connections
-        function canConnect(component, rotation, connections) {
-            const myConnections = CONNECTIONS[component][rotation];
-            for (let i = 0; i < 4; i++) {
-                if (myConnections[i] && !connections[i]) return false;
-                if (!myConnections[i] && connections[i]) return false;
-            }
-            return true;
-        }
+    const TILE_SIZE = 64;
+    const PIPE_WIDTH = 5;
+    const HALF = TILE_SIZE / 2;
 
-        // Get connections from adjacent tiles
-        function getAdjacentConnections(row, col) {
-            const connections = [0, 0, 0, 0]; // top, right, bottom, left
+    // --- DOM ---
+    const $levelSelect = document.getElementById('levelSelect');
+    const $gameScreen = document.getElementById('gameScreen');
+    const $levelGrid = document.getElementById('levelGrid');
+    const $gridSvg = document.getElementById('gridSvg');
+    const $moveCount = document.getElementById('moveCount');
+    const $levelTitle = document.getElementById('levelTitle');
+    const $optimalHint = document.getElementById('optimalHint');
+    const $winModal = document.getElementById('winModal');
+    const $modalTitle = document.getElementById('modalTitle');
+    const $modalStars = document.getElementById('modalStars');
+    const $modalStats = document.getElementById('modalStats');
+    const $modalNext = document.getElementById('modalNext');
+    const $modalReplay = document.getElementById('modalReplay');
+    const $btnBack = document.getElementById('btnBack');
+    const $btnReset = document.getElementById('btnReset');
 
-            // Top
-            if (row > 0) {
-                const topTile = gameState.tiles[row - 1][col];
-                if (topTile && topTile.type !== 'empty' && topTile.type !== 'load' && topTile.type !== 'source') {
-                    connections[0] = CONNECTIONS[topTile.component][topTile.rotation][2];
-                }
-            } else if (row === 0 && gameState.tiles[row][col].type === 'load') {
-                connections[0] = 0;
+    // --- PROGRESS PERSISTENCE ---
+    function loadProgress() {
+        try {
+            return JSON.parse(localStorage.getItem('circuitConnect_progress') || '{}');
+        } catch(e) { return {}; }
+    }
+    function saveProgress() {
+        localStorage.setItem('circuitConnect_progress', JSON.stringify(progress));
+    }
+
+    function isLevelUnlocked(idx) {
+        if (idx === 0) return true;
+        return progress[idx - 1] && progress[idx - 1].stars > 0;
+    }
+
+    // --- SHOW SCREEN ---
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    // --- LEVEL SELECT ---
+    function renderLevelSelect() {
+        $levelGrid.innerHTML = '';
+        const gridLabels = ['3x3','3x3','4x4','4x4','5x5','5x5','5x5','5x5','6x6','6x6'];
+        LEVELS.forEach((lvl, i) => {
+            const card = document.createElement('div');
+            card.className = 'level-card' + (isLevelUnlocked(i) ? '' : ' locked');
+            const p = progress[i];
+            const stars = p ? p.stars : 0;
+            if (isLevelUnlocked(i)) {
+                card.innerHTML = `
+                    <div class="level-num">${i + 1}</div>
+                    <div class="level-label">Level ${i + 1}</div>
+                    <div class="grid-size">${gridLabels[i]}</div>
+                    <div class="stars-display">
+                        ${[1,2,3].map(s => `<span class="${s <= stars ? 'star-on' : 'star-off'}">\u2605</span>`).join('')}
+                    </div>
+                `;
+                card.addEventListener('click', () => startLevel(i));
             } else {
-                connections[0] = 0;
+                card.innerHTML = `
+                    <div class="lock-icon">\uD83D\uDD12</div>
+                    <div class="level-label">Level ${i + 1}</div>
+                    <div class="grid-size">${gridLabels[i]}</div>
+                    <div class="stars-display">
+                        ${[1,2,3].map(() => `<span class="star-off">\u2605</span>`).join('')}
+                    </div>
+                `;
             }
+            $levelGrid.appendChild(card);
+        });
+    }
 
-            // Right
-            if (col < gameState.gridSize - 1) {
-                const rightTile = gameState.tiles[row][col + 1];
-                if (rightTile && rightTile.type !== 'empty' && rightTile.type !== 'load' && rightTile.type !== 'source') {
-                    connections[1] = CONNECTIONS[rightTile.component][rightTile.rotation][3];
-                }
-            } else if (col === gameState.gridSize - 1 && gameState.tiles[row][col].type === 'load') {
-                connections[1] = 1;
-            } else {
-                connections[1] = 0;
-            }
+    // --- START LEVEL ---
+    function startLevel(idx) {
+        currentLevel = idx;
+        const lvl = LEVELS[idx];
+        rows = lvl.rows;
+        cols = lvl.cols;
+        sourcePos = lvl.source;
+        loadPos = lvl.load;
+        moves = 0;
+        solved = false;
 
-            // Bottom
-            if (row < gameState.gridSize - 1) {
-                const bottomTile = gameState.tiles[row + 1][col];
-                if (bottomTile && bottomTile.type !== 'empty' && bottomTile.type !== 'load' && bottomTile.type !== 'source') {
-                    connections[2] = CONNECTIONS[bottomTile.component][bottomTile.rotation][0];
-                }
-            } else {
-                connections[2] = 0;
-            }
-
-            // Left
-            if (col > 0) {
-                const leftTile = gameState.tiles[row][col - 1];
-                if (leftTile && leftTile.type !== 'empty' && leftTile.type !== 'load' && leftTile.type !== 'source') {
-                    connections[3] = CONNECTIONS[leftTile.component][leftTile.rotation][1];
-                }
-            } else if (col === 0 && gameState.tiles[row][col].type === 'source') {
-                connections[3] = 1;
-            } else {
-                connections[3] = 0;
-            }
-
-            return connections;
-        }
-
-        // Pathfinding - Check if circuit is complete
-        function isCircuitComplete() {
-            // Find source position
-            let sourcePos = null;
-            let loadPos = null;
-
-            for (let r = 0; r < gameState.gridSize; r++) {
-                for (let c = 0; c < gameState.gridSize; c++) {
-                    if (gameState.tiles[r][c].type === 'source') sourcePos = { r, c };
-                    if (gameState.tiles[r][c].type === 'load') loadPos = { r, c };
-                }
-            }
-
-            if (!sourcePos || !loadPos) return false;
-
-            // BFS from source
-            const visited = new Set();
-            const queue = [sourcePos];
-            visited.add(`${sourcePos.r},${sourcePos.c}`);
-
-            while (queue.length > 0) {
-                const { r, c } = queue.shift();
-                const tile = gameState.tiles[r][c];
-
-                if (r === loadPos.r && c === loadPos.c) {
-                    return true; // Found path to load
-                }
-
-                if (tile.type === 'source') {
-                    // Source connects to the right
-                    const right = c + 1;
-                    if (right < gameState.gridSize) {
-                        const rightTile = gameState.tiles[r][right];
-                        if (rightTile && rightTile.type !== 'empty') {
-                            const key = `${r},${right}`;
-                            if (!visited.has(key)) {
-                                const connections = CONNECTIONS[rightTile.component][rightTile.rotation];
-                                if (connections[3]) {
-                                    // Left connection available
-                                    visited.add(key);
-                                    queue.push({ r, c: right });
-                                }
-                            }
-                        }
-                    }
-                } else if (tile.type === 'load') {
-                    // Load connects from the left
-                    const left = c - 1;
-                    if (left >= 0) {
-                        const leftTile = gameState.tiles[r][left];
-                        if (leftTile && leftTile.type !== 'empty' && leftTile.type !== 'source') {
-                            const key = `${r},${left}`;
-                            if (!visited.has(key)) {
-                                const connections = CONNECTIONS[leftTile.component][leftTile.rotation];
-                                if (connections[1]) {
-                                    // Right connection available
-                                    visited.add(key);
-                                    queue.push({ r, c: left });
-                                }
-                            }
-                        }
-                    }
-                } else if (tile.component) {
-                    const connections = CONNECTIONS[tile.component][tile.rotation];
-
-                    // Check all directions
-                    if (connections[0] && r > 0) {
-                        // Top
-                        const topTile = gameState.tiles[r - 1][c];
-                        if (topTile && topTile.type !== 'empty') {
-                            const key = `${r - 1},${c}`;
-                            if (!visited.has(key)) {
-                                if (topTile.type === 'source' || topTile.type === 'load') {
-                                    visited.add(key);
-                                    queue.push({ r: r - 1, c });
-                                } else {
-                                    const topConnections = CONNECTIONS[topTile.component][topTile.rotation];
-                                    if (topConnections[2]) {
-                                        visited.add(key);
-                                        queue.push({ r: r - 1, c });
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (connections[1] && c < gameState.gridSize - 1) {
-                        // Right
-                        const rightTile = gameState.tiles[r][c + 1];
-                        if (rightTile && rightTile.type !== 'empty') {
-                            const key = `${r},${c + 1}`;
-                            if (!visited.has(key)) {
-                                if (rightTile.type === 'load') {
-                                    visited.add(key);
-                                    queue.push({ r, c: c + 1 });
-                                } else if (rightTile.type !== 'source') {
-                                    const rightConnections = CONNECTIONS[rightTile.component][rightTile.rotation];
-                                    if (rightConnections[3]) {
-                                        visited.add(key);
-                                        queue.push({ r, c: c + 1 });
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (connections[2] && r < gameState.gridSize - 1) {
-                        // Bottom
-                        const bottomTile = gameState.tiles[r + 1][c];
-                        if (bottomTile && bottomTile.type !== 'empty') {
-                            const key = `${r + 1},${c}`;
-                            if (!visited.has(key)) {
-                                if (bottomTile.type === 'source' || bottomTile.type === 'load') {
-                                    visited.add(key);
-                                    queue.push({ r: r + 1, c });
-                                } else {
-                                    const bottomConnections = CONNECTIONS[bottomTile.component][bottomTile.rotation];
-                                    if (bottomConnections[0]) {
-                                        visited.add(key);
-                                        queue.push({ r: r + 1, c });
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (connections[3] && c > 0) {
-                        // Left
-                        const leftTile = gameState.tiles[r][c - 1];
-                        if (leftTile && leftTile.type !== 'empty') {
-                            const key = `${r},${c - 1}`;
-                            if (!visited.has(key)) {
-                                if (leftTile.type === 'source') {
-                                    visited.add(key);
-                                    queue.push({ r, c: c - 1 });
-                                } else if (leftTile.type !== 'load') {
-                                    const leftConnections = CONNECTIONS[leftTile.component][leftTile.rotation];
-                                    if (leftConnections[1]) {
-                                        visited.add(key);
-                                        queue.push({ r, c: c - 1 });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        // Render game board
-        function renderGameBoard() {
-            const boardElement = document.getElementById('gameBoard');
-            boardElement.innerHTML = '<canvas id="connectionCanvas" class="connection-canvas"></canvas>';
-
-            const gridSize = gameState.gridSize;
-            boardElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            boardElement.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
-
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) {
-                    const tile = gameState.tiles[r][c];
-                    const tileElement = document.createElement('div');
-                    tileElement.className = `tile ${tile.type}`;
-                    tileElement.dataset.row = r;
-                    tileElement.dataset.col = c;
-                    tileElement.id = `tile-${r}-${c}`;
-
-                    if (tile.type === 'source') {
-                        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                        svg.setAttribute('viewBox', '0 0 50 50');
-                        svg.innerHTML = '<circle cx="25" cy="25" r="8" fill="none" stroke="#10b981" stroke-width="2"/><text x="25" y="28" font-size="20" text-anchor="middle" fill="#10b981">+</text>';
-                        tileElement.appendChild(svg);
-                    } else if (tile.type === 'load') {
-                        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                        svg.setAttribute('viewBox', '0 0 50 50');
-                        svg.innerHTML = '<path d="M 25 10 L 30 20 L 28 20 L 28 38 L 22 38 L 22 20 L 20 20 Z" fill="none" stroke="#64748b" stroke-width="2"/><circle cx="25" cy="32" r="2" fill="#64748b"/>';
-                        tileElement.appendChild(svg);
-                    } else if (tile.component) {
-                        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                        svg.setAttribute('viewBox', '0 0 50 50');
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = 50;
-                        canvas.height = 50;
-                        drawComponent(ctx, tile.component, tile.rotation, 0, 0, 50);
-
-                        svg.style.background = `url('data:image/png;base64,${canvas.toDataURL().split(',')[1]}')`;
-                        svg.style.backgroundSize = '100% 100%';
-                        svg.style.backgroundColor = 'transparent';
-
-                        // Draw using SVG instead
-                        svg.innerHTML = '';
-                        drawSVGComponent(svg, tile.component, tile.rotation);
-
-                        tileElement.appendChild(svg);
-                    }
-
-                    tileElement.addEventListener('click', () => rotateTile(r, c));
-                    boardElement.appendChild(tileElement);
-                }
-            }
-
-            updateBoardVisuals();
-        }
-
-        function drawSVGComponent(svg, type, rotation) {
-            const transform = `rotate(${rotation * 90} 25 25)`;
-
-            switch (type) {
-                case COMPONENTS.STRAIGHT:
-                    svg.innerHTML = `<line x1="25" y1="5" x2="25" y2="45" stroke="#94a3b8" stroke-width="2" transform-origin="25 25" transform="${transform}"/>`;
-                    break;
-                case COMPONENTS.CORNER:
-                    svg.innerHTML = `<path d="M 25 5 L 25 25 L 45 25" stroke="#94a3b8" stroke-width="2" fill="none" transform-origin="25 25" transform="${transform}"/>`;
-                    break;
-                case COMPONENTS.TJUNCTION:
-                    svg.innerHTML = `<path d="M 25 5 L 25 45 M 5 25 L 45 25" stroke="#94a3b8" stroke-width="2" fill="none" transform-origin="25 25" transform="${transform}"/>`;
-                    break;
-                case COMPONENTS.CROSS:
-                    svg.innerHTML = `<path d="M 25 5 L 25 45 M 5 25 L 45 25" stroke="#94a3b8" stroke-width="2" fill="none" transform-origin="25 25" transform="${transform}"/>`;
-                    break;
-                case COMPONENTS.RESISTOR:
-                    svg.innerHTML = `<path d="M 25 5 L 25 15 L 28 18 L 22 22 L 28 26 L 22 30 L 25 35 L 25 45" stroke="#94a3b8" stroke-width="2" fill="none" transform-origin="25 25" transform="${transform}"/>`;
-                    break;
-                case COMPONENTS.SWITCH:
-                    svg.innerHTML = `<path d="M 25 5 L 25 22 M 25 28 L 25 45 M 23 25 C 23 26.1 23.9 27 25 27 C 26.1 27 27 26.1 27 25 C 27 23.9 26.1 23 25 23 C 23.9 23 23 23.9 23 25" stroke="#94a3b8" stroke-width="2" fill="none" transform-origin="25 25" transform="${transform}"/>`;
-                    break;
-                case COMPONENTS.FUSE:
-                    svg.innerHTML = `<path d="M 25 5 L 25 15 M 25 35 L 25 45 M 23 20 L 27 20 L 27 30 L 23 30 Z" stroke="#94a3b8" stroke-width="2" fill="none" transform-origin="25 25" transform="${transform}"/>`;
-                    break;
+        // Build grid - rotation is the tile's current visual rotation (0-3)
+        // solveRot is the rotation needed to solve the puzzle
+        grid = [];
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const def = lvl.grid[r][c];
+                grid.push({
+                    type: def.type,
+                    solveRot: def.solveRot,
+                    rotation: def.solveRot, // start at solved, then randomize
+                    row: r,
+                    col: c,
+                });
             }
         }
 
-        // Rotate tile
-        function rotateTile(row, col) {
-            const tile = gameState.tiles[row][col];
-            if (tile.type === 'source' || tile.type === 'load' || tile.type === 'empty' || !tile.component) return;
+        randomizeRotations();
+        $moveCount.textContent = '0';
+        $levelTitle.textContent = 'Level ' + (idx + 1);
+        $optimalHint.textContent = '\u2B50 ' + lvl.optimal + ' moves for 3 stars';
+        showScreen('gameScreen');
+        renderGrid();
+        updateConnectedState();
+    }
 
-            const tileElement = document.getElementById(`tile-${row}-${col}`);
-            tileElement.classList.add('rotating');
+    function randomizeRotations() {
+        // Randomize each non-empty, non-cross tile to a random absolute rotation
+        // ensuring puzzle isn't already solved
+        let attempts = 0;
+        do {
+            grid.forEach(tile => {
+                if (tile.type.id === 'empty' || tile.type.id === 'cross') {
+                    tile.rotation = tile.solveRot; // cross/empty stay fixed
+                    return;
+                }
+                // For straight tiles, only 2 unique orientations
+                const numDistinct = tile.type.id === 'straight' ? 2 : 4;
+                tile.rotation = Math.floor(Math.random() * numDistinct);
+                // For straights, rotation is 0 or 1 (horiz or vert)
+                // For others, rotation is 0-3
+            });
+            attempts++;
+        } while (checkSolved() && attempts < 100);
 
-            tile.rotation = (tile.rotation + 1) % 4;
+        // If somehow still solved, just offset one rotateable tile
+        if (checkSolved()) {
+            for (const tile of grid) {
+                if (tile.type.id !== 'empty' && tile.type.id !== 'cross') {
+                    tile.rotation = (tile.rotation + 1) % 4;
+                    break;
+                }
+            }
+        }
+    }
 
+    // --- GET TILE ---
+    function getTile(r, c) {
+        if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
+        return grid[r * cols + c];
+    }
+
+    // --- GET ACTUAL CONNECTIONS ---
+    function getConns(tile) {
+        return rotateConns(tile.type.conns, tile.rotation);
+    }
+
+    // --- CHECK SOLVED (BFS from source to load) ---
+    function checkSolved() {
+        const path = findPath();
+        return path !== null;
+    }
+
+    function findPath() {
+        const srcTile = getTile(sourcePos[0], sourcePos[1]);
+        const loadTile = getTile(loadPos[0], loadPos[1]);
+        if (!srcTile || !loadTile) return null;
+
+        const visited = new Set();
+        const parent = {};
+        const queue = [];
+        const srcKey = sourcePos[0] + ',' + sourcePos[1];
+        const loadKey = loadPos[0] + ',' + loadPos[1];
+
+        visited.add(srcKey);
+        queue.push(srcTile);
+
+        while (queue.length > 0) {
+            const tile = queue.shift();
+            const key = tile.row + ',' + tile.col;
+            const conns = getConns(tile);
+
+            for (let dir = 0; dir < 4; dir++) {
+                if (!conns[dir]) continue;
+                const nr = tile.row + DIR_DR[dir];
+                const nc = tile.col + DIR_DC[dir];
+                const neighbor = getTile(nr, nc);
+                if (!neighbor) continue;
+                const nKey = nr + ',' + nc;
+                if (visited.has(nKey)) continue;
+
+                // Check neighbor connects back
+                const nConns = getConns(neighbor);
+                if (!nConns[OPPOSITE[dir]]) continue;
+
+                visited.add(nKey);
+                parent[nKey] = key;
+                queue.push(neighbor);
+
+                if (nKey === loadKey) {
+                    // Reconstruct path
+                    const path = [];
+                    let cur = loadKey;
+                    while (cur) {
+                        const [pr, pc] = cur.split(',').map(Number);
+                        path.unshift({ row: pr, col: pc });
+                        cur = parent[cur];
+                    }
+                    return path;
+                }
+            }
+        }
+        return null;
+    }
+
+    // --- RENDER GRID ---
+    function renderGrid() {
+        const svgW = cols * TILE_SIZE;
+        const svgH = rows * TILE_SIZE;
+        $gridSvg.setAttribute('width', svgW);
+        $gridSvg.setAttribute('height', svgH);
+        $gridSvg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+        $gridSvg.innerHTML = '';
+
+        // Defs for glow filters
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `
+            <filter id="glowAmber" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feFlood flood-color="#f59e0b" flood-opacity="0.6"/>
+                <feComposite in2="blur" operator="in"/>
+                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glowGreen" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feFlood flood-color="#10b981" flood-opacity="0.6"/>
+                <feComposite in2="blur" operator="in"/>
+                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+        `;
+        $gridSvg.appendChild(defs);
+
+        grid.forEach((tile, idx) => {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'tile-group' +
+                (tile.type.id === 'empty' ? ' empty' : '') +
+                (tile.row === sourcePos[0] && tile.col === sourcePos[1] ? ' source' : '') +
+                (tile.row === loadPos[0] && tile.col === loadPos[1] ? ' load' : ''));
+            g.setAttribute('data-idx', idx);
+            g.setAttribute('transform', `translate(${tile.col * TILE_SIZE}, ${tile.row * TILE_SIZE})`);
+
+            // Background rect
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('class', 'tile-bg');
+            rect.setAttribute('x', 2); rect.setAttribute('y', 2);
+            rect.setAttribute('width', TILE_SIZE - 4); rect.setAttribute('height', TILE_SIZE - 4);
+            g.appendChild(rect);
+
+            if (tile.type.id !== 'empty') {
+                // Pipe container (for rotation animation)
+                const pipeG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                pipeG.setAttribute('class', 'pipe-container');
+                pipeG.setAttribute('transform', `rotate(${tile.rotation * 90}, ${HALF}, ${HALF})`);
+
+                drawPipe(pipeG, tile.type);
+                g.appendChild(pipeG);
+
+                // Source/load icons
+                if (tile.row === sourcePos[0] && tile.col === sourcePos[1]) {
+                    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    txt.setAttribute('class', 'source-icon');
+                    txt.setAttribute('x', HALF); txt.setAttribute('y', HALF);
+                    txt.setAttribute('font-size', '11');
+                    txt.textContent = '\u26A1';
+                    g.appendChild(txt);
+                }
+                if (tile.row === loadPos[0] && tile.col === loadPos[1]) {
+                    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    txt.setAttribute('class', 'load-icon');
+                    txt.setAttribute('x', HALF); txt.setAttribute('y', HALF);
+                    txt.setAttribute('font-size', '11');
+                    txt.textContent = '\uD83D\uDCA1';
+                    g.appendChild(txt);
+                }
+
+                // Click handler
+                g.addEventListener('click', () => onTileClick(idx));
+            }
+
+            $gridSvg.appendChild(g);
+        });
+    }
+
+    function drawPipe(parent, type) {
+        // Draw pipes based on base orientation (rotation 0)
+        // Base connections: type.conns [top, right, bottom, left]
+        // We draw lines from center to edges where connections exist
+        const lines = [];
+        const conns = type.conns;
+
+        const cx = HALF, cy = HALF;
+
+        if (type.id === 'cross') {
+            // Draw + shape
+            addLine(parent, cx, 2, cx, TILE_SIZE - 2);  // vertical full
+            addLine(parent, 2, cy, TILE_SIZE - 2, cy);  // horizontal full
+            addDot(parent, cx, cy);
+            return;
+        }
+
+        if (conns[0]) addLine(parent, cx, cy, cx, 2);         // top
+        if (conns[1]) addLine(parent, cx, cy, TILE_SIZE - 2, cy); // right
+        if (conns[2]) addLine(parent, cx, cy, cx, TILE_SIZE - 2); // bottom
+        if (conns[3]) addLine(parent, cx, cy, 2, cy);         // left
+
+        // Center dot for junctions
+        if (type.id === 'tee' || type.id === 'corner') {
+            addDot(parent, cx, cy);
+        }
+    }
+
+    function addLine(parent, x1, y1, x2, y2) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('class', 'pipe-line');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        parent.appendChild(line);
+    }
+
+    function addDot(parent, cx, cy) {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('class', 'pipe-dot');
+        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy);
+        circle.setAttribute('r', 4);
+        parent.appendChild(circle);
+    }
+
+    // --- TILE CLICK ---
+    function onTileClick(idx) {
+        if (solved) return;
+        const tile = grid[idx];
+        if (tile.type.id === 'empty' || tile.type.id === 'cross') return;
+
+        // Increment rotation (always cycle through 4 for smooth visual rotation)
+        tile.rotation = (tile.rotation + 1) % 4;
+        moves++;
+        $moveCount.textContent = moves;
+
+        // Animate rotation
+        const g = $gridSvg.querySelector(`[data-idx="${idx}"]`);
+        const pipeG = g.querySelector('.pipe-container');
+        pipeG.setAttribute('transform', `rotate(${tile.rotation * 90}, ${HALF}, ${HALF})`);
+
+        // Check connectivity for visual feedback
+        updateConnectedState();
+
+        // Check win
+        if (checkSolved()) {
+            solved = true;
+            animateWin();
+        }
+    }
+
+    function updateConnectedState() {
+        // BFS from source, mark connected tiles
+        const connected = new Set();
+        const srcTile = getTile(sourcePos[0], sourcePos[1]);
+        if (!srcTile) return;
+
+        const queue = [srcTile];
+        connected.add(srcTile.row + ',' + srcTile.col);
+
+        while (queue.length > 0) {
+            const tile = queue.shift();
+            const conns = getConns(tile);
+            for (let dir = 0; dir < 4; dir++) {
+                if (!conns[dir]) continue;
+                const nr = tile.row + DIR_DR[dir];
+                const nc = tile.col + DIR_DC[dir];
+                const neighbor = getTile(nr, nc);
+                if (!neighbor) continue;
+                const nKey = nr + ',' + nc;
+                if (connected.has(nKey)) continue;
+                const nConns = getConns(neighbor);
+                if (!nConns[OPPOSITE[dir]]) continue;
+                connected.add(nKey);
+                queue.push(neighbor);
+            }
+        }
+
+        // Update classes
+        $gridSvg.querySelectorAll('.tile-group').forEach(g => {
+            const idx = parseInt(g.getAttribute('data-idx'));
+            const tile = grid[idx];
+            const key = tile.row + ',' + tile.col;
+            g.classList.toggle('connected', connected.has(key) && tile.type.id !== 'empty');
+        });
+    }
+
+    // --- WIN ANIMATION ---
+    function animateWin() {
+        const path = findPath();
+        if (!path) return;
+
+        // Sequential glow animation along path
+        path.forEach((pos, i) => {
             setTimeout(() => {
-                tileElement.classList.remove('rotating');
-                renderGameBoard();
-                checkWinCondition();
-            }, 150);
-        }
-
-        // Update board visuals
-        function updateBoardVisuals() {
-            for (let r = 0; r < gameState.gridSize; r++) {
-                for (let c = 0; c < gameState.gridSize; c++) {
-                    const tile = gameState.tiles[r][c];
-                    const tileElement = document.getElementById(`tile-${r}-${c}`);
-
-                    if (tile.type === 'empty' || !tile.component) continue;
-
-                    // Check if tile is part of the circuit
-                    if (tile.type !== 'source' && tile.type !== 'load') {
-                        const connections = getAdjacentConnections(r, c);
-                        const myConnections = CONNECTIONS[tile.component][tile.rotation];
-
-                        let isConnected = true;
-                        for (let i = 0; i < 4; i++) {
-                            if (myConnections[i] !== connections[i]) {
-                                isConnected = false;
-                                break;
-                            }
-                        }
-
-                        if (isConnected) {
-                            tileElement.classList.add('connected');
-                        } else {
-                            tileElement.classList.add('disconnected');
-                        }
+                const tile = getTile(pos.row, pos.col);
+                const idx = pos.row * cols + pos.col;
+                const g = $gridSvg.querySelector(`[data-idx="${idx}"]`);
+                if (g) {
+                    const pipeG = g.querySelector('.pipe-container');
+                    if (pipeG) {
+                        const isSource = pos.row === sourcePos[0] && pos.col === sourcePos[1];
+                        pipeG.setAttribute('filter', isSource ? 'url(#glowGreen)' : 'url(#glowAmber)');
                     }
                 }
-            }
+            }, i * 120);
+        });
+
+        // Show modal after animation completes
+        setTimeout(() => showWinModal(), path.length * 120 + 400);
+    }
+
+    // --- WIN MODAL ---
+    function showWinModal() {
+        const lvl = LEVELS[currentLevel];
+        const optimal = lvl.optimal;
+        let stars = 1;
+        if (moves <= optimal) stars = 3;
+        else if (moves <= Math.floor(optimal * 1.5)) stars = 2;
+
+        // Save progress
+        const prev = progress[currentLevel];
+        if (!prev || stars > prev.stars || (stars === prev.stars && moves < prev.bestMoves)) {
+            progress[currentLevel] = { stars: Math.max(stars, prev ? prev.stars : 0), bestMoves: moves };
+        }
+        saveProgress();
+
+        $modalTitle.textContent = stars === 3 ? 'Perfect!' : stars === 2 ? 'Great Job!' : 'Level Complete!';
+        $modalStars.innerHTML = [1,2,3].map(s =>
+            `<span class="${s <= stars ? 'star-on' : 'star-off'}">\u2605</span>`
+        ).join('');
+        $modalStats.innerHTML = `Moves: <strong style="color:var(--amber)">${moves}</strong><br>` +
+            `Optimal: <strong>${optimal}</strong> moves` +
+            (stars < 3 ? `<br><span style="font-size:0.8rem;color:var(--text-muted)">Try again for ${optimal} moves!</span>` : '');
+
+        // Next button
+        if (currentLevel < LEVELS.length - 1) {
+            $modalNext.textContent = 'Next Level';
+            $modalNext.style.display = '';
+        } else {
+            $modalNext.textContent = 'All Complete!';
+            $modalNext.style.display = '';
         }
 
-        // Check win condition
-        function checkWinCondition() {
-            if (isCircuitComplete()) {
-                if (!gameState.isConnected) {
-                    gameState.isConnected = true;
-                    celebrateWin();
-                }
-            } else {
-                gameState.isConnected = false;
-            }
+        $winModal.classList.add('active');
+    }
+
+    function hideModal() {
+        $winModal.classList.remove('active');
+    }
+
+    // --- EVENT LISTENERS ---
+    $btnBack.addEventListener('click', () => {
+        showScreen('levelSelect');
+        renderLevelSelect();
+    });
+
+    $btnReset.addEventListener('click', () => {
+        if (!solved) {
+            startLevel(currentLevel);
+        } else {
+            startLevel(currentLevel);
         }
+    });
 
-        // Celebrate win
-        function celebrateWin() {
-            // Update load tile
-            for (let r = 0; r < gameState.gridSize; r++) {
-                for (let c = 0; c < gameState.gridSize; c++) {
-                    if (gameState.tiles[r][c].type === 'load') {
-                        document.getElementById(`tile-${r}-${c}`).classList.add('active');
-                    }
-                }
-            }
+    $modalReplay.addEventListener('click', () => {
+        hideModal();
+        startLevel(currentLevel);
+    });
 
-            // Particles
-            for (let i = 0; i < 20; i++) {
-                createParticle();
-            }
-
-            // Show completion modal after a short delay
-            setTimeout(() => {
-                showCompletionModal();
-            }, 800);
+    $modalNext.addEventListener('click', () => {
+        hideModal();
+        if (currentLevel < LEVELS.length - 1) {
+            startLevel(currentLevel + 1);
+        } else {
+            showScreen('levelSelect');
+            renderLevelSelect();
         }
+    });
 
-        function createParticle() {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * window.innerWidth + 'px';
-            particle.style.top = Math.random() * window.innerHeight + 'px';
-            particle.textContent = '✨';
-            particle.style.fontSize = Math.random() * 20 + 10 + 'px';
-            particle.style.animation = `fall ${Math.random() * 2 + 1}s ease-in forwards`;
-            document.body.appendChild(particle);
+    // Close modal on overlay click
+    $winModal.addEventListener('click', (e) => {
+        if (e.target === $winModal) hideModal();
+    });
 
-            setTimeout(() => particle.remove(), 3000);
-        }
+    // --- INIT ---
+    renderLevelSelect();
 
-        // Show completion modal
-        function showCompletionModal() {
-            const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
+})();
+</script>
 
-            let stars = 3;
-            if (elapsed > 120) stars = 2;
-            if (elapsed > 300) stars = 1;
-
-            document.getElementById('finalTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-            const starsDisplay = document.getElementById('starsDisplay');
-            starsDisplay.innerHTML = '';
-            for (let i = 0; i < stars; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.textContent = '⭐';
-                starsDisplay.appendChild(star);
-            }
-
-            // Save progress
-            if (!gameState.levelProgress[gameState.currentLevel]) {
-                gameState.levelProgress[gameState.currentLevel] = { stars, time: elapsed };
-            } else if (stars > gameState.levelProgress[gameState.currentLevel].stars) {
-                gameState.levelProgress[gameState.currentLevel].stars = stars;
-                gameState.levelProgress[gameState.currentLevel].time = elapsed;
-            }
-            localStorage.setItem('circuitConnectProgress', JSON.stringify(gameState.levelProgress));
-
-            document.getElementById('completionModal').classList.add('show');
-        }
-
-        // Load level
-        function loadLevel(levelNum) {
-            gameState.currentLevel = levelNum;
-            const level = LEVELS[levelNum - 1];
-
-            gameState.gridSize = level.gridSize;
-            gameState.tiles = [];
-            gameState.isConnected = false;
-            gameState.hintUsed = false;
-
-            for (let r = 0; r < level.gridSize; r++) {
-                gameState.tiles[r] = [];
-                for (let c = 0; c < level.gridSize; c++) {
-                    gameState.tiles[r][c] = {
-                        type: level.tiles[r][c],
-                        component: level.components[r][c],
-                        rotation: level.rotations[r][c],
-                    };
-                }
-            }
-
-            // Shuffle component rotations
-            for (let r = 0; r < level.gridSize; r++) {
-                for (let c = 0; c < level.gridSize; c++) {
-                    const tile = gameState.tiles[r][c];
-                    if (tile.component && (tile.type !== 'source' && tile.type !== 'load')) {
-                        tile.rotation = Math.floor(Math.random() * 4);
-                    }
-                }
-            }
-
-            document.getElementById('levelSelectScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'flex';
-            document.getElementById('levelNumber').textContent = levelNum;
-
-            gameState.startTime = Date.now();
-            startTimer();
-            renderGameBoard();
-        }
-
-        // Timer
-        function startTimer() {
-            clearInterval(gameState.timerInterval);
-            gameState.timerInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
-                const minutes = Math.floor(elapsed / 60);
-                const seconds = elapsed % 60;
-                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            }, 100);
-        }
-
-        // Reset puzzle
-        function resetPuzzle() {
-            loadLevel(gameState.currentLevel);
-        }
-
-        // Show hint
-        function showHint() {
-            if (gameState.hintUsed) {
-                alert('You have already used your hint for this level!');
-                return;
-            }
-
-            gameState.hintUsed = true;
-
-            // Find a random rotatable tile
-            const rotatableTiles = [];
-            for (let r = 0; r < gameState.gridSize; r++) {
-                for (let c = 0; c < gameState.gridSize; c++) {
-                    const tile = gameState.tiles[r][c];
-                    if (tile.component && tile.type !== 'source' && tile.type !== 'load') {
-                        rotatableTiles.push({ r, c });
-                    }
-                }
-            }
-
-            if (rotatableTiles.length > 0) {
-                const hint = rotatableTiles[Math.floor(Math.random() * rotatableTiles.length)];
-                const tileElement = document.getElementById(`tile-${hint.r}-${hint.c}`);
-                tileElement.classList.add('hint');
-
-                setTimeout(() => {
-                    tileElement.classList.remove('hint');
-                }, 3000);
-            }
-        }
-
-        // Navigate functions
-        function backToLevels() {
-            clearInterval(gameState.timerInterval);
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('levelSelectScreen').style.display = 'flex';
-            document.getElementById('completionModal').classList.remove('show');
-        }
-
-        function nextLevel() {
-            if (gameState.currentLevel < LEVELS.length) {
-                loadLevel(gameState.currentLevel + 1);
-                document.getElementById('completionModal').classList.remove('show');
-            } else {
-                backToLevels();
-                alert('🎉 You have completed all levels! Congratulations!');
-            }
-        }
-
-        function goBack() {
-            window.location.href = '../games.html';
-        }
-
-        // Initialize
-        function init() {
-            const saved = localStorage.getItem('circuitConnectProgress');
-            if (saved) {
-                gameState.levelProgress = JSON.parse(saved);
-            }
-
-            // Render level select
-            const levelGrid = document.getElementById('levelGrid');
-            for (let i = 1; i <= LEVELS.length; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'level-btn';
-                btn.textContent = i;
-
-                if (i === 1 || gameState.levelProgress[i - 1]) {
-                    btn.onclick = () => loadLevel(i);
-                } else {
-                    btn.classList.add('locked');
-                }
-
-                if (gameState.levelProgress[i]) {
-                    btn.classList.add('completed');
-                    const stars = document.createElement('div');
-                    stars.className = 'stars';
-                    stars.textContent = '⭐'.repeat(gameState.levelProgress[i].stars || 1);
-                    btn.appendChild(stars);
-                }
-
-                levelGrid.appendChild(btn);
-            }
-
-            // Add fall animation
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes fall {
-                    to {
-                        transform: translateY(100vh) rotate(360deg);
-                        opacity: 0;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        init();
-    </script>
+<!-- Disclaimer Overlay -->
 <style>
   .sparty-disclaimer-overlay {
     display: none;
