@@ -263,10 +263,6 @@
     color: #f59e0b;
     background: rgba(245,158,11,0.08);
 }
-.sparky-nav .sn-link.sn-admin {
-    display: none;
-    color: #8b949e;
-}
 .sparky-nav .sn-link.sn-logout {
     color: #f85149;
 }
@@ -367,7 +363,7 @@
     <a href="index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
     <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
     <div class="sn-links">
-        <a href="dashboard.html" class="sn-link">Dashboard</a><a href="tools.html" class="sn-link">Tools</a><a href="games.html" class="sn-link">Games</a><a href="worksheets.html" class="sn-link">Worksheets</a><a href="achievements.html" class="sn-link">Achievements</a><a href="formula-sheet.html" class="sn-link">Formulas</a><a href="admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="dashboard.html" class="sn-link">Dashboard</a><a href="modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="tools.html" class="sn-link">Tools</a><a href="worksheets.html" class="sn-link">Worksheets</a><a href="achievements.html" class="sn-link">Achievements</a><a href="formula-sheet.html" class="sn-link">Formulas</a><a href="admin.html" class="sn-link">Admin</a>
         <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
     </div>
 </nav>
@@ -811,7 +807,6 @@
 function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
 document.addEventListener('DOMContentLoaded',function(){
     try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
-    if(a.role==='owner'){document.querySelectorAll('.sn-admin').forEach(function(el){el.style.display='';});}}catch(e){}
 });
 </script>
 </body>

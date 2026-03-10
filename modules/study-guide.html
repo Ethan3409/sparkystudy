@@ -720,10 +720,6 @@
     color: #f59e0b;
     background: rgba(245,158,11,0.08);
 }
-.sparky-nav .sn-link.sn-admin {
-    display: none;
-    color: #8b949e;
-}
 .sparky-nav .sn-link.sn-logout {
     color: #f85149;
 }
@@ -783,7 +779,7 @@
     <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
     <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
     <div class="sn-links">
-        <a href="../dashboard.html" class="sn-link sn-active">Dashboard</a><a href="../tools.html" class="sn-link">Tools</a><a href="../games.html" class="sn-link">Games</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="../dashboard.html" class="sn-link sn-active">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link">Admin</a>
         <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
     </div>
 </nav>
@@ -1170,7 +1166,7 @@
                 });
             }
 
-            // Recommended Tools, Worksheets & Games
+            // Recommended Tools & Worksheets
             html += generateRecommendations(weakAreas);
 
             // Strong Areas
@@ -1374,10 +1370,6 @@
                 worksheets: [
                     { name: 'Reactance Worksheet', href: '../worksheets/reactance.html', desc: 'Practice XL and XC calculations' },
                     { name: 'Power Worksheet', href: '../worksheets/power.html', desc: 'Power factor and triangle problems' }
-                ],
-                games: [
-                    { name: 'Circuit Connect', href: '../games/circuit-connect.html', desc: 'Rotate tiles to complete AC circuits' },
-                    { name: 'Power Match', href: '../games/power-match.html', desc: 'Match AC formulas and values' }
                 ]
             },
             'Properties of L&C': {
@@ -1389,10 +1381,6 @@
                 worksheets: [
                     { name: 'Time Constant Worksheet', href: '../worksheets/time-constant.html', desc: 'RC and RL time constant problems' },
                     { name: 'Reactance Worksheet', href: '../worksheets/reactance.html', desc: 'Inductive and capacitive reactance' }
-                ],
-                games: [
-                    { name: 'Power Match', href: '../games/power-match.html', desc: 'Match inductor and capacitor properties' },
-                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Spot L&C circuit issues' }
                 ]
             },
             'L&C in Circuits': {
@@ -1404,10 +1392,6 @@
                 worksheets: [
                     { name: 'Reactance Worksheet', href: '../worksheets/reactance.html', desc: 'XL, XC, and resonance problems' },
                     { name: "Ohm's Law Worksheet", href: '../worksheets/ohms-law.html', desc: 'V=IR with reactive components' }
-                ],
-                games: [
-                    { name: 'Circuit Connect', href: '../games/circuit-connect.html', desc: 'Build complete L&C circuits' },
-                    { name: 'Wire Runner', href: '../games/wire-runner.html', desc: 'Navigate through circuit challenges' }
                 ]
             },
             'Relays & Contactors': {
@@ -1419,10 +1403,6 @@
                 worksheets: [
                     { name: "Ohm's Law Worksheet", href: '../worksheets/ohms-law.html', desc: 'Relay coil current problems' },
                     { name: 'Power Worksheet', href: '../worksheets/power.html', desc: 'Contactor power calculations' }
-                ],
-                games: [
-                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Find relay circuit faults' },
-                    { name: 'Circuit Connect', href: '../games/circuit-connect.html', desc: 'Wire up control circuits' }
                 ]
             },
             'Timers & Smart Relays': {
@@ -1433,10 +1413,6 @@
                 worksheets: [
                     { name: 'Time Constant Worksheet', href: '../worksheets/time-constant.html', desc: 'Timer delay calculations' },
                     { name: "Ohm's Law Worksheet", href: '../worksheets/ohms-law.html', desc: 'Timer circuit problems' }
-                ],
-                games: [
-                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Find timer circuit errors' },
-                    { name: 'Conduit Tetris', href: '../games/conduit-tetris.html', desc: 'CEC-based stacking game' }
                 ]
             },
             'Pilot & Overcurrent Devices': {
@@ -1448,10 +1424,6 @@
                 worksheets: [
                     { name: 'Voltage Drop Worksheet', href: '../worksheets/voltage-drop.html', desc: 'Conductor and protection sizing' },
                     { name: 'Power Worksheet', href: '../worksheets/power.html', desc: 'Load and protection calculations' }
-                ],
-                games: [
-                    { name: 'Fault Finder', href: '../games/fault-finder.html', desc: 'Spot CEC code violations' },
-                    { name: 'Conduit Tetris', href: '../games/conduit-tetris.html', desc: 'CEC conduit fill rules' }
                 ]
             }
         };
@@ -1461,7 +1433,7 @@
 
             let html = `<div class="recommendations" style="margin:2rem 0;padding:2rem;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-lg);">
                 <h2 style="font-size:1.5rem;margin-bottom:1.5rem;color:var(--accent);">🎯 Recommended For You</h2>
-                <p style="color:var(--muted);margin-bottom:1.5rem;">Based on your diagnostic results, here are the tools, worksheets, and games that will help you improve in your weak areas:</p>`;
+                <p style="color:var(--muted);margin-bottom:1.5rem;">Based on your diagnostic results, here are the tools and worksheets that will help you improve in your weak areas:</p>`;
 
             weakAreas.forEach(area => {
                 const recs = RECOMMENDATIONS[area];
@@ -1488,15 +1460,6 @@
                 });
                 html += '</div></div>';
 
-                // Games
-                html += `<div>
-                    <h4 style="color:var(--accent);font-size:0.9rem;margin-bottom:0.5rem;">🎮 Fun Practice Games</h4>
-                    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">`;
-                recs.games.forEach(g => {
-                    html += `<a href="${g.href}" style="display:inline-block;padding:0.5rem 1rem;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:6px;color:var(--accent);text-decoration:none;font-size:0.85rem;transition:all 0.2s;" title="${g.desc}">${g.name}</a>`;
-                });
-                html += '</div></div>';
-
                 html += '</div>';
             });
 
@@ -1512,7 +1475,6 @@
                     <a href="../dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
                     <a href="../tools.html" class="btn btn-tertiary">🔧 All Simulators</a>
                     <a href="../worksheets.html" class="btn btn-tertiary">📝 Worksheets</a>
-                    <a href="../games.html" class="btn btn-tertiary">🎮 Games</a>
                 </div>
             `;
         }
@@ -1616,7 +1578,6 @@
 function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
 document.addEventListener('DOMContentLoaded',function(){
     try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
-    if(a.role==='owner'){document.querySelectorAll('.sn-admin').forEach(function(el){el.style.display='';});}}catch(e){}
 });
 </script>
 </body>

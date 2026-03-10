@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sparkstudy-v3';
+const CACHE_NAME = 'sparkstudy-v4';
 
 // Files to cache on install
 const CACHE_FILES = [
@@ -7,7 +7,6 @@ const CACHE_FILES = [
   'login.html',
   'dashboard.html',
   'tools.html',
-  'games.html',
   'worksheets.html',
   'pricing.html',
   'payment.html',
@@ -38,12 +37,6 @@ const CACHE_FILES = [
   'tools/motor-control.html',
   'tools/transformer-calculator.html',
   'tools/wire-ampacity.html',
-  // Game pages
-  'games/wire-runner.html',
-  'games/conduit-tetris.html',
-  'games/circuit-connect.html',
-  'games/fault-finder.html',
-  'games/power-match.html',
   // Worksheet pages
   'worksheets/ohms-law.html',
   'worksheets/power.html',

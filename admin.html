@@ -47,10 +47,10 @@
         }
 
         .sidebar {
-            width: 220px;
+            width: 240px;
             background-color: var(--panel);
             border-right: 1px solid var(--border);
-            padding: 1.5rem 0;
+            padding: 0;
             flex-shrink: 0;
             position: sticky;
             top: 60px;
@@ -58,17 +58,43 @@
             overflow-y: auto;
         }
 
+        .sidebar-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            margin-bottom: 0;
+        }
+
+        .sidebar-header .sidebar-brand {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-nav {
+            padding: 0.5rem 0;
+        }
+
         .sidebar-item {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.85rem 1.5rem;
+            padding: 0.75rem 1.5rem;
             color: var(--muted);
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.2s;
             border-left: 3px solid transparent;
+            user-select: none;
         }
 
         .sidebar-item:hover {
@@ -87,11 +113,13 @@
             font-size: 1.1rem;
             width: 1.5rem;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .admin-main {
             flex: 1;
             min-width: 0;
+            background: var(--bg);
         }
 
         .tab-content {
@@ -122,9 +150,13 @@
                 width: 100%;
                 height: auto;
                 position: static;
+                padding: 0;
+            }
+            .sidebar-header { display: none; }
+            .sidebar-nav {
                 display: flex;
                 flex-wrap: wrap;
-                padding: 0.75rem;
+                padding: 0.5rem;
                 gap: 0.25rem;
             }
             .sidebar-item {
@@ -137,19 +169,36 @@
                 border-left-color: transparent;
                 border-bottom-color: var(--accent);
             }
+            .messaging-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Section Titles */
         h1 {
-            font-size: 2rem;
+            font-size: 1.75rem;
             margin-bottom: 1.5rem;
             color: var(--text);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1.5rem;
+            background: var(--accent);
+            border-radius: 2px;
         }
 
         h2 {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             margin-bottom: 1rem;
             color: var(--text);
+            font-weight: 600;
         }
 
         h3 {
@@ -161,8 +210,8 @@
         /* Stats Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
             margin-bottom: 2rem;
         }
 
@@ -171,26 +220,94 @@
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             padding: 1.5rem;
-            transition: all 0.2s;
+            transition: all 0.25s;
+            border-top: 3px solid var(--accent);
+            position: relative;
+            overflow: hidden;
         }
 
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .stat-card:nth-child(2) { border-top-color: var(--accent2); }
+        .stat-card:nth-child(2)::after { background: radial-gradient(circle at top right, rgba(88, 166, 255, 0.06) 0%, transparent 70%); }
+        .stat-card:nth-child(3) { border-top-color: var(--green); }
+        .stat-card:nth-child(3)::after { background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.06) 0%, transparent 70%); }
+        .stat-card:nth-child(4) { border-top-color: #a78bfa; }
+        .stat-card:nth-child(4)::after { background: radial-gradient(circle at top right, rgba(167, 139, 250, 0.06) 0%, transparent 70%); }
+
         .stat-card:hover {
-            border-color: var(--accent);
-            background-color: rgba(245, 158, 11, 0.05);
+            border-color: var(--border);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .stat-label {
             color: var(--muted);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.35rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.75px;
+            font-weight: 500;
         }
 
         .stat-value {
             font-size: 2rem;
             font-weight: 700;
             color: var(--accent);
+        }
+
+        .stat-card:nth-child(2) .stat-value { color: var(--accent2); }
+        .stat-card:nth-child(3) .stat-value { color: var(--green); }
+        .stat-card:nth-child(4) .stat-value { color: #a78bfa; }
+
+        /* Section Card */
+        .section-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-card h2 {
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Messaging Grid */
+        .messaging-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .messaging-card {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .messaging-card h2 {
+            font-size: 1.1rem;
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 1rem;
         }
 
         /* Forms */
@@ -345,7 +462,17 @@
         }
 
         .search-box input {
-            max-width: 300px;
+            max-width: 400px;
+            padding-left: 1rem;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         /* Modal */
@@ -423,7 +550,12 @@
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             padding: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
+        }
+
+        .chart-container:hover {
+            border-color: rgba(245, 158, 11, 0.3);
         }
 
         canvas {
@@ -543,7 +675,37 @@
         .notification.success {
             background-color: var(--green);
         }
-    
+
+        /* Custom Scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--muted);
+        }
+        .empty-state .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .empty-state p {
+            font-size: 0.95rem;
+        }
+
+
 /* ===== UNIVERSAL NAVBAR ===== */
 .sparky-nav {
     position: sticky;
@@ -558,8 +720,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
+    width: 100%;
     box-sizing: border-box;
 }
 .sparky-nav .sn-logo {
@@ -606,10 +767,6 @@
 .sparky-nav .sn-link.sn-active {
     color: #f59e0b;
     background: rgba(245,158,11,0.08);
-}
-.sparky-nav .sn-link.sn-admin {
-    display: none;
-    color: #8b949e;
 }
 .sparky-nav .sn-link.sn-logout {
     color: #f85149;
@@ -670,30 +827,36 @@
     <a href="index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
     <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
     <div class="sn-links">
-        <a href="dashboard.html" class="sn-link">Dashboard</a><a href="tools.html" class="sn-link">Tools</a><a href="games.html" class="sn-link">Games</a><a href="worksheets.html" class="sn-link">Worksheets</a><a href="achievements.html" class="sn-link">Achievements</a><a href="formula-sheet.html" class="sn-link">Formulas</a><a href="admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="dashboard.html" class="sn-link">Dashboard</a><a href="modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="tools.html" class="sn-link">Tools</a><a href="worksheets.html" class="sn-link">Worksheets</a><a href="achievements.html" class="sn-link">Achievements</a><a href="formula-sheet.html" class="sn-link">Formulas</a><a href="admin.html" class="sn-link sn-active">Admin</a>
         <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
     </div>
 </nav>
 <!-- Admin Layout: Sidebar + Main -->
     <div class="admin-layout">
         <aside class="sidebar">
-            <div class="sidebar-item active" onclick="switchTab('dashboard', this)">
-                <span class="sidebar-icon">📊</span> Dashboard
+            <div class="sidebar-header">
+                <h3>Navigation</h3>
+                <div class="sidebar-brand">Admin Panel</div>
             </div>
-            <div class="sidebar-item" onclick="switchTab('promo', this)">
-                <span class="sidebar-icon">🎟️</span> Promo Codes
-            </div>
-            <div class="sidebar-item" onclick="switchTab('users', this)">
-                <span class="sidebar-icon">👥</span> User Management
-            </div>
-            <div class="sidebar-item" onclick="switchTab('messaging', this)">
-                <span class="sidebar-icon">💬</span> Messaging & Gifts
-            </div>
-            <div class="sidebar-item" onclick="switchTab('analytics', this)">
-                <span class="sidebar-icon">📈</span> Analytics
-            </div>
-            <div class="sidebar-item" onclick="switchTab('refunds', this)">
-                <span class="sidebar-icon">💰</span> Refund Requests
+            <div class="sidebar-nav">
+                <div class="sidebar-item active" onclick="switchTab('dashboard', this)">
+                    <span class="sidebar-icon">📊</span> Dashboard
+                </div>
+                <div class="sidebar-item" onclick="switchTab('promo', this)">
+                    <span class="sidebar-icon">🎟️</span> Promo Codes
+                </div>
+                <div class="sidebar-item" onclick="switchTab('users', this)">
+                    <span class="sidebar-icon">👥</span> User Management
+                </div>
+                <div class="sidebar-item" onclick="switchTab('messaging', this)">
+                    <span class="sidebar-icon">💬</span> Messaging & Gifts
+                </div>
+                <div class="sidebar-item" onclick="switchTab('analytics', this)">
+                    <span class="sidebar-icon">📈</span> Analytics
+                </div>
+                <div class="sidebar-item" onclick="switchTab('refunds', this)">
+                    <span class="sidebar-icon">💰</span> Refund Requests
+                </div>
             </div>
         </aside>
 
@@ -706,18 +869,22 @@
 
                 <div class="stats-grid">
                     <div class="stat-card">
+                        <div class="stat-icon">👤</div>
                         <div class="stat-label">Total Users</div>
                         <div class="stat-value" id="stat-total-users">0</div>
                     </div>
                     <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
                         <div class="stat-label">Paid Users</div>
                         <div class="stat-value" id="stat-paid-users">0</div>
                     </div>
                     <div class="stat-card">
+                        <div class="stat-icon">💵</div>
                         <div class="stat-label">Estimated Revenue</div>
                         <div class="stat-value" id="stat-revenue">$0</div>
                     </div>
                     <div class="stat-card">
+                        <div class="stat-icon">🏷️</div>
                         <div class="stat-label">Active Promos</div>
                         <div class="stat-value" id="stat-active-promos">0</div>
                     </div>
@@ -738,9 +905,11 @@
             <div id="promo" class="tab-content">
                 <h1>Promo Code Management</h1>
 
-                <button class="btn-primary" onclick="openCreatePromoModal()">+ Create New Promo Code</button>
+                <div class="action-bar">
+                    <button class="btn-primary" onclick="openCreatePromoModal()">+ Create New Promo Code</button>
+                </div>
 
-                <h2 style="margin-top: 2rem;">Active Promo Codes</h2>
+                <h2>Active Promo Codes</h2>
                 <div class="table-wrapper">
                     <table id="promoTable">
                         <thead>
@@ -791,9 +960,9 @@
             <div id="messaging" class="tab-content">
                 <h1>Messaging & Gifts</h1>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="messaging-grid">
                     <!-- Send Individual Message -->
-                    <div>
+                    <div class="messaging-card">
                         <h2>Send Message to User</h2>
                         <div class="form-group">
                             <label>Select User</label>
@@ -809,7 +978,7 @@
                     </div>
 
                     <!-- Send Broadcast Message -->
-                    <div>
+                    <div class="messaging-card">
                         <h2>Broadcast to All Users</h2>
                         <div class="form-group">
                             <label>Message</label>
@@ -820,8 +989,8 @@
                 </div>
 
                 <!-- Gift System -->
-                <div style="margin-top: 3rem;">
-                    <h2>Send Gift/Reward</h2>
+                <div class="section-card" style="margin-top: 1.5rem;">
+                    <h2>Send Gift / Reward</h2>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Select User</label>
@@ -849,7 +1018,7 @@
                 </div>
 
                 <!-- Message History -->
-                <div style="margin-top: 3rem;">
+                <div class="section-card" style="margin-top: 1.5rem;">
                     <h2>Message History</h2>
                     <div class="table-wrapper">
                         <table id="messageHistoryTable">
@@ -984,7 +1153,6 @@
             // Check auth
             const auth = localStorage.getItem('sparty_auth');
             if (!auth) {
-                alert('You must be logged in');
                 window.location.href = 'dashboard.html';
                 return;
             }
@@ -992,12 +1160,10 @@
             try {
                 const authData = JSON.parse(auth);
                 if (authData.role !== 'owner' && authData.email !== 'owner@sparkystudy.com' && authData.email !== 'ethan') {
-                    alert('You do not have permission to access this page');
                     window.location.href = 'dashboard.html';
                     return;
                 }
             } catch (e) {
-                alert('Invalid authentication');
                 window.location.href = 'dashboard.html';
                 return;
             }
@@ -1045,8 +1211,15 @@
             document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
 
             // Show selected tab and mark sidebar item as active
-            document.getElementById(tabName).classList.add('active');
+            const target = document.getElementById(tabName);
+            if (target) target.classList.add('active');
             if (clickedItem) clickedItem.classList.add('active');
+
+            // Scroll to top of main content on mobile
+            if (window.innerWidth <= 768) {
+                const main = document.querySelector('.admin-main');
+                if (main) main.scrollIntoView({ behavior: 'smooth' });
+            }
 
             // Reload tab data
             if (tabName === 'dashboard') loadDashboard();
@@ -1122,42 +1295,74 @@
 
         function drawBarChart(ctx, labels, datasets, title, color) {
             const canvas = ctx.canvas;
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 320;
+            const dpr = window.devicePixelRatio || 1;
+            const displayWidth = canvas.offsetWidth;
+            const displayHeight = 300;
+            canvas.width = displayWidth * dpr;
+            canvas.height = displayHeight * dpr;
+            canvas.style.height = displayHeight + 'px';
+            ctx.scale(dpr, dpr);
 
-            const width = canvas.width;
-            const height = canvas.height;
+            const width = displayWidth;
+            const height = displayHeight;
             const padding = 50;
-            const bottomPadding = 80;
+            const bottomPadding = 70;
             const chartWidth = width - 2 * padding;
             const chartHeight = height - padding - bottomPadding;
 
             const data = datasets[0];
             const maxValue = Math.max(...data, 1);
 
-            ctx.fillStyle = '#e6edf3';
-            ctx.font = 'bold 16px Inter';
-            ctx.fillText(title, padding, 25);
+            // Draw horizontal grid lines
+            ctx.strokeStyle = 'rgba(48, 54, 61, 0.5)';
+            ctx.lineWidth = 1;
+            const gridLines = 4;
+            for (let i = 0; i <= gridLines; i++) {
+                const y = padding + (chartHeight / gridLines) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
 
-            // Draw axes
-            ctx.strokeStyle = '#30363d';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(padding, height - bottomPadding);
-            ctx.lineTo(width - padding, height - bottomPadding);
-            ctx.lineTo(width - padding, padding);
-            ctx.stroke();
+                // Y-axis labels
+                const val = Math.round(maxValue - (maxValue / gridLines) * i);
+                ctx.fillStyle = '#8b949e';
+                ctx.font = '11px Inter';
+                ctx.textAlign = 'right';
+                ctx.fillText(val, padding - 8, y + 4);
+            }
 
-            // Draw bars
+            // Draw bars with rounded tops
             const barWidth = chartWidth / labels.length;
-            ctx.fillStyle = color;
+            const barPadding = Math.max(barWidth * 0.15, 2);
 
             data.forEach((value, index) => {
-                const barHeight = (value / maxValue) * chartHeight;
-                const x = padding + index * barWidth + barWidth * 0.1;
-                const y = height - bottomPadding - barHeight;
+                const barH = (value / maxValue) * chartHeight;
+                const x = padding + index * barWidth + barPadding;
+                const y = height - bottomPadding - barH;
+                const bw = barWidth - barPadding * 2;
+                const radius = Math.min(bw / 2, 4);
 
-                ctx.fillRect(x, y, barWidth * 0.8, barHeight);
+                // Bar gradient
+                const grad = ctx.createLinearGradient(x, y, x, height - bottomPadding);
+                grad.addColorStop(0, color);
+                grad.addColorStop(1, color + '66');
+                ctx.fillStyle = grad;
+
+                // Rounded top bar
+                if (barH > radius) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, height - bottomPadding);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.lineTo(x + bw - radius, y);
+                    ctx.quadraticCurveTo(x + bw, y, x + bw, y + radius);
+                    ctx.lineTo(x + bw, height - bottomPadding);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (barH > 0) {
+                    ctx.fillRect(x, y, bw, barH);
+                }
             });
 
             // Draw labels (rotated for readability)
@@ -1169,7 +1374,7 @@
                 if (index % showEvery !== 0 && index !== labels.length - 1) return;
                 const x = padding + index * barWidth + barWidth / 2;
                 const y = height - bottomPadding + 12;
-                // Abbreviate date labels (2026-03-09 → Mar 9)
+                // Abbreviate date labels (2026-03-09 -> Mar 9)
                 let displayLabel = label;
                 if (/^\d{4}-\d{2}-\d{2}$/.test(label)) {
                     const parts = label.split('-');
@@ -1691,7 +1896,6 @@
 function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
 document.addEventListener('DOMContentLoaded',function(){
     try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
-    if(a.role==='owner'){document.querySelectorAll('.sn-admin').forEach(function(el){el.style.display='';});}}catch(e){}
 });
 </script>
 </body>
