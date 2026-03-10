@@ -123,6 +123,131 @@ a { text-decoration: none; color: inherit; }
 /* ============================================
    Welcome Screen
    ============================================ */
+.welcome-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px 40px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.welcome-badge {
+    display: inline-block;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    color: var(--text);
+}
+.welcome-title span {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 4px;
+}
+
+.welcome-desc {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto 32px;
+}
+
+.welcome-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 32px;
+}
+
+.welcome-stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 28px;
+    min-width: 120px;
+    transition: var(--transition);
+}
+.welcome-stat:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.welcome-stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.welcome-stat-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.welcome-categories {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 36px;
+}
+
+.welcome-cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text);
+    font-weight: 500;
+    transition: var(--transition);
+}
+.welcome-cat:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.welcome-cat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .welcome-card { padding: 32px 20px; }
+    .welcome-title { font-size: 1.5rem; }
+    .welcome-title span { font-size: 1.1rem; }
+    .welcome-stats { gap: 12px; }
+    .welcome-stat { padding: 14px 16px; min-width: 90px; }
+    .welcome-stat-value { font-size: 1.4rem; }
+}
 
 .btn-primary {
     display: inline-flex;
@@ -874,7 +999,7 @@ a { text-decoration: none; color: inherit; }
     <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
     <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
     <div class="sn-links">
-        <a href="../dashboard.html" class="sn-link sn-active">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link sn-active">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
         <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
     </div>
 </nav>
