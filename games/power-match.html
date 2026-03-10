@@ -60,11 +60,15 @@
 
         /* Level Select Screen */
         .level-select {
-            display: grid;
+            display: none;
             gap: 2rem;
             max-width: 900px;
             width: 100%;
             animation: fadeIn 0.5s ease-out;
+        }
+
+        .level-select.active {
+            display: grid;
         }
 
         @keyframes fadeIn {
