@@ -747,6 +747,7 @@
             },
 
             getConduitFill() {
+                if (!this.currentConduit) return 0;
                 const totalArea = this.conductorsInConduit.reduce((sum, c) => sum + c.data.area, 0);
                 return (totalArea / this.currentConduit.capacity) * 100;
             },

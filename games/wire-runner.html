@@ -619,6 +619,9 @@
                 this.lives = 3;
                 this.distance = 0;
                 this.particles = [];
+                this.obstacles = [];
+                this.collectibles = [];
+                this.electron = null;
                 this.gameRunning = false;
                 this.gamePaused = false;
 
@@ -1147,7 +1150,7 @@
         }
 
         // Initialize game
-        const game = new Game();
+        var game = new Game();
     </script>
 <style>
   .sparty-disclaimer-overlay {
