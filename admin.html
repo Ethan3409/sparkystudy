@@ -1067,13 +1067,14 @@
         function drawBarChart(ctx, labels, datasets, title, color) {
             const canvas = ctx.canvas;
             canvas.width = canvas.offsetWidth;
-            canvas.height = 300;
+            canvas.height = 320;
 
             const width = canvas.width;
             const height = canvas.height;
             const padding = 50;
+            const bottomPadding = 80;
             const chartWidth = width - 2 * padding;
-            const chartHeight = height - 2 * padding;
+            const chartHeight = height - padding - bottomPadding;
 
             const data = datasets[0];
             const maxValue = Math.max(...data, 1);
@@ -1086,8 +1087,8 @@
             ctx.strokeStyle = '#30363d';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(padding, height - padding);
-            ctx.lineTo(width - padding, height - padding);
+            ctx.moveTo(padding, height - bottomPadding);
+            ctx.lineTo(width - padding, height - bottomPadding);
             ctx.lineTo(width - padding, padding);
             ctx.stroke();
 
@@ -1098,18 +1099,32 @@
             data.forEach((value, index) => {
                 const barHeight = (value / maxValue) * chartHeight;
                 const x = padding + index * barWidth + barWidth * 0.1;
-                const y = height - padding - barHeight;
+                const y = height - bottomPadding - barHeight;
 
                 ctx.fillRect(x, y, barWidth * 0.8, barHeight);
             });
 
-            // Draw labels
+            // Draw labels (rotated for readability)
             ctx.fillStyle = '#8b949e';
-            ctx.font = '12px Inter';
-            ctx.textAlign = 'center';
+            ctx.font = '11px Inter';
+            ctx.textAlign = 'right';
+            const showEvery = labels.length > 15 ? Math.ceil(labels.length / 10) : 1;
             labels.forEach((label, index) => {
+                if (index % showEvery !== 0 && index !== labels.length - 1) return;
                 const x = padding + index * barWidth + barWidth / 2;
-                ctx.fillText(label, x, height - padding + 20);
+                const y = height - bottomPadding + 12;
+                // Abbreviate date labels (2026-03-09 → Mar 9)
+                let displayLabel = label;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(label)) {
+                    const parts = label.split('-');
+                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    displayLabel = months[parseInt(parts[1])-1] + ' ' + parseInt(parts[2]);
+                }
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(-Math.PI / 4);
+                ctx.fillText(displayLabel, 0, 0);
+                ctx.restore();
             });
         }
 

@@ -324,7 +324,7 @@
         }
 
         .card.flipped {
-            transform: rotateY(180deg);
+            /* flip handled by .card-inner only */
         }
 
         .card.matched {
@@ -338,27 +338,27 @@
 
         @keyframes matchPulse {
             0% {
-                transform: rotateY(180deg) scale(1);
+                transform: scale(1);
                 box-shadow: 0 0 0 0 rgba(241, 158, 11, 0.7);
             }
             50% {
-                transform: rotateY(180deg) scale(1.05);
+                transform: scale(1.05);
             }
             100% {
-                transform: rotateY(180deg) scale(1);
+                transform: scale(1);
                 box-shadow: 0 0 20px 10px rgba(241, 158, 11, 0);
             }
         }
 
         @keyframes noMatch {
             0%, 100% {
-                transform: rotateY(180deg) translateX(0);
+                transform: translateX(0);
             }
             25% {
-                transform: rotateY(180deg) translateX(-10px);
+                transform: translateX(-10px);
             }
             75% {
-                transform: rotateY(180deg) translateX(10px);
+                transform: translateX(10px);
             }
         }
 
