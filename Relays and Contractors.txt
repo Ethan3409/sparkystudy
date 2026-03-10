@@ -1,0 +1,1431 @@
+=== PAGE 1 ===
+P
+j
+
+LEARNING RESOURCES
+e e @ FoRskiten tae
+
+030204a
+
+ELECTRICIAN
+
+Relays and Contactors
+
+2" Edition
+
+Second Period
+
+Magnetic Controls and Switching Circuits
+
+c
+
+
+
+=== PAGE 2 ===
+—
+
+Table of Contents
+
+Objective One. 3
+Relays and Contactors. 3 3
+a Objective One Activity 12
+Objective Two... re,
+Nameplate Informatio: 1B
+Objective Two Activity... 16
+Objective Three... 7
+Relay or Contactor Parts 17
+Objective Three Activity 19
+Objective Four .. 22
+Lamination: 22 4
+Shading Coils 23
+Objective Four Activity . 24
+Objective Five.. 25
+Contact Materials BS
+Objective Five Activit .26
+Objective Six. .27
+Contact Configuration 27
+Objective Six Activity. aoe
+Objective Seven... 33
+Basic Relay Operation .. nas
+Basic Contactor Operation 34
+
+Seal-In and Drop-Out Voltages.
+Armature Movement and Inductance Changes
+Effects of Incorrect Voltage.
+Objective Seven Activity
+(2) Self-Test...
+Objective One Activity Answers ..
+Objective Two Activity Answers..
+Objective Three Activity Answer:
+Objective Four Activity Answers
+Objective Five Activity Answers.
+Objective Six Activity Answer:
+Objective Seven Activity Answers ..
+Self-Test Answers...
+
+
+
+=== PAGE 3 ===
+oe EE
+
+Relays and Contactors
+
+Rationale
+
+Why is it important for you to learn this skill?
+
+Relays and contactors are used extensively in the electrical industry for various control
+applications. To install and maintain them in good condition, you need to understand
+their operation, be able to interpret their nameplate information, and recognize the
+
+different types.
+
+Outcome
+
+When you have completed this module, you will be able to
+
+Connect and analyze relays and contactors.
+
+Objectives
+
+1. Describe different types of relays and contactors.
+
+2. Interpret nameplate information.
+
+3. Identify the three main parts of a relay.
+
+4. Describe the purpose of laminations and shading coils in relays and contactors.
+
+5. Identify the applications, advantages, and disadvantages of typical materials used for
+constructing contacts.
+
+Identify the advantages and disadvantages of contact configurations.
+
+Describe the operation of relays and contactors.
+
+8. Connect and analyze relay and contactor operation.
+
+ae
+
+NOTE
+
+Objective Eight is a practical component and is not covered in
+this module.
+
+Prerequisites
+To fully understand the construction and operation of relays and contactors, you must
+first complete the following modules:
+
+© 030103d: Generators
+
+© 030104f: Relays and Controls
+
+© 030104g: Extra-Low Voltage Switching
+
+(030204a02,docx
+
+
+
+=== PAGE 4 ===
+. Ta
+
+asic construction of electromagnetically act Objective One
+tothe basic vil lear about cores, cols, am ( e Aedes ee are
+contact design. When you have completed this objective, you will be able to
+Describe different types of relays and contactors.
+.d drop-out voltage and how th
+such as seal-in an the rela
+as changes position. yf Relays and Contactors
+= x on ‘Relays are electromagnetic switches that control an electrical load. An electric load can
+jew ofthe information found on a elay's nameplate to help yoy be connected either in the same circuit as the relay or in a separate circuit.
+also provides an OED cular ely foruse in a specific circuit
+determine te suitability ‘A contactor is fundamentally the same as a relay, but the term is generally used for
+ule also describes the common types of relays to help you select, ins devices that control a higher current.
+The module for a relay control system.
+or a relay CO —
+troubleshoot components Relays and contactors come in a wide range of sizes and features, but the basic parts of
+all relays or contactors are similar
+Resources Relays
+«Canadian Electrical Code, Part I (26th Edition) Arelay is a simple electromechanical switch made up of an electromagnetic coil
+‘and a set of contacts. Relays control current flow based on signals obtained from an
+information source
+When an electric signal (voltage) is sent to the coil, a magnetic field is created. The
+magnetic field pulls in the armature, which closes normally open (NO) contacts and
+| ‘opens normally closed (NC) contacts. Normally open and normally closed contacts refer
+to the state of the contacts when the relay coil is de-energized. The rated voltage of the
+r ) coil does not have to be the same as the rated voltage of the contacts.
+NOTE
+In this module, you will see the terms normally open (NO) and
+normally closed (NC). In industry, this may be expressed in the
+following ways:
+© Normally open: N.O., N/O, and NOC
+© Normally closed: N.C., N/C, and NCC
+BOD oer
+
+DHT ADT docx
+
+
+
+=== PAGE 5 ===
+Relays are constructed in various sizes and shapes depending
+clays are co
+shown in Figure 1.
+
+Figure 1 - Assorted relays,
+
+All electromagnetic relays function the same way: the
+
+n of an electrom;
+energized to change the position of sets of contacts. The basic electrom;
+categories are as follows:
+
+Figure 2 - Power relay,
+
+Dror,
+
+They can also sr 2 as
+
+Tubular Pins Spade Pins
+
+ir normal position
+relay is called a
+
+
+
+=== PAGE 6 ===
+Plugie Rleyd
+aise Come wtp
+Hire delayed
+Poys
+
+Induce)
+
+to block ac current flo
+
+ing relays used
+One-oil latching relays ich changes the position of
+
+pejerto change the magnetic poles of 8 d°
+the contacts.
+
+i jing functions for
+Plug-in relays are also available with timing fur
+The operation of timing relays wil be covered in more detail
+Relays module.
+
+Industrial Control Relays
+
+Jays rated by the International Electrical Con
+‘Manufacturers’ Association (NEMA).
+
+and the National Elect
+
+lec
+
+NEMA
+___ Figure 4-IEC and NEMA industrial control relays.
+ng is terminated on the relay itself and
+‘ormally open double-make
+cing tha causes contacts to pit
+
+‘ot on a separate base like the wiring of a
+
+‘or normally closed double-break contacts
+it or weld,
+
+Some industrial control relays have
+in additional contacts on the increased by putting adder decks that
+Gan sob added tothe basi pela fe ase Fey. Timing Perrone fing devices
+
+Carry
+
+Low-Voltage Lighting Relays
+such a
+
+Low-voltage
+Jow-voltag relays in industry, they fe
+Electrical Code (CE Code) defines as extra-low voltage because the coils operate at not
+Jess than 30 V ac, or not less than 60 V de.
+
+Figure 5 - Low:
+
+voltage lighting relays.
+
+Contactors
+
+‘Magnetic contactors are electromagnetically operated switches that
+
+tactor coil is energized, the moveable contacts change state and
+lowing:
+load attached to NO cont
+
+Peaahibtanditeruct an cloctical powee ci
+
+Contactors are
+pressure switch
+
+Canary
+
+
+
+=== PAGE 7 ===
+Figure 6 - Contactor and motor starter.
+
+Although there are different classi
+motor contol components
+between NEMA- and IEC-clasified components are due to their size, speed,
+
+IEMA contactors and I
+
+NEMA general-purpose contactors geners
+
+NEMA establishes product design standards and test speci
+their contactors, which are capable of general, jogging,
+
+have smaller creepage path (the shortest distance
+a higher temperature rating than NEMA equipment
+
+ity of NEMA and IEC equipment for a spec
+m will be covered in the Motor Starters module. eis i
+
+po of NEMA and IEC contactors include the following:
+‘on-reversing and reversing contactors
+
+Definite purpose contactors
+
+Non-Reversing and Reversing Contactors
+
+Non-reversing
+
+Contactor
+
+Mechanical
+Interlock (Block)
+
+Non-reversing
+Contactor
+
+
+
+=== PAGE 8 ===
+Mechanically Intelocked
+ical inerlocked comer
+en ae
+
+same time,
+
+ssembly can have it
+
+estat only one com
+losed, so Contactor
+
+pesitin, Contactor A is ma
+
+Figure 9- Mechanically interlocked and reversing contactor.
+
+Armatur
+
+Unlatch Coil
+
+
+
+=== PAGE 9 ===
+an
+
+Opjective One Activity
+
+Jectromagnetic relays are generally sorte
+(4 categories that e
+1. What are the four (
+
+5) afl 288 10259 eee
+
+austria! Con teal
+
+2 What are the two 2) types of pin in plugin relays?
+» — Vvlulec a
+» Pode y
+
+5, How many terminals would be associated with one NO/NC contact on a
+plug-in relay?
+
+Thee ere > Ping eG _NO/NC conhact
+
+4, Which type of contactor may have one or two operating coils?
+
+Mechaocally beta Cottoctor
+
+5. Whats the purpose of installing adder decks onto a relay?
+
+® @
+
+9\|®@
+
+Objective Two
+
+When you have completed this objective, you will be able to
+
+Interpret nameplate information
+
+Nameplate Information
+
+na relay or contactor describes its suitability for use in a
+n includes the following:
+
+Ratings for the operating coil,
+
+of the contacts controlled by the coil,
+
+Je and arrangement of the contacts, and
+
+ferminal numbering.
+
+‘The voltage rating 0
+of the circuit that
+ofthe control i
+
+that coil current ratings are not normally included as information on the relay.
+
+Contact Ratings
+The contacts ofa relay or conta
+
+Voltage ratings, which can be direct current (dc) and alternating current (ac);
+‘© Current ratings for continuous use or general use, or non-inductive or
+resistive loads;
+‘* Horsepower ratings at various voltages for control of circuits supplying motors;
+© NEMA pilot duty ratings; and
+© IECuses categories.
+
+Figure 11 shows an example of some of these ratings on a contactor.
+
+Figure 11 - Contactor nameplate,
+
+if these ratings are not printed on the device's nam:
+the manufacturer,
+
+they are readily available from
+
+‘TsoavTal doce
+
+
+
+=== PAGE 10 ===
+re of normally open
+
+‘ome common contact arrangements.
+
+fated on the nameplate, either pict
+
+anged from NO to
+
+(NO) an
+
+Cor
+Types | Arrangemer
+
+Description
+
+FomA |  SPST-NO _ | Single-pole, single-throw normally open
+
+FomB |  SPST-NC _| Single-pole, single-throw normally closed
+
+Forme | SPDT __| Single-pole double-th
+
+row
+
+Form | SPST-NO-DM® | Single-ole, si eee normally open double make
+
+Foamy | 'SeSTNGDB| SMBlEpOG shaledtvow normaly closed double Break |
+
+Normally Open
+
+=—o
+Common Q———= 5,
+
+Figure 12-Form C contact
+
+Normally Closed
+
+arrangement,
+
+idge
+al for an industial contol relay.
+
+arrangement, as illustrated in
+
+|
+
+oy 13- Form X contact arrangement.
+cussed further in Objective 6 ofthis module.
+
+|
+
+Terminal Numbering
+
++r and may be different for NEMA or
+iagrams.
+
+‘and the associated terminal numbers
+bases for the plug-in types. Be
+
+K1 A1X A2X A3X ASX
+4 | lie
+he
+
+Ko AIY A2Y AY AAY
+
+Figure 15 - Typi
+
+NEMA and IEC terminal n
+Starters module.
+
+TronOAAT docx
+
+
+
+=== PAGE 11 ===
+i
+
+a Activity jecti
+
+Objective TWO rst votinge ance one tT THES rth Objective Three
+
+1, Arelay has two sets 0 aE [ ) When you have completed this objective, you will be able to
+
+é (Eolas oie ec — Identify the three main parts ofa relay.
+
+the following forms?
+4 2, Whatare the switching arrangements for Z Relay or Contactor Parts
+Ay) Gi The jn parts of a relay or contactor are generally considered to be the following:
+
++ Core, and
++ Armature.
+
+arelay’s rating may be classified?
+
+3. Whatare the two agencies to which
+» NEewaé :
+lee
+
+4, The labeling ofthe ool terminals of different relays may vary depending upon rating
+agency and manufacturer.
+
+e
+Armature
+
+Coil Spring Contacts
+
+Ws (Co
+
+Power
+Circuit
+Core Armature Contact
+
+Figure 16 - An electromagnetic contactor or rela}
+
+Tina oes
+
+
+
+=== PAGE 12 ===
+sontactors.
+arts of relays and cont
+in Table 2 relate to the P
+
+‘The tems
+
+Definition
+
+into loops to create an electromagneti
+
+‘Aconductor for
+then current ost fi
+ra stationary ele lay or contactor, sometimes _ |
+‘atonary el
+
+Asana ere nbscomes magnetized when the coli |
+erence’. eel
+Tamovestio etal prthal i atvacod tothe magnetized coe
+that provides the mechanical action that changes the posi
+
+the contacts that are connected to it
+
+| armature
+
+Return the armature back
+
+s normal position when the oa
+Armature Springs | jo energized
+
+|
+=>
+
+Provide the switching action in the controlled circuit.
+
+Contact Springs,
+
+‘Table 2 - Relay and contactors terms and definitions.
+
+in components of a basic contactor. These three components
+the parts defined in Table 2,
+
+Moveable
+Contact
+
+Fi
+igure 17-Three components of a contactor or relay.
+
+lays are used
+Set for contol circuits and contactors are used for power circuits
+
+3
+
+Figure 18
+
+
+
+=== PAGE 13 ===
+4) The posh button has been depressed and the (
+
+: 4) The stationary laminated “(ole devomels) magnetized
+
+«) The Atak move(s) {na lateral direction to the left.
+
+4) Thenomally open Gortol rose and the load becomes energized,
+
+Figure 19
+
+Figure 20
+
+21
+
+
+
+=== PAGE 14 ===
+NOTES
+
+ee ee
+
+Objective Four
+
+When you have completed tis objective, you will be able 10
+Describe the purpose oftaminations and shading coils in relays and contactors
+Laminations
+
+caged contactor creates an electromagnetic field and ind
+Whi rbot carvan maces
+anced voltage causes cuent 1 cio the a etter
+aly Tesecurets, refered to ase produce heat and redu
+efficiency of the contactor.
+
+iro reduce the effect of eddy current {ron or steel armature and the stationary
+
+‘assembly are constructed of Yami
+
+cones shown in Figure
+from one another. The insulat
+1 oxidized surfaces of each lami
+the eddy-current path, which dereases the eddy currents.
+
+Laminations
+
+Figure 21 - Laminations.
+
+Shading Coils
+
+‘The shading coil flux cor
+chattering and its undesi
+
+Figure 22 - Shading coil.
+
+23
+
+
+=== PAGE 15 ===
+Objectiv
+1. To reduce the effect of.
+
+the iron or steel arm:
+eddy Counce’ ae
+
+Jfatonary electromagnetic assembly ‘a contactor are const
+ary electromagn f ©
+
+n the pole face of the armature
+
+x ring instal
+
+Wats the name ofthe compe ng Te
+
+assembly to minimize chatterin
+
+Shoring Coil
+
+hat else can be caused by chattering contacts?
+
+Besides undesirable noise,
+
+Objective Five
+
+Contact Materials
+
+both have lower condi
+the top of less-expensive materials, such as nickel or tin, to
+
+9ften used for contact surfaces in relays or co
+
+ig properties than silver. These mate
+
+[Element
+
+Uses Advantages
+
+Disadvantages
+
+Lower-voltage and | Considered to be “self-
+lower-current leaning” as silver
+applications. oxide is conductive.
+
+‘The soft contact
+faces can easily weld
+together, soit cannot |
+bbe used in high
+
+current applications.
+
+Copper
+
+The surface is hard and
+can be used wi
+
+Prone to pitting and
+oxidization, so
+
+it cannot be used for
+frequent switching
+under load
+conditions
+
+Cadmium
+
+conditions.
+
+Does not conduct
+as well as silver.
+
+Table 3 - Common contact
+
+Trades
+
+25
+
+
+=== PAGE 16 ===
+© 0
+
+Five Activity erates
+
+Objective Ts) mos common materials wed
+
+1 entity he three
+|) le 2 ———
+op bee
+Ce ———
+
+higcuren
+
+serial isthe softest and cannat be used for
+
+von lver
+3. Which contact ‘material is most prone to ag and oxidation?
+(Copper ft
+‘4. Which contact material is best suited for 2 wide variety of ap}
+Codmivir
+
+9 6
+
+9 @
+
+Objective Six
+
+When you have completed this objective, you will be able to
+
+“Identify the advantages and disadvantages of contact configurations.
+
+Contact Configuration
+
+‘The way that contacts of a relay or contactor are
+expectancy. Contact materials, spring pressures, physical arrangement, and number of
+
+intact points all affect the lifespan of the contacts.
+
+Life Expectancy
+
+However, this quick of
+against each o
+
+secondary arc each
+s as fast as possibl
+le as possible to reduce secondary ar
+
+~The more frequently the contacts are opened and closed, the shorter the I
+the contactor.
+Springs
+
+There are two
+Contact springs, whi
+
+types of springs used in relays and contactors:
+are used to absorb the impact of closing contacts; and
+
++h are used to quickly change the state of the cor
+
+DORIA Tox
+
+21
+
+
+=== PAGE 17 ===
+Figure 24 - Contactor parts.
+
+Electrical
+‘Symbols
+
+Bier
+q
+
+Tsao doo
+
+
+
+=== PAGE 18 ===
+Too Tight
+
+Twi not absorb the shock of the.
+ntact to bounce when
+
+maintain proPe
+maintain POP a
+
+pressure o”
+
+contacts becoming
+The magnetic field may not be
+
+“Table 4- Spring tension considerations.
+
+a it
+physical Arrangemen
+Pare el re the contact
+ial ee : sd by designing
+fo slide together into
+
+sarfaces. Ailing
+hat allows them
+‘heconacts in acurved Sha where contact is first made.
+ge This arrangement also helps to
+
+ines the arcing 10
+«et aning action hes PEE the contact
+Feduoe contact bounce:
+Contact Points
+ach time contacts are closed tNeY 2 subjected to mechanical wear. If
+tome electrical arcing occur. SI ting the contacts into mu
+nv faces, reducing the damaging effect 0
+
+its up the are over m™
+
+i iecrieal arcing by splitting the are voltage betwee
+mile, and the are can be extinguished faster then
+nay have bridge contacts orsingle-break <o
+
+contact arangement.
+
+‘Dr oer
+
+» @
+
+) ®@
+
+as the
+
+/~ Siatonary Contacts
+
+cLoseo <}— —> open
+
+\— Moveable Contacts
+
+Figure 27 - Bridge type of contact arrangement.
+
+ade-off to the advantages of the contact con!
+plex to construct the contacts at an an
+of the contactor enclosure
+
+points
+take up more space, thus increasing the size of the cor
+
+Figure 28 - Bifurcated bridge contact.
+
+TsOaOTaO doce
+
+3
+
+
+=== PAGE 19 ===
+Objective Six Activity
+
+‘contact Bounce and provide good continuity across
+
+1. Which springs prevent ®
+closed contacts?
+Conte’ Spricab a
+2. What is an advantage of the wiping action of contacts?
+Leary greab ope Rate oC
+
+What would happen ifthe armature springs in a contactor are too loose?
+
+Will nor oo otmetue Gr enevon Lo co y
+
+4. What would happen ifthe contact springs in a contactor are too tight?
+
+LRNOEBiWs oli 0% Charle 96 Lontocks
+We, ig z
+‘What is: AR A OTS contacts in a relay? )
+
+Seliy the b> % two goin S
+
+D2 PG ex air
+9a¢
+
+; ©
+
+6. How many contact points does a bifurcated bridge contacts have?
+
+Q Contacts ints
+
+U
+
+e
+
+Objective Seven
+
+When you have completed this objective, you wy
+YOU Will be able 1g
+
+(Deserbe the operation of relays and contactors
+
+Basic Relay Operation
+A standard w:
+change the
+or handle.
+
+erated device tha
+from open to closed
+
+A relay is an electrically operated sw
+position of the switch contacts
+manual, or automatically op
+
+ier
+
+‘© Photocells
+© Limit switches
+Float and pressure switches
+
+itch that uses an electromay
+Fs can be run
+s such as
+
+When these devices are oper
+positions of the relay. The cont
+voltages or current ratings. The electromagnet u
+relay may have a fixed core or a moving core, as d
+
+lx Contacts
+
+Armature
+
+Electromagnet
+(Coil)
+
+Core
+
+=
+
+\ Contacts ah
+
+Fixed Core
+
+Figure 29 - Electromagnets with fixed or movi
+
+s:
+
+Movable Core
+
+
+
+=== PAGE 20 ===
+lectrom: ‘losed plu
+
+be small and are found on most enclosed pi
+aes RY clectromagnets are used for heavy-duty industrial
+control relays.
+
+relays,
+
+Relays might have a variety of contact arrangements, such as the followis
+
+red; a
+pT caninc NES SO NSE SUT CT after the coil
+is de-energized.
+
+‘Complex processing or manufacturing systems can be controlled by linkit
+<ifferent relays with different combinations of contact arrangements,
+‘operated by a variety of manual or automatic devices.
+
+Basic Contactor Operation
+
+Magnetic contactors are electromagnetically operated switches that c
+non-motor loads or motor loads where the contactor is combined wi
+protection. The contactor operates by applying a control v
+Conductors can be run from the magnetic contactor to a remotel
+Pilot device, as illustrated in Figure 30.
+
+A
+
+Figure 30 - Basic contactor operation,
+
+operated, the c
+the coil to create a magnetic field. The coi
+
+lectromagnet. The stationary electromagn.
+moveable contacts are closed ag
+
+the stationary contacts,
+This either completes a circuit (when the load is wi
+(when the load
+
+ired to NO contacts) or breaks a circuit
+red to NC contacts).
+
+For the armature of a relay ot cont
+® in th
+
+Seal-In and Drop-Out Voltages
+
+Voltas
+using the calculation 240 V x 0.95
+If the armature has pulled
+voltage, the current does
+armature. The val
+
+rop-out voltage v
+
+approximately 50% of the rated coil voltage,
+
+i for a 240 V rated o
+
+ly 85% of the
+il is appr
+
+ted voltage ofthe coil For
+Ly 204 V, determined
+
+aries with the design of each ve
+
+the actual vol
+higher than the drop-o
+
+ut voltage.
+
+Armature Movement and Indu
+
+A certain amount of current is required to er
+()) e armature of an ac relay. After the armature seal
+As the armature seals,
+is closed, and a property
+increases, the total oppo:
+and the current is reduced.
+
+* The coil current before the arm
+
+fe has sealed in can be four to ten times higher than the
+Current after the armature has sealed i
+
+tages may vary, the seal
+
+ictance Changes
+
+-in Voltage is always
+
+fe a magn
+ls in, the:
+
+ca the
+‘current drops considerably
+
+fhanges. The air gap in the magnetic circ
+increases. Because inductance
+led impedance) also increases,
+
+35
+
+
+
+=== PAGE 21 ===
+zero te coil oT OF contactor. A
+
+iy affects the coll
+
+also damag
+ently, damaging t
+
+oltage may
+in viol
+
+‘A thgher-than-rated
+suse the armature 10 SP
+
+Ensure thatthe voltage SUP ed to
+‘ave. For example, the VOlaBe across @
+32,V (120 V * 1).
+
+ge applied to the
+
+ddoes not produce enough magi
+
+tions do not change.
+
+voltage is t00 1ows
+the contact posi
+
+armature completely, SO
+mature is pulling in could be u
+to the coil is slightly less
+and can burn out
+Value (85% of rated), the armature
+‘even though it appears to have
+3g, carb
+
+“The current drawn by a coil asthe a
+value. Ifthe voltage applied
+draws a higher-than-rated current
+igtly greater than the seal
+igh frequency change of st
+the contacts, resulting in
+
+same value oF
+may end up chatering (abi
+pulled in, This ean cause arcing at
+high contac resistance
+
+())
+
+0
+
+Coil current and Voltage
+«he supply vole i sed from zero to the rat
+Weourrent and voltage ae plotted ona gap, and the measured values
+jn Figure 3! to the graph depicted
+Current at
+blocked
+06 armature.
+05
+a A
+=
+5 04
+fa Current as
+& ‘armature
+5 seals in
+B03 fs
+S j Current as
+fel ‘armature
+8
+02
+04
+om2o) 40 80 oH 120
+Drop-out Voltage Seakin Voltage
+VOLTAGE ACROSS COIL (V)
+Figure 31 - Ci
+
+‘The current increases directly
+‘move. The armature may chat
+5 when the armature complete
+
+stop:
+
+closes.
+
+dramat
+
+ly, as shown at Pol
+current continues to rise proportior
+
+
+
+=== PAGE 22 ===
+ps teed anaprveted fo
+‘burning out the
+
+remains high, likely
+
+fe armature is
+
+jow and the curren!
+re3l
+
+tthe rated
+decreas he
+oars the inductance a
+
+Snddenly rises, as shown igure 31
+
+perating coil is Ww
+
+‘when the supply voltage
+immediately drop ov to drop out, any of
+
+re Residual magnetism in the armatures
+J Contacts are welded together, oF
+
+jammed armature.
+
+wi of the coil to decrease. As a rest
+
+off, the armature sho
+ywing could be responsible:
+
+Objective Seven Activity
+
+applied to the coi
+
+‘The amount of volt
+
+1
+phiysical trav‘
+
+imately DO %
+
+the armature
+
+coun
+se He SC 90p Clee Lewdas
+jnaltonce eS
+
+“Which Qducey — Cytren®
+not exceed “C.MO% of its
+
+which
+
+tage applied to a coil sho
+
+4, The maximum
+rated value.
+
+fated coil voltage have on the conta
+
+5, What effect would exceeding t
+
+TE Covla Cuin ren. Eyeo wera:
+
+fail to drop 0
+
+6. State thee @) possible reaso
+de-energized. 7
+
+a) Reridve- :
+
+Mlenis t> “erk2 loo Se
+z kag eter
+
+Arnorte
+
+9 Taromed
+
+TINT
+
+39
+
+
+=== PAGE 23 ===
+ee
+
+ay and a contactor?
+
+ve exposed contacts?
+
+Plug-in
+Power relay
+
+the function of the mech
+‘ensure both armature
+‘olatch both armatures
+de-energized
+
+‘To prevent both armatures
+> release both armatures imme
+
+‘4. Which form identifies a single-pole
+a) FormA
+b) FormB
+e) FormX
+
+® Form Y
+
+5, Whats the moveable portion of a relay called?
+
+@ Armature
+Bridge
+
+:
+|
+
+They wouldnt allow te omar och
+es ‘energized. ‘
+1) They would not return the contacts to the
+
+Fmal state fast
+
+0
+
+8, Whats  apptesmaeSealin vag of 120 Vc
+ov
+120
+d) 132V
+
+10. What is the main disad
+yey cannot
+
+They are not as conduct
+
+They are softer th
+
+ey are prone to
+
+41
+
+
+=== PAGE 24 ===
+ne Ac!
+
+Low-voltage lighting relays
+2. a) Tubular
+
+) Spade
+3, Three
+
+held orlatched-in contactor
+
+4. Amechanica
+‘To increase the number of contacts
+
+can be controlled by the relay
+
+Objective Two Activity Answers
+A relay has two sets of ratings for voltage and current. One set of rz
+ind the other set of ratings is for the cont
+
+1a) Form C: Single pole, double throw (SPDT)
+
+trical Manufacturers’ Association)
+
+trical Commission)
+s can use NEMA labelling, IEC labelling, or their
+
+own labelling,
+
+Objective Three Ac
+
+‘i and i
+
+2.
+
+4, 2) Core nary con
+b) Coil
+
+) Armature w
+
+ion has been depressex
+
+4, a) The push b
+b) The stationary laminat
+
+¢) The springs ret
+d) The normally open
+
+de-energized.
+
+B
+
+
+=== PAGE 25 ===
+9) Cadmium
+silver
+Copper
+Caden
+
+ctive Six Activity Answers
+
+springs
+
+obje
+
+G, A ifurcated bridge contact has fur contact points
+
+Objective Seven Activity Answers
+
+unt of vol
+
+3, When
+«magnetic field and the
+proportional to inductane
+proportional to impedanc
+
+more force than
+6. a) Resid
+b) Welded contacts
+
+©) Jammed armature
+
+
+
+=== PAGE 26 ===
+NOTES
+
+a
+
+Self-Test Answers
+
+b)
+d)
+°)
+d)
+a)
+b)
+1)
+
+Se ee ee a
+
+8. b)
+9°)
+10. d)
+
+‘The current rating of their contacts
+
+Power relay
+
+To prevent both armatures from closing at the same time \)
+Form Y
+
+Armature
+
+By laminating the core material
+
+rahe a maintain proper pressure on the contacts after they
+
+102 V
+
+They reduce contact chatter while the coil is energized.
+
+They are prone to pitting and oxidization.
+

@@ -1,0 +1,1090 @@
+=== PAGE 1 ===
+ELECTRICIAN
+
+Fundamentals of
+Alternating Current
+
+@ 2° Edition
+
+Second Period
+
+Alternating Current (ac) Circuit Properties
+
+030201a
+
+
+
+=== PAGE 2 ===
+©
+
+a
+
+Table of Contents
+
+Objective One wv...
+Generation of Alternating Current
+
+Objective One Activity
+
+Objective Two
+
+Objective Two Activity.
+Objective Three...
+
+Sine Wave Values...
+Objective Three Activit
+Self-Test......
+Objective One Activity Answers
+Objective Two Activity Answers.
+Objective Three Activity Answers..
+Self-Test Answers
+
+
+=== PAGE 3 ===
+a Fundamentals of Alternating Current
+
+Rationale
+
+Why is it important for you to learn this skill?
+
+Alternating current (ac) circuits are widely used as the means of distribution for electric
+energy. Most of your work involves ac circuits. You were introduced to ac resistive
+circuits in first period training. In second period training, you will learn about additional
+ac circuit properties that are crucial to your understanding of the electrical theory and the
+electrician trade.
+
+Outcome
+
+When you have completed this module, you will be able to
+
+Describe the fundamentals of alternating current (ac).
+
+Objectives
+
+1. Describe the generation of an ac sine wave.
+2. Determine the output frequency of an ac generator.
+e 3. Calculate standard ac sine wave values.
+
+Introduction
+
+This module discusses the generation of an alternating current and shows how a graph
+called a sine wave is generated. It also describes the relationship between output
+frequency, poles, and rotational speed. Finally, the module explains effective (RMS)
+voltage and performs sine wave calculations. This module will prepare you for further
+exploration of ac circuits in second period theory.
+
+030201a02.docx
+
+
+
+=== PAGE 4 ===
+it (ac) Circuit Properties
+
+Although the conductor velocity may be constant,
+
+‘ective One -
+oP lees cc compeed ti oe! .,you will be able 10 ® @ ¢ The angle at which the flux lines are cut constantly changes;
+en you ha
+
+pescrite the generation of an ac sine WANS:
+
+Generation of Alternating Current
+Relative motion means that
+
+field ora magnetic fed is mov
+
+mi
+ron between a conductor an seromele re vol
+sanged inthe conductor. The amount of ent gen Pend 9 ence
+
+a
+S tic flux, ~The Soe he Conger
++ The density ofthe magnetic TW agnetic field, and — CON *
+
+force (the rate of _
+
+Magnetic
+Field ~
+
+Rateg
+
+96 Hl
+conductor is moving parallel tothe lines of force at any speed, no lines of force are
+Maneatis “Aconductor moving at that same speed but cutting pes]
+ieeiy ames the lines of force at an angle of 90° generates maximum emf.
+% Not Cutting at All Medium Cutting Rate Maximum Cutting Rate
+‘a conductor that travels at a constant speed on a circular pa ip fe pe
+magnetic field cuts the lines of force at a constantly changing ;
+rate, Therefore, ge induced in the conductor is constantly changing and varies Figure 2 - Rate at which a conductor cuts the lines of force.
+according to the angle the conductor is cutting across the lines of force. ‘The maximum emf is generated at two points on the 360° circular path: 90° and 270°.
+asses by alternate
+@ { ) conductor loop passes a pole, one
+, it has completed two
+fay 2 ON
+
+N Ee e ° N
+
+Cutting Across the Lines of Force
+
+Conductor 180" @ orand 360°
+
+—1 Negative Alteration
+Figure 1 - Ci
+“gure 1- Circular motion of a conductor in a magnetic field.
+
+@ Figure 3 - A conductor passing through one electrical cycle or two alternations.
+
+Ts0a01
+
+
+
+=== PAGE 5 ===
+it (ac) Circuit Properties
+
+the conductor shown in Fig
+
+ion oft toleft through the m
+
+wing from right
+s moving Fests motion is now fo
+conductor then 1a¥e'5 magnetic field also changes the polarity of the induced
+tion throug!
+change of mation
+
+age in the conduct.
+
+i .ither end, forming @ complete circuit
+ihe contr iste athe nuced voltage. Ifthe em
+
+vol
+
+(ac) asit alter
+
+different eee from 0° to 180°, the positive alter would produce an
++ The
+
+Slotted on a graph.
+‘values ifthe values of voltage were Pl #
+em wie canation fom 180° to 360% the negative a
+
+th negative values.
+
+roth values of voltage are ploted on te same voltge/time graph, the result looks like
+te waveform in Figure 4.
+
+One Cycle
+
+ier
+
++
+
+{One Negative
+Aeration
+o 180° 270° 360°
+One Postive E
+Aeration
+
+Voltage ———
+
+Figure 4 - The changing rate at which a conductor cuts the lines of force.
+
+* The value of voltage builds from 0° to a maximum p
+conductor travels from a motion that is para
+
+to1one that crosses the lines of force at 90°, i
+Bee deat » producing maximum emf
+
+* Asthe conductor continues to travel al
+
+‘becomes parallel with the magnetic fi
+
+10° and produces no emf.
+© Asthe Ly
+teehee Lat re 4, itis now moving from left
+wera emf and resultant curentbuilds fom 0° to.4 maximum
++ The mation cont
+isd. The panhingoh Lang Felums to 0° and the cycle then repeats
+as called si ri fhe values produced by this motion results in a oe
+
+®
+
+®
+
+Objective One Activity
+
+ty of a conductor through a magnetic field plays
+femf produced. What other two (2)
+
+art in determining the
+tors affect the
+
+Ae
+
+\_ of tandurler Wwilnin Meant
+
+OF Whe wagres: Ply
+
+o lines of magnetic force produce?
+
+Sine weve —
+
+|. When one positive alternation and one negative altemation are completed,
+
+one _CAVC.2___is completed
+9
+
+5. One alteration occurs within \fo _° of an electrical sine wave.
+
+TrOaoanE doce
+
+
+
+=== PAGE 6 ===
+jective TWO
+aes npleted this obj
+
+mney of an ac generator.
+
+cou will be able (0
+
+When you have com
+Determine the output frequet
+
+Frequency
+Figure 4 demonstrated that one cleric
+
+sphincter orth and south magnetic les
+pases
+
+raphed is one cor
+smation produced a
+
+ition of usable electricity requires 4 8
+Tapeh enis ofcodntrs outed 8 he
+: : nets. A generator
+Fels produced by ever cleevomagnets, A BeneraE
+xy rotation of the generator shaft, one electrical eye
+aa ator ail is spinning at 60 rotations per second, it produces 60 cycles per second,
+
+following concepts about frequency.
+
+‘completed in one second is the frequency of the
+
+Regarding an ac generator, consider the
+
+‘The number of electrical eye
+‘output ofthe alternator.
+
++ The Intemational System of Units (S1
+
+«The unit of measurement for frequency
+symbol HZ
+
+«© Thettime required to complete one electrical cycle is known as the period
+(time period).
+
+bol for frequency is f-
+hertz, represented by the SI
+
+NOTE
+
+‘You may see the term eycles per second, which was previously used as
+the unit of measurement for frequency; 60 cycles per second is equal
+10.60 Hz.
+
+DRT
+
+0.
+
+Frequency and Magnetic Poles
+
+fan altemator has only one pair of magnetic poles (north and south) and has a shaft
+
+speed of 15 revolutions per second, the number of completed cycles per second would
+I degrees), the
+
+ial degrees).
+
+irs of magnetic poles,
+pass by more than one
+I cycle for each mechanical
+rotation of the shaft a it passes
+
+through 360 mechanical degrees.
+
+Remember that 360 electrical degrees are produced when a conductor
+passes by two opposite poles.
+
+In Figure 5, only one half of a revolution of a four-pole machine has occurred (180
+
+Figure 5 - A four-pole machine produces one cye
+through 180 mechanical degrees.
+
+‘One full revolution (360 mechanical degrees) of a four-pole machine produces
+720 electrical degrees. Since one cycle is 360 electrical degrees, the waveform in
+Figure 6 displays that two cycles have occurred.
+
+Figure 6 ~ A four-pole machine produces 720 elects
+through 360 mechanical degrees.
+
+degrees as it rotates
+
+Ifa four-pole altemator compl would complete
+
+ns per second equals
+
+Troan dase
+
+
+
+=== PAGE 7 ===
+n purposes, the ‘rs in Figure 8 are rotating very slowly. To produce
+) a frequency of 60 Hz, a four-pole machine must rotate a
+
+60 r/min
+f=1Hz
+‘
+| 4
+Fs]
+it four cycles as it rotates
+i Jght-pote machine produces
+Figure 7 An ct gh 360 mechan degrees. | :
+ie | LNT 120 rimin LN} 420 iin
+{fan ac generator or alternator is a i
+Toe ce: of ples or pole ais) and | eri mi
+‘« Thenumber of poles
+«Te revoltons per minute ofthe driven sha. : :
+
+tational frequency ofthe machine is ed in |
+Faas re pen my ones per inio te shah of the machine fs] Tn]
+3n for revolutions per minute is r/min,
+
+degrees. The abbre
+‘although rpm is often still used in industry.
+
+Figure 8 - A comparison of frequency and rotational speed
+| for two-pole and four-pole machines.
+
+ion per second
+Ifthe driven shaft ofa two-pole mi
+(or 60min), the output frequency is one cycle per second (or 1 Hz). The conductor
+
+passes two poles (one north and one south) in one second, Ifthe shaft of a ®)
+four-pole machine is rotating atthe same rate, its output frequency is 2 He since two
+
+cycles are completed in one second.
+
+Calculating Frequency
+
+fan altemator is the product of the number of cycles completed in one
+lied by the number of revolutions completed in one second. Frequency
+in hertz is equal to the number of completed cycles per revol
+revolutions per second.
+
+NOE | The number of eycles can be expressed as pairs of poles since a conductor passing by one
+
+ional speed is often expressed as revol
+minute rather than seconds or minutes divided by 60.
+
+‘The rotation produced by a mechanical force, such as an engine or
+turbine, is typically measured in r/min, Rot
+technically correct, but speed is common
+
+er of poles rev
+Frequency in Hz = Butber of pairs of poles x revolutions per minute
+
+60
+ince the information on the nameplate of machines typically indicates the number of
+al poles rather than pairs of poles, the formula is most often expressed as follows:
+
+Incither example, ifthe rate of rotation increases, the output frequency increases because
+‘more pole pairs are passed in the same amount of t
+
+Where
+* p=number of individual poles
+‘© _n=rotational frequency
+
+The denominator is 120 because the
+by two to account for the conductor ne
+electrical cycle,
+
+ber of individual poles (p) must be divided
+ing to pass two poles to make a complete
+
+50am
+
+
+=== PAGE 8 ===
+ee
+
+Ifanal
+output frequency?
+
+1s are as follows:
+
+‘The known val
++ pod
+n= 1800 rin
+
+Example 2.2
+Ifa two-pole alternator has
+frequency? To determine the
+formula becomes
+
+£2120
+P
+
+‘an output frequency of 50
+rotational frequency, the ori
+
+‘The known values are as follows:
+© f=S0Hz
+© p=2(itisatwo-pole altemator)
+£x120
+
+P
+_s0H2x120
+
+=3000 min
+
+Example 2.3
+
+= 1200 r/min,
+
+x20
+pL 5
+400 He 120
+
+®
+
+Objective Two Activity
+1. What is electrical frequency?
+Number C ely}
+
+2, What is the unit of measurement for frequency and
+of measurement?
+
+iat is the symbol for the unit
+
+Hee, ut
+
+3, The time required for one alternation to be completed is also known as a period.
+‘True
+BY False
+
+4, When a six-pole alternator I a pe
+
+waveform would have passed trough 2 PANS oF COE:
+
+alternator shaft makes two complete revolutions, the alternator must have
+
+y pois. OC DPA OF
+
+6. What are the two (2) factors that affect the output frequency of alternators?
+a Dumber of foley
+
+b) _ Rovoiv: ions Pe,
+
+7. Ifthe r/min of an alternator is increased, then the output frequency of the alternator
+
+is lOCfoSed
+
+8, When a four-pole altemator tu
+
+fz ae
+
+ee
+Bsc:
+2¥e)
+
+5 = done
+
+Col CYLles Completes iq
+
+Vesa,
+
+Lor
+
+
+
+=== PAGE 9 ===
+2
+
+value
+‘rer instances during 8
+
+Maximum or Peak Values
+simple g¢
+
+When the conductor of @
+
+induced varies oa et eae.
+
+js moving parallel to the Tines: siti
+
+‘angle of cut would be 0°. The greatest magn itude of
+
+cuts the lines of force at a i
+
+itage is referred to as the ma
+
+temation.
+
+In Figure 9, the
+cycle are
+value occurs at 90°,
+
+Figure 9- Peak and peak-to-peak
+Maximum or peak values, whether current or voltage,
+
+letter wit a lowercase subscript; for example, Vm for voltage.
+
+value would be stated a5 +m 10 Vn.
+
+sequen happens
+iS snator develoy
+
+thing less th
+
+conductor
+maximum or peak
+voltage
+
+es
+
+tage is induced
+ye angle
+
+that sine wave. ®
+
+‘instantaneous values of voltage at various
+ated. The peak value occurs twice in each cy‘
+and the negative maximum value occurs at
+
++ Maximum or
+
+“peak” value.
+Pei gh
+mognoatute
+aosV! Ref
+TO Be ay
+—Maximum or
+"peak" value.
+
+ues of a sine wave.
+
+are identified by an uppercase
+
+DOT
+
+= Eu *5iN 20°
+=10Vx0.342
+=3.42V
+
+© Attio®
+xsin110°
+=10Vx0.9397
+=94V
+
+© At210°
+
+ea E 1sin210
+
+=-5V
+
+led instantaneous values.
+can be found by multiplying the maximum emf
+
+jemnation by the sine of the angle at which the conductor is cutting the field.
+
+led
+
+you would calculate the instantaneous values of voltage at
+
+1d 210° as follows.
+
+Figure 10 illustrates the values calculated,
+
+and 210° in the 360° electrical c
+
+TaUTaO doce
+
+13
+
+
+=== PAGE 10 ===
+coltage are plotted
+egress, the result is Know
+
+tage represented B
+‘s moving and the
+
+value of V soltage at 0
+that at 45° the i
+taneous vale o
+stantancousV
+(voltage), and (
+
+sneous value is some’
+oF current
+fied by lowercase
+
+magnetic field twice is as follows:
+
+spe ivtion the eonduetor os Me
+dete ist half the cycle, Dench 0° and 180°, and
+2 pe second balof the cycle, between 180° and 360.
+
+ss that the polarity ofthe induced voltage ch
+tp and negative alleations form the sine NAPE
+hip between the conductor on 2 cicular path betweet
+
+sine wave graph ofthe event.
+
+The!
+
+« yle isthe product of the m
+cating angle), aximum value of voltage mu
+
+Nao,
+
+6
+
+0
+
+example 3.1
+
+Foi
+
+calculated as
+e=E, xsin 60°
+=100 Vxsin 60°
+=100 Vx 0.866
+
+=86.6V
+
+ws.
+
+ste sine wave and calculated valu is displayed in Figure 12.
+
+Figure 12- A sine wave where Em equals
+
+fantaneous value at 60° of the cycle ifthe maximum value of
+value of voltage is 100 V is
+
+100 V.
+
+
+
+=== PAGE 11 ===
+Example 3.2
+
+‘wave as the voltage. This re
+
++— CurrentWVottage
+
+.e causes current to flow in an electric cireui
+
+Inaresi
+
+Voltage in an ac
+Re:
+
+Current in an ac
+Resistive Circuit
+
+i= Tg, xsin25°
+=10Ax0.4266
+=4226A
+
+Effective Values
+
+electrical equipment an
+heating effect in an ac
+
+1 voltage is also constantly changing and rever
+ly changing, itis necessary to assign some val
+circuits. By convention, a Value is used
+circuit as that produced in a de
+
+ing, and therefore th
+
+This effective value is also refere
+‘waves, the effective value and
+to the square root of the mean
+Waveform. For the purposes o
+RMS value of a pure sine or
+
+at 45°. The same val
+the zero,
+
+d to as the RMS value,
+the RMS value are equal. RMS (root
+‘Squares of all the instantaneous valu
+
+'s module, you can assume that the RMS value is
+usoidal wavefor
+
+lue can also be found
+
+When dealing with pure sine
+mean square) refers
+168 of voltage of the
+
+. The effect
+
+jaximum value Would be the effective v
+
+Figure 14 - Maximum and
+
+NOTE
+
+If you are told that the supply voltage to abi
+
+the effective or RMS value of v
+
+
+
+=== PAGE 12 ===
+18
+
+es
+m Valu wave when giv
+
+saleulate th
+
+ting Maxim e maximum val
+
+calcula
+ays 10
+
+‘There are three
+
+fective value as
+the RMS value BY = 0.707.
+. Die MS py0.707 because sin 45 070
+1_2y414=¥2
+
+y the RMS by ¥2-S6° 9707
+120V.
+
+examples for each caeulation a7 shown in Tabl
+
+&, =Exv2
+
+=120 Vx V2
+
+“janie 1-Caleulation options for maximum value ofthe si
+
+9
+
+the sine wave w
+
+ven the
+
+Table 2 use a maxi
+
+Using 0.707
+
+|
+p-£,xsin4s° | e-€,x0.707 e-=
+=169.7Vxsin4s° | 1697 V 0.707 4097
+=120V =120V | mag
+120
+
+be used for calculating current.
+
+Note: The same methods can
+
+‘Table 2 - Caleulat
+
+on options for effective voltage (E) using peak vol
+
+NOTE
+
+‘Unless otherwise indicated, an ac meter reads effective (RMS) values,
+
+Example 3.3
+Determine an ac meter reading
+‘alternator have a peak value of 679 V
+
+f the sine wave of the voltag
+
+E=E,xsin45°
+
+=679 Vxsin45
+=480V
+
+
+
+=== PAGE 13 ===
+ample
+uate 20° if'an ac voltmeter reads 120 V.
+
+Determine
+
+taneous voltage at
+
+First, find a
+
+ow tat you know the maximum value, find antaneous value at 20°,
+= xsin®
+=169.7 Vxsin20
+=s8V
+
+Example 3.5
+
+rentaeous voltage ofa circuits 10Vat 110% what would a voltmeter read?
+
+-emaximum value. The equation ¢=E,, Sin must be transposed to
+
+unknown value.
+
+®
+
+n Artera\iors
+
+BAL ine vs :
+OF) O& Fi ge A bed
+= Fhe aot
+
+Lelloge
+
+(Rs) _Reot
+
+What is the maximum
+
+90 V. What voltage is
+
+18 V. What
+
+\F2.90V
+208 x Vo
+
+=394.15 *O\096
+
+
+
+=== PAGE 14 ===
+Self-Test
+
+1, When a conductor rot
+
+SJ Length of the conductor
+)_ Rate at which conductor
+
+the rotational speed of a generator has what effect on out
+
+Decrease
+©) Stay the same
+
+4, a tworpole generator spins at 3600 rimin, what isthe expected output frequency?
+a) 30H
+
+b) S0Hz
+60 Hz
+) 120Hz
+5. Analtemator with an output frequency of $0 Hz spins at 750 r/min. How many pairs
+of poles are in the machine?
+
+T
+5 Six Cea
+d) Bight | 19.0
+
+6. A four-pole altemator makes three full physi
+
+ae )
+
+degrees are completed? —
+a) 6 degrees yy
+b) 360 degrees re)
+
+1080 degrees
+() 2160 degrees
+
+a tees a le you read 121 V ac. What is the peak voltage of the sine wave?
+
+Duron
+
+9, When a conduct
+
+a) -146V
+b) 206
+
+c) -265V
+©) Spy
+0 V?
+
+II, An cele
+240 V de
+a)
+
+mnnected to 240 V
+the effect on the h
+
+©) More heat
+
+cuit has an RMS voltage of 600 V. A
+
+and connecte:
+
+
+
+=== PAGE 15 ===
+objective
+
+Objective Two Acti
+
+3
+4
+
+One Activity Answers
+ux density
+
+a
+cond
+
+tp) Length of
+inimum emt
+
+ctor in the field
+
+a)
+‘sine wave
+
+‘When one
+lestical
+
+Iteration are com
+
+poste aeration an 2° negati
+
+re is completed.
+
+:
+
+180" ofan electrical sine wave.
+
+‘ne aeration 0c WE
+
+ity Answers
+
+‘The number of lectical © Jes completed in one second
+
+Hert; He
+the tims
+‘hen a sx-potealtemator i 0m
+
+1 have passed thous
+
+waveform wou!
+vr magnetc poles tis means ta
+
+to complete one ee is known asthe period
+
+ed through 1080 mechanical degres
+
+Jn 3240 electrical degrees. Note: There a
+
+3 «1080 = 3240.
+
+1) Number of poles
+
+'b) Rotational speed
+tthe min ofan alterator is nereased, then the output frequency of the alt
+altemator
+
+increased.
+
+Corey
+
+Objective Three Activity Answer:
+‘Ss
+
+1.
+
+The symbol used to represent
+
+| The value of voltage anywhere in its cycle isk
+leis known at
+
+‘This is the greatest mas
+magnitude of v«
+sine wave F voltage or current that i
+at is represented on an
+a
+
+ie maximum voltage is £
+
+tantaneous value and is
+
+represented by the symbol ¢
+
+‘The value of an ac vol
+voltage tha
+de value. ige that produces heat in a circuit at th
+ye same rate as a
+
+5. Ig = 22.2 A
+
+hen a conductor cuts a field
+¢ field at right an;
+ren the conductor ci fefsda ses 268V. 5 pico
+Es) e voltage induced
+v
+
+the maximum value of
+a voltage wav 4
+eae ge waveform is 169.7'V, then the eff
+effective value of
+
+instantaneous value of the cycle is 172.9 V
+
+SIS EEE SEE
+
+
+
+=== PAGE 16 ===
+Self-Test Answers
+
+1. o)
+2 10)
+3. a)
+4. c)
+5. b)
+6. d)
+7. ¢)
+8c)
+9. b)
+10. d)
+11. b)
+
+90°
+
+Resistance of the conduct
+Increase
+
+60 Hz
+
+Four
+
+2160 degrees
+
+171 V
+
+206.8 V
+
+—206 V
+
+145°
+
+Same as before
+
+tor in the magnetic field
+
+(030201a02.doex
+
+Vy)
+
+()
+

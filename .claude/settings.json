@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(start chrome \"https://ethan3409.github.io/sparkystudy/\")",
+      "Bash(nslookup sparkystudy.com)",
+      "Bash(nslookup sparkystudy.com 8.8.8.8)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" api repos/Ethan3409/sparkystudy/pages)",
+      "Bash(nslookup sparkystudy.com 1.1.1.1)",
+      "Bash(nslookup sparkystudy.com ns19.worldnic.com)",
+      "Bash(dig sparkystudy.com @ns19.worldnic.com A +short)",
+      "Bash(nslookup -type=A sparkystudy.com ns19.worldnic.com)",
+      "WebFetch(domain:dns.google)",
+      "WebFetch(domain:www.whatsmydns.net)",
+      "WebFetch(domain:networkcalc.com)",
+      "Bash(start chrome \"https://ethan3409.github.io/sparkystudy/login.html\")",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" api repos/Ethan3409/sparkystudy/pages -X PUT -f \"cname=\" -f \"source[branch]=master\" -f \"source[path]=/\")",
+      "Bash(\"/c/Users/ethan/AppData/Local/Programs/Python/Python312/python.exe\" -c \":*)",
+      "Bash(git add dashboard.html period2.html modules/concepts.html modules/diagnostic-assessment.html modules/flashcards.html)",
+      "Bash(git commit:*)",
+      "Bash(git push origin master)",
+      "Bash(git add CNAME)",
+      "Bash(git add login.html)",
+      "Bash(gh api repos/Ethan3409/sparkystudy/pages -X PUT -f cname=\"sparkystudy.com\" -F https_enforced=true)",
+      "Bash(gh api repos/Ethan3409/sparkystudy/pages -X PATCH -f cname=\"sparkystudy.com\" -F https_enforced=true)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" api repos/Ethan3409/sparkystudy/pages -X PUT -f cname=\"sparkystudy.com\" -F https_enforced=true)"
+    ]
+  }
+}

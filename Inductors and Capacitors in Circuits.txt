@@ -1,0 +1,971 @@
+=== PAGE 1 ===
+030201c
+
+ELECTRICIAN
+
+Inductors and Capacitors
+in Circuits
+
+@ 2" Edition
+
+Second Period
+Alternating Current (ac) Circuit Properties
+
+KC
+
+
+
+=== PAGE 2 ===
+aoe
+
+inductors and Capacitors in Circuits
+
+Rationale
+
+Why is it important for you to learn this skill?
+
+Inductors and capacitors are used in a variety of applications that an electrician will
+encounter. It is important to understand the effect these devices will have when placed in
+poth ac and de circuits.
+
+Outcome
+
+When you have completed this module, you will be able to
+
+Objectives
+
+effects of an inductor in a de circuit.
+
+he effects of a capacitor in a de circuit.
+
+the effects of an inductor in an ac circuit.
+the characteristics of an ac inductive circuit.
+ductance and inductive reactance.
+effects of a capacitor in an ac circuit.
+e characteristics of an ac capacitive circuit.
+capacitance and capacitive reactance.
+and analyze pure de inductive and pure capacitive circuits.
+ind analyze pure ac inductive and pure capacitive circuits.
+
+seer aw ae DS
+
+NOTE
+
+Objectives Nine and Ten are practical components and are not covered
+in this module.
+
+Introduction
+
+This module outlines the effect of inductors and capacitors in both alternating current (ac)
+and direct current (dc) circuits. You will learn about the characteristics and the relevant
+calculations needed when working with these devices.
+
+OE ee
+030201¢02.docx
+
+
+
+=== PAGE 3 ===
+Objective One
+When you have completed
+Describe the effects of an inductor in a de circui
+
+this objective, you will be able to
+
+Ifa direct current (de) voltage
+rises to a steady value. Ifa de
+not rise instantly; it rises ata rate
+
+Time Constant
+
+represented by the symbol
+ime constant of an inductive
+
+ivided by the resistance (R).
+
+‘of inductance (L) of the ci
+
+If'a de voltage is applied toa
+takes the current to rise to a steady value depends on the values o'
+inductance. The amount of current that flows depends on the voltage
+and the resistance of the circuit. ,lie Value opsteadyscurrentis determined by)
+‘Ohm's law, ee represenied by the symbol.and the
+
+ee
+
+[takes approximately five time cons
+Figure 2 displays the current change ee a
+
+‘maximum steady ¥
+“each time co ay ‘alue Of current, NC
+
+Time Constants
+Figure 2 - Current change of 63.2% for during each time constant.
+
+If the steady State Valle of the current is 6 A, the current 7
+‘calculated a8 follows: " wtaflerone time constaitis
+
+Current change = 6.000 A x 63.2%
+=3.792A,
+
+‘After the second time constant, the current changes by 63.2% of the remaining current.
+
+
+
+=== PAGE 4 ===
+17 Switch Cl \
+ee 17 Switch Closed
+Time on
+Lower Resistance
+
+~ Time
+Higher Resistance
+
+ik Switch Closed {7 su coset
+Fore time constar coil that has an inductance of 0.16 H and a resi Time Tine
+ulated in the following way. ae .
+ss Lower inductance . Higher Inductance
+(lower cemf) (higher com)
+
+‘Figure 5 - Current versus time in a purely inductive circuit.
+
+ligher Resistance
+Lower Resistance al
+
+HORTA door
+
+
+
+=== PAGE 5 ===
+Lower Inductance
+
+=
+Higher Inductance
+
+Figure 7 - Current versus time in a coil with different values of L.
+
+Opening an Inductive Circuit
+
+When you open an inductive ci
+
+the collapsing magnetic field can induce a high
+
+voltage into the circuit, as demonstrated in Figure 8.
+
+R=3Q L=02H
+
+For this example, assume the time it tak
+opened is 0.4 microseconds (is), = OT RE CUTENt to reach 0 after the switch a
+
+NOTE
+
+The symbol jt represents micro (% 10-5) in
+
+. — the Si
+measurement. One million microseconds are equa et
+(1.000000 ps=15), > ‘are equal to one second
+
+‘You would first convert microseconds (is) o seconds (3),
+O4ys
+[000 000 = 00000004 s
+
+‘Then substitute the values into the formula to perform the calculation for induced emf (¢).
+e=——thange ofeurent
+change of time (in seconds)
+rs 4A
+~ 0.0000004s
+=2000000V
+
+x0.2H
+
+The induced voltage is measured in volts, inthis instance itis represented in megavolts.
+The induced emf of 2 000 000 V would then be converted to 2 megavolts (MV).
+
+
+=== PAGE 6 ===
+Discharge Resistors
+
+{I BTeIERiE ere mhiahyinducea Voltage (Dolfage spike) can be destru
+aoa ata properly sized resistor across the coil permanently or auto
+sonnet the ewitch opens. This resistor is called a discharge resistor. In
+discharge resistor has been added tothe circuit from Figure 8.
+
+Z
+
+12Vde
+
+I 02H
+
+Figure 9 - Coil with discharge resistor.
+
+‘When the switch is open, the current in the
+the magnetic field to collapse quickly in the
+(cemf) that keep the current flowing across the
+
+discharge circ
+now flows through the discharge resistor and no spark occurs at the switch.
+
+‘The discharge resistor reduces arcing at the switch when an inductiv
+Example 1.1
+
+‘When the switch is opened, the induced voltage can be
+
+. [a
+
+Objective One Activity
+1, a) During the time span of one time constant after cts
+in
+
+@ ; Wan inductive circuit, the
+current rises to (2s Doe ot its steady value,
+
+b)_ How many time constants are requis
+steady value? required for the current of a coil to reach a
+
+Htime _ Contracks
+
+2, a) Write the equation for the ti Bs
+Lime constant ofa resistve-inductive circuit
+
+rors
+
+| 'b) What is the unit of measurement for a time constant?
+
+Zecoths
+
+3. Ifthe iron core of a coil is removed, the time taken for the current to reach its
+steady value
+a) Increases
+Decreases
+©) Stays the same
+
+|. How would the time constant in a coil with 1000 tus of No. 20 AWG copper wire
+are to 1000 turns of No. 30 AWG copper wire?
+(a> Greater length of time %
+
+
+
+=== PAGE 7 ===
+Objective Two
+leted this objec q
+
+Electric Charge
+
+(6 240 000 0 10 000) electrons. One coulomb is the
+ric charge that maintains a current flow of one ampere (A) for one second,
+
+Calculating an Electric Charge
+
+Ifyou ¢ amount of current and the length oft
+calculate an electric charge. This can be expressed as
+
+that a current flows, you can
+
+‘Quantity of charge = Current x Unit of time
+
+O=Ixt Ea
+
+of electric charge in coulombs (C) |
+) \
+
+© 1=time in seconds (5)
+
+Example 21
+
+Calculate the electrical charge required to keep a current of 2.5 A flowi
+seconds (2s).
+
+Onin
+=25Ax2s
+=5¢
+
+fortwo
+
+Corry
+
+Calculating an Electric Charge in a Capacitor
+
+0 Ee
+
+Example 2.2
+We calcul
+22.V us
+
+in a 50 uF capacitor that has been charged to
+
+ansposed equation,
+
+You must first convert 50 uF to F.
+
+S0uF
+1000 000
+
+= 0,00005 F
+
+‘+ /=voltage measured in volts
+Q=cxv
+= 0.00095 Fx22 V
+=0.00
+
+In the example above 0.0011 C would be converted to 1.1 mC. One coulomb is equal to
+one thousand millicoulombs. The conversion would be
+
+0.0011 C1000 =1.1mC_
+
+‘The charge stored in a capacitor varies with the capacitance of the capacitor and its
+measured value of voltage.
+
+[aiboox
+
+
+
+=== PAGE 8 ===
+jx td daa
+
+Charging and Discharging @
+ch is in Pe
+
+Capacitor
+ion 1. The
+
+Figure 10 - Charging a capacitor. siti
+
+‘moved to Position 2, a voltage equal to the source voltage still exists
+between the plates of the capacitor. The capacitor has a stored charge because there is an
+clecric field with an excess of electrons on the negative (-) side and a lack of electrons.
+‘on the positive (+) side.
+
+Ifthe swi
+
+If the switch is moved to Pe mn 3, as shown in Figure lectrons flow from the © |
+negative plate through the resistor to the posit 1e until the voltage across the plates |
+drops to zero. At this point the capacitor is fully discharged.
+
+Figure 11 Discharging a capacitor through a re
+
+Time Constant
+
+current flow is very high and is
+
+Figure 12 Voltage and current in a charging RC circuit.
+
+‘The time it takes for the voltage to reach maximum value can be divided into five equal
+
+@ periods as Figure 13 demonstrates. The length of each period is defined as one time
+‘constant. During each time constant, the capacitor voltage increases by 63.2% of the
+difference between the maximum value and present value.
+
+‘Time Constant
+
+nh Pr
+
+Li} DR AA
+
+=a.
+
+
+=== PAGE 9 ===
+|, x 63.2%)
+
+12 34S time Constant
+
+Y,= Vous = Vie 63:25)
+
+1, ha ~ (yn * 63.2%)
+i=
+— Discharge Current
+
+Figure 15 - Voltage and current when discharging an RC circuit.
+
+CoCr
+
+converted to farads (F).
+
+One time constant for this RC circuit isc:
+T=RxC
+= 2002x0.000015 F
+= 0.0035
+
+‘After converting seconds above to milliseconds (0.003 s x 1000 = 3 ms), the time
+required to charge the capacitor equals five time constants and is calculated as
+Charging time = 5x7
+=5x3ms
+=15 ms
+
+
+
+=== PAGE 10 ===
+3V ea
+3V amen i
+T=RxC
+it. = 100 ps.
+T=RxC
+50 =50% 20pF
+= 5y ee |
+Bs |
+Increased C £ - 2 $
+Figure 17 - Effects of changing R or C.
+
+Calculate the
+
+xe of a 100 uF capacitor wher
+
+ssured voltage is 200 V de.
+
+Calculate how long
+series with a 30 2
+
+‘take an 80 uF capacitor to charge when itis connected in
+rn
+
+Calculate the voltage across a 50 4F capacitor after one time constant if the capacitor
+. in series with a 1200 @ resistor on a 100 V de supply.
+
+THRO cdo
+
+
+
+=== PAGE 11 ===
+e Three
+sleted this obj
+
+| Jeo] Provides opposton tothe steady current flow a |
+No ~ Creates inductive reactance Yes
+
+Table 1 - Comparison of resistance and inductance in an ac cireuit:
+
+Inductive Reactance
+
+reactance is the opposition to current flow di
+in a decrease in the total current. Therefore,
+
+value calculated by Ohm’s law.
+
+jue to induced cemf in an ac ci
+the current never reaches the
+
+ee
+R
+
+‘The symbol fr inductive reactance is Xi, The statement that the inductive reactance of &
+component is 10 ohms can be written X, = 10 2.
+
+NOTE
+
+nly in ac circuits due to the constantly
+five reactance does not occur in de circuits as
+
+changing current. Indi
+the current is constant.
+
+Tabara docx
+
+Effect of Inductance on Inductive Reactance
+
+o
+
+Low Inductance
+Low cemf
+Low Inductive Reactance
+
+High Inductance
+High cemf
+High Inductive Reactance
+
+high inductance.
+
+Figure 18 - Low inductance vers
+
+| Low cemf
+
+High Frequency
+
+Low Frequency
+High cent
+
+Low Inductive Reactance
+
+fa
+a /
+
+High Inductive Reactance
+
+Figure 19 - Effect of frequency on inductive reactance,
+
+TROT ao
+
+
+
+=== PAGE 12 ===
+Objective Three Activity
+
+1
+
+B
+
+3.
+
+Inductive reactance is the created by inductance in an ac circuit C
+a L
+
+Indu
+
+and its unit of measurement
+
+“The symbol for inductive reactance =
+
+ee ae
+
+“What ae the two (2) factors affecting the inductive reactance?
+
+a)
+
+»)
+When the frequeney ofa circuit is inereased, what happens tothe inductive reactance
+of the circuit?
+
+©) Stays the same
+
+Objective Four
+When you have completed this objective, you will be able to
+Describe the characteristics of an ac inductive circuit.
+
+Inductive Alternating Current Circuits
+
+‘The relationship between the induced voltage and the current in ani Bae
+the voltage originally applied to the induct IDO,
+or cemf.
+
+circuit and is referred to as counter emf
+
+H2V.
+
+ov
+
+ats 20 - Induced voltage and current relationship.
+in the postive direction, the induced voltage is
+
+decreasing appl
+applied voltage and Sees current from decreasing.
+
+
+
+=== PAGE 13 ===
+hip be
+
+Induced voltage and current rel
+
+e across the inductive react induced
+
+Figure 22 - The induced voltage, the voltage drop, and
+
+the current in an inductive ac circuit.
+‘The effect is thatthe total amount of current (Jz) is reduced and the current reaches a
+‘maximum value after the applied voltage (V,) reaches a maximum value.
+
+Electical degrees are a i
+
+e =e degrees are a measurement of time. Jy, reaches its maximum value at 90° (that
+
+pa saat ime) after Vi,, $0 x, follows or lags behind V,. You could also say
+
+thee eats i butts acceped practice to relate the current tothe voltage that eauses
+rent to flow. The phase relationship in an ac
+
+lags Vr, by 90°
+
+luctive circuit can be stated as Ix,
+
+Dory
+
+phasor Diagrams
+ship between current and v
+
+in an inductive circuit can also be
+mnship between voltage
+
+8 Vir, by 90°,
+
+Both phasor diagrams show
+as a horizontal reference fy
+ahor
+
+reference Vs,
+
+or
+
+| and vertical refer es,
+1g currents and/or voltages, and
+I degrees.
+
+con a phasor represents current. An open arrowhead
+
+Figure 24 - Closed and open arrowhead.
+{for example, 10 V per cm).
+
+for example, 2 A per cm).
+
+{All voltage phasors on a diagram are drawn to the same scal
+‘All current phasors on a diagram are drawn to the same scal
+
+Each phasor has its origin at zero where the horizontal and vertical lines cross. One
+phasor (current or voltage) is normally drawn along the horizontal reference to the right
+of the origin. It is the reference phasor. The other phasors are drawn at an angle to the
+horizontal reference.
+
+to the reference phasor ead the reference phasor.
+reference phasor /ag the reference phasor.
+
+Phasors that are counterclock,
+Phasors that are clockwise from
+
+NOTE
+
+Phasor diagrams will be discussed in more detail in later modules of
+
+TsOaOTeI oe
+
+
+
+=== PAGE 14 ===
+2 EEE
+
+Figure 25
+
+Corer,
+
+Objective Five
+
+when you have completed this objec
+
+© f= frequency
+@ _L= inductance in he
+
+nnected t0 a
+
+Example 5.2
+The inductance of a c
+100 Hz supply
+
+it is connected to a
+
+‘il is 450 mH, calculate its inductive reactance
+
+jenry (mH) to henry (H).
+
+‘You must first convert the inductance of the coil from
+
+450mH _ 0.45H
+1000
+
+‘Then, calculate the inductive reactance.
+X,=2nfL
+=2xnx100 Hzx0.45H
+=282.742
+
+25
+
+
+
+=== PAGE 15 ===
+Objective Five Act
+
+9 @
+
+22H, Calculate the inductive
+
+inductive reactance is 60.3 © when it is
+
+‘oaDT eae
+
+
+
+=== PAGE 16 ===
+ting Current Circuits
+
+Provides opposition
+
+e 1 Greates opposition tothe change of voltage
+
+No
+peiNO et
+[_ Creates capaci
+Table 2- Comparison of resistance and capac
+
+reactance
+
+Capacitive Reactance
+the total amount of current in a circ
+ion is called capacitive reac
+
+This reaction
+toan ac supply. This oppositi
+‘measurement isthe ohm (2).
+
+at thatthe capacitive reactance ofa component is 24 ofms.can be written as
+
+Xp=240
+jn an ac circuit is affected by its capacitance and
+
+The statemé
+
+‘The capacitive reactance of a capacitor
+the frequency of the voltage across
+
+Effect of Capacitance on Capacitive Reactance
+
+itive reactance is inversely proportional to the capacitance,
+xe capacitance ofthe capacitor is high, more electrons HOW fo and from the
+indicates that the ohmic
+
+the ohmic value of the
+
+Effect of Frequency on Capacitive Reactance
+
+ce is also inversely proporto
+
+ges more sl
+of capacitive reactance
+
+is
+
+igh Xo)
+
+Low Frequency hen reneneh
+
+e Reactance Low Capacitive Reactance
+
+High Capaci
+
+Figure 26 - Effect of frequency on capacitive reactance,
+
+ROT
+
+(29
+
+
+
+=== PAGE 17 ===
+what
+
+2,
+e@
+
+Capacitive Alternating Current Circuits
+
+cause the curr
+
+Figure 27 - Voltage and current relationship
+
+an ac capacitive circuit.
+
+BsOTTCOE TR
+
+
+
+=== PAGE 18 ===
+Phasor Diagrams
+
+Reference
+
+Voltage Reference
+
+Figure 28 - Ph:
+
+
+
+=== PAGE 19 ===
+=53052
+
+of the coil.
+
+2xax60Hzx102
+
+=0,000265F or 265 )F
+
+Corrs
+
+ctive Eight Activity
+
+nn for capacitive reactance,
+
+obje
+
+1, Wei
+
+re reactance of an 800 \F capacit
+
+is 44.8 2 when itis
+
+Bando
+
+
+
+=== PAGE 20 ===
+Self-Test
+
+0.0012 seconds
+0,0083 seconds
+
+©) The inductive reactance of the
+4d) The inductive reactance of the
+
+ship between current and voltage in a purely inductive circu
+tage by 90°
+
+lags voltage by 180°
+
+‘true if the fr
+Would increase,
+Would decrease
+
+tor Would increase
+(ot Would decrease
+
+42.44 pF
+424.41 bE
+d) 238.73 mF
+
+What would happen to the capacitive reactance if the
+from 50 Hz to 60 Hz.on an ac circt
+capacitive reactance?
+
+a) Xc would increase
+
+b) Xewould decrease.
+
+©) Xc would not change.
+
+4) There is not enough information to answer the question
+
+and voltage in a purely capaci
+
+were to
+
+aT
+
+
+=== PAGE 21 ===
+NOTES
+
+Objective One Activity Answers
+
+a.
+
+1a) During the time span of one time constant after closing an inductive cire
+‘current rises to 63.2% of its steady value.
+
+b) Five
+
+2) The equation for the time constant ofa resistive-inductive ci
+
+b) Seconds
+b) Decreases
+
+a) Greater
+
+‘When an inductive circuit is opened, the collapsing magnetic field can induce a
+very high voltage into the circuit.
+
+‘The discharge resistor reduces arcing at the switch when an inductive circuit
+is opened.
+
+Objective Two Activity Answers
+10
+2, a) Coulomb
+'b)_C (note that the symbol is not italicized),
+3. geIxt
+=5Ax4s
+=20€
+4, Q=CxV
+= 100 nF x 200 V
+= 0.0001 Fx200 V
+=0.02C
+
+5. First 7 RxC
+=302x0,00008 F
+= 0.0024 s (2.4 ms)
+
+‘Then Charging time = 52.4
+=12ms
+
+6. The voltage after one time constant is 63.2% of the supply voltage, which is 63.2 V
+calculated using 100 Vdex 63.2% = 63. ae
+
+NOTES
+
+
+
+=== PAGE 22 ===
+4) a) Increa
+
+Objective Four Activity Answers
+1. Ina purely inductive circuit, Ix, lags Vx, by 90°
++ Teads V5. by 90°
+
+Objective Eight Activity Answers
+Objective Five Activity Answers Lem ae7e
+
+1. The formu
+
+re reactance is X, =2nfL 1
+
+2nfC
+
+2, X,=28fL Bee
+
+=2xnx60 Hzx0.22H
+
+Dax 60 Hzx448Q
+
+= 0,000059209F or 59.209 uF
+
+THUD eto
+
+ToT
+
+41
+
+
+
+=== PAGE 23 ===
+42
+
+Self-Test Answers
+
+1, a)
+b)
+D)
+b)
+d)
+c)
+b)
+c)
+a)
+10. b)
+11. b)
+
+OS SRE (Sv eur fe AGP 10S
+
+0.12 seconds
+
+4.29 MV
+
+15.17V
+
+0.0012 seconds
+
+The inductive reactance of the coil would decrease.
+Current lags voltage by 90°
+
+226.22
+
+The capacitive reactance of the capacitor would increase.
+Current leads voltage by 90°
+
+42.44 wF
+
+Xc would decrease
+
+(030201¢02.docx
+

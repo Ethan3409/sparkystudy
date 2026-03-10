@@ -1,0 +1,628 @@
+=== PAGE 1 ===
+TES
+eS lll—s arr?
+jt Chara sive elements of these devices sense an increase in the
+
+etic respo! !
+id around a conductor due to the sudden increase in current during a
+
+ndition. Since the magnetic field around the conductor builds instant
+an de-energize the circuit almost instantaneously. oe
+
+2229
+Sess
+
+nel .
+circuit CO
+jrcuit preaker &
+
+p circuit breakers are covered in more detail in later years of your
+
+s-tri]
+antarreous
+ie training
+“time Circuit Breakers
+
+inverse” ie circuit breakers, also known as thermal-magnetic circuit breakers, provide
+averse" from both overload and short-circuit overcurrent conditions. A bimetallic
+roa element works similarly to time-delay fuses and gives the breaker inverse-time
+wiping tics to allow brief, overload conditions. In the event of a short circuit, an
+oerromagnetic trip element provides instantaneous action.
+dl
+it breakers found in panelboards for homes, commercial buildings, and
+
+t circ 5 = aa
+ye plants are inverse-time circuit breakers.
+
+industrial
+Figure 27 illustrates the basic components of an inverse-time circuit breaker.
+Handle in "ON" Position
+
+Handle in "TRIP" Trip Mechanism
+
+Position by
+i Bimetallic Strip
+Q)_ tandtein OFF” i
+Position ae
+
+Movable Electromagnet
+Contact Arm Sensing Element
+(Open) y | Spring
+
+Movable
+Contact Arm
+(Closed)
+
+
+
+=== PAGE 2 ===
+30
+
+NOTES
+
+Overload Characteristics
+
+Inverse-time circuit breakers employ a bimetallic strip made of two dissimj
+
+bonded together to sense overloads. The two metals have different th, Similar Metals
+characteristics, so the bimetallic strip bends when heated. Overload condi EXP ansion
+more heat in the bimetallic strip and cause it to bend. After it bends a itions Create
+distance, the strip contacts the tripper bar, activating the trip mechanism as ithe’
+in Figure 28. illustrateg
+
+Operating Mechanism
+
+Handle in "TRIP" Position Released by Trip Mechanism
+
+Bimetallic str
+, P bey
+to trip the bréagggied
+
+Figure 28 - Thermal-magnetic circuit breaker tripped on overload.
+
+When the circuit breaker’s contacts open, the bimetallic strip cools, and it returns to its
+original condition. This allows a circuit breaker to be manually reset once the overload
+condition is corrected.
+
+030204c02.docx
+
+®
+
+
+
+=== PAGE 3 ===
+circu
+
+oft" roug . Ra + A
+Seat f1OW t eal operating conditions, or during minor overloads, the opposing
+
+nder nOnn
+U not sufficient
+are NO acuit OCC
+
+Figu
+flows through the blow-apart contacts also flows through a conductor in
+is positioned close to the electromagnetic sensing element, as
+current levels, the magnetic field surrounding this
+
+Is in the sensing element, which contacts the tripper bar and releases the trip
+
+in Figure 30B.
+
+The current that
+the circuit breaker that
+figure 30A i
+
+conductor pul s
+mechanism, aS shown i
+
+Handle in "ON"
+Position
+
+it ae the circuit breaker’s blow-apart contacts creates opposing
+
+re 29 - Magnetic fields around blow-apart contacts.
+
+Ilustrates. At fault
+
+NOTE
+lagnetic
+
+to separate the contacts, as Figure 29A demonstrates. H.
+urs, these opposing magnetic fields increase significantly. Sali
+
+in Figure 29B.
+
+Operating Mechanism Held Handle in "TRIP"
+in Place by Trip Mechanism Position
+
+fault current
+begins to flow.
+
+
+
+=== PAGE 4 ===
+NOTES
+
+The combined actions of the blow-apart contacts and th
+electromagnetic sensing element result in the rapid inte sd ote
+O01
+
+is, the less time it tal
+
+the construction
+
+Because the magnetic forces are proportional to the of th
+‘i curr le fa
+i kes to interrupt the current. In the ve the greater wits
+mechanism is actuated within three to five milliseconds of a short
+
+Manufacturers may use methods different than described
+
+components of circuit breakers; however, the basic
+characteristics are the same.
+
+Ment of
+mn
+
+and arrangement of the short-circuit and pane for
+Overload —
+operating
+
+Trip-Free Mechanism
+
+Circuit breaker handles act as the control device that switches the circuit
+often used to reset the automatic tripping function after the break ete ton or
+Rule 14-300 1) requires circuit breakers to be in oe rom
+
+overcurrent condition.
+means that an overcurrent
+locked in the on position.
+
+030204c02.docx
+
+condition will trip the breaker even if the handle j
+le ish
+
+
+
+=== PAGE 5 ===
+Four and Five Activity NOTES
+
+eactive
+pjectY™ two (2) types of overcurrent conditions?
+what at?
+
+) : a)
+b)
+
+of the two overcurrent conditions cause more current to flow?
+which
+
+What are the two (2) current ratings for overcurrent devices?
+a
+
+a)
+b)
+
+4, Ashort-circuit pathhasa___—_——_simpedance than a normal circuit path.
+: a) Higher
+| b) Lower
+
+5, What are the two (2) basic protective devices used to protect conductors
+and equipment?
+
+b)
+
+6. Which of the two basic protective devices can provide both overcurrent and
+overload protection?
+
+. Anon-time-delay fuse can clear a short-circuit condition in less than of
+
+an electrical cycle and clear a high short-circuit current in less than a of
+
+an electrical cycle.
+
+Describe the sequence of events that occur to a time-delay fuse responding to
+a short-circuit condition.
+
+
+
+=== PAGE 6 ===
+9. What are the two (2) main types of circuit breakers?
+
+a) )
+
+b)
+
+10. Which of the two main types of circuit breakers has an electromagnetic responsiy,
+e
+
+element only?
+
+11. Which mechanism of an inverse-time circuit breaker responds to the extra heat
+
+caused by a prolonged overload condition?
+
+030204c02,docx
+
+
+
+=== PAGE 7 ===
+pjective six ee,
+ave completed this objective, you will be able to
+
+rs that determine short-circuit currents.
+
+fault current Values
+ort-circuit conditions, the fault current may be thousands of amper id
+res and must
+
+puring 8 t devi (
+d safely. Overcurrent devices must have an interrupti it
+es Pefies x ‘ing Parr
+wn short-circuit current that the device can safely SEEMED indicates the
+e circuit or equipment. If a fault current exceeds a per eons
+erupting
+
+mi
+damage 10 : UNE
+the device May rupture, destroying itself and damaging the equipment around i
+‘ound it.
+
+capacitY>
+‘The fuse in Figure 31 can safely interrupt a current of 200 000 i
+2600 V alternating current (ac) circuit or 100 000 A (100 kA) A cant?
+
+current (de) circuit.
+
+igo
+
+Figure 31 - Interrupting rating.
+
+NOTES
+
+
+
+=== PAGE 8 ===
+—
+
+| 36
+
+Factors Affecting the Maximum Available Fault Curre,
+To determine if the interrupting rating of an overcurrent device nt
+system in which it is installed, you must know the maximum ay,
+can be supplied by the source (for example, a transformer). The
+current is affected by
+The kilo-volt-amperes (kVA) rating of the transformer,
+The voltage rating of the transformer secondary supplyin,
+«The percent impedance voltage of the transformer.
+
+is large en
+ailable faut for the
+
+mas
+‘aximum Walla at
+
+faut
+
+ig the Circuit, an d
+
+Kilo-volt-amperes, ot kilo-volt-amps (kVA), is the unit of measurement
+energy capacity of transformers. The higher this rating is, the more en
+transformer can feed into a short circuit.
+
+used for
+‘ergy the be
+
+Following Ohm’s law, the amount of fault current that will flow during a short cireyj
+affected by the voltage rating on the secondary of the transformer supplying pipe is
+The percent impedance voltage, or simply percent impedance, is the Percentage pe
+normal rated primary voltage that must be applied to the transformer to cause full ee
+current (FLC) to flow in the short-circuited secondary windings. It is expressed as a
+numeric value on the nameplate of a transformer with the symbols %/Z or %Z. For
+example, %IZ = 5%. The lower the percent impedance rating, the higher the available
+fault current.
+
+Transformer ratings, percent impedance, and short-circuit calculations are covered in
+more detail in later years of your technical training.
+
+While the maximum available fault current describes how much current could flow
+during a short-circuit condition, the actual amount of current that flows during the fault
+depends on the impedance of the fault path. A fault caused by a single strand ofa live
+conductor contacting a metal enclosure has more impedance (and less fault current) than
+a fault caused by a metal tool short-circuiting the busbars in a panelboard. The closer the —
+fault is to the source, the lower the impedance will be since the length of the fault *"
+is shorter. As the distance from the source increases, the impedance of the
+also increases.
+
+The fault current may also be affected by motors connected to the
+act as generators when decelerating and can increase the av:
+
+030204c02.docx
+
+
+
+=== PAGE 9 ===
+ive
+
+oa NOTES
+jer impo rtant to know the interrupting Tating of a fuse or breaker?
+
+| jt the three (3) factors that affect the maximum available short-circuit current in
+* 4 circuit.
+
+a)
+b)
+
+°)
+
+3, Describe how the distance of a short circuit from the source affects the amount
+of fault current.
+
+
+
+=== PAGE 10 ===
+38
+
+jaa
+
+Self-Test
+1. What is the function of the holding contacts in a basic stop/start control circuit?
+a) To de-energize the motor during an overload condition ©
+
+b) To keep the motor running when the start button is released
+c) To keep the motor running when the stop button is released
+d) To allow the motor to be started from more than one location
+
+2. Ifan additional stop button is to be connected to an existing stop/start control circuit,
+how would it be connected?
+a) In parallel with the start button
+b) In series with the other stop button
+c) Inseries with the holding contacts
+d) In parallel with the other stop button
+
+3. What is a start push button an example of?
+a) Manually operated, momentary control device
+b) Manually operated, maintained control device
+c) Automatically operated, momentary control device
+d) Automatically operated, maintained control device
+
+4. Which of the following is a non-contact pilot device?
+a) Float switch
+b) Limit switch
+c) Toggle switch
+d) Proximity switch D))
+
+5. Which of the following is the correct symbol of a normally open limit switch? |
+SS :
+a) b)
+2,
+Cc) d) nm
+
+Figure 32
+
+6. What will an inverse-time circuit breaker p
+a) Overloads only
+b) Short circuits only
+c) Continuous operation
+d) Overloads and short circuits
+
+(030204c02.doex
+
+
+
+=== PAGE 11 ===
+tl
+. wh the preaker ™
+») ior opto"
+The preaker mu:
+
+) a breaker will a
+
+1
+
+“circuit curre
+shorter ondary voltage
+
+a)
+b) Supply tran
+
+‘Ampacity of
+d) Impedance of the
+
+9, A motor iS expected to
+
+pen when locked in the
+11 guard against nuisance tripping
+
+st trip, even if locked or held in the closed iti
+low inrush current to pass through wihout ipo
+
+F t by the term “ free” when applied to breaker?
+arisen? 5 ust not nA
+
+cessors wi
+
+¢ following is not a factor in determining the maximi "
+nt in a system? lum available
+
+sformer kVA rating
+f the supply conductors
+possible short-circuit path
+
+a) Always run at FLC.
+
+b) Drawa high current at start-up.
+
+¢) Draw the lowest current at start-up.
+
+d) Never have the start current exceed the FLC.
+
+0, What is a fault current caused by?
+a) Electrical overloading
+
+| b) Mechanical overloading
+c) Alow impedance path to ground
+d) Ahigh impedance path to ground
+
+
+=== PAGE 12 ===
+=
+
+Objective One Activity Answers
+Li
+25
+Ss
+
+Objective Two Activity Answers
+1G
+
+Objective Three Activity Answers
+ibs
+
+Normally closed push buttons are used for stopping.
+Normally open push buttons are used for starting. @
+
+The relay coil would be energized only while the start button contacts were closed,
+The relay coil would be de-energized when the start button was released, since the
+holding contacts would be in parallel with the stop button.
+
+Multiple start buttons must be connected in parallel with each other.
+
+Multiple stop buttons must be connected in series with each other.
+
+a) Maintained
+b) Momentary
+
+A start push-button switch used in parallel with holding contacts for a stop/start
+station is a momentary contact switch.
+
+A standard single-pole toggle switch is a maintained contact switch.
+
+a) True; automatic pilot devices convert a change in the medium they are sensing
+into a change in the state of a set of contacts. ®
+
+a) Float
+
+b) Pressure
+
+c) Limit
+
+d) Temperature
+
+a) No
+
+The switch contacts are in the float of a tethered bulb float switch. In the lever type,
+they are located at the termination point of the lever.
+
+With a limit switch, something (a lever, cam, rod, or other actuator) must contact the
+object or material being sensed. A proximity switch does not need to make contact. |
+
+030204c02,docx
+
+
+
+=== PAGE 13 ===
+¢ Four and Five Activity Answers
+
+‘active if
+) Sie conditions
+ad conditions
+
+overlo lly have higher current values.
+
+short circuits tyP) be
+Continuous et
+)
+
+3 ting rating
+) niae
+
+p) Lower B
+) Overcurrent devices
+») overload devices
+rent devices provide both short-circuit and overload protection.
+cul
+
+e delay fuse can clear a short-circuit condition in less than half of an
+ele and clear a high short-circuit current in less than a quarter of an
+
+6, over
+
+1A non-tim
+"electrical ¢:
+
+electrical cycle.
+
+During a short circuit, the fuse link vaporizes, and the surrounding arc-quenching
+
+filler extinguishes the arcing current.
+
+a) Inverse-time circuit breaker
+
+b) Instantaneous-trip circuit breaker
+
+10, An instantaneous-trip circuit breaker is a magnetic only device.
+
+11. The bimetal strip of an inverse-time circuit breaker responds to overload conditions.
+
+Objective Six Activity Answers
+
+1. You must know whether the overcurrent device can safely interrupt the fault current
+available in the system or the circuit in which it is to be installed. An overcurrent
+device with an interrupting rating lower than the available fault current in the system
+could rupture when it opens during a short-circuit condition.
+
+* a) Kilo-volt-amperes (kVA) rating of the supply transformer
+») Secondary voltage rating of the supply transformer
+
+°) Percentage impedance (IZ) of the supply transformer
+
+The further the short
+
+§ circuit is from the source, the lower the fault current will be
+
+ince the impedance of the fault path will be higher.
+
+
+
+=== PAGE 14 ===
+1. b)
+b)
+a)
+d)
+a)
+
+yR YY
+
+)
+c)
+°)
+b)
+10. c)
+
+he fe Se
+
+(030204c02.docx
+
+Self-Test Answers
+
+To keep the motor running when the start button is released
+In series with the other stop button
+
+Manually operated, momentary control device
+
+Proximity switch
+
+The normally open limit switch symbol is as follows:
+
+2
+Figure 33 - Response a).
+Overloads and short circuits
+The breaker must trip, even if locked or held in the closed position.
+Ampacity of the supply conductors
+Draw a high current at start-up.
+
+A low impedance path to ground
+

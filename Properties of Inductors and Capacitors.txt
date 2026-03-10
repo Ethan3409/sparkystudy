@@ -1,0 +1,1225 @@
+=== PAGE 1 ===
+LEARNING RESOURCES
+e @ FOR SKILLED TRADES
+
+ELECTRICIAN
+
+Properties of Inductors
+and Capacitors
+
+O 2" Edition
+
+Second Period
+
+Alternating Current (ac) Circuit Properties
+
+
+
+=== PAGE 2 ===
+Table of Contents
+
+Objective One...
+Inductors ...
+Objective One Activity ..
+Objective Tw
+Induction ...
+Objective Two Activity.
+Objective Three.
+Inductance
+Objective Three Activity.
+Objective Four .
+Capacitors
+Objective Four Activity
+Objective Five
+Capacitance
+Objective Five Activity.
+Self-Test.....
+Objective One Activity Answers
+Objective Two Activity Answers.
+Objective Three Activity Answers..
+Objective Four Activity Answers
+Objective Five Activity Answers
+Self-Test Answers...
+
+
+
+=== PAGE 3 ===
+Properties of Inductors and
+) Capacitors
+
+Rationale
+Why is it important for you to learn this skill?
+Asan electrician you will work with many different types of loads including several
+
+types of inductors and capacitors. It is important to understand the basic properties of
+these loads and the equipment that uses them before connecting them into a circuit.
+
+Outcome
+When you have completed this module, you will be able to
+
+Describe the properties of inductors and capacitors.
+
+Objectives
+
+Describe an inductor (coil) and its characteristics.
+Describe induction and its effects.
+
+Describe inductance and the factors which affect it.
+Describe capacitor construction, types, and applications.
+Describe capacitance and the factors which affect it.
+
+Pei adel dest
+
+Introduction
+
+This module introduces you to the basics of inductors (coils) and capacitors. You will
+learn the different types of construction and how that can impact the circuit properties of
+these devices. The basics of the many applications which inductors and capacitors can be
+used for will also be covered in the module.
+
+030201b02.docx
+
+
+
+=== PAGE 4 ===
+ane
+
+objective ones ey ill be able 0
+
+"2 1d its characteristics:
+
+Describe an inductor (C Nas
+
+Inductors an electrical component that stores
+
+nn of an inductor is an insulated
+
+may be ¢
+ctor wound around 86 :
+ce oe magnetic material such a i, cera ic, or plas
+
+© A magnetic material Tike i
+
+cethe one pictured in Figure |
+the etc field. Te const
+
+energy
+
+Figure 1 - Inductor.
+
+NOTE
+
+‘an air core versus an
+the real wor
+
+‘an iron core as they would be seen in a schem:
+i at
+Symbol is commonly used to represent all fixed.
+
+Coil- Air Core
+aaa gee
+
+Figure 2 - Air core and iron core coil symbol.
+
+ONT
+
+‘Various types of ele
+
+In an electric motor—such as the one pict
+
+1 equipment use coils:
+Motors,
+‘Transformers,
+Solenoids that actuate valves or strikers,
+Relay
+Magnetic starter
+Electromagni ing ballasts, and
+
+e reactors for variable frequency drives (VFD).
+
+din Figure 3—the coil converts electrical
+
+energy into mechanical energy.
+
+ure 4 - Transformer.
+
+TsODOTbOE doce
+
+
+
+=== PAGE 5 ===
+Relay Coil
+
+Figure 6 -Relay coil and magnetic starter coil.
+
+ONT oaaar
+
+Magnetic Starter Coll
+
+0
+
+ter and clean the power on the
+e (VFD). Line reactors and VFDs will
+
+Figure 8-
+
+for VEDs.
+
+
+
+=== PAGE 6 ===
+a |
+
+objective On° Activity consists of _IneAakea
+
+1
+
+4
+
+imple in
+gion of si
+ere Ce
+pound around 2 ee
+(oducts sed to refer 0. inductor besides coil?
+‘terms are
+hater vo
+
+»y Reet
+
+here inductors are used.
+of equipment wi
+Name thee (3) OPES
+
+» Vee sie
+»y Line teotte > __
+
+‘Sketch the symbol for the following.
+2), Acoil with an air core
+
+Nee
+
++) Acoil with an iron core
+——_
+
+ht
+
+Coy
+
+0
+
+\\ @ _irensyou nave competed
+
+| Deserit
+
+Objective Two
+
+, You will be able 10
+
+Induction
+
+the interaction of a magnetic field and a conductor that produces a voltage.
+
+es confused with inductance; Table I provides a brief statement of
+the difference between the two.
+
+Induction | Inductance i |
+
+Inductance isthe property ofa circuit |
+that opposes change in current.
+|
+
+Is the process wher
+
+is produced by the relative
+
+between a condi da
+field.
+
+Table 1 - Difference between induction and inductance.
+To understand induction, you must know that whenever a current passes through a
+conductor, the results are as follows:
+‘* A magnetic field develops around the conductor;
+
+* The magnetic field expands when current increases and contracts when the
+current decreases; and
+
+‘+ The magnetic flux den:
+proportional to the magr
+
+ear the conductor also increases or decreases
+eld
+
+Whenever magnetic lines of force cut across a conductor, an electromotive force (emf) is
+induced
+
+that conductor. Likewise, when current in a conductor produces a changing
+
+a loop or coil, its changing magnetic field
+
+cross the second conduct emf is induced in the second conductor.
+
+THOROTBOR ToS
+
+
+
+=== PAGE 7 ===
+‘stationary
+
+aday's aw OF
+
+Df induced emf is diretly
+three factors.
+
+‘more voltage.
++ The flux densi
+
+of ins per
+
+given spot
+
+= any Conuaot2 \
+
+conductors
+
+igre 9-tndtion dE
+
+re 9f Inductic -
+Faraday's Law 0" fon deals withthe amount of emf induced ina conductor by the
+
+es on the rate of change of flux density, The amo
+E ‘induction, which depends on unt
+proces of
+
+As Figure 10 demonstrates,
+
+ctor by
+
+‘2 ving .d magnetic lines of for
+
+sage oan or by MOVINE conductor and mag! ree,
+fault on een ceed bythe process of ind
+shee mS cases
+
+9. In
+in Fig
+
+or colapsind
+expat Feld
+induced in the fi
+
+jon
+
+either moving the con
+sf farce across a conductor. Either m,
+
+An emf is induceg
+in the moving conduct
+Yr
+
+tae ) Stationary
+
+Magnetic Fieig
+
+to the relative motion between the conductor and fe
+
+proportional tothe rate of change of flux.
+
+: i vhich the coils rotate
+2 rignal frequency the speed at w
+Prrpue A faster rotation cus ines of foree more quickly and generates
+
++ The angle ofeut affects the rate of cutting, wl
+
+Imes
+
+the number of lines of force per unit area, or
+isameasure of the strength of the magn
+
+the rte of change of flux in an alternator is affected by
+
+number
+i field at a
+
+is greatest at 90°.
+
+Angle of Cut
+
+Rotational
+
+@-—_ Frequency
+run density
+
+Figure 10 -Factors affecting the amount of induced emf.
+
+Tae
+
+0)
+
+iy conductors and an expanding of collapsing fie
+—the rate of change of flux density depends on how fast the current changes.
+induced in a conductor by an expanding or collapsing magnetic field.
+
+‘An expanding or collapsing magnetic
+field around Conductor 4 will produce
+= /@ _ anemfin Conductor 2
+
+Figure 11 - Expanding or collapsing magneti
+
+Types of Induction
+
+Mutual induction and self-induction are the two distinct processes involving stationary
+conductors and a moving field.
+
+Mutual Induction
+
+-mf in one conductor or circuit by a change of
+‘Mutual induction is demonstrated in
+
+Figure 12 where Conductor B emf is being changed due to the flux lines of the magnetic
+
+flux around Conductor A.
+
+Figure 12 - Process of mutu:
+
+Conductor A rises from zero to the
+ied by the source voltage and the resistance of the lamp,
+
+increases, the flux density around Conductor A increases and the
+field expands,
+
+ing field cuts across Conductor B, inducing a v
+
+tage into it. This is
+
+\g—the induced
+
+s again induced in
+
+
+
+=== PAGE 8 ===
+notes
+
+ual induction as they step
+ers use mul
+transform
+
+scree Ib
+nse ere) yon
+step
+
+‘Magnetic lines of force linking two coils
+ina simplified transformer.
+
+fi {Fin a conductor or circuit by
+nis the generation of emf ina con
+Seffinduetion is" &gustor or circuit. Self-induction occurs wher
+density around that con
+
+solange andthe changing magnetic field generates a v
+tho
+
+voltage
+tc eel ‘oltage when the current increases and
+«amp aplie voltage when te current decreases.
+
+ir i \d allow a cha
+
+ind a portion of conductor into loops to form a coil an amy
+ae et eanductr,as shown in Figure 14, the loops are cut by the
+exrrng magn fel formed around the col. As the switch is closed or opened te
+tent el expands or collapses across the loops inducing a voltage into them, The
+‘col induces its own voltage.
+
+a Expanding or collapsing
+magnetic field induces voltage
+into loops of the coil
+
+Figure 14- Process of self-induction,
+
+)
+
+¥ Lenz's Law
+
+‘According to Lenz’s law, when induction occurs, a voltage is induced in a conductor and
+attempts to force electrons in one direction. The induced voltage has a certain polarity
+‘The polarity of any induced voltage must be such that any current resulting from it
+develops a flux that opposes any change in the original flux
+
+‘An induced voltage opposes the change that produce
+‘opposes any chan: led a c
+‘counter emf, or most commonly, cemf). In Figure 15,
+
+ated, the cemf attempts to force electrons in the opposite direction; the
+fe opposes the increase
+
+ince the induced voltage
+
+Increase in applied emf
+causes increase of current
+
+cemf opposing change in current.
+——
+
+Figure 15 - Increase in curre
+
+ited by cemf.
+
+In Figure 16, ifthe current flows in the original
+‘opposes the decrease and tries to keep the current flowir
+
+but is decreasing, the cemf
+in the original direction,
+
+Decreasing applied emf
+‘causes decrease of current.
+
+—
+SO
+‘cemf opposing change in current.
+as
+
+Figure 16 - Counter electromotive force opposes decrease in current.
+
+‘DsonOTBORToce
+
+
+
+=== PAGE 9 ===
+noTes
+
+ing the left-hand rule for d
+7. When we apply
+
+she core epresenting the rel
+
+field.
+rection of the magnetic
+
+he page, represent
+
+Increasing
+inoreasing Current
+
+i iy
+a ‘Combined magnetic:
+
+‘Figure 17-Determining the direction of counter-emf using the left-hand rule,
+
+» ee
+
+Factors that Affect Counter Electromotive Force
+t\} |  ) ‘The counter emf induced in a coil depends on two factors:
+«The inductance of the coil and
+«The rate of change of current (which determines the rate of change of flux).
+
+‘The equation for cemf is as follows.
+
+change in current
+change in time
+
+cemf =
+
+x inductance
+
+affect cemf in a coil are st
+
+jarized in Figure 18.
+
+‘Same Rate of Current Change
+
+Fewer turns - less inductance ‘More turns - more inductance
+Ana
+
+LESS cemf
+
+wassssan
+MORE cemf
+
+‘Same Inductance
+
+t)
+r) =
+
+Figure 18 - Factors affecting cemf.
+
+Higher rate of change of current.
+
+RAARPS
+
+MORE cemf
+
+) @
+
+‘W5ORDTOR osx
+
+
+
+=== PAGE 10 ===
+O_o LL
+
+Objective Two Activity
+
+Faraday’s law of induction.
+tate
+
+" None ome HOLLY POPodIo09)
+Jo (oss 0 Ghtoge— of Nie
+i é
+
+: ”
+2, What is mutual induction
+
+e vy i
+3. What is self-induction?
+The generation of an em Pin
+oO Lattin feX bY OX Crocge
+Liyy density in Yet Sap
+
+4, State Lenz’s law.
+
+the _Cinnnge- bnok  produlede }~
+
+When ap Induty. Yolxeg e OD Petes
+
+5. What are the two (2) factors that affect the cemf of a coil?
+
+Objective Three
+
+When you have complet
+
+al property meaning itis dete
+does not change,
+
+‘component change at the rate of one amy
+force (emf) is induced across the compone
+
+of electromotive
+ant. For example, ac
+two henry is expressed as L=2.0 H,
+
+th an inductance of
+
+Factors that Affect Inductance
+
+ince of a coil is affected by two factors:
+
+The number of tums of conductor in the coil ('V) and
+© Three aspects of
+
+with higher permeabi
+A core with a larger cross-se,
+
+‘The length of the magnetic path decreases.
+
+THT
+
+
+
+=== PAGE 11 ===
+core
+Ha er Inductance
+
+«core Nea
+per neuctne®
+
+shorter Path =
+Higher Inauctance
+
+permeability” ——
+
+Tae
+
+ee
+
+Objective Three Activity
+1. Wi symbol for inductance?
+
+List the four (4) factors that affect the induc
+
+» LN) oumber of 4p > _
+
+ce of a coil and the symbol for each.
+
+» (Ce Section ort
+
+- HL) APeemabiitty
+
+4) (Q_Leogin of Condutier :
+
+=
+
+‘What is the formula for calculating inductance?
+we
+
+li cee
+
+
+
+=== PAGE 12 ===
+————...
+
+Oe es sie beable 10
+a types and applications
+
+When you have !
+
+esrb capacitor consrution
+
+Capacitors
+
+‘Avbasic capacitor is
+ted by an
+
+material pre
+
+asthe dlelectric.
+
+nent made up of two plates of condu
+
+ide of metalic foil or
+Je, The plates are ma
+ae pace een he plates led
+es fom suching each other.
+
+circuit compet
+
+Pl
+
+Plates
+
+Insulating material called Dielectric.
+
+Figure 21 - Basic capacitor constru:
+
+Figure 2 shows the circuit symbol fora capacitor.
+
+oe
+
+Figure 22 - Circuit symbol for a capacitor.
+
+Capacitor Types
+Capacitors are described according to their dielectric material. Some capacitors are
+polarized, mean are polarity sensitive; others are non-polarized. Electrolytic
+capacitors a in both polarized and non-polarized versions. Capacitors will
+have different markings dependent upon the manufacturer, si
+
+‘These markings will include things like rated voltages, current,
+(ifapplicabe). ‘
+
+DANGER
+
+Polarized capacitors must
+Ifincorectly connected,
+‘equipment damage.
+
+be connected to the correct polarity,
+they can explode causing injury or
+
+capacitors have a fixed valu
+“echancal or electronic mex
+
+leans,
+BTR
+
+| Non-Polarized Capacitors
+-there are six types of non-polarized capacitors:
+
+change the active area of
+
+lled Capacitors
+led capacitors,
+of current and
+
+the one in Figure 23, are used in power circuits with high values
+
+Figure 23 - An oil-filled capacitor.
+
+TsOaOTROE doce
+
+
+
+=== PAGE 13 ===
+‘These capacitors have
+rolled with the plastic
+
+plastic Film Capacitors
+
+axed paper between
+enclosed in a
+
+plas
+‘between the conduct
+
+Figure 25- Plastic film capacitor.
+
+Plate A
+Lead
+
+Sheets Pressed Together
+and Encapsulated
+
+Stacked Arrangement
+Figure 26 - A mica capacitor.
+Ceramic Capacitors
+
+capacitors are a small ceramic disc coated
+s pictured in Figure 27. These have a high
+
+0
+wo,
+HHH
+
+z
+
+9 8
+
+Shei oe
+
+An
+
+9
+
+Figure 27 - A ceramic capacitor.
+
+0 ©®
+
+
+
+=== PAGE 14 ===
+rized. They azardous if
+
+and de circuits.
+
+ized. The most CO!
+re 28 shows various st
+
+Pr.
+~s
+co
+
+Figure 28 - Aluminum electrolytic capacitors.
+
+tantalum electrolytic capacitor. The dielectri
+1s low dielectric strength and a high di
+
+Figure 29 shows a
+fy thi
+
+ry
+is
+
+Wu
+
+my
+(L
+@ “eb
+fi
+dl
+
+Figure 29 - Tantalum electrolytic capacitor.
+
+‘Non-poarized capacitors are made b
+‘made by manufacturing two electro
+back-to-back series arrangement with plates ofthe same polarity co
+
+resalsn eel fhe epetorav
+an ac circuit. oregiaa
+
+Gory
+
+principle to cau:
+heavy-duty flashers
+
+Rectifier Smoothing and Filtering
+Wh
+po:
+
+de voltage.
+
+in ac source is converted
+
+Power Factor Correction
+
+When used for po
+and voltage in indust
+
+Motor Starting
+
+‘the common uses are for
+, they are typi
+
+ly used for
+
+feen current
+
+
+
+=== PAGE 15 ===
+Activity
+
+1 two cont
+
+‘a capacitor called?
+
+ductive plates of
+
+ate beree”
+
+ac circuits?
+
+a poaried electrolytic capacitor is connected improperly in
+ft polar
+
+‘What can hae
+
+iy Goyld_€¥ lode
+
+pee Ae
+
+vieations where capacitors are used.
+
+‘Name four (4) appl
+
+Nig
+(Je
+
+Sieeemipert COCfEC or
+9 Odchoc Brocios ®
+
+0
+
+@ resto ofa itesric materia
+
+Objective Five
+
+cen you have completed this obje
+
+ih you will be able to
+
+sseseribe eapacitance and the factors which affect
+
+voltage acro
+affects how the v
+
+Measuring Capacitance
+‘The unit designated by the Intemational Sy
+pacitance is the farad (F). A capacitor has a
+
+‘aPtsmb of charge for every volt arossit. Th
+
+Mie farad is an extremely large w
+fone farad or 10 farads. Instead,
+Pa ‘used to discuss capacitance measurements.
+Jarger capacitors can be represented by farad ot
+be represented by picofarad. Table 2 provides so
+
+‘one farad.
+STURT Symbol Factor Standard Form |
+Farad = thas ia
+wilifarad nF io? [oor
+Mira 1 +000 001
+Pcotrad faecal 000 000.000 001 |
+
+‘Table 2 - SI conversion for one farad w
+
+Factors that Affect Capacitance
+
+(There are three factors that affect the capacitance of a capacitor:
+of the mat t separat
+
+‘© The area of the plates (4), and
+
+© The distance (d) between the plates.
+
+the plates,
+
+er as follows:
+
+‘The capacitance formul:
+‘capacitor based
+
+1
+
+
+
+=== PAGE 16 ===
+gg aio chants On red inthe
+
+lectrics and states t
+
+jiance, Different types of dielectric.
+
+‘capacitor, and the capacitance
+
+sand the constant valu
+
+Material Dielectric Constant
+
+Paper
+“Transformer ol
+
+Mica
+
+Porcelain
+
+‘Some types of ceramic 7500
+
+‘Depends on paper density
+‘Table 3 - Dielectric constants,
+
+®
+
+®
+
+))
+
+0
+
+‘The thicknes
+across the capacitor
+
+‘example, if ami
+Fovnetand a voltage of
+les of the diel
+
+provides examp!
+
+“ Dielec
+te indie) |
+Me
+[Porcelain |
+an — a a
+Mica Sua |
+
+Table 4 - Dielectric strengths.
+
+Plate Area
+ ) ‘ofthe plates iS increased, as in Figure 32, the capacitance increases because *
+
+an be stored)-Fhe capacitance is directly proportional to the area‘ofi ¥
+
+slates.
+
+Plate Area Doubled - Capacitance Doubled.
+
+Figure 32 - Capacitance is affected by the area of the plates.
+
+
+
+=== PAGE 17 ===
+Figure 33-C
+
+sce is affected by the distance between the plates.
+
+Coury
+
+())
+
+|
+
+opjective Five Activity
+
+‘What is capacitance?
+
+_The Cape ior abi
+
+What are the two
+) Wor 0g
+b)
+
+AC
+
+‘On a capacitor rated at 300 WVDC, what does WVD\
+DaQ warhia "5
+
+ro \t
+
+\ectd! & Charge
+
+
+
+=== PAGE 18 ===
+Self-Test
+
+1. Whatis a common application of electromagnetic ballasts?
+er), ing power on conductors
+
+fc) Creating mechanical energy
+
+Fluorescent lighting
+Doorbell ci
+
+What is inductance?
+a) A circuit property that opposes
+
+Decreased inductance
+Inductance
+
+‘Which law is expressed in the following statemer
+current induced in a conductor by a changing magnetic field i
+
+field created by the induced current opposes changes i
+a) Faraday’s law
+
+b) Ohm's law
+Lenz’s law
+Pythagorean’s law
+
+is such
+
+the unit of measurement for capacitance?
+hms
+
+type radio tuning circuit?
+
+{nereasing the distance between the plates ofa capacitor would have what effect
+‘on capacitance?
+
+a) Increased capacitance
+)) Decreased. capacitance
+& Capacitance would not change
+
+® ®
+
+@any
+
+©) 300V
+d) 424y
+
+
+
+=== PAGE 19 ===
+Objective One Activity Answers
+1. The basic construction ofa simple inductor consists of insulated wire
+1 bas
+a core.
+2. a) Solenoid
+
+wound around
+
+b)_ Reactor
+3, Any three (3) ofthe following are correct.
+a) Motors
+b) Solenoids
+)_ Relay or magnetic starter coils
+4). Electromagnetic lighting ballasts
+
+©) Line reactors for variable frequency drives (VFD).
+4, a) Figure 34 shows the correct symbol.
+
+Coil - Air Core
+ann
+Figure 34
+'b) Figure 35 shows the correct symbol.
+
+iron Core:
+
+SR
+Figure 35
+
+Objective Two Activity Answers
+
+1. Faraday’s law of inductance states that the amount of induced emf is d
+the rate of change of flux.
+
+Mutual induction is the generation of an emf in one conductor or circuit by a change
+of flux around another separate conductor or circuit.
+
+Self-induction is the generation of an emf in a conductor or circuit by a change of
+flux in that conductor or circuit.
+
+[Lenz’s law states thatthe polarity of any induced voltage must be such that any
+Curent resulting from it develops a flux that tends to oppose any change in the
+original flux.
+
+5. a) The inductance of the coil
+
+') The rate of change of current (which determines the rate of change of flux)
+
+®
+
+®
+
+Objective Three Activity an,
+1, The symbol f cei
+
+swers
+
+2, The symbol for the unit of measurement of induc
+3, a) Number of turns (iv)
+
+b) Permeabi
+
+@) Area of core (4)
+
+4) Length of magnetic path (£)
+NMA
+
+mere
+
+a
+
+Objective Four Activity Answers
+1. a) Adi
+
+2. Non-polarized
+3, Itmay explode
+4, a) Timers
+
+b
+
+Rectifiers smoothing and
+
+©) Power factor correction
+d)
+
+Motor starting
+
+Objective Five Activity Answers
+1, Capacitance is the ability of a capacitor to store ge.
+2 C
+
+|. a) The area of the plat:
+b) The distance between
+©) The type of di
+
+5. a) Dielectric constant
+
+b) Dielectric strength
+. Working volts de (WVDC)
+
+ance is H (for henry)
+
+
+
+=== PAGE 20 ===
+Self-Test Answers
+
+ls
+
+Gy al Ga Colpo tS
+
+c)
+d)
+a)
+c)
+d)
+a)
+b)
+b)
+
+Fluorescent lighting
+
+A circuit property that opposes a change in current.
+
+Increased inductance
+Lenz’s law
+
+Farad
+
+Air capacitors
+Decreased capacitance
+212Nj
+
+030201b02.docx

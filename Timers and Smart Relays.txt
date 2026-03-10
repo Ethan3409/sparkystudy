@@ -1,0 +1,675 @@
+=== PAGE 1 ===
+LEARNING RESOURCES
+e e @ FoR SKILLED TRADES 030204b
+
+ELECTRICIAN
+
+Timers and Smart Relays
+
+2" Edition
+
+Second Period
+
+Magnetic Controls and Switching Circuits
+
+
+
+=== PAGE 2 ===
+OS Te
+
+Table of Contents
+
+Basic Timing Functions .
+Multi-Function Timing Relay:
+
+Objective One Activity...
+
+Objective Two.. 2
+Smart Relays 2
+
+Objective Two Activit 1s
+
+Self-Test.
+Objective One Activity Answer:
+Objective Two Activity Answer:
+Self-Test Answers...
+
+
+
+=== PAGE 3 ===
+Timers and Smart Relays
+
+Rationale
+
+Why is it important for you to learn this skill?
+
+Electrical circuits are designed to control a wide variety of operations. Some of these
+circuits require events to occur after a specific time has elapsed. With technology
+improving and the world becoming increasingly automated, it is important that you are
+aware of and understand some of the equipment that can provide timing control.
+
+Outcome
+
+When you have completed this module, you will be able to
+
+Analyze timers and smart relays.
+
+Objectives
+
+1. Describe timers and basic timing functions.
+2. Describe smart relays and basic timing functions.
+3. Connect and analyze timers and smart relays.
+
+NOTE
+Objective Three is a practical objective and is not coveredin |
+this module.
+Introduction
+
+This module describes different timing devices with emphasis on timing relays.
+Different timing functions and some timing relay control circuits are illustrated.
+The basic principles of smart relays are also examined.
+
+(030204b02.docx
+
+
+
+=== PAGE 4 ===
+eee 2 2——s=SO
+
+Objective One
+
+When you have completed this objective, you will be able to
+
+Describe timers and basic timing functions. »
+
+Timers
+
+‘Timers were developed to provide basic automatic control of a systemyT
+certain period and then stop autor
+
+ly after a period of time. As technology ha:
+ated and accurate.
+
+hhave become more sophist
+
+‘The three basic types of timing devices are”
+*  Spring-wound interval timers,”
+* Mechanical and electronic time switches, arid
+* Timing relays.
+
+Spring-Wound interval Timers
+Spri nd i
+
+lock mechanism that holds the cor
+stay energized for the set
+
+ly accurate. For these apy
+
+‘minutes is not important.
+
+Mechanical and Electroni
+Mech
+
+Figure 1 - Electronic time switch,
+
+BORE ose
+
+4 BAS oF liquid flows betw:
+
+dashpot timing relays
+two chambers through a
+ice by means of a needle v
+
+adjusted by co
+late resistors to the
+
+
+
+=== PAGE 5 ===
+a
+
+x ses between these functions to select the correct
+‘understand the differenc
+[tis important to unc
+‘timing relay tO
+
+relay
+ de-energized, the contacts revert to their normal state
+iso be refered to as on-delay or delay-on-operation.
+
+1 athe requirements ofthe installation.
+
+diately. This type
+
+Col Energized
+
+Monee He [NCSaycoxed | NCopen ENC ose
+
+Figure 3 - TDOE timing function,
+2e the schematic diagram in Figure 4. When the start button is pressed, Motor |
+saris and runs for three minutes, then Motor 2 (M:) automatically starts, ar
+ar cue fo run unt the stop button is pressed. An example ofthis process
+system where a lubrication pump must ee minutes to build up bearing
+Before then eri pum must run fr three minutes to build up bearing pressure
+
+‘Time Delay o1
+
+of timer can also be referred to
+
+n De-Energization
+
+jon (TDOD) contacts change state instantly when a relay coil?
+
+L— coil Energized —}
+
+Coil
+
+Timed
+Contact
+Position |
+
+Normally
+Open
+Normally
+Closed
+
+med contacts
+remain changed.
+
+NO stay dosed =}
+
+ale
+HE | NCopen iF
+
+| nosayooen SIE |ncome
+
+Figure 5 - TDOD timing function.
+
+smergency stop button must be used wi
+the emergency stop button immediat
+
+Figure 6 - TDOD circuit.
+
+TRE oe
+
+
+
+=== PAGE 6 ===
+Reese
+been energized
+cau eate
+faisgon 2 Pe"
+tohave happened:
+
+Instant cals
+-de-energzed.
+
+Col deanergized long
+enough ranting
+thats going to happen
+tohave happened,
+
+Figure 7- Timer contact operation.
+
+Interval timing function,
+
+‘The sequence of operation of one-shot timing is depicted in Figure 9,
+
+On
+
+Coil le
+Power OFF
+ont
+Start t
+Signal OFF |
+
+CHANGED |
+Contacte THCRUAL | Timed Period
+
+Condition
+‘Timed Contacts} Timed contacts | Timed contacts
+arenormal | have changed } are normal
+condition. }_conion. ‘condition.
+NO are open, | NO are open,
+NC are closed,
+
+NC are closed,
+
+sxample appl
+asa lathe
+pressed to pr
+
+a machine tool
+ray button is
+
+TOE oo
+
+
+
+=== PAGE 7 ===
+«Tne
+
+eyele forthe timed cor
+bya signal to a start ter
+change st
+
+Timed_,|,_Timed
+
+1Coniads
+{normal
+
+Contacts
+
+Condition NORMAL
+
+‘ight look something like 5 minutes on, 2 mint
+
+function timing relays offer separately selectable on
+
+ff, then repeat.
+
+Doors
+
+‘unction Timing Relays
+
+SETTING RANGE
+
+TIME SETTING
+fa
+
+runcTiON IIMS.
+
+
+
+=== PAGE 8 ===
+ee
+
+Objective One Acti
+1. Name three (3) ‘basic types:
+
+B
+
+ivity
+
+ftiming devices used in electrical circuits.
+
+a _
+§) sve! eee
+
+9 —Reptad eS
+
+timing relay.
+
+Describe three (3) methods of eontrolting the timing of
+») Dhenumatic 4
+» Ftvid=filed doshoo™ 4
+) Cerone Clay a
+
+What does TDOE mean?
+
+Time delay on energization
+
+What does TDOD mean? a
+
+Time 2cloy on de energization
+
+‘When a TDOE timing relay is first energized, it
+Ue eels nergized, would the condition of the following
+
+8) AnNO timed contact: YU) __
+b) AnNCtimed contact: _()o%ee
+©) AnNC,ICcontact: Q)PEOQ
+
+When a TDOD timing rel
+be open or closed?
+
+a) AnNO timed contact: (Ae)
+
+b) An NC timed contact: Tota)
+©) AnNC,ICeontact: OPEQ
+
+is first energized, would the condition of the following,
+
+THe
+
+© 8
+
+; {When a TDOE timing relay hes timed out, would the condition of the following b
+‘ of the following be
+
+pen or closed?
+a) An NO timed contact: Clogs
+by An NC timed contact: Opto _
+
+) AnNO,1C contact: _ Doerr
+
+When a TOD timing relay has just been de-energized,
+following be open or closed?
+
+4) An NO timed contact: Cicer
+timed contact: QVEC) _
+
+b) AnNC
+c) AnNO, IC contact: i OPE A
+4, Name three (3) additional basic functions that may be provided by a multi-function
+timing relay.
+
+» _ Funtien e
+b) Tiere a
+
+xy that is set for interval timing has timed out,
+ing be open or closed?
+
+contact: Cleo
+
+1 set for one-shot timing, how is the timing
+
+btece Sermina Ss _
+
+12. Briefly describe a repeat cycle tir
+This ig when one ‘apinn 1d €
+cel Wan peciar of ‘hme
+Re on Lectern 2 PedoF LO neo urs
+
+9 oein
+
+
+
+=== PAGE 9 ===
+NOTES
+
+ee
+
+a ectwo!
+ory ‘is objective, you will Be able 10
+
+a eee
+
+‘Smart Relays
+
+‘Smart relays, suchas the one shown in Figure 14, are simp!
+
+programmable. They can have numerous inputs and outputs along with some
+store a program.
+
+the relay’s keypad or ;
+‘ ad oF @ computer. Vist
+Schematic diagrams, and function block grams
+
+These programm
+ing langus
+Your tecicaltaning ee over in
+
+look
+
+hes block diagrams.
+
+the later years of
+
+Dorr,
+
+®
+
+traditional relays, which require rewiring
+
+unlike
+ed to adapt to ch
+
+smart Relay Functions
+relays are capable of numerous different logic, co
+
+Smart
+few examples of common smart relay funtions ae in
+
+Function Description
+|
+slay) | Non-imed control of contacts, similar to standard relays
+
+i, Changes the normal condition ofthe contacts once the
+ntacts once the set
+
+{DOE Timing time has elapsed after an input signal
+
+Changes the normal condi
+after an input sign:
+
+‘Changes the normal condition of the contacts for the set time
+each time the start terminal receives a signal
+
+e normal and changed states |
+‘can be programmed to be
+
+Repetitive Timing;
+Cycling Timing
+
+input signe
+imes are the same) or non-symmetrical
+imes),
+
+T Cycles the contacts between the normal and changed states:
+based on a schedule. The timing function can operate on
+various scales, such as days, weeks, or months, depending
+‘on the application and the capabilities of the smart relay.
+Several start and end times can be set for each
+
+is sometimes referred to as re scheduling.
+
+jWeekly/Monthly
+Timing Function
+
+‘sequence of |
+
+Totalizing Time with sequence is repeated.
+
+Reset
+
+‘Table 1 - Smart relay functions.
+
+
+
+=== PAGE 10 ===
+Smart Relay Applications
+
+Application Operation Details
+
+‘Automatic control for a car wash where water is turneg
+fn, brushes start, then more water and other brushes
+start, Another example could be control of automatic door |
+‘openers where the door is only permitted to operate
+during certain times of the day, or control of a door and
+‘operation of waming lights that a door is in use.
+
+‘Small Machinery
+Automation
+
+Lighting Management | Tring nuling tants
+
+Access, Control,
+
+Smart relays are uBed to allow access only during parts
+‘and Surveillance
+
+of a day or days of a week. Control of surveillance
+
+d using smart relays,
+Table 2 - Smart relay application examples,
+Crs
+
+Objective Two Activity
+What programming |;
+
+Block ont
+
+Bec. on,
+
+What is the difference between symmetrical ar
+
+Toratan)
+
+\GeS are smart relays typ
+
+INip\ 14 Mol of fF A+
+
+time
+
+an
+
+
+
+=== PAGE 11 ===
+‘2). Open, n
+
+Which statement best des
+
+4) Closed, timing to
+
+energized for 12 seconds,
+
+ing
+)On-delay timing
+
+Which statement best desert
+relay col
+
+Closed, not timin
+(c) pen timing close
+o ing t0
+'5, An interval timing relay is set for 5 seconds. Ifthe relay coil for thi
+
+‘Smart relays ean be programmed to provide many timing funct
+m vi ing func
+4) Smar relays are rated for higher voltages and currents than timing relays.
+
+es the normally open (NO) contacts of a TDOE
+is energized?
+
+‘open
+
+cribes the normally open (NO) c
+
+the instant the relay coil is energized?
+
+‘open
+
+ier has be
+vat must happen forthe contact to change sate again?
+
+must be de-energized.
+ig terminals must receive a start signal.
+
+change states in three more seconds.
+
+fora set
+
+Objective One Activity Answers
+1.) Spring wound interval timers
+bb) Mechanical and electronic time switches
+
+\g relays
+
+2, a) Pneumatic
+id dash pot
+
+ectronically
+
+°)
+3, Time delay on energ
+‘4, Time delay on de-ener
+5, a) AnNO timed contact: open
+
+ion
+
+b) An NC timed contact: closed
+©) AnNC,IC
+
+6. a) AnNOtimed
+b) An NC timed contact: open
+©) ANC, IC contact: open
+
+7. a) AnNOti
+b) An NC timed contact: open
+©) AnNO, IC contact: closed
+
+8, a) AnNO timed cont
+b) An NC timed cont
+©) AnNO, IC contact: open
+
+9. a) Interval timing
+b) One-shot timing
+
+ing x
+
+©) Repeat eycle
+10. a) An NO timed contact: open
+
+{
+
+1d changed states
+
+. Repeat cycle timing
+for a set period of ti
+de-energized.
+
+
+
+=== PAGE 12 ===
+Objective Two Activity Answers
+1. Function block and ladder logic
+2. Small programmable logic controllers (PLCs) 0
+3. Any four (4) of the following answers are correct,
+a) Small machinery automation
+
+b) Decentralized automation systems su;
+large machinery
+
+pplementary to medium and
+c) Lighting management
+
+d) Access, control, and surveillance management
+
+©) Heating and air conditioning management
+
+f) Automatic control and sequencing for car washes
+
+g) Automatic door control
+
+Any four (4) of the following answers are correct,
+
+a) On-delay
+
+b) Off-delay
+
+©) One-shot
+
+d) Repeat cycle with a maintained input
+
+©) Repeat cycle with a momentary input
+
+1) Symmetrical or non-symmetrical cycle timing
+8) Real-time clock scheduling
+
+h) Totalizing timer with Teset
+
+For symmetrical cycle timing, the timing for the normal and changed states of the
+Contacts is the same. For non-symmetrical cycle timing, the normal state time and
+changed state time are different.
+
+Self-Test Answers
+1. a) Spring wound interval timer
+d) One-shot
+
+c) Open, timing to close
+
+b) Closed, not timing
+
+d) The relay coil must be de-energized and then re-energized.
+
+©) Smart relays can be programmed to
+4) On-delay timing
+
+>A wawn
+
+Provide many timing functions.
+
+030204602. docx
+
