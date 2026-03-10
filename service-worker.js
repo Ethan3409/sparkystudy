@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sparkstudy-v2';
+const CACHE_NAME = 'sparkstudy-v3';
 
 // Files to cache on install
 const CACHE_FILES = [

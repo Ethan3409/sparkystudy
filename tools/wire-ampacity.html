@@ -32,59 +32,6 @@
       line-height: 1.6;
     }
 
-    .navbar {
-      background-color: var(--panel);
-      border-bottom: 1px solid var(--border);
-      padding: 1rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .nav-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      text-decoration: none;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .logo span {
-      font-size: 2rem;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 2rem;
-    }
-
-    .nav-link {
-      text-decoration: none;
-      color: var(--muted);
-      transition: color 0.3s;
-    }
-
-    .nav-link.active {
-      color: var(--accent);
-      border-bottom: 2px solid var(--accent);
-      padding-bottom: 0.25rem;
-    }
-
-    .nav-link:hover {
-      color: var(--text);
-    }
-
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -394,11 +341,6 @@
         font-size: 1.75rem;
       }
 
-      .nav-links {
-        gap: 1rem;
-        font-size: 0.9rem;
-      }
-
       .results {
         grid-template-columns: 1fr;
       }
@@ -407,43 +349,137 @@
         font-size: 0.75rem;
       }
     }
-  </style>
+  
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    display: none;
+    color: #8b949e;
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+<!-- AUTH_GUARD -->
 <script>
 (function(){
-    var auth = localStorage.getItem('sparty_auth');
-    if (!auth) { window.location.href = '../login.html'; return; }
-    try {
-        var parsed = JSON.parse(auth);
-        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
-            localStorage.removeItem('sparty_auth');
-            window.location.href = '../login.html';
-        }
-    } catch(e) {
-        localStorage.removeItem('sparty_auth');
-        window.location.href = '../login.html';
-    }
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
 })();
 </script>
 </head>
 <body>
-  <nav style="background-color:#161b22;border-bottom:1px solid #30363d;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
-        <a href="../index.html" style="font-size:1.5rem;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
-            <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#58a6ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0d1117;">S</div>
-            SparkStudy
-        </a>
-        <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
-            <a href="../dashboard.html" class="nav-link">Dashboard</a>
-        <a href="../tools.html" class="nav-link">Tools</a>
-        <a href="../games.html" class="nav-link">Games</a>
-        <a href="../worksheets.html" class="nav-link">Worksheets</a>
-        <a href="../achievements.html" class="nav-link">Achievements</a>
-        <a href="../formula-sheet.html" class="nav-link">Formulas</a>
-        <a href="../admin.html" class="nav-link admin-link-hidden" style="display:none;color:#f59e0b;">Admin</a>
-            <a href="#" onclick="logout();return false;" class="nav-link" style="color:#ef4444;">Logout</a>
-        </div>
-    </nav>
-
-  <div class="container">
+  <nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../tools.html" class="sn-link sn-active">Tools</a><a href="../games.html" class="sn-link">Games</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<div class="container">
     <h1>Wire Ampacity Calculator</h1>
     <p class="subtitle">CEC Table 2 Interactive Lookup with Temperature & Bundling Corrections</p>
 
@@ -869,20 +905,13 @@
       const printWindow = window.open('', '', 'width=800,height=600');
       printWindow.document.write('<html><head><title>CEC Table 2</title>');
       printWindow.document.write('<style>body { font-family: Arial; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }</style>');
-      printWindow.document.write('<script>
+      printWindow.document.write('<!-- AUTH_GUARD -->
+<script>
 (function(){
-    var auth = localStorage.getItem('sparty_auth');
-    if (!auth) { window.location.href = '../login.html'; return; }
-    try {
-        var parsed = JSON.parse(auth);
-        if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
-            localStorage.removeItem('sparty_auth');
-            window.location.href = '../login.html';
-        }
-    } catch(e) {
-        localStorage.removeItem('sparty_auth');
-        window.location.href = '../login.html';
-    }
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
 })();
 </script>
 </head><body>');
@@ -1035,23 +1064,12 @@
     backBtn.addEventListener('click', goBack);
   })();
 </script>
+
 <script>
-function logout() {
-    localStorage.removeItem('sparty_auth');
-    window.location.href = '../login.html';
-}
-function isOwner() {
-    try {
-        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
-        return auth.role === 'owner';
-    } catch(e) { return false; }
-}
-// Show admin link for owner
-document.addEventListener('DOMContentLoaded', function() {
-    if (isOwner()) {
-        var adminLinks = document.querySelectorAll('.admin-link-hidden');
-        adminLinks.forEach(function(el) { el.style.display = ''; });
-    }
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+    if(a.role==='owner'){document.querySelectorAll('.sn-admin').forEach(function(el){el.style.display='';});}}catch(e){}
 });
 </script>
 </body></html>');
@@ -1062,23 +1080,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial update
     update();
   </script>
+
 <script>
-function logout() {
-    localStorage.removeItem('sparty_auth');
-    window.location.href = '../login.html';
-}
-function isOwner() {
-    try {
-        var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
-        return auth.role === 'owner';
-    } catch(e) { return false; }
-}
-// Show admin link for owner
-document.addEventListener('DOMContentLoaded', function() {
-    if (isOwner()) {
-        var adminLinks = document.querySelectorAll('.admin-link-hidden');
-        adminLinks.forEach(function(el) { el.style.display = ''; });
-    }
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+    if(a.role==='owner'){document.querySelectorAll('.sn-admin').forEach(function(el){el.style.display='';});}}catch(e){}
 });
 </script>
 </body>
