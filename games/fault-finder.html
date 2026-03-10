@@ -2087,37 +2087,30 @@
             }
 
             showRules() {
-                const rulesText = `
-                    FAULT FINDER - HOW TO PLAY
-
-                    Objective:
-                    Spot electrical code violations in each scene before time runs out. Test your knowledge of the Canadian Electrical Code.
-
-                    How It Works:
-                    1. Each round shows an electrical installation scene
-                    2. Find 3-5 hidden code violations
-                    3. Click on violations to identify them
-                    4. Each violation shows the relevant CEC rule and explanation
-                    5. Complete all violations to advance to the next round
-
-                    Scoring:
-                    • Find all violations quickly = 50+ points per violation
-                    • Time bonus for completing rounds early
-                    • Wrong clicks cost 5 seconds
-
-                    Tips:
-                    • Look for wrong wire colors, missing grounds, improper installations
-                    • After 30 seconds, unfound violations will pulse slightly
-                    • Pay attention to CEC rules - they help you learn
-                    • Each violation teaches a real electrical safety principle
-
-                    Rounds: 10 total, progressively more difficult
-                    Time: 60 seconds per round
-                    Violations: 3-5 per round
-
-                    Good luck, inspector!
+                const overlay = document.getElementById('modalOverlay');
+                document.getElementById('modalIcon').textContent = '📋';
+                document.getElementById('modalIcon').className = 'modal-icon';
+                document.getElementById('modalTitle').textContent = 'How to Play';
+                document.getElementById('violationName').textContent = '';
+                document.getElementById('cecRule').innerHTML = `
+                    <strong>Objective:</strong> Spot electrical code violations in each scene before time runs out.<br><br>
+                    <strong>How It Works:</strong><br>
+                    1. Each round shows an electrical installation scene<br>
+                    2. Find 3-5 hidden code violations<br>
+                    3. Click on violations to identify them<br>
+                    4. Each violation shows the relevant CEC rule<br>
+                    5. Complete all violations to advance<br><br>
+                    <strong>Scoring:</strong><br>
+                    &bull; Find violations quickly = 50+ points each<br>
+                    &bull; Time bonus for completing rounds early<br>
+                    &bull; Wrong clicks cost 5 seconds<br><br>
+                    <strong>Tips:</strong><br>
+                    &bull; Look for wrong wire colors, missing grounds<br>
+                    &bull; After 30s, unfound violations pulse slightly<br>
+                    &bull; 10 rounds, progressively more difficult
                 `;
-                alert(rulesText);
+                document.getElementById('explanation').textContent = 'Good luck, inspector!';
+                overlay.classList.add('active');
             }
         }
 
