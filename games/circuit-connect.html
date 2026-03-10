@@ -179,7 +179,15 @@
     }
     .sparky-nav .sn-link:hover { color: #e6edf3; background: rgba(255,255,255,0.04); }
     .sparky-nav .sn-link.sn-active { color: #f59e0b; background: rgba(245,158,11,0.08); }
-    .sparky-nav .sn-link.sn-logout { color: #f85149; }
+    .sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout { color: #f85149; }
     .sparky-nav .sn-link.sn-logout:hover { color: #ff7b72; background: rgba(248,81,73,0.08); }
     .sparky-nav .sn-burger {
         display: none; flex-direction: column; gap: 5px;
@@ -211,7 +219,7 @@
         <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
         <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
         <div class="sn-links">
-            <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link">Admin</a>
+            <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
             <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
         </div>
     </nav>
