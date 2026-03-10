@@ -400,17 +400,6 @@ a { text-decoration: none; color: inherit; }
 </script>
 </head>
 <body>
-<script>
-(function(){
-    try {
-        const auth = JSON.parse(localStorage.getItem('sparty_auth'));
-        if (!auth || auth.user !== 'ethan' || (Date.now() - auth.loginTime > 86400000)) {
-            localStorage.removeItem('sparty_auth');
-            window.location.href = '../login.html';
-        }
-    } catch(e) { window.location.href = '../login.html'; }
-})();
-</script>
 
 <!-- ============================================
      Navigation
