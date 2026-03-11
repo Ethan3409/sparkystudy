@@ -801,6 +801,8 @@ input[type="radio"]:checked::after {
 .oa-legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
 .oa-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
 .oa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+/* Simulator responsive two-col: left controls, right canvas */
+.sim-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 .oa-heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
 .oa-heat-cell { aspect-ratio: 1; border-radius: 3px; min-width: 14px; }
 .oa-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
@@ -809,34 +811,102 @@ input[type="radio"]:checked::after {
 .oa-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; animation: livePulse 2s infinite; }
 @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+/* ===== MOBILE DRAWER ===== */
+.mobile-drawer-overlay {
+  display: none; position: fixed; inset: 0; z-index: 1998;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(3px);
+}
+.mobile-drawer-overlay.open { display: block; }
+.mobile-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 285px; z-index: 1999;
+  background: #0d0d1a; border-right: 1px solid var(--border);
+  transform: translateX(-100%); transition: transform 0.27s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.mobile-drawer.open { transform: translateX(0); }
+.mobile-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 18px 14px; border-bottom: 1px solid var(--border);
+}
+.mobile-drawer-brand {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 1.2rem; font-weight: 800; color: var(--accent);
+}
+.mobile-drawer-brand svg { width: 24px; height: 24px; }
+.mobile-drawer-close {
+  background: none; border: none; color: var(--text-secondary);
+  padding: 8px; cursor: pointer; border-radius: 8px; line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-drawer-user {
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.mobile-drawer-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: #000;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+}
+.mobile-drawer-name { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
+.mobile-drawer-streak {
+  font-size: 0.8rem; color: var(--accent);
+  display: flex; align-items: center; gap: 4px; margin-top: 3px;
+}
+.mobile-drawer-nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
+.mobile-drawer-section-label {
+  padding: 12px 12px 4px; font-size: 0.68rem;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-muted); font-weight: 700;
+}
+.mobile-drawer-item {
+  display: flex; align-items: center; gap: 13px;
+  padding: 13px 12px; border-radius: 10px; margin-bottom: 2px;
+  color: var(--text-secondary); font-size: 0.95rem; font-weight: 500;
+  cursor: pointer; transition: background 0.13s, color 0.13s;
+  border: none; background: none; width: 100%; text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-drawer-item:active { background: var(--bg-card); }
+.mobile-drawer-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.mobile-drawer-item .mdi { font-size: 1.2rem; width: 26px; text-align: center; flex-shrink: 0; }
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(10,10,15,0.97); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 6px 0 env(safe-area-inset-bottom, 4px);
+  grid-template-columns: repeat(5, 1fr);
+}
+.bottom-nav.bn-visible { display: grid; }
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 4px 2px 2px; cursor: pointer; color: var(--text-muted);
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.3px;
+  text-transform: uppercase; border: none; background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.bn-item:active .bn-icon { transform: scale(0.88); }
+.bn-item.active { color: var(--accent); }
+.bn-item.active .bn-icon { background: var(--accent-soft); }
+.bn-icon {
+  width: 42px; height: 30px; border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; transition: background 0.15s, transform 0.12s;
+}
+
 /* ===== MOBILE ===== */
 @media (max-width: 768px) {
   html { font-size: 15px; }
-  .nav-links.nav-visible { display: none !important; }
-  .nav-links.nav-visible.open {
-    display: flex !important; flex-direction: column;
-    position: fixed; top: 64px; left: 0; right: 0; bottom: 0;
-    background: rgba(10,10,15,0.98); backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    padding: 16px; gap: 2px; z-index: 999;
-    animation: slideDown 0.2s ease;
-    overflow-y: auto;
-  }
-  @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-  .nav-links.nav-visible.open li { width: 100%; }
-  .nav-links.nav-visible.open a {
-    display: flex; align-items: center; padding: 14px 16px;
-    font-size: 1.05rem; border-radius: var(--radius-sm);
-  }
-  .nav-links.nav-visible.open a:hover,
-  .nav-links.nav-visible.open a.active { background: var(--accent-soft); }
+  .nav-links { display: none !important; }
   .burger { display: flex !important; align-items: center; justify-content: center; }
-  .nav-right { display: none; }
-  .navbar .nav-right-mobile { display: flex; }
+  .nav-right { display: none !important; }
 
   /* Containers */
   .container, .container-wide { padding: 20px 14px; }
-  .app-container { padding-top: 64px; }
+  .app-container { padding-top: 64px; padding-bottom: 80px; }
 
   /* Grids */
   .dash-grid { grid-template-columns: 1fr; }
@@ -864,9 +934,9 @@ input[type="radio"]:checked::after {
   .hero-diag-demo { display: none; }
 
   /* Buttons - more touch friendly */
-  .btn { min-height: 44px; padding: 12px 20px; font-size: 0.95rem; }
-  .btn-sm { min-height: 40px; padding: 10px 16px; }
-  .btn-lg { padding: 14px 28px; }
+  .btn { min-height: 48px; padding: 12px 20px; font-size: 0.95rem; }
+  .btn-sm { min-height: 42px; padding: 10px 16px; }
+  .btn-lg { min-height: 52px; padding: 14px 28px; }
 
   /* Cards */
   .card { padding: 16px; }
@@ -887,15 +957,32 @@ input[type="radio"]:checked::after {
   .toast-container { top: 70px; right: 12px; left: 12px; }
   .toast { font-size: 0.85rem; padding: 12px 14px; }
 
-  /* FAB position */
-  #fabContainer { bottom: 16px; left: 12px; }
+  /* FAB position - raise above bottom nav */
+  #fabContainer { bottom: 88px; left: 12px; }
   #fabContainer button { width: 42px !important; height: 42px !important; font-size: 1rem !important; }
 
   /* Tools page */
   .tools-grid { grid-template-columns: 1fr !important; }
 
-  /* Form inputs */
+  /* Simulator two-col → single col on mobile */
+  .sim-two-col { grid-template-columns: 1fr !important; }
+  #toolsContent [style*="grid-template-columns:1fr 1fr"],
+  #toolsContent [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Form inputs - prevent iOS zoom */
   input, select, textarea { font-size: 16px !important; }
+
+  /* Sim inline-styled inputs: override narrow widths */
+  #toolsContent input[style*="width:80px"],
+  #toolsContent input[style*="width:100px"],
+  #toolsContent input[style*="width:120px"] {
+    width: 100% !important; min-width: 80px;
+  }
+
+  /* Sim canvas: scale to full width, maintain aspect ratio */
+  canvas { max-width: 100% !important; height: auto !important; }
 }
 
 /* Small phones */
@@ -906,6 +993,7 @@ input[type="radio"]:checked::after {
   .oa-stat-value { font-size: 1.3rem; }
   .nav-brand { font-size: 1.1rem; }
   .nav-brand svg { width: 22px; height: 22px; }
+  .app-container { padding-bottom: 76px; }
 }
 
 /* ===== CELEBRATION ANIMATION ===== */
@@ -968,9 +1056,61 @@ input[type="radio"]:checked::after {
     <span class="owner-badge" id="ownerBadge" style="display:none;" title="Owner Mode">&#x1F451; Owner</span>
     <div class="nav-avatar" id="navAvatar" onclick="App.navigate('settings')">?</div>
   </div>
-  <button class="burger" id="burgerBtn" onclick="toggleMobileNav()">
-    <svg id="burgerIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-    <svg id="closeIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  <button class="burger" id="burgerBtn" onclick="openMobileDrawer()" aria-label="Open menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+</nav>
+
+<!-- MOBILE DRAWER OVERLAY -->
+<div class="mobile-drawer-overlay" id="drawerOverlay" onclick="closeMobileDrawer()"></div>
+
+<!-- MOBILE DRAWER -->
+<nav class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <div class="mobile-drawer-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      SparkStudy
+    </div>
+    <button class="mobile-drawer-close" onclick="closeMobileDrawer()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="mobile-drawer-user" id="drawerUser" style="display:none;">
+    <div class="mobile-drawer-avatar" id="drawerAvatar">?</div>
+    <div>
+      <div class="mobile-drawer-name" id="drawerName">—</div>
+      <div class="mobile-drawer-streak">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 4-3 6-3 10a5 5 0 0 0 8.5 3.5c-1 2.5-3.5 4.5-6.5 4.5-4 0-7-3-7-7C4 8 8 4 12 2z"/></svg>
+        <span id="drawerStreak">0</span> day streak
+      </div>
+    </div>
+  </div>
+  <div class="mobile-drawer-nav" id="drawerNav">
+    <!-- populated by updateMobileDrawer() -->
+  </div>
+</nav>
+
+<!-- BOTTOM NAV BAR -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-item" id="bn-dashboard" onclick="App.navigate('dashboard');closeMobileDrawer();">
+    <div class="bn-icon">🏠</div>
+    <span>Home</span>
+  </button>
+  <button class="bn-item" id="bn-flashcards" onclick="App.navigate('flashcards');closeMobileDrawer();">
+    <div class="bn-icon">🃏</div>
+    <span>Cards</span>
+  </button>
+  <button class="bn-item" id="bn-exams" onclick="App.navigate('exams');closeMobileDrawer();">
+    <div class="bn-icon">📝</div>
+    <span>Exams</span>
+  </button>
+  <button class="bn-item" id="bn-lessons" onclick="App.navigate('lessons');closeMobileDrawer();">
+    <div class="bn-icon">📚</div>
+    <span>Lessons</span>
+  </button>
+  <button class="bn-item" id="bn-more" onclick="openMobileDrawer()">
+    <div class="bn-icon">☰</div>
+    <span>More</span>
   </button>
 </nav>
 
@@ -2869,6 +3009,9 @@ const App = {
       document.getElementById('navAvatar').textContent = 'E';
       document.getElementById('navStreak').style.display = 'none';
     }
+
+    // Update mobile drawer & bottom nav
+    if (typeof updateMobileDrawer === 'function') updateMobileDrawer(state, page);
 
     // Render page content
     this.renderPage(page, state);
@@ -9379,22 +9522,96 @@ const OwnerDashboard = {
   }
 };
 
-// ===== MOBILE NAV TOGGLE =====
-function toggleMobileNav() {
-  const nav = document.getElementById('navLinks');
-  const burger = document.getElementById('burgerIcon');
-  const close = document.getElementById('closeIcon');
-  const isOpen = nav.classList.toggle('open');
-  burger.style.display = isOpen ? 'none' : 'block';
-  close.style.display = isOpen ? 'block' : 'none';
+// ===== MOBILE NAV TOGGLE (burger → open drawer) =====
+function toggleMobileNav() { openMobileDrawer(); }
+
+function openMobileDrawer() {
+  document.getElementById('mobileDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
-// Close mobile nav when a link is clicked
-document.addEventListener('click', e => {
-  if (e.target.matches('.nav-links a') || e.target.closest('.nav-links a')) {
-    const nav = document.getElementById('navLinks');
-    if (nav.classList.contains('open')) toggleMobileNav();
+function closeMobileDrawer() {
+  document.getElementById('mobileDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Populate the drawer nav based on login state
+function updateMobileDrawer(state, activePage) {
+  const drawerUser = document.getElementById('drawerUser');
+  const drawerAvatar = document.getElementById('drawerAvatar');
+  const drawerName = document.getElementById('drawerName');
+  const drawerStreak = document.getElementById('drawerStreak');
+  const drawerNav = document.getElementById('drawerNav');
+  const bottomNav = document.getElementById('bottomNav');
+
+  const publicPages = ['landing','login','signup','diagnostic'];
+  const isMobile = window.innerWidth <= 768;
+
+  if (!state) {
+    // Not logged in — hide drawer user, hide bottom nav
+    if (drawerUser) drawerUser.style.display = 'none';
+    if (bottomNav) bottomNav.classList.remove('bn-visible');
+    if (drawerNav) drawerNav.innerHTML = `
+      <div class="mobile-drawer-section-label">Account</div>
+      <button class="mobile-drawer-item" onclick="App.navigate('login');closeMobileDrawer();">
+        <span class="mdi">🔑</span> Log In
+      </button>
+      <button class="mobile-drawer-item" onclick="App.navigate('signup');closeMobileDrawer();">
+        <span class="mdi">✨</span> Sign Up
+      </button>`;
+    return;
   }
-});
+
+  // Logged in — show user info
+  if (drawerUser) drawerUser.style.display = 'flex';
+  if (drawerAvatar) drawerAvatar.textContent = (state.user.name || '?')[0].toUpperCase();
+  if (drawerName) drawerName.textContent = state.user.name || 'Student';
+  if (drawerStreak) drawerStreak.textContent = state.sessions.streak || 0;
+
+  // Show bottom nav on mobile
+  if (bottomNav && isMobile) bottomNav.classList.add('bn-visible');
+
+  // Update bottom nav active states
+  const bnPages = ['dashboard','flashcards','exams','lessons'];
+  bnPages.forEach(p => {
+    const el = document.getElementById('bn-' + p);
+    if (el) el.classList.toggle('active', activePage === p);
+  });
+  const moreBn = document.getElementById('bn-more');
+  if (moreBn) moreBn.classList.toggle('active', !bnPages.includes(activePage));
+
+  // Build drawer nav items
+  const navItems = [
+    { section: 'Study' },
+    { page: 'dashboard', icon: '🏠', label: 'Dashboard' },
+    { page: 'flashcards', icon: '🃏', label: 'Flashcards' },
+    { page: 'exams', icon: '📝', label: 'Exams' },
+    { page: 'lessons', icon: '📚', label: 'Lessons' },
+    { page: 'study-guide', icon: '📖', label: 'Study Guide' },
+    { section: 'Tools & Insights' },
+    { page: 'tools', icon: '🔧', label: 'Simulators' },
+    { page: 'analytics', icon: '📊', label: 'Analytics' },
+    { page: 'review', icon: '⭐', label: 'Review Wrong' },
+    { section: 'Account' },
+    { page: 'settings', icon: '⚙️', label: 'Settings' },
+  ];
+  if (state.user.subscription && state.user.subscription.groupId) {
+    navItems.splice(navItems.findIndex(i => i.page === 'settings'), 0,
+      { page: 'group', icon: '👥', label: 'Group' });
+  }
+
+  drawerNav.innerHTML = navItems.map(item => {
+    if (item.section) return `<div class="mobile-drawer-section-label">${item.section}</div>`;
+    const active = activePage === item.page ? ' active' : '';
+    return `<button class="mobile-drawer-item${active}" onclick="App.navigate('${item.page}');closeMobileDrawer();">
+      <span class="mdi">${item.icon}</span> ${item.label}
+    </button>`;
+  }).join('');
+}
+
+// Expose so App.navigate can call it
+window._updateMobileDrawer = updateMobileDrawer;
 
 // ===== EXAM SCORE PREDICTOR =====
 function getExamPrediction(state) {
