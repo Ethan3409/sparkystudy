@@ -1427,6 +1427,11 @@ input[type="radio"]:checked::after {
   <div class="container-wide" id="lessonsContent"></div>
 </div>
 
+<!-- ======= WRONG ANSWER STUDY ======= -->
+<div class="page" id="page-wrong-study">
+  <div class="container-wide" id="wrongStudyContent"></div>
+</div>
+
 <!-- ======= OWNER ANALYTICS ======= -->
 <div class="page" id="page-group">
   <div class="container" id="groupContent"></div>
@@ -3033,6 +3038,7 @@ const App = {
       case 'group': GroupProgress.render(state); break;
       case 'owner': OwnerDashboard.render(); break;
       case 'lessons': Lessons.render(state); break;
+      case 'wrong-study': WrongAnswerStudy.render(); break;
     }
   },
   init() {
@@ -4089,12 +4095,295 @@ const Exams = {
         </div>
 
         <div style="display:flex;gap:12px;justify-content:center;margin-top:32px;flex-wrap:wrap;">
+          ${(() => {
+            const wrongs = attempt.responses.filter(r=>!r.isCorrect).map(r=>({q:r.q,opts:r.opts,correct:r.correct,selected:r.selected,exp:r.exp||'',topic:r.topic}));
+            if (wrongs.length > 0) { WrongAnswerStudy._pending = wrongs; WrongAnswerStudy._pendingLabel = 'Exam'; }
+            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">📖 Study My ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
+          })()}
           <button class="btn btn-primary" onclick="Exams.startNew()">Take Another Exam</button>
           <button class="btn btn-secondary" onclick="Exams.mode='list';App.navigate('exams')">Back to Exams</button>
           <button class="btn btn-secondary" onclick="App.navigate('dashboard')">Dashboard</button>
         </div>
       </div>
     `;
+  }
+};
+
+// ===== WRONG ANSWER STUDY MODULE =====
+const WrongAnswerStudy = {
+  questions: [],      // [{q, opts, correct, selected, exp, topic}]
+  phase: 'study',     // 'study' | 'quiz'
+  quizIdx: 0,
+  quizAnswers: [],
+  quizSelected: null,
+  quizShowFeedback: false,
+  sourceLabel: '',
+
+  _pending: null,
+  _pendingLabel: '',
+
+  launchPending() {
+    if (this._pending && this._pending.length > 0) {
+      this.launch(this._pending, this._pendingLabel);
+    }
+  },
+
+  launch(wrongResponses, sourceLabel) {
+    this.questions = wrongResponses;
+    this.phase = 'study';
+    this.quizIdx = 0;
+    this.quizAnswers = [];
+    this.quizSelected = null;
+    this.quizShowFeedback = false;
+    this.sourceLabel = sourceLabel || 'Exam';
+    App.navigate('wrong-study');
+  },
+
+  render() {
+    const container = document.getElementById('wrongStudyContent');
+    if (!container) return;
+    if (!this.questions || this.questions.length === 0) {
+      container.innerHTML = `<div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:3rem;margin-bottom:16px;">🎯</div>
+        <h2 style="color:var(--accent);">No Wrong Answers!</h2>
+        <p style="color:var(--text-secondary);">You got everything right. Nothing to study.</p>
+        <button class="btn btn-primary" onclick="App.navigate('exams')" style="margin-top:20px;">Back to Exams</button>
+      </div>`;
+      return;
+    }
+    if (this.phase === 'study') this._renderStudy(container);
+    else this._renderQuiz(container);
+  },
+
+  _renderStudy(container) {
+    const q = this.questions;
+    const topicGroups = {};
+    q.forEach(r => {
+      const tn = TOPICS[r.topic]?.name || r.topic;
+      if (!topicGroups[tn]) topicGroups[tn] = [];
+      topicGroups[tn].push(r);
+    });
+
+    container.innerHTML = `
+      <div style="max-width:800px;margin:0 auto;">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(245,158,11,0.08));border:1px solid rgba(239,68,68,0.25);border-radius:16px;padding:24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="font-size:2.5rem;">📖</div>
+          <div style="flex:1;min-width:200px;">
+            <h2 style="margin:0;font-size:1.3rem;font-weight:800;">Custom Study Guide</h2>
+            <div style="color:var(--text-secondary);font-size:0.88rem;margin-top:4px;">Based on ${q.length} wrong answer${q.length!==1?'s':''} from your ${this.sourceLabel}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:8px 16px;text-align:center;">
+              <div style="font-size:1.4rem;font-weight:800;color:#ef4444;">${q.length}</div>
+              <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);">To Review</div>
+            </div>
+            <div style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3);border-radius:10px;padding:8px 16px;text-align:center;">
+              <div style="font-size:1.4rem;font-weight:800;color:#8b5cf6;">${Object.keys(topicGroups).length}</div>
+              <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);">Topic${Object.keys(topicGroups).length!==1?'s':''}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Topic index pills -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;">
+          ${Object.keys(topicGroups).map((tn,i) => `
+            <a href="#topic-${i}" style="padding:6px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);text-decoration:none;transition:var(--transition);"
+              onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+              ${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'📌'} ${tn} (${topicGroups[tn].length})
+            </a>
+          `).join('')}
+        </div>
+
+        <!-- Questions by topic -->
+        ${Object.entries(topicGroups).map(([tn, qs], gi) => `
+          <div id="topic-${gi}" style="margin-bottom:32px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid rgba(245,158,11,0.2);">
+              <span style="font-size:1.3rem;">${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'📌'}</span>
+              <h3 style="margin:0;font-size:1rem;font-weight:700;">${tn}</h3>
+              <span style="background:rgba(239,68,68,0.12);color:#ef4444;font-size:0.75rem;font-weight:700;padding:2px 10px;border-radius:10px;">${qs.length} wrong</span>
+            </div>
+            ${qs.map((r, qi) => `
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;border-left:4px solid rgba(239,68,68,0.5);">
+                <!-- Question -->
+                <div style="font-weight:600;font-size:0.95rem;color:var(--text-primary);margin-bottom:14px;line-height:1.5;">${r.q}</div>
+
+                <!-- All options with color coding -->
+                <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+                  ${r.opts.map((opt, oi) => {
+                    const isCorrect = oi === r.correct;
+                    const wasSelected = oi === r.selected;
+                    let bg = 'var(--bg-input)', border = 'var(--border)', textCol = 'var(--text-secondary)', prefix = '';
+                    if (isCorrect) { bg='rgba(34,197,94,0.1)'; border='rgba(34,197,94,0.4)'; textCol='#22c55e'; prefix='✓ '; }
+                    else if (wasSelected) { bg='rgba(239,68,68,0.08)'; border='rgba(239,68,68,0.35)'; textCol='#ef4444'; prefix='✗ '; }
+                    return `<div style="padding:10px 14px;background:${bg};border:1px solid ${border};border-radius:8px;font-size:0.88rem;color:${textCol};font-weight:${isCorrect?'600':'400'};">
+                      ${prefix}${opt}${wasSelected&&!isCorrect?' <span style="font-size:0.75rem;opacity:0.7;">(your answer)</span>':''}
+                    </div>`;
+                  }).join('')}
+                </div>
+
+                <!-- Explanation -->
+                ${r.exp ? `
+                  <div style="background:linear-gradient(135deg,rgba(245,158,11,0.07),rgba(245,158,11,0.03));border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px;">
+                    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:6px;">💡 Why this is correct</div>
+                    <div style="font-size:0.88rem;color:var(--text-primary);line-height:1.6;">${r.exp}</div>
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+
+        <!-- CTA to Quiz -->
+        <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(139,92,246,0.08));border:1px solid rgba(245,158,11,0.25);border-radius:16px;padding:28px;text-align:center;margin-top:32px;">
+          <div style="font-size:2rem;margin-bottom:10px;">🎯</div>
+          <h3 style="margin:0 0 8px;font-size:1.1rem;font-weight:700;">Ready to test yourself?</h3>
+          <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:20px;">Take a targeted quiz with only these ${q.length} question${q.length!==1?'s':''} — no distractors, just your weak spots.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">⚡ Start Re-Quiz (${q.length} Questions)</button>
+            <button class="btn btn-secondary" onclick="App.navigate('exams')">Back to Exams</button>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  _startQuiz() {
+    this.phase = 'quiz';
+    this.quizIdx = 0;
+    this.quizAnswers = new Array(this.questions.length).fill(null);
+    this.quizSelected = null;
+    this.quizShowFeedback = false;
+    // Shuffle questions for variety
+    this.questions = [...this.questions].sort(() => Math.random() - 0.5);
+    this.render();
+    window.scrollTo(0, 0);
+  },
+
+  _renderQuiz(container) {
+    const q = this.questions;
+    const done = this.quizIdx >= q.length;
+
+    if (done) {
+      // Results screen
+      let correct = 0;
+      q.forEach((r, i) => { if (this.quizAnswers[i] === r.correct) correct++; });
+      const pct = Math.round(correct / q.length * 100);
+      const allCorrect = correct === q.length;
+      if (allCorrect) launchConfetti();
+
+      container.innerHTML = `
+        <div style="max-width:640px;margin:0 auto;text-align:center;padding:40px 20px;">
+          <div style="font-size:4.5rem;font-weight:900;color:${pct>=80?'var(--success)':'var(--danger)'};">${pct}%</div>
+          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${allCorrect?'Perfect! All Mastered! 🏆':pct>=80?'Great improvement! 🎉':pct>=50?'Getting there! 💪':'Keep grinding! ⚡'}</div>
+          <div style="color:var(--text-secondary);margin-bottom:28px;">${correct}/${q.length} correct on your targeted re-quiz</div>
+
+          ${pct < 100 ? `
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:16px;margin-bottom:24px;">
+              <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);font-weight:700;margin-bottom:10px;">Still needs work (${q.length-correct})</div>
+              ${q.filter((r,i)=>this.quizAnswers[i]!==r.correct).map(r=>`
+                <div style="text-align:left;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;">
+                  <div style="color:var(--text-primary);font-weight:500;margin-bottom:3px;">${r.q.length>80?r.q.slice(0,80)+'…':r.q}</div>
+                  <div style="color:#22c55e;font-size:0.8rem;">✓ ${r.opts[r.correct]}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : `<div style="font-size:1.1rem;color:var(--success);margin-bottom:24px;">You've mastered all of your weak areas! 🌟</div>`}
+
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            ${pct < 100 ? `<button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">🔁 Retry Missed Questions</button>` : ''}
+            <button class="btn btn-secondary" onclick="WrongAnswerStudy.phase='study';WrongAnswerStudy.render()">📖 Review Study Guide</button>
+            <button class="btn btn-secondary" onclick="App.navigate('exams')">Back to Exams</button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    const current = q[this.quizIdx];
+    const sel = this.quizSelected;
+    const showFb = this.quizShowFeedback;
+    const progress = Math.round((this.quizIdx / q.length) * 100);
+
+    container.innerHTML = `
+      <div style="max-width:680px;margin:0 auto;">
+        <!-- Progress bar -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:0.8rem;color:var(--text-muted);font-weight:600;">Re-Quiz: Wrong Answer Drill</span>
+            <span style="font-size:0.8rem;font-weight:700;color:var(--accent);">${this.quizIdx+1} / ${q.length}</span>
+          </div>
+          <div style="height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${progress}%;background:var(--accent);border-radius:3px;transition:width 0.4s ease;"></div>
+          </div>
+        </div>
+
+        <!-- Question card -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;">
+          <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:10px;">${TOPICS[current.topic]?.icon||''} ${TOPICS[current.topic]?.name||current.topic}</div>
+          <div style="font-size:1rem;font-weight:600;color:var(--text-primary);line-height:1.6;">${current.q}</div>
+        </div>
+
+        <!-- Options -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+          ${current.opts.map((opt, oi) => {
+            let bg = 'var(--bg-card)', border = 'var(--border)', textCol = 'var(--text-primary)', cursor = 'pointer', pointerEvents = 'auto';
+            if (showFb) {
+              pointerEvents = 'none';
+              if (oi === current.correct) { bg='rgba(34,197,94,0.12)'; border='rgba(34,197,94,0.5)'; textCol='#22c55e'; }
+              else if (oi === sel) { bg='rgba(239,68,68,0.1)'; border='rgba(239,68,68,0.4)'; textCol='#ef4444'; }
+              else { bg='var(--bg-input)'; border='var(--border)'; textCol='var(--text-muted)'; }
+            } else if (oi === sel) { bg='rgba(245,158,11,0.1)'; border='var(--accent)'; textCol='var(--text-primary)'; }
+            return `<button onclick="WrongAnswerStudy._selectAnswer(${oi})"
+              style="width:100%;text-align:left;padding:14px 18px;background:${bg};border:2px solid ${border};border-radius:12px;color:${textCol};font-size:0.93rem;font-weight:500;cursor:${cursor};pointer-events:${pointerEvents};transition:border-color 0.15s,background 0.15s;line-height:1.4;">
+              <span style="font-weight:700;margin-right:8px;opacity:0.6;">${String.fromCharCode(65+oi)}.</span>${opt}
+              ${showFb && oi===current.correct ? ' <span style="float:right;font-size:1rem;">✅</span>' : ''}
+              ${showFb && oi===sel && oi!==current.correct ? ' <span style="float:right;font-size:1rem;">❌</span>' : ''}
+            </button>`;
+          }).join('')}
+        </div>
+
+        <!-- Feedback / explanation -->
+        ${showFb ? `
+          <div style="background:${sel===current.correct?'rgba(34,197,94,0.08)':'rgba(239,68,68,0.06)'};border:1px solid ${sel===current.correct?'rgba(34,197,94,0.25)':'rgba(239,68,68,0.2)'};border-radius:12px;padding:16px;margin-bottom:20px;">
+            <div style="font-weight:700;font-size:0.9rem;color:${sel===current.correct?'#22c55e':'#ef4444'};margin-bottom:${current.exp?'8px':'0'};">
+              ${sel===current.correct?'✅ Correct!':'❌ Incorrect — the right answer was: '+current.opts[current.correct]}
+            </div>
+            ${current.exp ? `<div style="font-size:0.87rem;color:var(--text-secondary);line-height:1.6;">${current.exp}</div>` : ''}
+          </div>
+          <button class="btn btn-primary" style="width:100%;" onclick="WrongAnswerStudy._next()">
+            ${this.quizIdx+1 < q.length ? 'Next Question →' : 'See Results'}
+          </button>
+        ` : `
+          <button class="btn btn-primary" style="width:100%;opacity:${sel===null?'0.45':'1'};pointer-events:${sel===null?'none':'auto'};" onclick="WrongAnswerStudy._confirmAnswer()">
+            Confirm Answer
+          </button>
+        `}
+      </div>
+    `;
+  },
+
+  _selectAnswer(idx) {
+    if (this.quizShowFeedback) return;
+    this.quizSelected = idx;
+    this.render();
+  },
+
+  _confirmAnswer() {
+    if (this.quizSelected === null) return;
+    this.quizAnswers[this.quizIdx] = this.quizSelected;
+    this.quizShowFeedback = true;
+    this.render();
+    window.scrollTo(0, 0);
+  },
+
+  _next() {
+    this.quizIdx++;
+    this.quizSelected = null;
+    this.quizShowFeedback = false;
+    this.render();
+    window.scrollTo(0, 0);
   }
 };
 
@@ -9749,6 +10038,11 @@ const QuickQuiz = {
           </div>
         `).join('')}
         <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap;">
+          ${(() => {
+            const wrongs = this.questions.map((q,i)=>this.answers[i]!==q.correct?{q:q.q,opts:q.opts,correct:q.correct,selected:this.answers[i],exp:q.exp||'',topic:q.topic}:null).filter(Boolean);
+            if (wrongs.length > 0) { WrongAnswerStudy._pending = wrongs; WrongAnswerStudy._pendingLabel = 'Quick Quiz'; }
+            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">📖 Study ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
+          })()}
           <button class="btn btn-primary" onclick="QuickQuiz.start()">Another Quick Quiz</button>
           <button class="btn btn-secondary" onclick="App.navigate('dashboard')">Dashboard</button>
         </div>
