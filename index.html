@@ -7572,10 +7572,10 @@ const Tools = {
     ctx.beginPath(); ctx.roundRect(0, 0, W, H, 10); ctx.fill();
 
     const ox = 70, oy = H / 2;
-    const XL = 2 * Math.PI * (parseFloat(document.getElementById('rlcF')?.value||60)) * ((parseFloat(document.getElementById('rlcL')?.value||50))/1000);
-    const XC2 = (() => { const cF = (parseFloat(document.getElementById('rlcC')?.value||10))/1000000; const f2 = parseFloat(document.getElementById('rlcF')?.value||60); return cF > 0 ? 1/(2*Math.PI*f2*cF) : 0; })();
-    const R2 = parseFloat(document.getElementById('rlcR')?.value||100);
-    const maxVal = Math.max(R2, XL, XC2, Z, 1);
+    const pXL = 2 * Math.PI * (parseFloat(document.getElementById('rlcF')?.value||60)) * ((parseFloat(document.getElementById('rlcL')?.value||50))/1000);
+    const pXC = (() => { const cF = (parseFloat(document.getElementById('rlcC')?.value||10))/1000000; const f2 = parseFloat(document.getElementById('rlcF')?.value||60); return cF > 0 ? 1/(2*Math.PI*f2*cF) : 0; })();
+    const pR = parseFloat(document.getElementById('rlcR')?.value||100);
+    const maxVal = Math.max(pR, pXL, pXC, Z, 1);
     const scale = Math.min(160 / maxVal, 2);
 
     const drawArrow = (fromX, fromY, toX, toY, color, label, glow) => {
@@ -7619,19 +7619,19 @@ const Tools = {
     ctx.fillText('-jX', ox, H - 6);
 
     // R vector (horizontal, green)
-    const rPx = R2 * scale;
-    drawArrow(ox, oy, ox + rPx, oy, '#22c55e', 'R=' + R2.toFixed(0) + 'Ω', false);
+    const rPx = pR * scale;
+    drawArrow(ox, oy, ox + rPx, oy, '#22c55e', 'R=' + pR.toFixed(0) + 'Ω', false);
 
     // XL vector (vertical up, purple)
-    const xlPx = XL * scale;
-    drawArrow(ox + rPx, oy, ox + rPx, oy - xlPx, '#8b5cf6', 'XL=' + XL.toFixed(1) + 'Ω', false);
+    const xlPx = pXL * scale;
+    drawArrow(ox + rPx, oy, ox + rPx, oy - xlPx, '#8b5cf6', 'XL=' + pXL.toFixed(1) + 'Ω', false);
 
     // XC vector (vertical down, blue)
-    const xcPx = XC2 * scale;
-    drawArrow(ox + rPx, oy, ox + rPx, oy + xcPx, '#3b82f6', 'XC=' + XC2.toFixed(1) + 'Ω', false);
+    const xcPx = pXC * scale;
+    drawArrow(ox + rPx, oy, ox + rPx, oy + xcPx, '#3b82f6', 'XC=' + pXC.toFixed(1) + 'Ω', false);
 
     // Net X vector
-    const netX = XL - XC2;
+    const netX = pXL - pXC;
     const xnetPx = netX * scale;
     if (Math.abs(netX) > 0.5) {
       ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
