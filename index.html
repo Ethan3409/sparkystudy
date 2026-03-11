@@ -2943,6 +2943,19 @@ const FireDB = {
         return local || data;
       });
     } catch(e) { console.warn('[sparkystudy] getAllUsers failed:', e.message); return null; }
+  },
+  async logVisit(data) {
+    if (!this.ready) return;
+    try { await this.db.collection('visits').add({ ...data, _ts: firebase.firestore.FieldValue.serverTimestamp() }); }
+    catch(e) { /* non-critical, fail silently */ }
+  },
+  async getVisits(days = 30) {
+    if (!this.ready) return null;
+    try {
+      const cutoff = Date.now() - days * 86400000;
+      const snap = await this.db.collection('visits').where('timestamp', '>=', cutoff).orderBy('timestamp', 'desc').limit(5000).get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { return null; }
   }
 };
 
@@ -3070,7 +3083,9 @@ const SiteAnalytics = {
       funnelData: { landing: 0, signup: 0, diagnostic: 0, dashboard: 0, flashcards: 0, exams: 0 }
     };
   },
+  _isOwner() { try { const s = Storage.get(); return !!(s && s.user && s.user.isOwner); } catch(e) { return false; } },
   track(eventName, data = {}) {
+    if (this._isOwner()) return; // never track owner activity
     const a = this._get();
     const event = { event: eventName, timestamp: Date.now(), date: new Date().toISOString().slice(0, 10), ...data };
     a.events.push(event);
@@ -3078,6 +3093,7 @@ const SiteAnalytics = {
     this._save(a);
   },
   trackVisit(userId) {
+    if (this._isOwner()) return; // never count owner visits
     const a = this._get();
     const today = new Date().toISOString().slice(0, 10);
     const hour = new Date().getHours();
@@ -3087,14 +3103,21 @@ const SiteAnalytics = {
     a.dailyVisits[today] = (a.dailyVisits[today] || 0) + 1;
     if (userId) a.uniqueVisitors[userId] = Date.now();
     this._save(a);
+    // Log to Firebase for cross-device analytics
+    FireDB.logVisit({ userId: userId || 'anonymous', timestamp: Date.now(), date: today, hour });
   },
   trackPageView(page, userId) {
+    if (this._isOwner()) return; // never track owner page views
     const a = this._get();
-    a.pageViews.push({ page, userId: userId || 'anonymous', timestamp: Date.now(), date: new Date().toISOString().slice(0, 10) });
+    const today = new Date().toISOString().slice(0, 10);
+    const hour = new Date().getHours();
+    a.pageViews.push({ page, userId: userId || 'anonymous', timestamp: Date.now(), date: today });
     if (a.pageViews.length > 10000) a.pageViews = a.pageViews.slice(-10000);
     // Funnel tracking
     if (a.funnelData[page] !== undefined) a.funnelData[page]++;
     this._save(a);
+    // Log page visits to Firebase too
+    FireDB.logVisit({ userId: userId || 'anonymous', timestamp: Date.now(), date: today, hour, page });
   },
   trackSubscription(userId, plan, amount) {
     const a = this._get();
@@ -11595,7 +11618,8 @@ const PromoCodes = {
 const OwnerDashboard = {
   currentTab: 'overview',
   groupSliderVal: 5,
-  _cloudUsers: null, // populated from Firestore on owner login
+  _cloudUsers: null,  // populated from Firestore
+  _cloudVisits: null, // real visit data from Firestore (excludes owner)
 
   _gatherData() {
     const a = SiteAnalytics.getData();
@@ -11610,7 +11634,6 @@ const OwnerDashboard = {
     const totalUsers = registry.length;
     const activeWeek = users.filter(s=>s.user.lastLogin>last7).length;
     const activeMonth = users.filter(s=>s.user.lastLogin>last30).length;
-    const totalVisits = a.totalVisits||0, todayVisits = a.dailyVisits[today]||0;
     const avgTime = users.length>0?Math.round(users.reduce((s,u)=>s+(u.sessions.totalTime||0),0)/Math.max(users.length,1)/60000):0;
     const totalExams = users.reduce((s,u)=>s+(u.exams.attempts?.length||0),0);
     const totalFc = users.reduce((s,u)=>s+Object.values(u.flashcards||{}).reduce((c,fc)=>c+(fc.correct||0)+(fc.incorrect||0),0),0);
@@ -11622,24 +11645,59 @@ const OwnerDashboard = {
     const revenue = a.revenue?.total||0;
     const signupsWeek = registry.filter(u=>u.signupDate>last7).length;
     const signupsMonth = registry.filter(u=>u.signupDate>last30).length;
-    const visitDays = SiteAnalytics.getVisitsLast30Days();
-    const hourly = SiteAnalytics.getHourlyDistribution();
-    const topPages = SiteAnalytics.getTopPages();
-    const recentEvents = SiteAnalytics.getRecentEvents(50);
     const p1 = users.filter(s=>s.user.period===1).length, p2 = users.filter(s=>s.user.period===2).length;
     let allScores=[]; users.forEach(s=>{(s.exams.attempts||[]).forEach(ex=>{if(ex.pct!==undefined)allScores.push(ex.pct);});});
     const avgExam = allScores.length>0?Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length):0;
     const diagScores = users.filter(s=>s.diagnostic.completed).map(s=>s.diagnostic.pct||0);
     const avgDiag = diagScores.length>0?Math.round(diagScores.reduce((a,b)=>a+b,0)/diagScores.length):0;
+    const recentEvents = SiteAnalytics.getRecentEvents(50);
+
+    // Traffic stats — use Firebase cloud data if available (real cross-device, owner-excluded)
+    let totalVisits, todayVisits, visitDays, hourly, topPages;
+    if (this._cloudVisits) {
+      const cv = this._cloudVisits;
+      totalVisits = cv.length;
+      todayVisits = cv.filter(v => v.date === today).length;
+      // Build 30-day chart
+      const dayMap = {};
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        dayMap[d.toISOString().slice(0,10)] = 0;
+      }
+      cv.forEach(v => { if (dayMap[v.date] !== undefined) dayMap[v.date]++; });
+      visitDays = Object.entries(dayMap).map(([date, count]) => {
+        const d = new Date(date + 'T12:00:00');
+        return { date, label: d.toLocaleDateString('en', { month: 'short', day: 'numeric' }), count };
+      });
+      // Hourly distribution
+      const hrs = new Array(24).fill(0);
+      cv.forEach(v => { if (v.hour !== undefined) hrs[v.hour]++; });
+      hourly = hrs;
+      // Top pages
+      const pageCounts = {};
+      cv.forEach(v => { if (v.page) pageCounts[v.page] = (pageCounts[v.page]||0) + 1; });
+      topPages = Object.entries(pageCounts).sort((a,b) => b[1]-a[1]);
+    } else {
+      totalVisits = a.totalVisits||0;
+      todayVisits = a.dailyVisits[today]||0;
+      visitDays = SiteAnalytics.getVisitsLast30Days();
+      hourly = SiteAnalytics.getHourlyDistribution();
+      topPages = SiteAnalytics.getTopPages();
+    }
+
     return {a,users,registry,now,today,last7,last30,totalUsers,activeWeek,activeMonth,totalVisits,todayVisits,avgTime,totalExams,totalFc,diagDone,eliteUsers,trialUsers,expiredTrials,groupUsers,revenue,signupsWeek,signupsMonth,visitDays,hourly,topPages,recentEvents,p1,p2,avgExam,avgDiag};
   },
 
   async render() {
     const container = document.getElementById('ownerContent');
-    // If Firebase is ready and we haven't fetched yet (or refreshing), pull from cloud
+    // Pull both users and visits from Firebase in parallel
     if (FireDB.ready) {
-      const cloudUsers = await FireDB.getAllUsers();
+      const [cloudUsers, cloudVisits] = await Promise.all([
+        FireDB.getAllUsers(),
+        FireDB.getVisits(30)
+      ]);
       if (cloudUsers && cloudUsers.length >= 0) this._cloudUsers = cloudUsers;
+      if (cloudVisits) this._cloudVisits = cloudVisits;
     }
     const D = this._gatherData();
     const cloudBadge = FireDB.ready
