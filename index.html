@@ -1359,28 +1359,7 @@ input[type="radio"]:checked::after {
         <label>Password</label>
         <input type="password" id="signupPassword" placeholder="Create a password">
       </div>
-      <div class="input-group">
-        <label>Select Your Period</label>
-        <div class="period-select" id="periodSelect">
-          <div class="period-option" data-period="1" onclick="Auth.selectPeriod(1)">
-            <div class="period-num">1</div>
-            <div class="period-label">First Year</div>
-          </div>
-          <div class="period-option" data-period="2" onclick="Auth.selectPeriod(2)">
-            <div class="period-num">2</div>
-            <div class="period-label">Second Year</div>
-          </div>
-        </div>
-      </div>
-      <div class="input-group">
-        <label>Promo Code <span style="color:var(--text-muted);font-weight:400;font-size:0.8rem;">(optional)</span></label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" id="signupPromo" placeholder="Enter promo code" style="text-transform:uppercase;flex:1;">
-          <button class="btn btn-secondary btn-sm" onclick="Auth.checkPromo()" style="white-space:nowrap;">Apply</button>
-        </div>
-        <div id="promoResult" style="font-size:0.8rem;margin-top:4px;"></div>
-      </div>
-      <button class="btn btn-primary btn-block btn-lg" onclick="Auth.signup()">Create Account</button>
+      <button class="btn btn-primary btn-block btn-lg" onclick="Auth.signup()">Create Account &amp; Take Diagnostic</button>
       <div class="auth-divider">Already have an account? <a href="#" onclick="App.navigate('login')">Log in</a></div>
     </div>
   </div>
@@ -1416,7 +1395,7 @@ input[type="radio"]:checked::after {
           <p style="color:var(--text-secondary);margin-top:8px;">Answer these questions so we can build your personalized study plan. Don't worry about getting them all right — this helps us find where to focus.</p>
         </div>
         <div style="display:flex;gap:8px;flex-shrink:0;">
-          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Skip the diagnostic? You can take it later from your dashboard.')){const s=Storage.get();if(s){s.diagnostic.completed=true;s.diagnostic.pct=0;s.diagnostic.weakAreas=Object.keys(TOPICS);Storage.set(s);App.navigate('dashboard');}}" style="font-size:0.8rem;">Skip for now</button>
+          <button class="btn btn-ghost btn-sm" onclick="Diagnostic.skipDiagnostic()" style="font-size:0.8rem;">Skip for now</button>
           <button class="btn btn-ghost btn-sm" onclick="Auth.logout()" style="font-size:0.8rem;color:#ef4444;">Log out</button>
         </div>
       </div>
@@ -2960,6 +2939,7 @@ const STORAGE_KEY = 'sparkstudy_v1';
 const USERS_KEY = 'sparkstudy_users';
 const ANALYTICS_KEY = 'sparkstudy_analytics';
 const ACTIVE_USER_KEY = 'sparkstudy_active';
+const PREV_ACCOUNT_KEY = 'sparkstudy_prev_uid';
 
 const Storage = {
   // Active user session
@@ -3311,30 +3291,15 @@ const Auth = {
     const email = document.getElementById('signupEmail').value.trim();
     const pass = document.getElementById('signupPassword').value;
     if (!name || !email || !pass) return showToast('Please fill in all fields', 'error');
-    if (!this.selectedPeriod) return showToast('Please select your period', 'error');
     // Check local first (fast), then Firestore (catches accounts from other devices)
     if (Storage.findByEmailLocal(email)) return showToast('An account with this email already exists. Please log in.', 'error');
     if (FireDB.ready) {
       const cloudUser = await FireDB.findByEmail(email);
       if (cloudUser) return showToast('An account with this email already exists. Please log in.', 'error');
     }
-    const state = Storage.createDefault(name, email, pass, this.selectedPeriod);
-    // Apply promo code if valid
-    if (this.appliedPromo) {
-      const p = this.appliedPromo;
-      if (p.type === 'trial_extend') {
-        state.user.subscription.trialEnd = Date.now() + (PRICING.elite.trialDays + p.value) * 86400000;
-      } else if (p.type === 'free') {
-        state.user.subscription.plan = 'paid'; state.user.subscription.status = 'paid';
-        state.user.subscription.endDate = Date.now() + 365 * 86400000;
-      }
-      state.user.promoUsed = p.code;
-      Storage.set(state);
-      PromoCodes.redeem(p.code);
-      SiteAnalytics.track('promo_used', { code: p.code, type: p.type, email });
-      this.appliedPromo = null;
-    }
-    SiteAnalytics.track('signup', { email, period: this.selectedPeriod });
+    // Default to period 1 — user will pick their year on the plan selection screen after diagnostic
+    const state = Storage.createDefault(name, email, pass, this.selectedPeriod || 1);
+    SiteAnalytics.track('signup', { email, period: this.selectedPeriod || 1 });
     showToast('Account created! Starting your diagnostic...', 'success');
     App.navigate('diagnostic');
   },
@@ -3572,6 +3537,10 @@ const Diagnostic = {
             <div>${opt}</div>
           </div>
         `).join('')}
+        <div class="diag-option ${this.answers[this.currentIndex] === -1 ? 'selected' : ''}" onclick="Diagnostic.selectAnswer(-1)" style="border-style:dashed;opacity:0.75;">
+          <div class="option-letter" style="background:rgba(100,116,139,0.2);color:var(--text-muted);">?</div>
+          <div style="color:var(--text-muted);font-style:italic;">Haven't learned this yet</div>
+        </div>
       </div>
       <div class="diag-actions">
         <button class="btn btn-secondary" ${this.currentIndex === 0 ? 'disabled' : ''} onclick="Diagnostic.prev()">&#8592; Previous</button>
@@ -3608,9 +3577,12 @@ const Diagnostic = {
     const topicCounts = {};
     let totalCorrect = 0;
 
+    const notLearnedTopics = {};
     this.questions.forEach((q, i) => {
-      const correct = this.answers[i] === q.correct;
+      const isNYL = this.answers[i] === -1;
+      const correct = !isNYL && this.answers[i] === q.correct;
       if (correct) totalCorrect++;
+      if (isNYL) { notLearnedTopics[q.topic] = true; return; }
       if (!topicScores[q.topic]) { topicScores[q.topic] = 0; topicCounts[q.topic] = 0; }
       topicCounts[q.topic]++;
       if (correct) topicScores[q.topic]++;
@@ -3620,6 +3592,7 @@ const Diagnostic = {
     const topicPcts = {};
     const weak = [];
     const strong = [];
+    const notLearned = Object.keys(notLearnedTopics);
     Object.keys(topicScores).forEach(tid => {
       const pct = Math.round((topicScores[tid] / topicCounts[tid]) * 100);
       topicPcts[tid] = pct;
@@ -3632,16 +3605,19 @@ const Diagnostic = {
 
     const pct = Math.round((totalCorrect / this.questions.length) * 100);
 
+    const answeredTotal = this.questions.filter((_,i) => this.answers[i] !== -1).length || 1;
+    const answeredPct = Math.round((totalCorrect / answeredTotal) * 100);
     state.diagnostic = {
       completed: true,
       completedDate: Date.now(),
-      responses: this.questions.map((q, i) => ({ qId: q.id, selected: this.answers[i], correct: q.correct, topic: q.topic, isCorrect: this.answers[i] === q.correct })),
+      responses: this.questions.map((q, i) => ({ qId: q.id, selected: this.answers[i], correct: q.correct, topic: q.topic, isCorrect: this.answers[i] === q.correct, isNYL: this.answers[i] === -1 })),
       weakAreas: weak,
       strongAreas: strong,
+      notLearnedAreas: notLearned,
       topicPcts,
       score: totalCorrect,
       total: this.questions.length,
-      pct,
+      pct: answeredPct,
       timeSpent
     };
 
@@ -3653,6 +3629,81 @@ const Diagnostic = {
     SiteAnalytics.track('diagnostic_complete', { userId: state.user.id, score: pct, weakAreas: weak.length, strongAreas: strong.length });
 
     this.renderResults(state);
+  },
+
+  skipDiagnostic() {
+    const s = Storage.get();
+    if (!s) return;
+    s.diagnostic.completed = true;
+    s.diagnostic.pct = 0;
+    s.diagnostic.weakAreas = [];
+    s.diagnostic.notLearnedAreas = Object.keys(TOPICS);
+    Storage.set(s);
+    // Show the plan selector inline instead of going to dashboard
+    const header = document.getElementById('diagHeader');
+    const container = document.getElementById('diagContent');
+    if (header) header.innerHTML = '<h1>Choose Your Year</h1><p style="color:var(--text-secondary);margin-top:8px;">Select which year of your apprenticeship you\'re currently studying.</p>';
+    if (container) container.innerHTML = `<div class="diag-results slide-up">${Diagnostic._planSelectHTML(s)}</div>`;
+  },
+
+  _planSelectHTML(state) {
+    const p = state.user.period || 1;
+    return `
+    <div style="background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(139,92,246,0.04));border:2px solid rgba(245,158,11,0.2);border-radius:16px;padding:24px;">
+      <h3 style="margin:0 0 6px;font-size:1.1rem;">&#x1F393; Select Your Year</h3>
+      <p style="font-size:0.82rem;color:var(--text-secondary);margin:0 0 18px;">Choose which year of your apprenticeship you're studying for.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;" id="planYearGrid">
+        <div onclick="Diagnostic._selectYear(1)" id="planY1" style="border:2px solid ${p===1?'var(--accent)':'var(--border)'};border-radius:12px;padding:16px;cursor:pointer;text-align:center;background:${p===1?'rgba(245,158,11,0.08)':'var(--bg-card)'};">
+          <div style="font-size:1.6rem;font-weight:900;color:var(--accent);">1</div>
+          <div style="font-weight:700;font-size:0.9rem;">First Year</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">DC theory, wiring, code basics</div>
+        </div>
+        <div onclick="Diagnostic._selectYear(2)" id="planY2" style="border:2px solid ${p===2?'var(--accent)':'var(--border)'};border-radius:12px;padding:16px;cursor:pointer;text-align:center;background:${p===2?'rgba(245,158,11,0.08)':'var(--bg-card)'};">
+          <div style="font-size:1.6rem;font-weight:900;color:var(--accent);">2</div>
+          <div style="font-weight:700;font-size:0.9rem;">Second Year</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">AC theory, motors, controls, code</div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:6px;">Promo code (optional)</label>
+        <div style="display:flex;gap:8px;">
+          <input id="planPromoInput" type="text" placeholder="Enter code" style="flex:1;padding:9px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.85rem;text-transform:uppercase;">
+          <button onclick="Diagnostic._applyPromo()" style="padding:9px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:0.8rem;cursor:pointer;font-weight:600;">Apply</button>
+        </div>
+        <div id="planPromoMsg" style="font-size:0.78rem;margin-top:5px;min-height:18px;"></div>
+      </div>
+      <button onclick="Diagnostic.confirmPlan()" class="btn btn-primary btn-lg" style="width:100%;">Go to My Dashboard &#8594;</button>
+    </div>`;
+  },
+
+  _selectedYear: null,
+  _selectYear(y) {
+    this._selectedYear = y;
+    const y1 = document.getElementById('planY1');
+    const y2 = document.getElementById('planY2');
+    if (y1 && y2) {
+      y1.style.borderColor = y === 1 ? 'var(--accent)' : 'var(--border)';
+      y1.style.background = y === 1 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
+      y2.style.borderColor = y === 2 ? 'var(--accent)' : 'var(--border)';
+      y2.style.background = y === 2 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
+    }
+  },
+
+  _applyPromo() {
+    const code = (document.getElementById('planPromoInput')?.value || '').trim().toUpperCase();
+    const msg = document.getElementById('planPromoMsg');
+    if (!code) { if(msg) msg.textContent = ''; return; }
+    const result = PromoCodes.apply(code);
+    if (msg) { msg.textContent = result.message; msg.style.color = result.success ? 'var(--success)' : 'var(--danger)'; }
+  },
+
+  confirmPlan() {
+    const state = Storage.get();
+    if (!state) return;
+    const year = this._selectedYear || state.user.period || 1;
+    state.user.period = year;
+    Storage.set(state);
+    App.navigate('dashboard');
   },
 
   renderResults(state) {
@@ -3677,7 +3728,7 @@ const Diagnostic = {
         </p>
 
         ${d.weakAreas.length > 0 ? `
-          <div style="margin-bottom:24px;">
+          <div style="margin-bottom:16px;">
             <h3 style="color:var(--danger);margin-bottom:12px;">&#9888; Areas Needing Work</h3>
             <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
               ${d.weakAreas.map(tid => `<span class="badge badge-danger">${TOPICS[tid]?.name || tid} \u2014 ${d.topicPcts[tid]}%</span>`).join('')}
@@ -3685,8 +3736,18 @@ const Diagnostic = {
           </div>
         ` : ''}
 
+        ${(d.notLearnedAreas||[]).length > 0 ? `
+          <div style="margin-bottom:16px;">
+            <h3 style="color:var(--text-muted);margin-bottom:12px;">&#x1F4DA; Not Covered Yet</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+              ${(d.notLearnedAreas||[]).map(tid => `<span class="badge" style="background:rgba(100,116,139,0.15);color:var(--text-muted);border:1px dashed var(--border);">${TOPICS[tid]?.name || tid}</span>`).join('')}
+            </div>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;">We'll start you here — no pressure.</p>
+          </div>
+        ` : ''}
+
         ${d.strongAreas.length > 0 ? `
-          <div style="margin-bottom:32px;">
+          <div style="margin-bottom:24px;">
             <h3 style="color:var(--success);margin-bottom:12px;">&#10003; Strong Areas</h3>
             <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
               ${d.strongAreas.map(tid => `<span class="badge badge-success">${TOPICS[tid]?.name || tid} \u2014 ${d.topicPcts[tid]}%</span>`).join('')}
@@ -3694,19 +3755,22 @@ const Diagnostic = {
           </div>
         ` : ''}
 
-        <h3 style="margin-bottom:16px;">All Topics</h3>
-        <div class="diag-breakdown">
-          ${topicEntries.map(([tid, pct]) => `
-            <div class="diag-topic-result">
-              <span class="topic-name">${TOPICS[tid]?.icon || ''} ${TOPICS[tid]?.name || tid}</span>
-              <span class="topic-score" style="color:${getMasteryColor(pct)}">${pct}%</span>
-            </div>
-          `).join('')}
-        </div>
+        ${topicEntries.length > 0 ? `
+        <details style="margin-bottom:24px;text-align:left;">
+          <summary style="cursor:pointer;font-size:0.85rem;color:var(--text-muted);padding:8px 0;">&#x25B6; All topic scores</summary>
+          <div class="diag-breakdown" style="margin-top:12px;">
+            ${topicEntries.map(([tid, pct]) => `
+              <div class="diag-topic-result">
+                <span class="topic-name">${TOPICS[tid]?.icon || ''} ${TOPICS[tid]?.name || tid}</span>
+                <span class="topic-score" style="color:${getMasteryColor(pct)}">${pct}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </details>` : ''}
 
-        <button class="btn btn-primary btn-lg" style="margin-top:32px;" onclick="App.navigate('dashboard')">
-          Go to Your Dashboard &#8594;
-        </button>
+        <div id="diagPlanSelect" style="margin-top:8px;">
+          ${Diagnostic._planSelectHTML(state)}
+        </div>
       </div>
     `;
   }
@@ -11277,10 +11341,58 @@ const Settings = {
           <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;text-align:center;">This will permanently delete all your progress.</div>
         </div>
 
+        <!-- Account Switcher -->
+        ${Settings._accountSwitcherHTML(state)}
+
         <!-- Log Out -->
         <button class="btn btn-ghost" onclick="Auth.logout()" style="width:100%;margin-bottom:40px;">&#8592; Log Out</button>
       </div>
     `;
+  },
+
+  _accountSwitcherHTML(state) {
+    // Collect all locally stored accounts
+    const reg = UserRegistry.getAll();
+    const currentUid = state.user.id;
+    const others = reg.filter(u => u.id !== currentUid);
+    if (others.length === 0) return '';
+    return `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
+      <h3 style="margin:0 0 16px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F500; Switch Account</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${others.map(u => {
+          const initials = (u.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().substring(0,2);
+          const isOwner = u.isOwner;
+          return `
+          <button onclick="Settings.switchToAccount('${u.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;width:100%;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="width:36px;height:36px;border-radius:50%;background:${isOwner ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#3b82f6,#1d4ed8)'};display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:#000;flex-shrink:0;">${initials}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:0.88rem;color:var(--text-primary);">${u.name}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${u.email}${isOwner ? ' &nbsp;&#x1F451; Owner' : ''}</div>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Switch &#8594;</div>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
+  },
+
+  switchToAccount(uid) {
+    const targetState = Storage.getUserById(uid);
+    if (!targetState) return showToast('Account not found on this device', 'error');
+    // Remember who we're switching away from
+    const currentState = Storage.get();
+    if (currentState) localStorage.setItem(PREV_ACCOUNT_KEY, currentState.user.id);
+    // Switch active user
+    localStorage.setItem(ACTIVE_USER_KEY, uid);
+    showToast('Switched to ' + targetState.user.name, 'success');
+    // Re-navigate to dashboard or owner panel
+    if (targetState.user.isOwner) {
+      OwnerDashboard._cloudUsers = null;
+      App.navigate('owner');
+    } else {
+      App.navigate('dashboard');
+    }
   },
 
   updateGoal(key, value) {
