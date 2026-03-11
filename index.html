@@ -2956,6 +2956,14 @@ const FireDB = {
       const snap = await this.db.collection('visits').where('timestamp', '>=', cutoff).orderBy('timestamp', 'desc').limit(5000).get();
       return snap.docs.map(d => d.data());
     } catch(e) { return null; }
+  },
+  async deleteUser(uid) {
+    if (!this.ready) return;
+    try { await this.db.collection('users').doc(uid).delete(); } catch(e) { /* fail silently */ }
+  },
+  async updateUserField(uid, fields) {
+    if (!this.ready) return;
+    try { await this.db.collection('users').doc(uid).set({ user: fields }, { merge: true }); } catch(e) { /* fail silently */ }
   }
 };
 
@@ -3399,6 +3407,7 @@ const Auth = {
     }
     if (!state) return showToast('No account found. Please sign up first.', 'error');
     if (state.user.password !== pass) return showToast('Invalid credentials', 'error');
+    if (state.user.banned) return showToast('This account has been disabled. Please contact support.', 'error');
     Storage.setActiveUser(state.user.id);
     state.user.lastLogin = Date.now();
     Storage.set(state);
@@ -11734,7 +11743,7 @@ const OwnerDashboard = {
     const groups={};D.users.forEach(s=>{const gid=s.user.subscription?.groupId;if(gid){if(!groups[gid])groups[gid]=[];groups[gid].push(s.user.name);}});
     const groupCount=Object.keys(groups).length;
     const groupedCount=D.users.filter(s=>s.user.subscription?.groupId).length;
-    const rows = D.registry.map(reg=>{const st=Storage.getUserById(reg.id);if(!st||st.user.isOwner)return '';const u=st.user,sub=u.subscription||{};const isActive=u.lastLogin>D.last7;const isTrial=sub.status==='trial';const trialLeft=isTrial&&sub.trialEnd?Math.max(0,Math.ceil((sub.trialEnd-D.now)/86400000)):0;const subLabel=sub.status==='paid'?'Elite':(isTrial?'Trial ('+trialLeft+'d)':'Trial');const subBadge=sub.status==='paid'?'oa-badge-paid':(isTrial&&trialLeft>0?'oa-badge-trial':'oa-badge-inactive');const gid=sub.groupId;return '<tr><td><strong>'+u.name+'</strong><br><span style="font-size:0.7rem;color:var(--text-muted);">'+u.email+'</span></td><td>P'+u.period+'</td><td><span class="oa-badge '+(isActive?'oa-badge-active':'oa-badge-inactive')+'">'+(isActive?'Active':'Inactive')+'</span></td><td>'+this._timeAgo(u.lastLogin)+'</td><td>'+(st.diagnostic.completed?st.diagnostic.pct+'%':'--')+'</td><td>'+this._getUserMastery(st)+'%</td><td>'+(st.exams.attempts?.length||0)+'</td><td>'+(st.sessions.streak||0)+'d</td><td><span class="oa-badge '+subBadge+'">'+subLabel+'</span></td><td style="font-size:0.8rem;">'+(gid?'<span style="color:#8b5cf6;">'+gid+'</span>':'--')+'</td><td style="font-size:0.7rem;">'+new Date(u.signupDate).toLocaleDateString()+'</td></tr>';}).join('');
+    const rows = D.registry.map(reg=>{const st=Storage.getUserById(reg.id);if(!st||st.user.isOwner)return '';const u=st.user,sub=u.subscription||{};const isActive=u.lastLogin>D.last7;const isBanned=!!u.banned;const isTrial=sub.status==='trial';const trialLeft=isTrial&&sub.trialEnd?Math.max(0,Math.ceil((sub.trialEnd-D.now)/86400000)):0;const subLabel=sub.status==='paid'?'Elite':(isTrial?'Trial ('+trialLeft+'d)':'Trial');const subBadge=sub.status==='paid'?'oa-badge-paid':(isTrial&&trialLeft>0?'oa-badge-trial':'oa-badge-inactive');const gid=sub.groupId;const rowStyle=isBanned?'opacity:0.5;background:rgba(239,68,68,0.05);':'';return '<tr style="'+rowStyle+'"><td><strong>'+u.name+'</strong>'+(isBanned?' <span style="font-size:0.65rem;background:#ef444422;color:#ef4444;border-radius:4px;padding:1px 5px;font-weight:700;">BLOCKED</span>':'')+'<br><span style="font-size:0.7rem;color:var(--text-muted);">'+u.email+'</span></td><td>P'+u.period+'</td><td><span class="oa-badge '+(isActive&&!isBanned?'oa-badge-active':'oa-badge-inactive')+'">'+(isBanned?'Blocked':isActive?'Active':'Inactive')+'</span></td><td>'+this._timeAgo(u.lastLogin)+'</td><td>'+(st.diagnostic.completed?st.diagnostic.pct+'%':'--')+'</td><td>'+this._getUserMastery(st)+'%</td><td>'+(st.exams.attempts?.length||0)+'</td><td>'+(st.sessions.streak||0)+'d</td><td><span class="oa-badge '+subBadge+'">'+subLabel+'</span></td><td style="font-size:0.8rem;">'+(gid?'<span style="color:#8b5cf6;">'+gid+'</span>':'--')+'</td><td style="font-size:0.7rem;">'+new Date(u.signupDate).toLocaleDateString()+'</td><td style="white-space:nowrap;"><button onclick="OwnerDashboard.blockUser(\''+u.id+'\')" style="font-size:0.7rem;padding:3px 8px;border-radius:5px;border:1px solid '+(isBanned?'#22c55e':'#f59e0b')+';background:transparent;color:'+(isBanned?'#22c55e':'#f59e0b')+';cursor:pointer;margin-right:4px;">'+(isBanned?'Unblock':'Block')+'</button><button onclick="OwnerDashboard.removeUser(\''+u.id+'\')" style="font-size:0.7rem;padding:3px 8px;border-radius:5px;border:1px solid #ef4444;background:transparent;color:#ef4444;cursor:pointer;">Remove</button></td></tr>';}).join('');
     return '<div class="oa-grid"><div class="oa-stat"><div class="oa-stat-value">'+D.totalUsers+'</div><div class="oa-stat-label">Students</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.activeWeek+'</div><div class="oa-stat-label">Active (7d)</div></div><div class="oa-stat"><div class="oa-stat-value">'+groupCount+'</div><div class="oa-stat-label">Groups</div></div><div class="oa-stat"><div class="oa-stat-value">'+groupedCount+'</div><div class="oa-stat-label">In Groups</div></div></div>'+
       // Group management section
       '<div class="oa-section"><h3>&#x1F465; Group Management</h3><p style="color:var(--text-secondary);margin-bottom:12px;">Assign students to groups so they can see each other\'s progress.</p>'+
@@ -11746,7 +11755,7 @@ const OwnerDashboard = {
       '</div>'+
       (groupCount>0?'<div style="margin-bottom:16px;">'+Object.entries(groups).map(([gid,members])=>'<div style="background:var(--bg-input);border:1px solid rgba(139,92,246,0.3);border-radius:var(--radius);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;"><span style="color:#8b5cf6;font-weight:700;">'+gid+'</span><span style="font-size:0.85rem;color:var(--text-secondary);">'+members.length+' members: '+members.join(', ')+'</span></div>').join('')+'</div>':'')+
       '</div>'+
-      '<div class="oa-section"><h3>&#x1F4CB; All Students</h3><div style="overflow-x:auto;"><table class="oa-table"><thead><tr><th>User</th><th>Period</th><th>Status</th><th>Last Active</th><th>Diagnostic</th><th>Mastery</th><th>Exams</th><th>Streak</th><th>Plan</th><th>Group</th><th>Joined</th></tr></thead><tbody>'+(rows||'<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:40px;">No students yet.</td></tr>')+'</tbody></table></div></div>'+D.users.filter(s=>!s.user.isOwner).map(s=>this._renderUserDetail(s)).join('');
+      '<div class="oa-section"><h3>&#x1F4CB; All Students</h3><div style="overflow-x:auto;"><table class="oa-table"><thead><tr><th>User</th><th>Period</th><th>Status</th><th>Last Active</th><th>Diagnostic</th><th>Mastery</th><th>Exams</th><th>Streak</th><th>Plan</th><th>Group</th><th>Joined</th><th>Actions</th></tr></thead><tbody>'+(rows||'<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:40px;">No students yet.</td></tr>')+'</tbody></table></div></div>'+D.users.filter(s=>!s.user.isOwner).map(s=>this._renderUserDetail(s)).join('');
   },
 
   _renderUserDetail(st) {
@@ -11957,6 +11966,35 @@ const OwnerDashboard = {
 
   _getUserMastery(st) {const cs=Object.values(st.flashcards||{}).filter(c=>c.lastReview);if(!cs.length)return 0;return Math.round(cs.reduce((s,c)=>s+c.correct/Math.max(c.correct+c.incorrect,1),0)/cs.length*100);},
   _timeAgo(ts) {const d=Date.now()-ts;if(d<60000)return 'Just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';if(d<604800000)return Math.floor(d/86400000)+'d ago';return new Date(ts).toLocaleDateString();},
+
+  async removeUser(uid) {
+    const st = Storage.getUserById(uid);
+    if (!st) return showToast('User not found', 'error');
+    if (!confirm('Permanently remove ' + st.user.name + ' (' + st.user.email + ')?\n\nThis cannot be undone.')) return;
+    // Remove from localStorage
+    localStorage.removeItem('sparkstudy_v1_' + uid);
+    // Remove from UserRegistry
+    const reg = UserRegistry.getAll().filter(u => u.id !== uid);
+    localStorage.setItem('sparkstudy_users', JSON.stringify(reg));
+    // Remove from Firebase
+    await FireDB.deleteUser(uid);
+    showToast(st.user.name + ' has been removed.', 'success');
+    this.render();
+  },
+
+  async blockUser(uid) {
+    const st = Storage.getUserById(uid);
+    if (!st) return showToast('User not found', 'error');
+    const isBanned = !!st.user.banned;
+    const action = isBanned ? 'unblock' : 'block';
+    if (!confirm((isBanned ? 'Unblock' : 'Block') + ' ' + st.user.name + '?\n\n' + (isBanned ? 'They will be able to log in again.' : 'They will be locked out immediately.'))) return;
+    st.user.banned = !isBanned;
+    localStorage.setItem('sparkstudy_v1_' + uid, JSON.stringify(st));
+    // Update Firebase too
+    await FireDB.updateUserField(uid, { banned: st.user.banned });
+    showToast(st.user.name + ' has been ' + action + 'ed.', 'success');
+    this.render();
+  },
 
   exportAll() {const d={analytics:SiteAnalytics.getData(),users:UserRegistry.getAll(),date:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkystudy-analytics-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
   exportUsers() {const d=Storage.getAllUsers().map(s=>({...s,user:{...s.user,password:'[REDACTED]'}}));const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkystudy-users-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
