@@ -1085,6 +1085,7 @@ input[type="radio"]:checked::after {
     <li><a href="#" data-page="study-guide">Study Guide</a></li>
     <li><a href="#" data-page="lessons">&#x1F4DA; Lessons</a></li>
     <li><a href="#" data-page="tools">Tools</a></li>
+    <li><a href="#" data-page="math">🧮 Math</a></li>
     <li><a href="#" data-page="notes">📝 Notes</a></li>
     <li><a href="#" data-page="analytics">Analytics</a></li>
     <li><a href="#" data-page="review">Review</a></li>
@@ -1466,6 +1467,11 @@ input[type="radio"]:checked::after {
 
 <div class="page" id="page-owner">
   <div class="container" id="ownerContent"></div>
+</div>
+
+<!-- ======= MATH PRACTICE ======= -->
+<div class="page" id="page-math">
+  <div class="container" id="mathContent"></div>
 </div>
 
 </div><!-- /app-container -->
@@ -3515,6 +3521,7 @@ const App = {
       case 'lessons': Lessons.render(state); break;
       case 'notes': Notes.render(state); break;
       case 'wrong-study': WrongAnswerStudy.render(); break;
+      case 'math': MathPractice.render(state); break;
     }
   },
   init() {
@@ -3906,6 +3913,27 @@ const Dashboard = {
         <div class="card">
           <div class="section-title">&#127919; Today's Goals</div>
           <div class="daily-goals">
+            ${(() => {
+              const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+              const sched = state.schedule || {};
+              const todayTopicId = sched[dayName];
+              const todayTopic = todayTopicId ? TOPICS[todayTopicId] : null;
+              if (todayTopic) {
+                const topicMastery = getTopicMastery(state, todayTopicId);
+                return `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+                  <div style="font-size:0.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">📅 Today — ${dayName}</div>
+                  <div style="font-weight:700;font-size:0.95rem;">${todayTopic.icon} ${todayTopic.name}</div>
+                  <div style="font-size:0.78rem;color:var(--text-muted);margin:4px 0 8px;">Current mastery: ${topicMastery}%</div>
+                  <div style="display:flex;gap:8px;">
+                    <button onclick="App.navigate('flashcards')" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:5px 10px;">Study Cards</button>
+                    <button onclick="App.navigate('math')" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:5px 10px;">Math Practice</button>
+                  </div>
+                </div>`;
+              }
+              return `<div style="font-size:0.8rem;color:var(--text-muted);padding:8px 0 12px;">
+                <a href="#" onclick="App.navigate('settings');return false;" style="color:var(--accent);">Set your class schedule</a> to get daily topic suggestions.
+              </div>`;
+            })()}
             <div class="goal-item">
               <div class="goal-icon">&#128218;</div>
               <div class="goal-info">
@@ -11414,6 +11442,9 @@ const Settings = {
           <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;text-align:center;">This will permanently delete all your progress.</div>
         </div>
 
+        <!-- Schedule Upload -->
+        ${Settings._scheduleHTML(state)}
+
         <!-- Account Switcher -->
         ${Settings._accountSwitcherHTML(state)}
 
@@ -11421,6 +11452,77 @@ const Settings = {
         <button class="btn btn-ghost" onclick="Auth.logout()" style="width:100%;margin-bottom:40px;">&#8592; Log Out</button>
       </div>
     `;
+  },
+
+  _scheduleHTML(state) {
+    const sched = state.schedule || {};
+    const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const topics = Object.values(TOPICS).filter(t => t.period === (state.user.period||1)).sort((a,b)=>a.order-b.order);
+    const hasSchedule = Object.keys(sched).some(k => days.includes(k) && sched[k]);
+    return `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
+      <h3 style="margin:0 0 6px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F4C5; My Class Schedule</h3>
+      <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 18px;">Set your schedule so the dashboard can suggest what to study each day based on your classes and weak spots.</p>
+
+      <!-- Image upload -->
+      <div style="margin-bottom:18px;">
+        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:8px;">Upload a photo of your timetable (optional — for reference)</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <label style="padding:8px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.85rem;">
+            📎 Choose Image
+            <input type="file" accept="image/*,application/pdf" style="display:none;" onchange="Settings.uploadScheduleImage(event)">
+          </label>
+          ${sched.imageData ? `<span style="font-size:0.8rem;color:#22c55e;">✓ Schedule image saved</span>
+            <button onclick="Settings.clearScheduleImage()" style="font-size:0.75rem;color:#ef4444;background:none;border:none;cursor:pointer;">Remove</button>` : '<span style="font-size:0.8rem;color:var(--text-muted);">No image uploaded</span>'}
+        </div>
+        ${sched.imageData ? `<img src="${sched.imageData}" style="max-width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--border);">` : ''}
+      </div>
+
+      <!-- Weekly grid -->
+      <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;">What topic do you study each day?</div>
+      <div style="display:grid;gap:8px;">
+        ${days.map(day => `
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="min-width:90px;font-size:0.85rem;font-weight:600;color:var(--text-secondary);">${day}</div>
+            <select id="sched_${day}" onchange="Settings.saveScheduleDay('${day}',this.value)"
+              style="flex:1;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.82rem;">
+              <option value="">— No class —</option>
+              ${topics.map(t=>`<option value="${t.id}" ${sched[day]===t.id?'selected':''}>${t.name}</option>`).join('')}
+            </select>
+          </div>`).join('')}
+      </div>
+      ${hasSchedule ? `<div style="margin-top:12px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:8px;font-size:0.82rem;color:#22c55e;">✅ Schedule saved — your dashboard will show daily study suggestions based on today's topic.</div>` : ''}
+    </div>`;
+  },
+
+  uploadScheduleImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) return showToast('Image too large (max 3MB)', 'error');
+    const reader = new FileReader();
+    reader.onload = e => {
+      const s = Storage.get();
+      if (!s.schedule) s.schedule = {};
+      s.schedule.imageData = e.target.result;
+      Storage.set(s);
+      showToast('Schedule image saved!', 'success');
+      Settings.render(s);
+    };
+    reader.readAsDataURL(file);
+  },
+
+  clearScheduleImage() {
+    const s = Storage.get();
+    if (s.schedule) { delete s.schedule.imageData; Storage.set(s); }
+    showToast('Image removed', 'info');
+    Settings.render(s);
+  },
+
+  saveScheduleDay(day, topicId) {
+    const s = Storage.get();
+    if (!s.schedule) s.schedule = {};
+    s.schedule[day] = topicId || null;
+    Storage.set(s);
   },
 
   _accountSwitcherHTML(state) {
@@ -12136,6 +12238,7 @@ function updateMobileDrawer(state, activePage) {
     { page: 'notes', icon: '📝', label: 'My Notes' },
     { section: 'Tools & Insights' },
     { page: 'tools', icon: '🔧', label: 'Simulators' },
+    { page: 'math', icon: '🧮', label: 'Math Practice' },
     { page: 'analytics', icon: '📊', label: 'Analytics' },
     { page: 'review', icon: '⭐', label: 'Review Wrong' },
     { section: 'Account' },
@@ -12180,6 +12283,310 @@ function getExamPrediction(state) {
   });
   return totalWeight > 0 ? Math.round(weightedScore / totalWeight) : 0;
 }
+
+// ===== MATH PRACTICE =====
+const MathPractice = {
+  currentCategory: 'ohms-law',
+  currentProblem: null,
+  score: 0,
+  attempts: 0,
+  showingSolution: false,
+
+  categories: [
+    { id:'ohms-law',       name:"Ohm's Law",          icon:'⚡', period:1, formula:'V = IR' },
+    { id:'power',          name:'Power',               icon:'💡', period:1, formula:'P = VI = I²R = V²/R' },
+    { id:'series',         name:'Series Circuits',     icon:'➡️', period:1, formula:'Rt = R1+R2+... Vt = V1+V2+...' },
+    { id:'parallel',       name:'Parallel Circuits',   icon:'⑂',  period:1, formula:'1/Rt = 1/R1+1/R2+...' },
+    { id:'series-parallel',name:'Series-Parallel',     icon:'🔧', period:1, formula:'Combined Rt, V drops, I' },
+    { id:'ac-basics',      name:'AC Basics',           icon:'📈', period:2, formula:'Vrms = Vp×0.707, f = 1/T' },
+    { id:'reactance',      name:'Reactance (XL & XC)', icon:'🌊', period:2, formula:'XL=2πfL, XC=1/(2πfC)' },
+    { id:'impedance',      name:'Impedance',           icon:'📐', period:2, formula:'Z = √(R²+X²)' },
+    { id:'power-factor',   name:'Power Factor',        icon:'📊', period:2, formula:'PF=cosθ, P=S×PF, S=VI' },
+    { id:'transformers',   name:'Transformers',        icon:'🔁', period:2, formula:'V1/V2 = N1/N2 = I2/I1' },
+    { id:'motors',         name:'Motor Speed & Slip',  icon:'⚙️', period:2, formula:'Ns=120f/P, slip=(Ns-Nr)/Ns' },
+    { id:'three-phase',    name:'Three-Phase',         icon:'🔺', period:2, formula:'VL=√3×Vp (wye), IL=√3×Ip (delta)' },
+  ],
+
+  _r(min, max, step=1) { return Math.round((Math.random()*(max-min)+min)/step)*step; },
+  _round(v, dp=2) { return Math.round(v*Math.pow(10,dp))/Math.pow(10,dp); },
+
+  generateProblem() {
+    const gen = this['_gen_' + this.currentCategory.replace(/-/g,'_')];
+    if (gen) this.currentProblem = gen.call(this);
+    this.showingSolution = false;
+    this.render(Storage.get());
+  },
+
+  _gen_ohms_law() {
+    const type = this._r(0,2);
+    if (type===0) { const V=this._r(12,480,12),R=this._r(1,200,5); return {q:`A circuit has a voltage of <strong>${V}V</strong> and a resistance of <strong>${R}Ω</strong>. What is the current?`,a:this._round(V/R),unit:'A',hint:'I = V ÷ R',formula:'I = V / R'}; }
+    if (type===1) { const I=this._r(1,30),R=this._r(5,200,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Ω</strong> resistor. What is the voltage across it?`,a:this._round(I*R),unit:'V',hint:'V = I × R',formula:'V = I × R'}; }
+    const V=this._r(12,480,12),I=this._r(1,20); return {q:`A <strong>${V}V</strong> source pushes <strong>${I}A</strong> through a resistor. What is the resistance?`,a:this._round(V/I),unit:'Ω',hint:'R = V ÷ I',formula:'R = V / I'};
+  },
+
+  _gen_power() {
+    const type = this._r(0,3);
+    if (type===0) { const V=this._r(12,240,12),I=this._r(1,20); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong>. What is the power?`,a:this._round(V*I),unit:'W',hint:'P = V × I',formula:'P = V × I'}; }
+    if (type===1) { const I=this._r(1,20),R=this._r(5,100,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Ω</strong> resistor. What power is dissipated?`,a:this._round(I*I*R),unit:'W',hint:'P = I² × R',formula:'P = I² × R'}; }
+    if (type===2) { const V=this._r(12,240,12),R=this._r(5,100,5); return {q:`<strong>${V}V</strong> is applied across a <strong>${R}Ω</strong> resistor. What is the power?`,a:this._round(V*V/R),unit:'W',hint:'P = V² ÷ R',formula:'P = V² / R'}; }
+    const P=this._r(100,2400,100),V=this._r(120,240,120); return {q:`A <strong>${P}W</strong> heater operates at <strong>${V}V</strong>. What current does it draw?`,a:this._round(P/V),unit:'A',hint:'I = P ÷ V',formula:'I = P / V'};
+  },
+
+  _gen_series() {
+    const type = this._r(0,2);
+    if (type===0) { const R1=this._r(5,100,5),R2=this._r(5,100,5),R3=this._r(5,100,5); return {q:`Three resistors <strong>R1=${R1}Ω, R2=${R2}Ω, R3=${R3}Ω</strong> are connected in series. What is the total resistance?`,a:R1+R2+R3,unit:'Ω',hint:'Add all resistors: Rt = R1+R2+R3',formula:'Rt = R1 + R2 + R3'}; }
+    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,50,10),R2=this._r(10,50,10); const I=this._round(V/(R1+R2)); return {q:`<strong>${V}V</strong> is applied across a series circuit with <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What is the current?`,a:I,unit:'A',hint:'Find Rt first, then I = V ÷ Rt',formula:'I = V / (R1+R2)'}; }
+    const V=this._r(24,120,12),R1=this._r(10,40,10),R2=this._r(10,40,10); const I=V/(R1+R2); return {q:`In a series circuit with <strong>${V}V</strong>, <strong>R1=${R1}Ω</strong>, and <strong>R2=${R2}Ω</strong>, what is the voltage drop across R1?`,a:this._round(I*R1),unit:'V',hint:'Find I first (I=V/Rt), then V1 = I × R1',formula:'V1 = I × R1'};
+  },
+
+  _gen_parallel() {
+    const type = this._r(0,2);
+    if (type===0) { const R1=this._r(10,100,10),R2=this._r(10,100,10); const Rt=this._round((R1*R2)/(R1+R2)); return {q:`Two resistors <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong> are in parallel. What is the total resistance?`,a:Rt,unit:'Ω',hint:'Use the product-over-sum formula: Rt = (R1×R2)/(R1+R2)',formula:'Rt = (R1×R2) / (R1+R2)'}; }
+    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); const I1=this._round(V/R1),I2=this._round(V/R2); return {q:`<strong>${V}V</strong> is applied to a parallel circuit with <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What is the total current?`,a:this._round(I1+I2),unit:'A',hint:'Each branch: I=V/R. Total: It=I1+I2',formula:'It = V/R1 + V/R2'}; }
+    const V=this._r(24,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); return {q:`A parallel circuit has <strong>${V}V</strong> across branches <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What current flows through R2?`,a:this._round(V/R2),unit:'A',hint:'In parallel, same voltage across all branches. I2 = V / R2',formula:'I2 = V / R2'};
+  },
+
+  _gen_series_parallel() {
+    const R1=this._r(10,50,10),R2=this._r(10,50,10),R3=this._r(10,50,10),V=this._r(24,120,12);
+    const Rp=this._round((R2*R3)/(R2+R3)); const Rt=this._round(R1+Rp); const I=this._round(V/Rt);
+    const type=this._r(0,1);
+    if(type===0) return {q:`R1=${R1}Ω is in series with parallel combination of R2=${R2}Ω and R3=${R3}Ω. Source is <strong>${V}V</strong>. What is the total current?`,a:I,unit:'A',hint:'Find Rparallel=(R2×R3)/(R2+R3), then Rt=R1+Rp, then I=V/Rt',formula:'Rp=(R2×R3)/(R2+R3), Rt=R1+Rp, I=V/Rt'};
+    return {q:`R1=${R1}Ω is in series with parallel combination of R2=${R2}Ω and R3=${R3}Ω. Source is <strong>${V}V</strong>. What is the total resistance?`,a:Rt,unit:'Ω',hint:'Rp=(R2×R3)/(R2+R3), then Rt=R1+Rp',formula:'Rt = R1 + (R2×R3)/(R2+R3)'};
+  },
+
+  _gen_ac_basics() {
+    const type=this._r(0,3);
+    if(type===0){ const Vp=this._r(100,400,10); return {q:`A sine wave has a peak voltage of <strong>${Vp}V</strong>. What is the RMS voltage?`,a:this._round(Vp*0.7071),unit:'V',hint:'Vrms = Vpeak × 0.7071',formula:'Vrms = Vpeak × 0.7071'}; }
+    if(type===1){ const Vr=this._r(100,250,10); return {q:`The RMS voltage of a circuit is <strong>${Vr}V</strong>. What is the peak voltage?`,a:this._round(Vr*1.4142),unit:'V',hint:'Vpeak = Vrms × 1.414',formula:'Vpeak = Vrms × 1.414'}; }
+    if(type===2){ const T=this._r(10,100,5); return {q:`A sine wave has a period of <strong>${T}ms</strong>. What is its frequency?`,a:this._round(1000/T,1),unit:'Hz',hint:'f = 1 / T (convert ms to seconds first)',formula:'f = 1/T'}; }
+    const f=this._r(10,120,10); return {q:`A signal has a frequency of <strong>${f}Hz</strong>. What is its period?`,a:this._round(1000/f,2),unit:'ms',hint:'T = 1/f (then convert to ms)',formula:'T = 1/f × 1000ms'};
+  },
+
+  _gen_reactance() {
+    const type=this._r(0,1);
+    if(type===0){ const f=this._r(30,120,10),L=this._r(10,500,10); return {q:`An inductor of <strong>${L}mH</strong> is connected to a <strong>${f}Hz</strong> supply. What is its inductive reactance?`,a:this._round(2*Math.PI*f*(L/1000)),unit:'Ω',hint:'XL = 2π × f × L (convert mH to H)',formula:'XL = 2πfL'}; }
+    const f=this._r(30,120,10),C=this._r(10,500,10); return {q:`A capacitor of <strong>${C}μF</strong> is connected to a <strong>${f}Hz</strong> supply. What is its capacitive reactance?`,a:this._round(1/(2*Math.PI*f*(C/1000000))),unit:'Ω',hint:'XC = 1 ÷ (2π × f × C) (convert μF to F)',formula:'XC = 1/(2πfC)'};
+  },
+
+  _gen_impedance() {
+    const type=this._r(0,1);
+    const R=this._r(10,100,10);
+    if(type===0){ const XL=this._r(10,150,10); return {q:`A series RL circuit has R=<strong>${R}Ω</strong> and XL=<strong>${XL}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XL*XL)),unit:'Ω',hint:'Z = √(R² + XL²)',formula:'Z = √(R² + X²)'}; }
+    const XC=this._r(10,150,10); return {q:`A series RC circuit has R=<strong>${R}Ω</strong> and XC=<strong>${XC}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XC*XC)),unit:'Ω',hint:'Z = √(R² + XC²)',formula:'Z = √(R² + X²)'};
+  },
+
+  _gen_power_factor() {
+    const type=this._r(0,2);
+    if(type===0){ const pf=this._round(this._r(70,99)/100,2),S=this._r(1000,10000,500); return {q:`A load has an apparent power of <strong>${S}VA</strong> and a power factor of <strong>${pf}</strong>. What is the true power?`,a:this._round(S*pf),unit:'W',hint:'P = S × PF',formula:'P = S × PF'}; }
+    if(type===1){ const R=this._r(10,80,10),X=this._r(10,80,10); const Z=Math.sqrt(R*R+X*X); return {q:`A circuit has R=<strong>${R}Ω</strong> and X=<strong>${X}Ω</strong>. What is the power factor?`,a:this._round(R/Z,3),unit:'(decimal)',hint:'PF = R / Z (where Z = √(R²+X²))',formula:'PF = cos θ = R/Z'}; }
+    const V=this._r(120,600,120),I=this._r(5,40,5); return {q:`A circuit has <strong>${V}V</strong> and <strong>${I}A</strong>. What is the apparent power?`,a:this._round(V*I),unit:'VA',hint:'S = V × I',formula:'S = V × I'};
+  },
+
+  _gen_transformers() {
+    const type=this._r(0,2);
+    const N1=this._r(100,2000,100),N2=this._r(50,500,50);
+    if(type===0){ const V1=this._r(120,4800,120); return {q:`A transformer has <strong>${N1} primary turns</strong> and <strong>${N2} secondary turns</strong>. Primary voltage is <strong>${V1}V</strong>. What is the secondary voltage?`,a:this._round(V1*N2/N1),unit:'V',hint:'V2 = V1 × (N2/N1)',formula:'V1/V2 = N1/N2'}; }
+    if(type===1){ const V1=this._r(240,4800,240),V2=this._r(12,240,12); const ratio=this._round(V1/V2,1); return {q:`A transformer steps down from <strong>${V1}V</strong> to <strong>${V2}V</strong>. What is the turns ratio (N1:N2)?`,a:ratio,unit:':1',hint:'Turns ratio = V1 / V2',formula:'N1/N2 = V1/V2'}; }
+    const V1=this._r(240,4800,240),N1b=this._r(200,2000,200),N2b=this._r(50,500,50),I2=this._r(5,50,5);
+    return {q:`A transformer has turns ratio ${N1b}:${N2b}. If secondary current is <strong>${I2}A</strong>, what is the primary current?`,a:this._round(I2*N2b/N1b),unit:'A',hint:'I1 = I2 × (N2/N1) — primary current is inversely proportional to turns',formula:'I1/I2 = N2/N1'};
+  },
+
+  _gen_motors() {
+    const type=this._r(0,1);
+    if(type===0){ const f=60,P=this._r(2,8,2)*2; return {q:`A <strong>${P}-pole</strong> induction motor operates on <strong>60Hz</strong>. What is its synchronous speed?`,a:this._round(120*f/P),unit:'RPM',hint:'Ns = 120 × f / P',formula:'Ns = 120f / P'}; }
+    const Ns=this._r(600,3600,300),slip=this._r(2,8);
+    const Nr=Math.round(Ns*(1-slip/100));
+    return {q:`A motor has synchronous speed <strong>${Ns}RPM</strong> and runs at <strong>${Nr}RPM</strong>. What is the slip percentage?`,a:slip,unit:'%',hint:'Slip = (Ns - Nr) / Ns × 100',formula:'Slip% = (Ns−Nr)/Ns × 100'};
+  },
+
+  _gen_three_phase() {
+    const type=this._r(0,1);
+    if(type===0){ const Vp=this._r(120,277,1); return {q:`In a <strong>wye (Y)</strong> connected system, the phase voltage is <strong>${Vp}V</strong>. What is the line voltage?`,a:this._round(Vp*Math.sqrt(3)),unit:'V',hint:'VL = Vp × √3 (√3 ≈ 1.732)',formula:'VL = Vp × √3'}; }
+    const VL=this._r(208,600,100); return {q:`In a <strong>wye (Y)</strong> system, the line voltage is <strong>${VL}V</strong>. What is the phase voltage?`,a:this._round(VL/Math.sqrt(3)),unit:'V',hint:'Vp = VL ÷ √3 (√3 ≈ 1.732)',formula:'Vp = VL / √3'};
+  },
+
+  checkAnswer() {
+    const input = document.getElementById('mathAnswer');
+    if (!input || !this.currentProblem) return;
+    const userVal = parseFloat(input.value.replace(/[^0-9.\-]/g,''));
+    if (isNaN(userVal)) { showToast('Enter a number first', 'error'); return; }
+    const correct = this.currentProblem.a;
+    const tolerance = Math.abs(correct) * 0.02 + 0.01; // 2% tolerance
+    const isCorrect = Math.abs(userVal - correct) <= tolerance;
+    this.attempts++;
+    if (isCorrect) { this.score++; showToast('✅ Correct!', 'success'); }
+    else { showToast(`❌ Not quite. Answer: ${correct} ${this.currentProblem.unit}`, 'error'); }
+    const pct = this.attempts > 0 ? Math.round(this.score/this.attempts*100) : 0;
+    const scoreEl = document.getElementById('mathScore');
+    if (scoreEl) scoreEl.textContent = `${this.score}/${this.attempts} (${pct}%)`;
+    this.showingSolution = !isCorrect;
+    const solEl = document.getElementById('mathSolution');
+    if (solEl) solEl.style.display = this.showingSolution ? 'block' : 'none';
+    if (isCorrect) setTimeout(() => this.generateProblem(), 1200);
+  },
+
+  render(state) {
+    const container = document.getElementById('mathContent');
+    if (!container) return;
+    const period = state ? state.user.period : 1;
+    const cat = this.categories.find(c => c.id === this.currentCategory) || this.categories[0];
+    container.innerHTML = `
+      <div style="margin-bottom:24px;">
+        <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:4px;">🧮 Math Practice</h1>
+        <p style="color:var(--text-secondary);">Practice every formula with randomly generated problems. Get instant feedback.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start;" class="math-layout">
+
+        <!-- Category sidebar -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Period 1</div>
+          ${this.categories.filter(c=>c.period===1).map(c=>`
+            <div onclick="MathPractice.selectCategory('${c.id}')" style="padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${c.id===this.currentCategory?'var(--accent-soft)':'transparent'};border:1px solid ${c.id===this.currentCategory?'var(--accent)':'transparent'};transition:var(--transition);">
+              <div style="font-weight:${c.id===this.currentCategory?'700':'500'};font-size:0.85rem;color:${c.id===this.currentCategory?'var(--accent)':'var(--text-primary)'};">${c.icon} ${c.name}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;font-family:monospace;">${c.formula}</div>
+            </div>`).join('')}
+          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:16px 0 12px;">Period 2</div>
+          ${this.categories.filter(c=>c.period===2).map(c=>`
+            <div onclick="MathPractice.selectCategory('${c.id}')" style="padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${c.id===this.currentCategory?'var(--accent-soft)':'transparent'};border:1px solid ${c.id===this.currentCategory?'var(--accent)':'transparent'};transition:var(--transition);">
+              <div style="font-weight:${c.id===this.currentCategory?'700':'500'};font-size:0.85rem;color:${c.id===this.currentCategory?'var(--accent)':'var(--text-primary)'};">${c.icon} ${c.name}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;font-family:monospace;">${c.formula}</div>
+            </div>`).join('')}
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+            <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">🖨️ Print Worksheet</button>
+          </div>
+        </div>
+
+        <!-- Practice area -->
+        <div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+              <div>
+                <span style="font-size:1.2rem;">${cat.icon}</span>
+                <strong style="font-size:1.1rem;margin-left:6px;">${cat.name}</strong>
+                <span style="font-size:0.8rem;color:var(--text-muted);margin-left:8px;font-family:monospace;">${cat.formula}</span>
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-muted);">Score: <strong id="mathScore" style="color:var(--accent);">${this.score}/${this.attempts} (${this.attempts>0?Math.round(this.score/this.attempts*100):0}%)</strong></div>
+            </div>
+
+            ${this.currentProblem ? `
+              <div style="background:var(--bg-input);border-radius:12px;padding:20px;margin-bottom:20px;font-size:1.05rem;line-height:1.7;">
+                ${this.currentProblem.q}
+              </div>
+
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
+                  <input id="mathAnswer" type="number" step="any" placeholder="Your answer..."
+                    style="flex:1;padding:12px 16px;font-size:1.1rem;background:var(--bg-input);border:2px solid var(--accent);border-radius:10px;color:var(--text-primary);outline:none;"
+                    onkeydown="if(event.key==='Enter')MathPractice.checkAnswer()">
+                  <span style="font-weight:600;color:var(--text-secondary);">${this.currentProblem.unit}</span>
+                </div>
+                <button onclick="MathPractice.checkAnswer()" class="btn btn-primary" style="padding:12px 28px;font-size:1rem;">Check ✓</button>
+                <button onclick="MathPractice.generateProblem()" class="btn btn-ghost btn-sm">Skip →</button>
+              </div>
+
+              <div id="mathSolution" style="display:${this.showingSolution?'block':'none'};background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:0.9rem;">
+                <strong>💡 Hint:</strong> ${this.currentProblem.hint}<br>
+                <strong>Formula:</strong> <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">${this.currentProblem.formula}</code><br>
+                <strong>Answer:</strong> ${this.currentProblem.a} ${this.currentProblem.unit}
+              </div>
+
+              <div style="margin-top:12px;">
+                <button onclick="document.getElementById('mathSolution').style.display='block'" style="font-size:0.8rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:4px;">💡 Show hint / formula</button>
+              </div>
+            ` : `
+              <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:12px;">🧮</div>
+                <p>Click "New Problem" to start practicing ${cat.name}</p>
+              </div>
+            `}
+          </div>
+
+          <button onclick="MathPractice.generateProblem()" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;">
+            ${this.currentProblem ? '➡️ Next Problem' : '▶️ Start Practicing'}
+          </button>
+
+          <!-- Formula reference card -->
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:16px;">
+            <h3 style="margin:0 0 12px;font-size:0.95rem;font-weight:700;">📋 Formula Reference — ${cat.name}</h3>
+            <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.9;font-family:monospace;">
+              ${this._formulaRef(this.currentCategory)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>
+        @media(max-width:768px){.math-layout{grid-template-columns:1fr!important;}}
+      </style>
+    `;
+    if (this.currentProblem) {
+      const inp = document.getElementById('mathAnswer');
+      if (inp) setTimeout(() => inp.focus(), 50);
+    }
+  },
+
+  selectCategory(id) {
+    this.currentCategory = id;
+    this.currentProblem = null;
+    this.showingSolution = false;
+    this.render(Storage.get());
+  },
+
+  _formulaRef(id) {
+    const refs = {
+      'ohms-law': 'V = I × R<br>I = V / R<br>R = V / I',
+      'power': 'P = V × I<br>P = I² × R<br>P = V² / R<br>I = P / V<br>V = P / I',
+      'series': 'Rt = R1 + R2 + R3...<br>It = I1 = I2 = I3 (same)<br>Vt = V1 + V2 + V3<br>Vn = It × Rn',
+      'parallel': 'Vt = V1 = V2 = V3 (same)<br>It = I1 + I2 + I3<br>Rt = (R1×R2)/(R1+R2)  [2 resistors]<br>1/Rt = 1/R1 + 1/R2 + 1/R3',
+      'series-parallel': 'Solve parallel groups first → get Rp<br>Add Rp to series resistors → get Rt<br>I = V / Rt<br>Vdrop = I × R (series parts)',
+      'ac-basics': 'Vrms = Vpeak × 0.7071<br>Vpeak = Vrms × 1.4142<br>f = 1 / T<br>T = 1 / f<br>60 Hz → T = 16.67ms',
+      'reactance': 'XL = 2π × f × L<br>XC = 1 / (2π × f × C)<br>XL in Ω, f in Hz, L in H<br>XC in Ω, f in Hz, C in F',
+      'impedance': 'Z = √(R² + X²)<br>θ = arctan(X / R)<br>X = XL − XC (net reactance)',
+      'power-factor': 'PF = cos θ = R / Z<br>P = S × PF  (true power, W)<br>Q = S × sin θ  (reactive, VAR)<br>S = V × I  (apparent, VA)<br>S² = P² + Q²',
+      'transformers': 'V1/V2 = N1/N2<br>I1/I2 = N2/N1<br>V2 = V1 × (N2/N1)<br>I1 = I2 × (N2/N1)<br>Efficiency = Pout / Pin × 100%',
+      'motors': 'Ns = 120 × f / P<br>Slip = (Ns − Nr) / Ns × 100%<br>Nr = Ns × (1 − slip)<br>(Ns=sync RPM, Nr=rotor RPM, P=poles)',
+      'three-phase': 'Wye: VL = Vp × √3,  IL = Ip<br>Delta: VL = Vp,  IL = Ip × √3<br>√3 = 1.732<br>3φ Power = √3 × VL × IL × PF',
+    };
+    return refs[id] || '';
+  },
+
+  exportPDF() {
+    const cat = this.categories.find(c => c.id === this.currentCategory);
+    // Generate 10 problems for printing
+    const problems = [];
+    for (let i = 0; i < 10; i++) {
+      const gen = this['_gen_' + this.currentCategory.replace(/-/g,'_')];
+      if (gen) problems.push(gen.call(this));
+    }
+    // Build printable HTML
+    const html = `<!DOCTYPE html><html><head><title>${cat.name} Worksheet</title>
+    <style>
+      body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#000;}
+      h1{font-size:1.4rem;border-bottom:2px solid #000;padding-bottom:8px;}
+      .problem{margin:20px 0;padding:14px;border:1px solid #ccc;border-radius:6px;}
+      .num{font-weight:700;color:#555;}
+      .q{font-size:1rem;margin:4px 0 12px;}
+      .answer{border-bottom:1px solid #000;min-width:150px;display:inline-block;height:20px;margin-left:8px;}
+      .formula{font-size:0.8rem;color:#888;font-style:italic;margin-top:8px;}
+      .footer{margin-top:40px;font-size:0.75rem;color:#888;text-align:center;}
+      @media print{button{display:none;}}
+    </style></head><body>
+    <h1>🧮 ${cat.name} Worksheet</h1>
+    <p style="font-size:0.85rem;color:#555;">Formula: ${cat.formula}</p>
+    <p style="font-size:0.85rem;color:#555;">Name: ___________________ &nbsp;&nbsp;&nbsp; Date: ___________________</p>
+    ${problems.map((p,i)=>`<div class="problem"><div class="num">Problem ${i+1}</div>
+    <div class="q">${p.q.replace(/<strong>/g,'').replace(/<\/strong>/g,'')}</div>
+    <div>Answer: <span class="answer"></span> ${p.unit}</div>
+    <div class="formula">Hint: ${p.hint}</div></div>`).join('')}
+    <div class="footer">SparkyStudy — ${cat.name} Worksheet — sparkystudy.com</div>
+    <br><button onclick="window.print()">🖨️ Print</button>
+    </body></html>`;
+    const win = window.open('','_blank');
+    win.document.write(html);
+    win.document.close();
+  },
+};
 
 // ===== CRAM MODE =====
 const CramMode = {
