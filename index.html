@@ -1096,7 +1096,7 @@ input[type="radio"]:checked::after {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 4-3 6-3 10a5 5 0 0 0 8.5 3.5c-1 2.5-3.5 4.5-6.5 4.5-4 0-7-3-7-7C4 8 8 4 12 2z"/></svg>
       <span id="streakCount">0</span> day streak
     </div>
-    <span class="owner-badge" id="ownerBadge" style="display:none;" title="Owner Mode">&#x1F451; Owner</span>
+    <span class="owner-badge" id="ownerBadge" style="display:none;cursor:pointer;" title="Go to Owner Analytics" onclick="App.navigate('owner')">&#x1F451; Owner</span>
     <div class="nav-avatar" id="navAvatar" onclick="App.navigate('settings')">?</div>
   </div>
   <button class="burger" id="burgerBtn" onclick="openMobileDrawer()" aria-label="Open menu">
