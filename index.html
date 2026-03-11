@@ -2970,6 +2970,19 @@ const FireDB = {
   async updateUserField(uid, fields) {
     if (!this.ready) return;
     try { await this.db.collection('users').doc(uid).set({ user: fields }, { merge: true }); } catch(e) { /* fail silently */ }
+  },
+  async clearVisits() {
+    if (!this.ready) return 0;
+    try {
+      const snap = await this.db.collection('visits').limit(500).get();
+      if (snap.empty) return 0;
+      const batch = this.db.batch();
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      // If there were 500 (max batch), run again to catch the rest
+      if (snap.docs.length === 500) await this.clearVisits();
+      return snap.docs.length;
+    } catch(e) { console.warn('clearVisits failed', e); return 0; }
   }
 };
 
@@ -11894,7 +11907,7 @@ const OwnerDashboard = {
     const dayN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],byDay=[0,0,0,0,0,0,0];
     D.a.visits.forEach(v=>{byDay[new Date(v.timestamp).getDay()]++;});const maxD=Math.max(...byDay,1);
     const totalUnique=Object.keys(D.a.uniqueVisitors||{}).length;
-    return '<div class="oa-grid"><div class="oa-stat"><div class="oa-stat-value">'+D.totalVisits+'</div><div class="oa-stat-label">Total Visits</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.todayVisits+'</div><div class="oa-stat-label">Today</div></div><div class="oa-stat"><div class="oa-stat-value">'+totalUnique+'</div><div class="oa-stat-label">Unique Visitors</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.signupsMonth+'</div><div class="oa-stat-label">Signups (30d)</div></div></div><div class="oa-section"><h3>&#x1F4C8; Daily Traffic</h3><div class="oa-bar-chart">'+D.visitDays.map(d=>'<div class="oa-bar" style="height:'+Math.max(d.count/maxV*100,2)+'%;"><div class="oa-bar-value">'+(d.count||'')+'</div><div class="oa-bar-label">'+d.label.split(' ')[1]+'</div></div>').join('')+'</div></div><div class="oa-two-col"><div class="oa-section"><h3>&#x23F0; Hourly</h3><div class="oa-bar-chart" style="height:120px;">'+D.hourly.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxH*100,2)+'%;"><div class="oa-bar-value">'+(v||'')+'</div><div class="oa-bar-label">'+(i%4===0?i+':00':'')+'</div></div>').join('')+'</div></div><div class="oa-section"><h3>&#x1F4C5; By Day</h3><div class="oa-bar-chart" style="height:120px;">'+byDay.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxD*100,3)+'%;"><div class="oa-bar-value">'+v+'</div><div class="oa-bar-label">'+dayN[i]+'</div></div>').join('')+'</div></div></div><div class="oa-section"><h3>&#x1F4C4; Top Pages</h3>'+(D.topPages.length>0?D.topPages.slice(0,10).map(([p,c],i)=>'<div class="oa-metric-row"><span>#'+(i+1)+' '+p+'</span><span style="font-weight:600;">'+c+'</span></div>').join(''):'<p style="color:var(--text-muted);">No data</p>')+'</div>';
+    return '<div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button class="btn btn-ghost btn-sm" onclick="OwnerDashboard.clearAllTrafficData()" style="color:#ef4444;border-color:#ef4444;">🗑️ Clear All Traffic Data</button></div><div class="oa-grid"><div class="oa-stat"><div class="oa-stat-value">'+D.totalVisits+'</div><div class="oa-stat-label">Total Visits</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.todayVisits+'</div><div class="oa-stat-label">Today</div></div><div class="oa-stat"><div class="oa-stat-value">'+totalUnique+'</div><div class="oa-stat-label">Unique Visitors</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.signupsMonth+'</div><div class="oa-stat-label">Signups (30d)</div></div></div><div class="oa-section"><h3>&#x1F4C8; Daily Traffic</h3><div class="oa-bar-chart">'+D.visitDays.map(d=>'<div class="oa-bar" style="height:'+Math.max(d.count/maxV*100,2)+'%;"><div class="oa-bar-value">'+(d.count||'')+'</div><div class="oa-bar-label">'+d.label.split(' ')[1]+'</div></div>').join('')+'</div></div><div class="oa-two-col"><div class="oa-section"><h3>&#x23F0; Hourly</h3><div class="oa-bar-chart" style="height:120px;">'+D.hourly.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxH*100,2)+'%;"><div class="oa-bar-value">'+(v||'')+'</div><div class="oa-bar-label">'+(i%4===0?i+':00':'')+'</div></div>').join('')+'</div></div><div class="oa-section"><h3>&#x1F4C5; By Day</h3><div class="oa-bar-chart" style="height:120px;">'+byDay.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxD*100,3)+'%;"><div class="oa-bar-value">'+v+'</div><div class="oa-bar-label">'+dayN[i]+'</div></div>').join('')+'</div></div></div><div class="oa-section"><h3>&#x1F4C4; Top Pages</h3>'+(D.topPages.length>0?D.topPages.slice(0,10).map(([p,c],i)=>'<div class="oa-metric-row"><span>#'+(i+1)+' '+p+'</span><span style="font-weight:600;">'+c+'</span></div>').join(''):'<p style="color:var(--text-muted);">No data</p>')+'</div>';
   },
 
   _tab_engagement(D) {
@@ -12095,6 +12108,19 @@ const OwnerDashboard = {
     // Update Firebase too
     await FireDB.updateUserField(uid, { banned: st.user.banned });
     showToast(st.user.name + ' has been ' + action + 'ed.', 'success');
+    this.render();
+  },
+
+  async clearAllTrafficData() {
+    if (!confirm('Clear ALL traffic data?\n\nThis will permanently delete all visit logs from localStorage and Firebase. This cannot be undone.')) return;
+    // Clear localStorage analytics
+    const blank = SiteAnalytics._default ? SiteAnalytics._default() : { visits:[], pageViews:[], dailyVisits:{}, totalVisits:0, uniqueVisitors:{}, events:[], revenue:{total:0,transactions:[]}, funnelData:{landing:0,signup:0,diagnostic:0,dashboard:0,flashcards:0,exams:0} };
+    localStorage.setItem(ANALYTICS_KEY, JSON.stringify(blank));
+    // Clear Firebase visits collection
+    showToast('Clearing Firebase visit data...', 'info');
+    await FireDB.clearVisits();
+    this._cloudVisits = [];
+    showToast('All traffic data cleared.', 'success');
     this.render();
   },
 
