@@ -11965,7 +11965,7 @@ const OwnerDashboard = {
     const dayN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],byDay=[0,0,0,0,0,0,0];
     D.a.visits.forEach(v=>{byDay[new Date(v.timestamp).getDay()]++;});const maxD=Math.max(...byDay,1);
     const totalUnique=Object.keys(D.a.uniqueVisitors||{}).length;
-    return '<div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button class="btn btn-ghost btn-sm" onclick="OwnerDashboard.clearAllTrafficData()" style="color:#ef4444;border-color:#ef4444;">🗑️ Clear All Traffic Data</button></div><div class="oa-grid"><div class="oa-stat"><div class="oa-stat-value">'+D.totalVisits+'</div><div class="oa-stat-label">Total Visits</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.todayVisits+'</div><div class="oa-stat-label">Today</div></div><div class="oa-stat"><div class="oa-stat-value">'+totalUnique+'</div><div class="oa-stat-label">Unique Visitors</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.signupsMonth+'</div><div class="oa-stat-label">Signups (30d)</div></div></div><div class="oa-section"><h3>&#x1F4C8; Daily Traffic</h3><div class="oa-bar-chart">'+D.visitDays.map(d=>'<div class="oa-bar" style="height:'+Math.max(d.count/maxV*100,2)+'%;"><div class="oa-bar-value">'+(d.count||'')+'</div><div class="oa-bar-label">'+d.label.split(' ')[1]+'</div></div>').join('')+'</div></div><div class="oa-two-col"><div class="oa-section"><h3>&#x23F0; Hourly</h3><div class="oa-bar-chart" style="height:120px;">'+D.hourly.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxH*100,2)+'%;"><div class="oa-bar-value">'+(v||'')+'</div><div class="oa-bar-label">'+(i%4===0?i+':00':'')+'</div></div>').join('')+'</div></div><div class="oa-section"><h3>&#x1F4C5; By Day</h3><div class="oa-bar-chart" style="height:120px;">'+byDay.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxD*100,3)+'%;"><div class="oa-bar-value">'+v+'</div><div class="oa-bar-label">'+dayN[i]+'</div></div>').join('')+'</div></div></div><div class="oa-section"><h3>&#x1F4C4; Top Pages</h3>'+(D.topPages.length>0?D.topPages.slice(0,10).map(([p,c],i)=>'<div class="oa-metric-row"><span>#'+(i+1)+' '+p+'</span><span style="font-weight:600;">'+c+'</span></div>').join(''):'<p style="color:var(--text-muted);">No data</p>')+'</div>';
+    return '<div class="oa-grid"><div class="oa-stat"><div class="oa-stat-value">'+D.totalVisits+'</div><div class="oa-stat-label">Total Visits</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.todayVisits+'</div><div class="oa-stat-label">Today</div></div><div class="oa-stat"><div class="oa-stat-value">'+totalUnique+'</div><div class="oa-stat-label">Unique Visitors</div></div><div class="oa-stat"><div class="oa-stat-value">'+D.signupsMonth+'</div><div class="oa-stat-label">Signups (30d)</div></div></div><div class="oa-section"><h3>&#x1F4C8; Daily Traffic</h3><div class="oa-bar-chart">'+D.visitDays.map(d=>'<div class="oa-bar" style="height:'+Math.max(d.count/maxV*100,2)+'%;"><div class="oa-bar-value">'+(d.count||'')+'</div><div class="oa-bar-label">'+d.label.split(' ')[1]+'</div></div>').join('')+'</div></div><div class="oa-two-col"><div class="oa-section"><h3>&#x23F0; Hourly</h3><div class="oa-bar-chart" style="height:120px;">'+D.hourly.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxH*100,2)+'%;"><div class="oa-bar-value">'+(v||'')+'</div><div class="oa-bar-label">'+(i%4===0?i+':00':'')+'</div></div>').join('')+'</div></div><div class="oa-section"><h3>&#x1F4C5; By Day</h3><div class="oa-bar-chart" style="height:120px;">'+byDay.map((v,i)=>'<div class="oa-bar" style="height:'+Math.max(v/maxD*100,3)+'%;"><div class="oa-bar-value">'+v+'</div><div class="oa-bar-label">'+dayN[i]+'</div></div>').join('')+'</div></div></div><div class="oa-section"><h3>&#x1F4C4; Top Pages</h3>'+(D.topPages.length>0?D.topPages.slice(0,10).map(([p,c],i)=>'<div class="oa-metric-row"><span>#'+(i+1)+' '+p+'</span><span style="font-weight:600;">'+c+'</span></div>').join(''):'<p style="color:var(--text-muted);">No data</p>')+'</div>';
   },
 
   _tab_engagement(D) {
@@ -13011,6 +13011,17 @@ const PWA = {
     }
   }
 };
+
+// One-time analytics wipe — clears all pre-launch test traffic (was 100% owner)
+(function purgeTestTraffic() {
+  const FLAG = 'sparkstudy_traffic_purged_v1';
+  if (localStorage.getItem(FLAG)) return; // already ran, never run again
+  const blank = { visits:[], pageViews:[], dailyVisits:{}, totalVisits:0, uniqueVisitors:{}, events:[], revenue:{total:0,transactions:[]}, funnelData:{landing:0,signup:0,diagnostic:0,dashboard:0,flashcards:0,exams:0} };
+  localStorage.setItem(ANALYTICS_KEY, JSON.stringify(blank));
+  localStorage.setItem(FLAG, '1');
+  // Clear Firebase visits too once SDK is ready
+  setTimeout(async () => { try { if (FireDB.ready) await FireDB.clearVisits(); } catch(e){} }, 4000);
+})();
 
 // Initialize app
 document.addEventListener("DOMContentLoaded", () => {
