@@ -953,12 +953,12 @@ input[type="radio"]:checked::after {
     <li><a href="#" data-page="flashcards">Flashcards</a></li>
     <li><a href="#" data-page="exams">Exams</a></li>
     <li><a href="#" data-page="study-guide">Study Guide</a></li>
+    <li><a href="#" data-page="lessons">&#x1F4DA; Lessons</a></li>
     <li><a href="#" data-page="tools">Tools</a></li>
     <li><a href="#" data-page="analytics">Analytics</a></li>
     <li><a href="#" data-page="review">Review</a></li>
     <li><a href="#" data-page="settings">Settings</a></li>
     <li id="navGroupLink" style="display:none;"><a href="#" data-page="group" style="color:#8b5cf6;">&#x1F465; Group</a></li>
-    <li id="navInstallLink" style="display:none;"><a href="#" id="navInstallBtn" style="color:#22c55e;font-weight:600;" onclick="PWA.promptInstall();return false;">&#x1F4F2; Install App</a></li>
   </ul>
   <div class="nav-right nav-hidden" id="navRight">
     <div class="nav-streak" id="navStreak" title="Study streak">
@@ -1118,6 +1118,31 @@ input[type="radio"]:checked::after {
     </div>
   </div>
 
+  <!-- INSTALL APP BANNER -->
+  <div id="landingInstallBanner" style="display:none;padding:48px 24px;background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(16,185,129,0.04));border-top:1px solid rgba(34,197,94,0.2);border-bottom:1px solid rgba(34,197,94,0.2);">
+    <div style="max-width:700px;margin:0 auto;display:flex;align-items:center;gap:32px;flex-wrap:wrap;justify-content:center;">
+      <div style="font-size:4rem;flex-shrink:0;">&#x1F4F2;</div>
+      <div style="flex:1;min-width:240px;">
+        <h2 style="font-size:1.4rem;font-weight:800;margin:0 0 6px;color:#22c55e;">Install SparkStudy on Your Device</h2>
+        <p style="color:var(--text-secondary);margin:0 0 4px;font-size:0.95rem;line-height:1.5;">Add to your home screen for instant access, offline study, and a full native app experience — no App Store needed.</p>
+        <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;font-size:0.8rem;color:var(--text-muted);">
+          <span>&#10003; Works offline</span>
+          <span>&#10003; No App Store</span>
+          <span>&#10003; Home screen icon</span>
+          <span>&#10003; Fast &amp; lightweight</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:center;flex-shrink:0;">
+        <button id="landingInstallBtn" onclick="PWA.promptInstall()" class="btn btn-lg" style="background:#22c55e;color:#000;font-weight:700;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px;">
+          &#x2B07; Install App — It's Free
+        </button>
+        <button onclick="document.getElementById('landingInstallBanner').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;">
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- FINAL CTA -->
   <div style="padding:80px 24px;text-align:center;background:radial-gradient(ellipse at 50% 100%, rgba(245,158,11,0.08) 0%, transparent 60%);">
     <div style="max-width:600px;margin:0 auto;">
@@ -1255,6 +1280,11 @@ input[type="radio"]:checked::after {
 <!-- ======= SETTINGS ======= -->
 <div class="page" id="page-settings">
   <div class="container" id="settingsContent"></div>
+</div>
+
+<!-- ======= LESSONS ======= -->
+<div class="page" id="page-lessons">
+  <div class="container-wide" id="lessonsContent"></div>
 </div>
 
 <!-- ======= OWNER ANALYTICS ======= -->
@@ -2478,20 +2508,53 @@ function getTopicsForPeriod(period) {
 }
 
 function getTopicMastery(state, topicId) {
+  // --- Flashcard component (SM-2 based) ---
   const cards = FLASHCARD_BANK.filter(fc => fc.topic === topicId);
-  if (cards.length === 0) return 0;
-  let total = 0;
-  cards.forEach(fc => {
-    const cd = state.flashcards[fc.id];
-    if (!cd) return;
-    const tier = SM2.getMasteryTier(cd);
-    if (tier === 'expert') total += 100;
-    else if (tier === 'mastered') total += 80;
-    else if (tier === 'review') total += 50;
-    else if (tier === 'learning') total += 25;
-    else total += 0;
-  });
-  return Math.round(total / cards.length);
+  let flashScore = 0;
+  let hasFlashActivity = false;
+  if (cards.length > 0) {
+    let total = 0;
+    cards.forEach(fc => {
+      const cd = state.flashcards[fc.id];
+      if (!cd) return;
+      hasFlashActivity = true;
+      const tier = SM2.getMasteryTier(cd);
+      if (tier === 'expert') total += 100;
+      else if (tier === 'mastered') total += 80;
+      else if (tier === 'review') total += 50;
+      else if (tier === 'learning') total += 25;
+      else total += 0;
+    });
+    if (hasFlashActivity) flashScore = total / cards.length;
+  }
+
+  // --- Exam component (aggregate across all attempts for this topic) ---
+  let examScore = 0;
+  let hasExamActivity = false;
+  if (state.exams && state.exams.attempts && state.exams.attempts.length > 0) {
+    let totalCorrect = 0, totalQuestions = 0;
+    state.exams.attempts.forEach(attempt => {
+      if (attempt.topicScores && attempt.topicScores[topicId]) {
+        totalCorrect += attempt.topicScores[topicId].correct;
+        totalQuestions += attempt.topicScores[topicId].total;
+      }
+    });
+    if (totalQuestions > 0) {
+      hasExamActivity = true;
+      examScore = (totalCorrect / totalQuestions) * 100;
+    }
+  }
+
+  // --- Blend: if both sources have data, weight 60% flashcard / 40% exam.
+  //     If only one source, use it alone. If neither, return 0. ---
+  if (hasFlashActivity && hasExamActivity) {
+    return Math.round(flashScore * 0.6 + examScore * 0.4);
+  } else if (hasFlashActivity) {
+    return Math.round(flashScore);
+  } else if (hasExamActivity) {
+    return Math.round(examScore);
+  }
+  return 0;
 }
 
 function getOverallMastery(state) {
@@ -2704,6 +2767,7 @@ const App = {
       case 'settings': Settings.render(state); break;
       case 'group': GroupProgress.render(state); break;
       case 'owner': OwnerDashboard.render(); break;
+      case 'lessons': Lessons.render(state); break;
     }
   },
   init() {
@@ -3407,6 +3471,24 @@ const Exams = {
             Build Exam
           </button>
         </div>
+        <div id="customCountRow" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(139,92,246,0.06);border-radius:8px;border:1px solid rgba(139,92,246,0.15);">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <label style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;white-space:nowrap;">Question Count:</label>
+            <div style="display:flex;align-items:center;gap:8px;flex:1;">
+              <input type="range" id="customCountSlider" min="1" max="10" value="10"
+                style="flex:1;accent-color:var(--accent);cursor:pointer;"
+                oninput="Exams._syncCountInputs('slider')">
+              <input type="number" id="customCountInput" min="1" max="10" value="10"
+                style="width:64px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:0.9rem;text-align:center;"
+                oninput="Exams._syncCountInputs('number')">
+              <button class="btn btn-sm" onclick="Exams._setMaxCount()"
+                style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+                MAX
+              </button>
+            </div>
+          </div>
+          <div id="customCountHint" style="margin-top:6px;font-size:0.78rem;color:var(--text-muted);"></div>
+        </div>
         <div id="customExamInfo" style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);"></div>
       </div>
 
@@ -3473,19 +3555,60 @@ const Exams = {
     const sel = document.getElementById('customExamSelect');
     const btn = document.getElementById('customExamBtn');
     const info = document.getElementById('customExamInfo');
+    const countRow = document.getElementById('customCountRow');
     if (!sel || !btn) return;
     const val = sel.value;
-    if (!val) { btn.disabled = true; info.innerHTML = ''; return; }
+    if (!val) {
+      btn.disabled = true;
+      info.innerHTML = '';
+      if (countRow) countRow.style.display = 'none';
+      return;
+    }
     const questions = this._getCustomQuestions(val);
     btn.disabled = questions.length === 0;
     if (questions.length > 0) {
+      // Show and configure the count controls
+      if (countRow) {
+        countRow.style.display = 'block';
+        const slider = document.getElementById('customCountSlider');
+        const numInput = document.getElementById('customCountInput');
+        const hint = document.getElementById('customCountHint');
+        if (slider) { slider.max = questions.length; slider.value = questions.length; }
+        if (numInput) { numInput.max = questions.length; numInput.value = questions.length; }
+        if (hint) hint.textContent = questions.length + ' questions available — drag the slider or type a number (1–' + questions.length + ')';
+      }
       const topicBreakdown = {};
       questions.forEach(q => { topicBreakdown[q.topic] = (topicBreakdown[q.topic] || 0) + 1; });
       const breakdown = Object.entries(topicBreakdown).map(([tid, count]) => (TOPICS[tid]?.name || tid) + ': ' + count).join(', ');
       info.innerHTML = '<strong style="color:var(--accent);">' + questions.length + ' questions available</strong> &mdash; ' + breakdown;
     } else {
+      if (countRow) countRow.style.display = 'none';
       info.innerHTML = '<span style="color:#ef4444;">No questions available for this selection</span>';
     }
+  },
+
+  _syncCountInputs(source) {
+    const slider = document.getElementById('customCountSlider');
+    const numInput = document.getElementById('customCountInput');
+    if (!slider || !numInput) return;
+    const max = parseInt(slider.max) || 1;
+    if (source === 'slider') {
+      let v = Math.max(1, Math.min(max, parseInt(slider.value) || 1));
+      slider.value = v;
+      numInput.value = v;
+    } else {
+      let v = Math.max(1, Math.min(max, parseInt(numInput.value) || 1));
+      numInput.value = v;
+      slider.value = v;
+    }
+  },
+
+  _setMaxCount() {
+    const slider = document.getElementById('customCountSlider');
+    const numInput = document.getElementById('customCountInput');
+    if (!slider || !numInput) return;
+    slider.value = slider.max;
+    numInput.value = slider.max;
   },
 
   _getCustomQuestions(val) {
@@ -3508,13 +3631,18 @@ const Exams = {
     if (!state) return;
     const questions = this._getCustomQuestions(sel.value);
     if (questions.length === 0) return showToast('No questions available for this selection', 'error');
-    // Shuffle the questions
+
+    // Get the user-chosen count from the slider/input (default to all)
+    const numInput = document.getElementById('customCountInput');
+    const wantedCount = numInput ? Math.max(1, Math.min(questions.length, parseInt(numInput.value) || questions.length)) : questions.length;
+
+    // Shuffle the questions then slice to requested count
     const shuffled = [...questions].sort(() => Math.random() - 0.5);
-    this.currentExam = shuffled;
-    this.answers = new Array(shuffled.length).fill(null);
+    this.currentExam = shuffled.slice(0, wantedCount);
+    this.answers = new Array(this.currentExam.length).fill(null);
     this.currentQ = 0;
     // Time: 1.2 minutes per question, minimum 5 minutes
-    this.timeLeft = Math.max(300, Math.round(shuffled.length * 72));
+    this.timeLeft = Math.max(300, Math.round(this.currentExam.length * 72));
     this.startTime = Date.now();
     this.mode = 'active';
     if (this.timer) clearInterval(this.timer);
@@ -3523,7 +3651,7 @@ const Exams = {
       this.updateTimer();
       if (this.timeLeft <= 0) { clearInterval(this.timer); this.submitExam(); }
     }, 1000);
-    showToast('Custom exam started: ' + shuffled.length + ' questions', 'success');
+    showToast('Custom exam started: ' + this.currentExam.length + ' questions', 'success');
     App.navigate('exams');
     this.renderQuestion();
   },
@@ -3640,7 +3768,7 @@ const Exams = {
     };
 
     state.exams.attempts.push(attempt);
-    SiteAnalytics.track('exam_complete', { userId: state.user.id, score: pct, correct: correct, total: this.questions.length });
+    SiteAnalytics.track('exam_complete', { userId: state.user.id, score: pct, correct: score, total: this.currentExam.length });
 
     // Update daily stats
     const today = getToday();
@@ -6682,6 +6810,553 @@ const Review = {
   }
 };
 
+// ===== LESSONS MODULE =====
+
+const LESSONS_CONTENT = [
+  {
+    id: 'm1',
+    title: 'AC Fundamentals',
+    icon: '〜',
+    subtitle: 'The Invisible River That Powers Everything',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(234,88,12,0.06))',
+    border: 'rgba(245,158,11,0.3)',
+    readTime: '12 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: '⚡ Picture This',
+        body: `Right now, the electrons in your outlet aren't traveling from the power plant to your house — they're just jiggling back and forth, 60 times per second, barely moving anywhere at all.\n\nAnd yet your lights are on. Your phone is charging. Your coffee maker just finished its cycle.\n\nHow? Welcome to AC power — arguably the greatest electrical engineering trick ever pulled off.`
+      },
+      {
+        type: 'story',
+        title: '🏆 The War of Currents',
+        body: `In the late 1880s, Thomas Edison and Nikola Tesla were locked in a bitter fight over which electrical system would power the world.\n\nEdison backed DC (direct current) — electrons flowing one direction, like water through a pipe. Safe, predictable. But DC couldn't be stepped up to high voltage efficiently, which meant it lost half its energy as heat over long distances. Edison's system needed a power station every mile or two.\n\nTesla backed AC (alternating current) — electrons oscillating back and forth. Edison called it dangerous and even publicly electrocuted animals to prove his point (truly a PR disaster). But AC had one killer advantage: it could be transformed.\n\nUsing a transformer, AC voltage could be stepped up to 100,000V to travel hundreds of kilometers with minimal loss, then stepped back down to a safe level at your house. Tesla and Westinghouse won. The world runs on AC to this day.`
+      },
+      {
+        type: 'concept',
+        title: '📐 The Sine Wave: Nature\'s Favorite Shape',
+        body: `AC voltage follows a sine wave — the same mathematical curve you see in ocean waves, sound waves, and light waves. It's not a coincidence: it's what you get when something rotates.\n\nA generator is literally just a coil of wire spinning in a magnetic field. As the coil rotates, the voltage it produces traces a perfect sine wave:\n• Starting at 0 when the coil is parallel to the magnetic field\n• Rising to a positive peak when the coil is at 90°\n• Back to 0 at 180°\n• Dropping to a negative peak at 270°\n• Back to 0 at 360° (one full rotation)\n\nIn North America, the generator completes 60 of these rotations every second — that's 60 Hz (hertz). Europe uses 50 Hz. Your equipment is designed specifically for the frequency it was built for.`,
+        formula: 'v(t) = Vpeak × sin(2πft)\nWhere: f = 60 Hz, t = time in seconds'
+      },
+      {
+        type: 'keypoint',
+        title: '⚡ Peak vs. RMS: The Number That Actually Matters',
+        body: `Here's where people get confused. When we say a standard outlet is "120V," that's NOT the peak voltage. The actual peak is about 170V.\n\nSo why do we say 120V? Because of RMS — Root Mean Square — a mathematical average that represents the equivalent DC heating effect.\n\nA 120V RMS AC supply does the same work as a 120V DC supply on a resistive load. It's the practical, useful number. The peak voltage is 1.414 times the RMS value (that factor is √2).\n\nThis matters enormously for equipment ratings, insulation ratings, and any calculations involving power.`,
+        formula: 'VRMS = Vpeak ÷ √2 = Vpeak × 0.707\nVpeak = VRMS × √2 = VRMS × 1.414\nExample: 120V RMS → Peak = 120 × 1.414 = 169.7V'
+      },
+      {
+        type: 'analogy',
+        title: '🌊 Frequency & Period: Thinking in Time',
+        body: `Think of frequency like the tempo of a song. 60 Hz means the wave completes 60 full cycles per second — it's a very fast tempo. The period is the time for one complete cycle: 1/60 = 0.0167 seconds (about 16.7 milliseconds).\n\nWhy does this matter on the job? Because:\n• Fluorescent lights flicker at 120 Hz (twice per cycle) — if you ever see a strobe effect on rotating equipment, that's why\n• Induction motor speeds are directly tied to frequency: a 2-pole motor at 60 Hz runs at 3600 RPM (synchronous speed)\n• Harmonic frequencies (120 Hz, 180 Hz, 240 Hz...) are multiples of the fundamental and can cause heating in transformers and neutral conductors`,
+        formula: 'f = 1/T   T = 1/f\nAt 60 Hz: T = 1/60 = 16.7 ms\nMotor sync speed = (120 × f) ÷ number of poles'
+      },
+      {
+        type: 'concept',
+        title: '🔄 Phase: Where Are You in the Cycle?',
+        body: `Phase describes the timing relationship between two sine waves. If two waves start at exactly the same time, they're "in phase" — they work together perfectly.\n\nIf one wave is shifted in time relative to another, there's a phase difference, measured in degrees (since one full cycle = 360°).\n\nThis becomes critical in three-phase power, where three sine waves are deliberately spaced 120° apart. Those three phases allow generators to produce constant power (not pulsing like single-phase), allow smaller conductors for the same power, and enable self-starting motors.\n\nOn the job: when connecting three-phase motors, phase rotation order (A-B-C vs A-C-B) determines which direction the motor spins. Get it wrong and the motor runs backwards.`
+      },
+      {
+        type: 'real-world',
+        title: '🔧 Real World: Why Your Outlets Are 120V and 240V',
+        body: `Canadian residential service comes into your panel as 240V single-phase (two hot legs, each 120V to neutral, 240V between them). This clever setup means:\n\n• Normal outlets (120V): use one hot leg + neutral\n• High-power appliances (240V): use both hot legs\n\nThe two hot legs are 180° out of phase with each other — when one is at +170V peak, the other is at -170V peak. The difference between them is always 240V.\n\nThis is why a 240V circuit doesn't need a neutral for heating loads — it's just phase-to-phase. But 240V circuits with control electronics (like ovens with displays) DO use neutral for the low-voltage control circuits.`
+      },
+      {
+        type: 'quiz',
+        title: '🧠 Quick Check',
+        questions: [
+          { q: 'A 240V RMS supply has a peak voltage of approximately:', a: '340V (240 × 1.414 = 339.4V)' },
+          { q: 'At 60 Hz, how long does one complete AC cycle take?', a: '16.7 milliseconds (1/60 second)' },
+          { q: 'Why does AC power win over DC for long-distance transmission?', a: 'AC voltage can be transformed (stepped up/down). High voltage = low current = low I²R losses over long distances.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: '🛠 Pro Tips',
+        tips: [
+          'When measuring AC with a multimeter, you\'re always reading RMS unless the meter specifies otherwise.',
+          'Three-phase panels label phases as A, B, C (or L1, L2, L3). The voltage between any two phases is always 1.732 × the phase-to-neutral voltage. At 120V/208V service: 120 × √3 = 207.8V ≈ 208V.',
+          'Harmonics are a real problem in modern buildings loaded with computers and variable frequency drives. They cause neutral conductors to overheat even when balanced — always check neutral sizing in these environments.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'm2',
+    title: 'Properties of Inductors & Capacitors',
+    icon: '🔄',
+    subtitle: 'The Components That Make AC Interesting',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(59,130,246,0.06))',
+    border: 'rgba(139,92,246,0.3)',
+    readTime: '14 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: '⚡ The Components That Fight Back',
+        body: `Resistors are boring. Feed them voltage, they resist, they heat up. Simple.\n\nBut inductors and capacitors? These components have attitude. They store energy. They fight changes in the circuit. They shift the phase of current. And together, they make possible everything from radio tuners to motor starters to power factor correction systems that utilities charge you thousands of dollars for.\n\nUnderstanding L and C is what separates an apprentice who can run wire from a journeyman who understands why the system works.`
+      },
+      {
+        type: 'story',
+        title: '🌀 The Inductor: Magnetism Fights Back',
+        body: `An inductor is just a coil of wire — but wrapping wire into a coil creates a magnetic field when current flows through it. And here's the key insight: magnetic fields store energy.\n\nWhen you try to increase current through an inductor, the growing magnetic field induces a voltage that opposes the increase (Lenz's Law). When you try to decrease current, the collapsing field tries to maintain the current.\n\nIn other words: an inductor resists changes in current. It's electrical inertia.\n\nThe unit is the henry (H), named after Joseph Henry who discovered electromagnetic induction (yes, Faraday gets more credit, but Henry actually discovered it first — he just published later).\n\nReal-world inductors include motor windings, transformer primary coils, fluorescent lamp ballasts, and relay coils. Basically anything that uses a magnetic field to do work is an inductor.`
+      },
+      {
+        type: 'concept',
+        title: '📊 Inductive Reactance: Resistance That Cares About Frequency',
+        body: `Inductors don't have resistance in the traditional sense — they have reactance. And unlike resistance (which is fixed), inductive reactance changes with frequency.\n\nHigher frequency → inductor changes current faster → it fights back harder → more reactance.\n\nLower frequency (or DC) → slower change → inductor barely resists → nearly zero reactance at DC.\n\nThis is why inductors are used as "chokes" to block high-frequency signals while passing DC — perfect for power supply filters in electronics.`,
+        formula: 'XL = 2πfL\nWhere: XL = inductive reactance (Ω), f = frequency (Hz), L = inductance (H)\n\nExample: L = 100mH at 60 Hz\nXL = 2π × 60 × 0.1 = 37.7 Ω'
+      },
+      {
+        type: 'keypoint',
+        title: '⏰ Inductive Phase Shift: Current Lags',
+        body: `Here's the most important characteristic for your exam: in a purely inductive circuit, current LAGS voltage by 90°.\n\nMnemonic: ELI the ICE man\n• ELI: in an inductive (L) circuit, voltage (E) leads current (I)\n• ICE: in a capacitive (C) circuit, current (I) leads voltage (E)\n\nPhysically, this makes sense: voltage is applied first, but the inductor's opposition means current builds up slowly afterward. The voltage is always "ahead" of the current by a quarter-cycle (90°).\n\nThis phase shift is the root cause of poor power factor in industrial facilities. Inductive motors, transformers, and ballasts all cause lagging current, and utilities charge extra for it.`,
+        formula: 'In a pure inductor: θ = 90° (current lags voltage)'
+      },
+      {
+        type: 'story',
+        title: '⚡ The Capacitor: Electric Fields Fight Back',
+        body: `A capacitor stores energy in an electric field rather than a magnetic field. The basic structure is two conductive plates separated by an insulator (the dielectric). Push charge onto the plates, an electric field builds up between them — and energy is stored.\n\nCapacitors resist changes in voltage. Try to change the voltage across a capacitor quickly, and the capacitor absorbs or releases charge to fight you.\n\nWhen you disconnect a capacitor from a circuit, it holds its charge — sometimes for a very long time. This is why capacitors in equipment like large drives and power supplies can be lethally dangerous even hours after power is removed. Always verify capacitors are discharged with a properly rated discharge resistor before working inside high-voltage equipment.\n\nThe unit is the farad (F), but practical capacitors are usually in microfarads (μF) or nanofarads (nF) — a full farad is enormous.`
+      },
+      {
+        type: 'concept',
+        title: '📊 Capacitive Reactance: The Opposite of Inductive',
+        body: `Capacitive reactance is the opposite of inductive reactance in almost every way:\n\n• Higher frequency → capacitor charges/discharges faster → less time to fight → LESS reactance\n• Lower frequency (or DC) → very slow charging → capacitor barely lets anything through → infinite reactance at DC\n\nThis is why capacitors block DC but pass AC — essential in virtually every electronic circuit for signal coupling and filtering.`,
+        formula: 'XC = 1 / (2πfC)\nWhere: XC = capacitive reactance (Ω), f = frequency (Hz), C = capacitance (F)\n\nExample: C = 100μF at 60 Hz\nXC = 1 / (2π × 60 × 0.0001) = 26.5 Ω\n\nNote: XC decreases as frequency increases (opposite of XL)'
+      },
+      {
+        type: 'keypoint',
+        title: '⏰ Capacitive Phase Shift: Current Leads',
+        body: `In a purely capacitive circuit, current LEADS voltage by 90°.\n\nPhysical intuition: when you first connect voltage to a capacitor, current rushes in immediately to charge the plates — before the voltage has had time to build up. Current is "eager," getting there before voltage.\n\nThis leading current is the exact opposite of inductive lagging current, which is why capacitors are used to correct power factor: they cancel out the lagging effect of inductive loads.\n\nPower factor correction capacitor banks are installed at industrial facilities, transformer substations, and motor control panels. They reduce the reactive current the utility has to supply, reducing losses and avoiding demand charges.`,
+        formula: 'In a pure capacitor: θ = -90° (current leads voltage)'
+      },
+      {
+        type: 'real-world',
+        title: '🔧 Real World: The Motor Start Capacitor',
+        body: `Single-phase induction motors can't self-start without help — the single-phase supply creates a pulsating (not rotating) magnetic field. A start capacitor solves this by creating a second, phase-shifted current in a separate start winding.\n\nThe capacitor shifts the current in the start winding by about 90°, creating a phase difference between the run and start windings. The two magnetic fields, 90° apart in time and space, create a rotating field that kicks the motor off.\n\nOnce up to speed, a centrifugal switch disconnects the start capacitor (which is only rated for intermittent duty). Run capacitors (smaller, continuous duty rated) stay in circuit to improve power factor and efficiency.\n\nIf a single-phase motor hums but won't start, or starts only when you give it a spin by hand — the start capacitor is bad. Test it with a capacitance meter.`
+      },
+      {
+        type: 'quiz',
+        title: '🧠 Quick Check',
+        questions: [
+          { q: 'A 50 mH inductor at 60 Hz has a reactance of:', a: 'XL = 2π × 60 × 0.05 = 18.85 Ω' },
+          { q: 'In a purely inductive circuit, current _____ voltage by 90°.', a: 'LAGS (use ELI: voltage E leads current I in inductor L)' },
+          { q: 'A 47 μF capacitor at 60 Hz has a reactance of:', a: 'XC = 1/(2π × 60 × 0.000047) = 56.4 Ω' },
+          { q: 'Why is capacitive reactance high at DC (0 Hz)?', a: 'XC = 1/(2πfC) — dividing by frequency approaching zero gives infinity. DC cannot charge/discharge a capacitor continuously, so it blocks DC.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: '🛠 Pro Tips',
+        tips: [
+          'Remember ELI the ICE man — it\'s the most exam-tested concept related to L and C. ELI = E leads I in Inductor. ICE = I leads E in Capacitor.',
+          'Capacitors store dangerous charge. On anything with a large capacitor bank (drives, UPS systems, motor start panels), verify voltage with your meter before touching. Some will hold a lethal charge for many minutes.',
+          'Inductive reactance and capacitive reactance cancel each other out at resonance (when XL = XC). Resonance is exploited in radio tuning circuits and power factor correction, but can also cause dangerous overvoltages in unintended resonant conditions.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'm3',
+    title: 'Inductors & Capacitors in Circuits',
+    icon: '⚡',
+    subtitle: 'Reactance, Impedance, and the Power Triangle',
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg,rgba(6,182,212,0.12),rgba(59,130,246,0.06))',
+    border: 'rgba(6,182,212,0.3)',
+    readTime: '15 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: '⚡ Resistance Isn\'t Everything',
+        body: `In a DC circuit, life is simple: Ohm's Law, resistance, done. But in an AC circuit with inductors and capacitors, resistance is just one piece of the puzzle.\n\nWhen you combine resistance (R) with reactance (XL or XC), you get impedance (Z) — the total opposition to current flow in an AC circuit. And impedance doesn't just determine how much current flows — it determines when it flows.\n\nMaster impedance and you understand why motors draw reactive current, why long fluorescent ballast circuits need power factor capacitors, and why neutral conductors in some commercial buildings carry more current than the phase conductors.`
+      },
+      {
+        type: 'concept',
+        title: '📐 Impedance: The Full Picture',
+        body: `You cannot simply add resistance and reactance together — they're at different angles. R is always at 0° (in phase with voltage), while XL is at +90° and XC is at -90°.\n\nTo combine them, use the Pythagorean theorem on the impedance triangle:\n• Z = √(R² + (XL - XC)²)\n\nWhen XL > XC: net reactance is inductive, current lags voltage\nWhen XC > XL: net reactance is capacitive, current leads voltage\nWhen XL = XC: resonance — Z = R only, current is in phase with voltage\n\nThe phase angle θ tells you how far current is shifted from voltage:\nθ = arctan((XL - XC) / R)`,
+        formula: 'Z = √(R² + X²)\nwhere X = XL - XC (net reactance)\n\nFor an RL circuit: Z = √(R² + XL²)\nFor an RC circuit: Z = √(R² + XC²)\nFor an RLC circuit: Z = √(R² + (XL - XC)²)'
+      },
+      {
+        type: 'concept',
+        title: '⚡ Series RL Circuit: Motors and Ballasts',
+        body: `Almost every inductive load you'll work with is a series RL circuit: resistance from the copper windings plus inductance from the coil. Motors, transformers, relay coils, and fluorescent ballasts are all RL loads.\n\nIn a series RL circuit:\n• Voltage across R is in phase with current\n• Voltage across L leads current by 90°\n• Total supply voltage is the phasor sum: VS = √(VR² + VL²)\n• Current lags supply voltage by angle θ = arctan(XL/R)\n\nExample: A motor coil has R = 8Ω and XL = 6Ω at 60 Hz.\nZ = √(8² + 6²) = √(64 + 36) = √100 = 10 Ω\nCurrent lags voltage by θ = arctan(6/8) = 36.87°`,
+        formula: 'Series RL:\nZ = √(R² + XL²)\nVR = I × R\nVL = I × XL\nVS = √(VR² + VL²)\nθ = arctan(XL / R)   [current lags]'
+      },
+      {
+        type: 'concept',
+        title: '🔋 Series RC Circuit: Timers and Filters',
+        body: `Series RC circuits appear in motor start circuits, timing circuits, and filter networks. Current leads voltage in a capacitive circuit, which is the exact opposite of an RL load.\n\nExample: A circuit has R = 30Ω and C = 100μF at 60 Hz.\nXC = 1/(2π × 60 × 0.0001) = 26.5 Ω\nZ = √(30² + 26.5²) = √(900 + 702) = √1602 = 40.0 Ω\nθ = arctan(26.5/30) = 41.4° (current leads voltage)`,
+        formula: 'Series RC:\nZ = √(R² + XC²)\nVR = I × R\nVC = I × XC\nVS = √(VR² + VC²)\nθ = arctan(XC / R)   [current leads]'
+      },
+      {
+        type: 'keypoint',
+        title: '🔺 The Power Triangle: Real, Reactive, Apparent',
+        body: `Power in AC circuits comes in three flavors:\n\n• True Power (P) — measured in Watts (W). This is REAL power that does actual work: heats elements, spins motors, powers computers. Calculated from I²R (the resistive component only).\n\n• Reactive Power (Q) — measured in VAR (Volt-Amps Reactive). This power is NOT consumed — it just sloshes back and forth between the source and the inductor/capacitor. It does no useful work, but it occupies conductor and transformer capacity.\n\n• Apparent Power (S) — measured in VA (Volt-Amps). This is what the utility actually has to supply: it's the total current times the total voltage, regardless of phase angle. S = V × I.\n\nThese three form a right triangle (just like the impedance triangle):\n S = √(P² + Q²)\n\nPower factor = P / S = cos(θ)`,
+        formula: 'P = I² × R = S × cos(θ)     [Watts — does work]\nQ = I² × X = S × sin(θ)     [VAR — does no work]\nS = V × I = √(P² + Q²)      [VA — what the utility supplies]\n\nPF = P/S = cos(θ)\nPF = 1.0 = perfect (resistive only)\nPF = 0.8 = typical induction motor (lagging)'
+      },
+      {
+        type: 'real-world',
+        title: '🏭 Real World: Power Factor Correction',
+        body: `A large factory runs 200A of current on a 600V system. Power factor is 0.72 lagging (very common with lots of induction motors).\n\nApparent power: S = 600 × 200 = 120 kVA\nTrue power: P = 120 × 0.72 = 86.4 kW\n\nThe utility charges based on the 120 kVA demand (they have to supply that much current), but only 86.4 kW of useful work is being done. The remaining 33.6 kVAR is reactive power wasting conductor capacity.\n\nSolution: install capacitor banks sized to cancel the inductive reactive power (Q). This brings PF closer to 1.0, reducing the apparent current the utility must supply — which reduces your demand charges and line losses.\n\nAs an electrician, you'll install and maintain these power factor correction banks. The capacitors are usually switched in and out automatically based on load.`
+      },
+      {
+        type: 'concept',
+        title: '🎯 Resonance: When XL = XC',
+        body: `Resonance occurs when inductive and capacitive reactances are equal and opposite — they cancel each other out, leaving only resistance. The results are dramatic:\n\n• Series resonance: impedance drops to minimum (Z = R only), current reaches maximum\n• Parallel resonance: impedance rises to maximum, current from source is minimum\n\nResonant frequency: fr = 1 / (2π√(LC))\n\nThis principle is used intentionally in radio tuners (adjusting C to resonate at a specific station's frequency) and power factor correction banks. Unintentionally, harmonics from VFDs can excite resonance in power factor correction capacitors, causing damaging overvoltages and capacitor failures.`,
+        formula: 'Resonant frequency:\nfr = 1 / (2π × √(L × C))\n\nAt resonance: XL = XC, Z = R, PF = 1.0\nSeries resonance: maximum current\nParallel resonance: minimum current from source'
+      },
+      {
+        type: 'quiz',
+        title: '🧠 Quick Check',
+        questions: [
+          { q: 'A series RL circuit has R = 6Ω and XL = 8Ω. What is the impedance?', a: 'Z = √(6² + 8²) = √(36 + 64) = √100 = 10 Ω' },
+          { q: 'A motor draws 20A at 240V with a power factor of 0.85. What is the true power?', a: 'S = 240 × 20 = 4800 VA; P = 4800 × 0.85 = 4080 W' },
+          { q: 'Why does reactive power (VAR) not appear on your electricity bill?', a: 'Reactive power does no useful work — it just oscillates between source and load. But utilities often charge for high reactive demand because it increases their current supply requirements.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: '🛠 Pro Tips',
+        tips: [
+          'The impedance triangle and power triangle are the SAME shape at the SAME angle. If you know Z, R, and X for the circuit, you know the ratio of P, S, and Q too.',
+          'Power factor of 0.8 lagging is the absolute minimum for most industrial facilities before the utility starts charging demand penalties. If you see power factor capacitors in a commercial or industrial panel, their job is to bring PF back above 0.9 or 0.95.',
+          'On exam questions involving power: always identify whether the given voltage/current is per-phase or line-to-line in a three-phase system. Three-phase power = 3 × Vphase × Iphase × PF, or equivalently √3 × Vline × Iline × PF.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'm21',
+    title: 'Relays & Contactors',
+    icon: '🔌',
+    subtitle: 'The Brain and Muscle of Industrial Control',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.06))',
+    border: 'rgba(16,185,129,0.3)',
+    readTime: '13 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: '⚡ Small Signal, Big Power',
+        body: `Imagine you want to turn on a 100-horsepower motor from across a factory floor. You can't run a wire carrying 150 amps to a little pushbutton at a control station — that would melt the wiring and probably kill the operator.\n\nSo instead, you run a low-voltage, low-current control circuit to a relay or contactor. A tiny 24V signal energizes a coil, which creates a magnetic field, which pulls in a set of contacts, which closes a circuit carrying the full motor current.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. And relays and contactors are what make it possible.`
+      },
+      {
+        type: 'concept',
+        title: '🔌 Relay vs. Contactor: Same Idea, Different Scale',
+        body: `A relay and a contactor work on exactly the same principle — an electromagnetic coil pulls in an armature to open or close contacts. The difference is scale and purpose:\n\n• Relays: designed for control circuits. Low current (typically < 10A), multiple sets of contacts, used to route signals and interlock circuits. Think of a relay as the logic device.\n\n• Contactors: designed for power circuits. High current (10A to thousands of amps), fewer contact sets (usually 3 main power contacts + a few auxiliary), built for starting and stopping motors and loads. Think of a contactor as the muscle.\n\nContactors have arc suppression features that relays don't — when you interrupt 150A at 600V, there's a tremendous arc. Special materials, magnet blow-out coils, and arc chutes deal with this energy. A relay's contacts would weld together.`
+      },
+      {
+        type: 'concept',
+        title: '📐 Contact Types: NO, NC, and Why It Matters',
+        body: `Every relay and contactor has contacts in one of two resting states:\n\n• Normally Open (NO): contacts are open when the coil is de-energized. When the coil energizes, they close. This is the most common type for motor starters — you want the motor off by default.\n\n• Normally Closed (NC): contacts are closed when the coil is de-energized. When the coil energizes, they open. Used for safety circuits: if power fails, the NC contact stays closed (safe state) or opens to de-energize a dangerous load.\n\nCritical: "normally" refers to the state with NO power applied. A pushbutton, relay contact, or limit switch is described by its state at rest. This seems obvious but trips up electricians constantly during troubleshooting — a closed NC contact means the coil is NOT energized.`
+      },
+      {
+        type: 'keypoint',
+        title: '🔒 Seal-In Contacts: The Self-Latching Trick',
+        body: `Here's one of the most important circuits you'll build: the motor starter with seal-in contacts.\n\nProblem: you use a momentary pushbutton (springs back when released) to start a motor. But once you release the button, the control circuit opens and the motor stops. How do you keep the motor running?\n\nSolution: add an auxiliary NO contact from the contactor, wired in parallel with the start button. When you press Start, the contactor energizes. The auxiliary contact (now closed, since the coil is energized) bridges across the start button — creating an alternate current path that holds the coil energized even after you release Start.\n\nPress Stop (an NC pushbutton in series) and the circuit opens — contactor drops out, motor stops, and the now-open auxiliary contact removes the seal-in. Circuit is back to its normal, off state.\n\nThis is called a three-wire control circuit. It's also inherently safe: if power fails, the contactor drops out and won't restart automatically when power returns (unlike a two-wire circuit).`
+      },
+      {
+        type: 'real-world',
+        title: '🔀 Interlock Circuits: Preventing Disasters',
+        body: `Interlocking is the technique of using contacts to prevent dangerous simultaneous operations. The classic example is a reversing motor starter:\n\nA forward contactor (F) and reverse contactor (R) cannot EVER be energized at the same time — doing so would connect two phases together and short the power supply. So you wire it so each contactor's NC auxiliary contact is in series with the coil of the other.\n\nThis means: if F is energized (its NC contact is now open), the circuit path to R's coil is broken — you physically cannot energize R while F is on. This is electrical interlock.\n\nFor extra safety, add mechanical interlock — a physical lever that prevents both contactors from pulling in simultaneously. Belt-and-suspenders approach.\n\nAs an apprentice, you'll be asked to wire these interlocks. Get them wrong and you risk a phase-to-phase fault, a very unpleasant explosion, and a failed inspection.`
+      },
+      {
+        type: 'concept',
+        title: '🌡️ Overload Relays: Protecting the Motor',
+        body: `Every motor starter includes an overload relay (OL relay) to protect the motor from overheating. The overload relay monitors current and trips if the current exceeds a threshold for a sustained period.\n\nTwo main types:\n\n• Thermal overload: a bimetallic strip or eutectic alloy that deforms as it heats up (proportional to I² × t). Heats up like the motor does. Trips after a time delay proportional to the overcurrent — brief spikes don't trip it, but sustained overloads do.\n\n• Electronic overload: measures actual current through the motor, calculates thermal model mathematically, trips more accurately and consistently than thermal types. Can also provide phase loss protection and trip history.\n\nThe OL relay's contacts are wired in series with the contactor coil circuit. When the OL trips, it opens its NC contact, which de-energizes the contactor coil, which opens the power contacts, which stops the motor. The motor cannot restart until the OL is manually reset.`,
+        formula: 'Overload relay setting range: typically 0.8 × to 1.25 × motor FLA\nCEC requires OL protection for motors: set at no more than 125% of FLA for motors with SF ≥ 1.15 and temperature rise ≤ 40°C'
+      },
+      {
+        type: 'quiz',
+        title: '🧠 Quick Check',
+        questions: [
+          { q: 'What is the purpose of seal-in (holding) contacts in a motor starter?', a: 'To maintain the contactor coil circuit energized after the momentary start pushbutton is released. The NC auxiliary contact wired in parallel with the start button holds the circuit.' },
+          { q: 'What happens to an NC contact when its coil is energized?', a: 'It opens. NC = Normally Closed = closed when de-energized. Energizing the coil causes the armature to pull in, opening the NC contact.' },
+          { q: 'Why is a reversing starter interlocked?', a: 'To prevent both forward and reverse contactors from energizing simultaneously, which would cause a phase-to-phase short circuit.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: '🛠 Pro Tips',
+        tips: [
+          'When troubleshooting a contactor that chatters or "machine-guns" — check coil voltage first. Low voltage (below ~85% of rated) means the coil can\'t fully pull in the armature. The armature drops out, coil voltage rises, pulls back in, repeat. Also check for a shorted shading ring (in AC contactors).',
+          'Always check the "normal" state of contacts before a job: an NC contact with the system off should have continuity. If it doesn\'t, the coil is either still energized, or the contact is damaged.',
+          'Three-wire vs. two-wire control: three-wire (momentary pushbutton with seal-in) is safety preferred — loss of power means motor won\'t auto-restart. Two-wire (maintained contact) will restart automatically when power returns. Use two-wire only where that\'s the intended behavior and is safe.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'm22',
+    title: 'Timers & Smart Relays',
+    icon: '⏱',
+    subtitle: 'Time-Based Control and Programmable Logic',
+    color: '#f97316',
+    gradient: 'linear-gradient(135deg,rgba(249,115,22,0.12),rgba(245,158,11,0.06))',
+    border: 'rgba(249,115,22,0.3)',
+    readTime: '12 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: '⏰ When "Now" Isn\'t Good Enough',
+        body: `Not everything in a control system should happen instantaneously. A conveyor needs to run for 5 seconds before a downstream process starts. A blower should keep running for 2 minutes after an oven shuts off to prevent heat damage. A pump needs a rest period between starts to avoid overheating.\n\nTimers solve all of these problems. They add the dimension of time to control logic, turning simple on/off decisions into time-sequenced operations. And smart relays take this further — they're essentially tiny programmable computers that can replace dozens of timers, counters, and relays with a single compact device.`
+      },
+      {
+        type: 'concept',
+        title: '📊 ON-Delay Timer (TON): Wait, Then Act',
+        body: `The most common timer type. An ON-delay timer waits a preset time after receiving an input signal before energizing its output.\n\nSequence:\n1. Input signal arrives (coil energizes)\n2. Timing begins\n3. After preset time, output contact closes (timed contact)\n4. If input is removed before timing completes, timer resets — nothing happens\n5. When input is removed after timing, output immediately opens\n\nReal world uses: motor startup delay (allow pressures/temperatures to stabilize before starting), conveyor sequencing (upstream conveyor starts, downstream conveyor delays 3 seconds), HVAC damper control (open damper before starting fan).\n\nInstantaneous contacts: some timers also have an "instantaneous" contact that closes the moment the coil energizes (before timing starts) — useful for starting a different operation while timing proceeds.`,
+        formula: 'ON-delay: Input ON → timer counts → output ON after preset time\nInput OFF (anytime) → timer resets → output OFF immediately'
+      },
+      {
+        type: 'concept',
+        title: '⏲ OFF-Delay Timer (TOF): Keeps Running After Stop',
+        body: `An OFF-delay timer does the opposite: it keeps its output energized for a preset time after the input signal is REMOVED.\n\nSequence:\n1. Input signal arrives → output immediately energizes\n2. Input signal removed → timing begins\n3. After preset time, output de-energizes\n\nReal world uses: cooling fan delay (keep fan running after motor stops to remove heat), exhaust hood (keep running after cooking stops), parking garage lighting (lights stay on for 5 minutes after you leave the area), anti-short-cycle protection on compressors.`,
+        formula: 'OFF-delay: Input ON → output immediately ON\nInput OFF → timer counts → output OFF after preset time'
+      },
+      {
+        type: 'concept',
+        title: '🔁 Recycling (Repeat Cycle) Timers: Pulse Generators',
+        body: `A recycling timer automatically and repeatedly cycles its output on and off at adjustable intervals. Think of it as a built-in pulse generator.\n\nTwo adjustable settings:\n• ON time: how long output stays energized\n• OFF time: how long output stays de-energized\n\nReal world uses: intermittent windshield wiper control, irrigation systems (water for 2 min, pause 30 min), alarm horns (beep-pause-beep), automatic lubrication systems (pump for 10 seconds every 15 minutes).`
+      },
+      {
+        type: 'keypoint',
+        title: '💻 Smart Relays: Tiny PLCs',
+        body: `A smart relay (also called a programmable logic relay or PLR) is a compact, inexpensive device that combines inputs, outputs, and programmable logic in one unit. Common brands: Siemens LOGO!, Schneider Electric Zelio, Allen-Bradley Pico.\n\nCapabilities in a package the size of a large relay:\n• 8-24 digital inputs\n• 4-16 digital outputs\n• Analog inputs (some models)\n• Built-in clock/calendar\n• Multiple timer functions (ON, OFF, repeat cycle, single-shot)\n• Counter functions\n• Logic gates (AND, OR, NOT, XOR)\n• Simple arithmetic\n• Communication (some models)\n\nA single smart relay can replace a panel stuffed with 10-15 individual relays, timers, and counters — at a fraction of the cost and panel space. They're programmed either through a front panel display or via laptop with free software.`
+      },
+      {
+        type: 'real-world',
+        title: '🏭 Ladder Logic: The Language of Control',
+        body: `Industrial control programs are written in ladder logic — a visual programming language that looks like a schematic of relay contacts and coils laid out in rungs, like a ladder.\n\nEach rung is a logical statement:\n• Contacts on the left side = conditions (inputs)\n• Coils on the right side = outputs\n• Current "flows" left to right if all contacts are satisfied\n\nA normally open contact in ladder logic = an input that must be TRUE to pass logic.\nA normally closed contact = an input that must be FALSE to pass logic.\n\nLadder logic translates directly from hardwired relay logic — if you understand relay control circuits, you already understand the fundamentals of ladder logic programming. This is why learning relay control is so valuable for the modern electrician: PLCs and smart relays have taken over, but they still speak the language of relays.`
+      },
+      {
+        type: 'quiz',
+        title: '🧠 Quick Check',
+        questions: [
+          { q: 'An ON-delay timer starts timing when the input turns ON. True or False: if the input turns off before timing completes, the output will energize for the remaining delay time.', a: 'FALSE. If the input is removed before the preset time expires, the timer resets and the output never energizes.' },
+          { q: 'A blower motor needs to keep running for 3 minutes after an oven shuts off. Which timer type is used?', a: 'OFF-delay timer (TOF). The blower energizes immediately when the oven runs, then stays on for 3 minutes after the oven shuts off.' },
+          { q: 'What is the key advantage of a smart relay (PLR) over hardwired relay logic?', a: 'Flexibility and space savings. A single smart relay replaces many individual relays, timers, and counters. The logic is software-defined and can be reprogrammed without rewiring.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: '🛠 Pro Tips',
+        tips: [
+          'When troubleshooting timer circuits, separate the timing function from the contact function. First verify the coil is energizing (voltage across coil terminals). Then verify the timer is actually timing (LED or display indicator). Then check the output contacts.',
+          'ON-delay or OFF-delay? Ask yourself: "does the output come ON after a delay, or does it go OFF after a delay?" That question answers it every time.',
+          'Smart relays use the IEC61131-3 standard for ladder logic — the same standard as full PLCs. Time you spend learning Siemens LOGO! or Zelio programming translates directly into understanding Allen-Bradley, Siemens S7, and other industrial PLC platforms.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'm23',
+    title: 'Pilot & Overcurrent Devices',
+    icon: '🛡',
+    subtitle: 'The Guardians of Every Circuit',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
+    border: 'rgba(239,68,68,0.3)',
+    readTime: '14 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: '⚡ Every Circuit Needs Protection',
+        body: `Every electrical circuit has a potential failure mode: too much current. Overcurrent destroys insulation, melts conductors, starts fires, and kills people.\n\nThe overcurrent protection device (OCPD) — whether a fuse or circuit breaker — is the last line of defense. It monitors current, and when current exceeds its rating for a sufficient time, it interrupts the circuit.\n\nBut protection isn't the only job in a control system. Someone also has to initiate, stop, and direct the flow of current to the loads. That's the job of pilot devices — the pushbuttons, switches, and sensors that give humans and machines control over electrical systems.`
+      },
+      {
+        type: 'concept',
+        title: '🔘 Pilot Devices: Control Without Power',
+        body: `A pilot device is a control component that controls a circuit but doesn't carry the main load current. The name comes from "pilot," meaning guide or direct.\n\nKey pilot devices you'll work with:\n\n• Pushbuttons: momentary (springs back) or maintained (stays in place). NO types start things; NC types stop things. Color code: green/black = start, red = stop.\n\n• Selector switches: 2 or 3 position, maintained. For mode selection (Hand/Off/Auto, Local/Remote).\n\n• Limit switches: mechanically actuated by equipment position. Used to detect "door open," "conveyor at end of travel," "cylinder fully extended." Can be NO or NC, maintained or momentary.\n\n• Float switches: actuated by liquid level. Used to control pumps and sump systems.\n\n• Pressure switches: actuated by fluid or air pressure. Compressor control, hydraulic systems.\n\n• Pilot lights: indicate status (motor running, fault condition, power present). Wired in parallel with the load they're indicating.`
+      },
+      {
+        type: 'keypoint',
+        title: '🟢 Color Codes and Standards',
+        body: `Pilot device colors are standardized by NEMA ICS and the CEC:\n\n• Red: Stop, emergency stop, power off. NC pushbutton.\n• Green or Black: Start, run, power on. NO pushbutton.\n• Yellow: Caution, abnormal condition.\n• Blue: Mandatory action (lockout).\n• White/Grey: no specific function.\n\nPilot lights follow similar conventions:\n• Red = machine running or dangerous condition present\n• Green = safe condition, machine stopped, power available\n• Amber = abnormal condition, attention needed\n\nKnowing color codes lets you read an unfamiliar control panel quickly. A green lit light with a red lit light simultaneously? Something's wrong — those shouldn't both be on if they represent opposite states.`
+      },
+      {
+        type: 'concept',
+        title: '⚡ Fuses: Simple, Fast, Sacrificial',
+        body: `A fuse is the simplest overcurrent protection device: a piece of calibrated metal that melts at a specific current, breaking the circuit. One-shot device — once blown, it must be replaced.\n\nFuse characteristics that matter:\n\n• Current rating: the continuous current the fuse handles without opening. Size to 100-125% of load.\n\n• Voltage rating: maximum voltage the fuse can safely interrupt. A 250V fuse on a 600V circuit is dangerous — the arc won't extinguish.\n\n• Interrupting rating: the maximum fault current the fuse can safely clear. A fuse rated 10 kAIC on a bus capable of 50 kA fault current WILL explode violently.\n\n• Current-limiting: fast-acting fuses (Class CC, J, RK1, RK5, L) limit the peak let-through current by clearing in less than a half-cycle. This protects equipment from the destructive energy of high fault currents.\n\n• Time-delay (dual-element): have a thermal delay element that ignores brief motor inrush (5-7× FLA) while still protecting against sustained overloads. Essential for motor circuits.',
+        formula: 'Motor circuit fuse sizing (CEC Rule 28-200):\nTime-delay fuses: up to 175% of motor FLA\nNon-time-delay: up to 300% of motor FLA (but must not exceed 600% for short-circuit protection)'
+      },
+      {
+        type: 'concept',
+        title: '🔌 Circuit Breakers: Resettable Protection',
+        body: `A circuit breaker performs the same overcurrent protection function as a fuse, but mechanically trips rather than melting — it can be reset after a fault is cleared.\n\nThermal-magnetic circuit breaker (most common):\n• Bimetallic strip: provides time-delay overload protection. As overcurrent heats the strip, it bends and trips the mechanism. Simulates thermal damage to the protected conductor.\n• Magnetic (electromagnetic) trip: a solenoid that trips the breaker almost instantaneously on very high fault currents. Protects against short circuits.\n\nElectronic trip breakers (LSIG):\n• Long-time (L): overload protection with inverse time-current curve\n• Short-time (S): short-time delay for selective coordination\n• Instantaneous (I): immediate trip for high-level faults\n• Ground fault (G): ground fault protection at adjustable threshold\n\nGFCI (Ground Fault Circuit Interrupter): detects as little as 5mA of ground fault current and trips in <1/40 second. Protects people from electrocution on 15/20A branch circuits. Required by CEC near water.\n\nGFP (Ground Fault Protection of Equipment): detects ground faults typically in the 150mA-1200mA range. Protects equipment from arcing ground faults on large systems. Required on 1000A+ services per CEC.`
+      },
+      {
+        type: 'real-world',
+        title: '🔗 Selective Coordination: The Art of Only Tripping What Needs to Trip',
+        body: `In a properly coordinated system, a fault on a branch circuit should trip only the branch circuit breaker — not the feeder breaker, not the main breaker. Otherwise a small fault in one room takes down the whole building.\n\nAchieving coordination means sizing and selecting breakers so each upstream device has a significantly slower (or higher threshold) trip characteristic than the downstream device. Engineers use time-current curves to verify coordination.\n\nFor electricians: never "upsize" a breaker to stop nuisance tripping. If a 20A breaker keeps tripping, the LOAD is drawing more than 20A — fix the load, or investigate the fault. Upsizing the breaker destroys the protection the system was designed to provide.`
+      },
+      {
+        type: 'quiz',
+        title: '🧠 Quick Check',
+        questions: [
+          { q: 'A fuse is rated 600V, 30A, with an interrupting rating of 10 kAIC. The available fault current is 15 kA. Can this fuse be used?', a: 'NO. The interrupting rating (10 kAIC) is less than the available fault current (15 kA). The fuse would explode violently and fail to safely clear the fault.' },
+          { q: 'What is the difference between GFCI and GFP?', a: 'GFCI detects very small ground faults (5mA) to protect people. GFP detects larger ground faults (150mA+) to protect equipment from arcing damage. Both interrupt the circuit, but they serve different purposes at different current thresholds.' },
+          { q: 'A time-delay fuse for a motor is used instead of a fast-acting fuse. Why?', a: 'Motors draw 5-7× their full-load current during starting. A fast-acting fuse would blow on every motor start. A time-delay fuse rides through brief inrush current while still protecting against sustained overloads and short circuits.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: '🛠 Pro Tips',
+        tips: [
+          'The CEC requires overcurrent protection to be sized based on the conductor ampacity, not the load. If you have a 12 AWG conductor (rated 20A in NMD90), you cannot install a 30A breaker even if the load only draws 15A. The breaker protects the wire, not the load.',
+          'Fuse classes use size rejection features to prevent installing the wrong fuse. A Class J fuse physically cannot fit in a Class H fuseholder. Never force a fuse into a holder it wasn\'t designed for, and never bridge a fuse with wire.',
+          'When a fuse blows, the fuse is doing its job. Find and fix the fault before replacing the fuse. Putting in a new fuse without clearing the fault means the new fuse will blow too — or worse, if you installed a higher-rated fuse to "fix" the problem, now the conductor is unprotected and it may be the wire that fails next time.'
+        ]
+      }
+    ]
+  }
+];
+
+const Lessons = {
+  activeLesson: null,
+
+  render(state) {
+    if (!state) return;
+    const container = document.getElementById('lessonsContent');
+    if (!container) return;
+
+    if (this.activeLesson) {
+      this._renderLesson(this.activeLesson, container);
+    } else {
+      this._renderIndex(container, state);
+    }
+  },
+
+  _renderIndex(container, state) {
+    container.innerHTML = `
+      <div style="padding:24px 0 8px;">
+        <h1 style="font-size:2rem;margin-bottom:6px;">&#x1F4DA; Lessons</h1>
+        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">Deep-dive lessons for every available module — real explanations, real-world examples, and the kind of context that makes everything click.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-top:24px;">
+        ${LESSONS_CONTENT.map(lesson => `
+          <div onclick="Lessons._open('${lesson.id}')" style="cursor:pointer;background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:24px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;"
+            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="font-size:2.5rem;margin-bottom:10px;">${lesson.icon}</div>
+            <h2 style="font-size:1.15rem;margin:0 0 4px;color:${lesson.color};">${lesson.title}</h2>
+            <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 16px;line-height:1.4;">${lesson.subtitle}</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:0.78rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</span>
+              <span style="font-size:0.8rem;font-weight:600;color:${lesson.color};">Start &#x2192;</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  },
+
+  _open(lessonId) {
+    this.activeLesson = lessonId;
+    const container = document.getElementById('lessonsContent');
+    if (container) this._renderLesson(lessonId, container);
+    window.scrollTo(0, 0);
+  },
+
+  _back() {
+    this.activeLesson = null;
+    const container = document.getElementById('lessonsContent');
+    const state = Storage.get();
+    if (container && state) this._renderIndex(container, state);
+    window.scrollTo(0, 0);
+  },
+
+  _renderLesson(lessonId, container) {
+    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    if (!lesson) { this.activeLesson = null; return; }
+
+    const sectionHtml = lesson.sections.map(s => this._renderSection(s, lesson.color)).join('');
+
+    container.innerHTML = `
+      <div style="padding:16px 0;">
+        <button onclick="Lessons._back()" style="background:none;border:1px solid var(--border);color:var(--text-secondary);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;margin-bottom:20px;display:flex;align-items:center;gap:6px;">
+          &#8592; All Lessons
+        </button>
+        <div style="background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:32px;margin-bottom:28px;">
+          <div style="font-size:3rem;margin-bottom:12px;">${lesson.icon}</div>
+          <h1 style="font-size:1.9rem;margin:0 0 6px;color:${lesson.color};">${lesson.title}</h1>
+          <p style="color:var(--text-secondary);font-size:1rem;margin:0;font-style:italic;">${lesson.subtitle}</p>
+          <div style="margin-top:14px;font-size:0.82rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</div>
+        </div>
+        ${sectionHtml}
+        <div style="text-align:center;padding:32px 0 16px;">
+          <button onclick="Lessons._back()" style="background:${lesson.color};color:#000;font-weight:700;border:none;padding:14px 32px;border-radius:10px;cursor:pointer;font-size:1rem;">
+            &#x2190; Back to Lessons
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
+  _renderSection(s, accentColor) {
+    const typeStyles = {
+      hook:       { bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.25)', icon: '' },
+      story:      { bg: 'rgba(99,102,241,0.06)', border: 'rgba(99,102,241,0.2)', icon: '' },
+      concept:    { bg: 'var(--bg-card)',          border: 'var(--border)',           icon: '' },
+      keypoint:   { bg: 'rgba(16,185,129,0.07)',  border: 'rgba(16,185,129,0.25)',   icon: '' },
+      analogy:    { bg: 'rgba(6,182,212,0.06)',   border: 'rgba(6,182,212,0.2)',     icon: '' },
+      real_world: { bg: 'rgba(249,115,22,0.06)',  border: 'rgba(249,115,22,0.2)',    icon: '' },
+      'real-world': { bg: 'rgba(249,115,22,0.06)', border: 'rgba(249,115,22,0.2)',   icon: '' },
+      quiz:       { bg: 'rgba(139,92,246,0.06)',  border: 'rgba(139,92,246,0.25)',   icon: '' },
+      protip:     { bg: 'rgba(34,197,94,0.06)',   border: 'rgba(34,197,94,0.25)',    icon: '' },
+    };
+    const style = typeStyles[s.type] || typeStyles.concept;
+
+    let inner = '';
+
+    if (s.body) {
+      const paragraphs = s.body.split('\n\n').map(p => {
+        const lines = p.split('\n');
+        if (lines.length > 1 && lines.some(l => l.startsWith('•'))) {
+          const listItems = lines.filter(l => l.startsWith('•')).map(l => '<li style="margin-bottom:5px;">' + l.slice(1).trim() + '</li>').join('');
+          const pre = lines.filter(l => !l.startsWith('•')).join(' ').trim();
+          return (pre ? '<p style="margin:0 0 8px;">' + pre + '</p>' : '') + '<ul style="margin:0 0 12px;padding-left:20px;">' + listItems + '</ul>';
+        }
+        return '<p style="margin:0 0 12px;line-height:1.7;color:var(--text-primary);">' + p.replace(/\n/g, '<br>') + '</p>';
+      }).join('');
+      inner += paragraphs;
+    }
+
+    if (s.formula) {
+      inner += `<pre style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 16px;font-family:monospace;font-size:0.85rem;color:#e2e8f0;white-space:pre-wrap;margin:12px 0 0;">${s.formula}</pre>`;
+    }
+
+    if (s.questions) {
+      inner += '<div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">';
+      s.questions.forEach((qobj, i) => {
+        inner += `
+          <div style="background:rgba(0,0,0,0.15);border-radius:10px;padding:14px;">
+            <div style="font-weight:600;margin-bottom:6px;font-size:0.9rem;">Q${i+1}: ${qobj.q}</div>
+            <details style="cursor:pointer;">
+              <summary style="font-size:0.82rem;color:${accentColor};font-weight:600;">Reveal Answer</summary>
+              <div style="margin-top:8px;padding:10px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:0.85rem;line-height:1.5;color:#a7f3d0;">${qobj.a}</div>
+            </details>
+          </div>`;
+      });
+      inner += '</div>';
+    }
+
+    if (s.tips) {
+      inner += '<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">';
+      s.tips.forEach(tip => {
+        inner += `<div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:1.1rem;flex-shrink:0;">&#x2705;</span><span style="font-size:0.88rem;line-height:1.6;color:var(--text-secondary);">${tip}</span></div>`;
+      });
+      inner += '</div>';
+    }
+
+    return `
+      <div style="background:${style.bg};border:1px solid ${style.border};border-radius:14px;padding:24px;margin-bottom:18px;">
+        <h3 style="font-size:1.05rem;margin:0 0 14px;display:flex;align-items:center;gap:8px;">${s.title}</h3>
+        ${inner}
+      </div>`;
+  }
+};
+
 // ===== SETTINGS MODULE =====
 const Settings = {
   render(state) {
@@ -6776,13 +7451,6 @@ const Settings = {
               <span style="font-size:1.1rem;">&#x1F504;</span> Retake Diagnostic Assessment
             </button>
           </div>
-        </div>
-
-        <!-- Install App -->
-        <div id="settingsInstallCard" style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.3);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
-          <h3 style="margin:0 0 8px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F4F2; Install SparkStudy</h3>
-          <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:14px;">Add SparkStudy to your home screen for quick access, offline support, and a native app experience.</p>
-          <button class="btn btn-primary" onclick="PWA.promptInstall()" style="background:#22c55e;">Install App</button>
         </div>
 
         <!-- Danger Zone -->
@@ -7659,14 +8327,16 @@ const PWA = {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
-      const link = document.getElementById('navInstallLink');
-      if (link) link.style.display = '';
+      // Show the install banner on the landing page
+      const banner = document.getElementById('landingInstallBanner');
+      if (banner) banner.style.display = '';
     });
     window.addEventListener('appinstalled', () => {
       this.deferredPrompt = null;
-      const link = document.getElementById('navInstallLink');
-      if (link) link.style.display = 'none';
-      showToast('SparkStudy installed!', 'success');
+      // Hide the banner once installed
+      const banner = document.getElementById('landingInstallBanner');
+      if (banner) banner.style.display = 'none';
+      showToast('SparkStudy installed! Tap the icon on your home screen to launch it.', 'success');
     });
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -7678,12 +8348,12 @@ const PWA = {
       this.deferredPrompt.userChoice.then(result => {
         this.deferredPrompt = null;
         if (result.outcome === 'accepted') {
-          const link = document.getElementById('navInstallLink');
-          if (link) link.style.display = 'none';
+          const banner = document.getElementById('landingInstallBanner');
+          if (banner) banner.style.display = 'none';
         }
       });
     } else {
-      showToast('Open this site in Chrome or Safari, then tap "Install App" to add it to your home screen.', 'info');
+      showToast('Open this page in Chrome or Safari, then use "Add to Home Screen" to install SparkStudy.', 'info');
     }
   }
 };
