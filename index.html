@@ -233,9 +233,40 @@ input[type="radio"]:checked::after {
 .nav-links a {
   padding: 8px 16px; border-radius: var(--radius-sm);
   color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;
-  transition: var(--transition);
+  transition: var(--transition); white-space: nowrap;
 }
 .nav-links a:hover, .nav-links a.active {
+  color: var(--accent); background: var(--accent-soft);
+}
+/* Dropdown nav */
+.nav-dropdown { position: relative; }
+.nav-dropdown-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;
+  cursor: pointer; background: none; border: none;
+  transition: var(--transition); white-space: nowrap;
+}
+.nav-dropdown-btn:hover, .nav-dropdown-btn.active {
+  color: var(--accent); background: var(--accent-soft);
+}
+.nav-dropdown-btn svg { transition: transform 0.2s; }
+.nav-dropdown:hover .nav-dropdown-btn svg { transform: rotate(180deg); }
+.nav-dropdown-menu {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 200;
+  padding: 6px;
+}
+.nav-dropdown:hover .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px;
+  color: var(--text-secondary); font-size: 0.87rem; font-weight: 500;
+  transition: var(--transition);
+}
+.nav-dropdown-menu a:hover, .nav-dropdown-menu a.active {
   color: var(--accent); background: var(--accent-soft);
 }
 .nav-right { display: flex; align-items: center; gap: 12px; }
@@ -1080,17 +1111,37 @@ input[type="radio"]:checked::after {
   </div>
   <ul class="nav-links nav-hidden" id="navLinks">
     <li><a href="#" data-page="dashboard">Dashboard</a></li>
-    <li><a href="#" data-page="flashcards">Flashcards</a></li>
-    <li><a href="#" data-page="exams">Exams</a></li>
-    <li><a href="#" data-page="study-guide">Study Guide</a></li>
-    <li><a href="#" data-page="lessons">&#x1F4DA; Lessons</a></li>
-    <li><a href="#" data-page="tools">Tools</a></li>
-    <li><a href="#" data-page="math">🧮 Math</a></li>
-    <li><a href="#" data-page="notes">📝 Notes</a></li>
+
+    <!-- Study dropdown -->
+    <li class="nav-dropdown">
+      <button class="nav-dropdown-btn" id="navDropStudy">
+        Study
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-dropdown-menu">
+        <a href="#" data-page="flashcards">🃏 Flashcards</a>
+        <a href="#" data-page="exams">📝 Exams</a>
+        <a href="#" data-page="lessons">📚 Lessons</a>
+        <a href="#" data-page="study-guide">📖 Study Guide</a>
+        <a href="#" data-page="review">⭐ Review Wrong</a>
+        <li id="navGroupLink" style="display:none;list-style:none;"><a href="#" data-page="group" style="color:#8b5cf6;">👥 Group</a></li>
+      </div>
+    </li>
+
+    <!-- Practice dropdown -->
+    <li class="nav-dropdown">
+      <button class="nav-dropdown-btn" id="navDropPractice">
+        Practice
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-dropdown-menu">
+        <a href="#" data-page="tools">🔧 Simulators</a>
+        <a href="#" data-page="math">🧮 Math Practice</a>
+        <a href="#" data-page="notes">📝 Notes</a>
+      </div>
+    </li>
+
     <li><a href="#" data-page="analytics">Analytics</a></li>
-    <li><a href="#" data-page="review">Review</a></li>
-    <li><a href="#" data-page="settings">Settings</a></li>
-    <li id="navGroupLink" style="display:none;"><a href="#" data-page="group" style="color:#8b5cf6;">&#x1F465; Group</a></li>
   </ul>
   <div class="nav-right nav-hidden" id="navRight">
     <div class="nav-streak" id="navStreak" title="Study streak">
@@ -3489,10 +3540,17 @@ const App = {
       navRight.classList.remove('nav-hidden');
     }
 
-    // Active nav link
-    document.querySelectorAll('.nav-links a').forEach(a => {
+    // Active nav link (handles both top-level and dropdown items)
+    document.querySelectorAll('.nav-links a, .nav-dropdown-menu a').forEach(a => {
       a.classList.toggle('active', a.dataset.page === page);
     });
+    // Highlight dropdown button if active page is inside it
+    const studyPages = ['flashcards','exams','lessons','study-guide','review','group'];
+    const practicePages = ['tools','math','notes'];
+    const studyBtn = document.getElementById('navDropStudy');
+    const practiceBtn = document.getElementById('navDropPractice');
+    if (studyBtn) studyBtn.classList.toggle('active', studyPages.includes(page));
+    if (practiceBtn) practiceBtn.classList.toggle('active', practicePages.includes(page));
 
     // Update streak display & owner badge
     if (state) {
