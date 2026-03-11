@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SparkStudy — Alberta Electrical Apprentice Study Platform</title>
+<title>sparkystudy — Alberta Electrical Apprentice Study Platform</title>
 <meta name="theme-color" content="#f59e0b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SparkStudy">
+<meta name="apple-mobile-web-app-title" content="sparkystudy">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -1076,7 +1076,7 @@ input[type="radio"]:checked::after {
 <nav class="navbar" id="navbar">
   <div class="nav-brand">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-    SparkStudy
+    sparkystudy
   </div>
   <ul class="nav-links nav-hidden" id="navLinks">
     <li><a href="#" data-page="dashboard">Dashboard</a></li>
@@ -1112,7 +1112,7 @@ input[type="radio"]:checked::after {
   <div class="mobile-drawer-header">
     <div class="mobile-drawer-brand">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      SparkStudy
+      sparkystudy
     </div>
     <button class="mobile-drawer-close" onclick="closeMobileDrawer()">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -1306,7 +1306,7 @@ input[type="radio"]:checked::after {
     <div style="max-width:700px;margin:0 auto;display:flex;align-items:center;gap:32px;flex-wrap:wrap;justify-content:center;">
       <div style="font-size:4rem;flex-shrink:0;">&#x1F4F2;</div>
       <div style="flex:1;min-width:240px;">
-        <h2 style="font-size:1.4rem;font-weight:800;margin:0 0 6px;color:#22c55e;">Install SparkStudy on Your Device</h2>
+        <h2 style="font-size:1.4rem;font-weight:800;margin:0 0 6px;color:#22c55e;">Install sparkystudy on Your Device</h2>
         <p style="color:var(--text-secondary);margin:0 0 4px;font-size:0.95rem;line-height:1.5;">Add to your home screen for instant access, offline study, and a full native app experience — no App Store needed.</p>
         <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;font-size:0.8rem;color:var(--text-muted);">
           <span>&#10003; Works offline</span>
@@ -1522,6 +1522,7 @@ const TOPICS = {
   'timers-smart': { id: 'timers-smart', name: 'Timers & Smart Relays', period: 2, icon: '&#x23F1;', order: 22 },
   'pilot-overcurrent': { id: 'pilot-overcurrent', name: 'Pilot & Overcurrent Devices', period: 2, icon: '&#x1F6A8;', order: 23 },
   'inductors-capacitors': { id: 'inductors-capacitors', name: 'Inductors & Capacitors', period: 2, icon: '&#x1F50B;', order: 24 },
+  'drawing-diagrams': { id: 'drawing-diagrams', name: 'Drawing & Diagram Conversion', period: 2, icon: '&#x1F4CB;', order: 25 },
 };
 
 // ===== MODULES — Alberta Electrical Apprentice 2nd Year Curriculum =====
@@ -1561,7 +1562,7 @@ const MODULES = [
   { id:'m21', num:21, name:'Relays and Contactors', section:'controls', topics:['relays-contactors'], hasContent:true },
   { id:'m22', num:22, name:'Timers and Smart Relays', section:'controls', topics:['timers-smart'], hasContent:true },
   { id:'m23', num:23, name:'Pilot and Overcurrent Devices', section:'controls', topics:['pilot-overcurrent'], hasContent:true },
-  { id:'m24', num:24, name:'Drawing and Diagram Conversion', section:'controls', topics:['motor-controls','blueprints'], hasContent:false },
+  { id:'m24', num:24, name:'Drawing and Diagram Conversion', section:'controls', topics:['drawing-diagrams','motor-controls','blueprints'], hasContent:true },
   { id:'m25', num:25, name:'Motor Starters', section:'controls', topics:['motor-controls'], hasContent:false },
   { id:'m26', num:26, name:'Single Motor Control', section:'controls', topics:['motor-controls'], hasContent:false },
   { id:'m27', num:27, name:'Reversing Motor Starters', section:'controls', topics:['motor-controls'], hasContent:false },
@@ -1906,6 +1907,22 @@ const FLASHCARD_BANK = [
   { id:'fc136', topic:'inductors-capacitors', q:"What is impedance (Z)?", a:"Total opposition to AC current flow, combining resistance (R) and reactance (X). Z = √(R² + X²) measured in ohms." },
   { id:'fc137', topic:'inductors-capacitors', q:"What is resonance in an LC circuit?", a:"When XL = XC, the circuit is at resonance. Impedance is at minimum (series) or maximum (parallel). f₀ = 1/(2π√LC)" },
   { id:'fc138', topic:'inductors-capacitors', q:"What is power factor?", a:"The ratio of real power (W) to apparent power (VA). PF = cos(θ) where θ is the phase angle between voltage and current. PF = 1 is ideal." },
+
+  { id:'fc139', topic:'drawing-diagrams', q:"What are the three types of electrical diagrams?", a:"Block diagram (logical flow), wiring diagram (physical connections and conductor colours), schematic/ladder diagram (circuit logic with standard symbols on two rails)" },
+  { id:'fc140', topic:'drawing-diagrams', q:"What does a block diagram show?", a:"The logical sequence of components using labeled boxes and arrows — shows WHAT components are present and in what order, but not wire colours, cable types, or physical routing" },
+  { id:'fc141', topic:'drawing-diagrams', q:"What does a wiring diagram show?", a:"Physical connections: actual conductor colours, cable types, terminal connections, splice locations (wire nuts), and how devices connect inside their boxes — what the electrician builds from" },
+  { id:'fc142', topic:'drawing-diagrams', q:"What does a schematic (ladder) diagram show?", a:"Circuit logic using standard symbols on two vertical rails (L1 and N/L2) with horizontal rungs — used for troubleshooting and understanding circuit operation" },
+  { id:'fc143', topic:'drawing-diagrams', q:"In a ladder diagram, where are contacts placed? Where are coils/loads placed?", a:"Contacts (inputs/conditions) always on the LEFT side of the rung. Coils and loads (outputs) always on the RIGHT side closest to the neutral rail." },
+  { id:'fc144', topic:'drawing-diagrams', q:"What is the difference between an NO and NC contact symbol on a schematic?", a:"NO (Normally Open): drawn as two vertical lines with an open gap — must CLOSE for current to flow. NC (Normally Closed): same but with a diagonal slash — is already CLOSED, must OPEN to break the circuit." },
+  { id:'fc145', topic:'drawing-diagrams', q:"A cable run on a floor plan has three slash marks (///). What cable is required?", a:"14/3 NMD90 — each slash mark represents one conductor. Three slashes = 3 current-carrying conductors. The extra conductor is typically a red wire (second hot or traveler)." },
+  { id:'fc146', topic:'drawing-diagrams', q:"Why does a 3-way switch circuit require 14/3 between the two switches?", a:"Three conductors must run between the switches: Traveler A (black), Traveler B (red), and neutral (white). 14/3 NMD90 carries these three conductors — 14/2 only has two and cannot carry both travelers." },
+  { id:'fc147', topic:'drawing-diagrams', q:"What is a switch loop (switch leg) and what must be done to the white wire?", a:"A switch loop runs cable from a light box to a switch — the white wire carries switched hot back to the light. The white wire MUST be re-identified with black tape at both ends since it is acting as an ungrounded (hot) conductor." },
+  { id:'fc148', topic:'drawing-diagrams', q:"What is the purpose of the M seal-in contact in a motor control schematic?", a:"Wired in parallel with the Start pushbutton — when the M coil energizes, this NO contact closes, keeping the control circuit energized after the momentary Start button is released. Without it, the motor would stop the instant you let go of Start." },
+  { id:'fc149', topic:'drawing-diagrams', q:"In a 3-wire motor control rung, why is the Stop pushbutton NC (normally closed)?", a:"A NC stop button is already CLOSED in normal operation, allowing current to flow. Pressing Stop OPENS the contact, breaking the circuit and de-energizing the coil — motor stops. It is fail-safe: if the stop circuit is broken for any reason, the motor cannot run." },
+  { id:'fc150', topic:'drawing-diagrams', q:"What do the OL NC contacts do in a motor control ladder rung?", a:"The overload relay NC contacts are in series in the control rung. Under normal operation they are closed. If the motor overloads, the OL relay heats and opens these contacts, de-energizing the M coil and stopping the motor." },
+  { id:'fc151', topic:'drawing-diagrams', q:"How do you convert a block diagram cable run to a required cable type?", a:"Count the number of electrical connections that must cross between two boxes (the conductor count). 2 conductors = 14/2 NMD90. 3 conductors = 14/3 NMD90. Each unique conductor (hot, neutral, traveler, etc.) needs its own wire in the cable." },
+  { id:'fc152', topic:'drawing-diagrams', q:"What is the dashed line on a schematic between a coil symbol and a contact?", a:"The dashed line shows that the coil and contact are mechanically linked — when the coil (M) energizes, all contacts labeled M change state simultaneously. It is not a wire; it shows the electromechanical relationship between the coil and its contacts." },
+  { id:'fc153', topic:'drawing-diagrams', q:"Stop buttons are wired in series; Start buttons in parallel. Why?", a:"Series stops: ANY stop button can break the circuit and stop the motor (fail-safe). Parallel starts: ANY start button can energize the coil (convenience from multiple locations). This is universal in motor control circuits." },
 ];
 
 // ====== EXAM QUESTION BANK ======
@@ -2398,6 +2415,23 @@ const EXAM_BANK = [
   {id:'e490',topic:'motor-controls',q:"In a sequence control circuit for conveyors, where Conveyor 2 must stop if Conveyor 1 stops:",opts:["Conveyor 1 and 2 share a common overload relay","An auxiliary NC contact from Conveyor 1 starter is wired in series with Conveyor 2's coil circuit — Conveyor 1 stopping opens this contact and de-energizes Conveyor 2","Both conveyors must have the same HP motor","Special PLC programming is required"],correct:1,exp:"Interlock sequencing uses auxiliary contacts of one starter to control another. An NC auxiliary contact on Contactor 1 wired in series with Contactor 2's coil creates an interlock: if Contactor 1 de-energizes (trips or is stopped), its NC contact closes but the NO contact feeding Contactor 2 opens, stopping Conveyor 2. This prevents material buildup on a stopped conveyor — a common IEC/NEMA control design pattern."},
   {id:'e491',topic:'motor-controls',q:"A control circuit using a PLC (Programmable Logic Controller) compared to hard-wired relay logic:",opts:["Is always less reliable","Allows the control logic to be changed via software without rewiring — easier troubleshooting, data logging, and remote monitoring","Cannot control motor contactors","Is not permitted by CEC"],correct:1,exp:"PLC-based control replaces physical relay logic with software. Advantages: logic changes via programming (no rewiring), built-in diagnostics, data logging, remote monitoring via HMI, and ability to implement complex sequencing. However, field devices (pushbuttons, limit switches) and output devices (contactors, solenoids) are still hard-wired to PLC I/O modules. Safety circuits (E-stop) must still meet hardwired safety standards."},
   {id:'e492',topic:'motor-controls',q:"CEC Section 28 requires a motor disconnecting means that:",opts:["Can be a standard light switch","Is within sight of the motor (or lockable in the open position if not within sight), rated for the motor's locked rotor current, and capable of being locked in the open position","Is always a circuit breaker","Must be located at the motor control center only"],correct:1,exp:"CEC Rule 28-600 requires a disconnecting means within sight of the motor and driven machinery, or able to be locked open. 'Within sight' means visible from the motor and within 15m. The disconnect must be rated for the motor's locked rotor current (LRC). This allows safe servicing of the motor without traveling back to the MCC. Lockout/tagout capability is required for worker safety."},
+  {id:'e494',topic:'drawing-diagrams',q:"A block diagram shows [Panel] → [Switch Box] → [Light Box]. How many conductors are in the cable run between the switch box and the light box?",opts:["1","2","3","4"],correct:1,exp:"Two conductors are required: the switched hot (black) returning from the switch and the neutral (white) passing through to the light. Both must be present to complete the 120V circuit at the light fixture. This requires 14/2 NMD90 cable."},
+  {id:'e495',topic:'drawing-diagrams',q:"In a 3-way switch circuit, what cable type is required between the two switch boxes and why?",opts:["14/2 — one traveler is enough","14/3 — both traveler wires (plus neutral) must run between the switches","14/4 — the ground needs its own conductor","12/2 — larger wire for longer runs"],correct:1,exp:"Two traveler conductors (black and red) plus the neutral (white) must run between the two 3-way switch boxes — that's 3 conductors total, requiring 14/3 NMD90 cable. The bare EGC is not counted in the cable designation. 14/2 only carries 2 insulated conductors and cannot carry both travelers."},
+  {id:'e496',topic:'drawing-diagrams',q:"On a blueprint floor plan, a circuit line has two slash marks (//). This indicates:",opts:["The circuit is 240V","Two current-carrying conductors in the cable (14/2 NMD90)","Two conduit runs","The circuit is on Phase 2"],correct:1,exp:"Each slash mark on a circuit line represents one conductor. Two slashes = 2 current-carrying conductors = 14/2 NMD90 cable (or 12/2, etc. depending on ampacity). Three slashes would indicate 14/3. This convention is standard on Canadian electrical floor plans."},
+  {id:'e497',topic:'drawing-diagrams',q:"In a ladder (schematic) diagram, contacts are placed on which side of the rung? Coils on which side?",opts:["Contacts right, coils left","Contacts left, coils right — current flows left to right from L1 to N/L2","Contacts and coils alternate — no fixed rule","Both are placed in the centre"],correct:1,exp:"Universal ladder diagram rule: inputs (contacts, switches, pushbuttons) are placed on the LEFT side of each rung. Outputs (coils, lamps, solenoids) are placed on the RIGHT side closest to the neutral (N/L2) rail. Current conceptually flows left-to-right through closed contacts to energize the output. Violating this makes the diagram non-standard and hard to read."},
+  {id:'e498',topic:'drawing-diagrams',q:"A contact symbol on a schematic has a diagonal slash through the gap. This means the contact is:",opts:["Normally Open — must close to allow current","Normally Closed — is already closed; opens when coil is energized","A time-delay contact","A latching contact"],correct:1,exp:"The diagonal slash through a contact symbol indicates Normally Closed (NC). An NC contact is CLOSED when the controlling coil is de-energized (normal/resting state). When the coil energizes, the NC contact OPENS, breaking the circuit. Stop pushbuttons and overload relay contacts in motor control circuits are NC type."},
+  {id:'e499',topic:'drawing-diagrams',q:"What is the primary purpose of a wiring diagram compared to a schematic?",opts:["A wiring diagram shows circuit logic; a schematic shows physical routing","A wiring diagram shows actual physical terminal-to-terminal connections, wire colours, and cable types; a schematic shows circuit logic using standard symbols","A wiring diagram is only for residential work; a schematic for industrial","They are identical — same information, different names"],correct:1,exp:"Wiring diagrams show HOW to physically wire the circuit: which conductor colour goes to which terminal, where wire nuts are, what cable type runs between boxes. Schematics show WHY the circuit works: the logic, the contact conditions, and the current path from L1 to N/L2. An electrician needs both: the wiring diagram to build it and the schematic to troubleshoot it."},
+  {id:'e500',topic:'drawing-diagrams',q:"A white conductor is connected directly to a single-pole switch terminal (not at a wire nut). This indicates:",opts:["Correct wiring — white is always neutral","A switch loop return conductor — the white wire is acting as a hot conductor and must be re-identified with black tape","The switch is wired backwards","The circuit is 240V"],correct:1,exp:"A white wire at a switch terminal that is NOT spliced (wire-nutted) with other whites indicates a switch loop (switch leg). In a switch loop, cable runs from the light box to the switch box — the white wire carries the switched hot back to the light. CEC requires this white wire to be re-identified at both ends with black electrical tape or paint to indicate it is an ungrounded (hot) conductor."},
+  {id:'e501',topic:'drawing-diagrams',q:"In a ladder schematic, two contacts are drawn in SERIES in the same rung. What logic does this represent?",opts:["OR — either contact can close the circuit","AND — BOTH contacts must be closed for current to reach the output","XOR — only one can be closed at a time","NOT — one contact inverts the other"],correct:1,exp:"Series contacts in a ladder rung = AND logic. ALL contacts in the series path must be closed (or NC contacts must remain closed) for current to flow from L1 to the output at N/L2. This is how Stop and OL contacts work — both must allow current (both remain closed) for the motor to run. Opening either one breaks the circuit."},
+  {id:'e502',topic:'drawing-diagrams',q:"The M seal-in (holding) contact in a 3-wire motor control circuit is wired:",opts:["In series with the Start button","In parallel with the Start button — provides an alternate current path to keep the coil energized","In series with the Stop button","In parallel with the Stop button"],correct:1,exp:"The M auxiliary (seal-in) contact is in PARALLEL with the Start pushbutton. When the M coil energizes (because Start was pressed), this NO contact closes, providing an alternate path for control current. When the Start button is released, current continues through the seal-in path — the motor keeps running. Pressing Stop opens the series NC stop contact, breaking BOTH paths simultaneously."},
+  {id:'e503',topic:'drawing-diagrams',q:"A block diagram for a relay control circuit shows two separate rows: a control circuit row and a power circuit row. Why are they drawn separately?",opts:["They share the same conductors, just drawn twice for clarity","They are electrically separate circuits — the low-energy control circuit energizes the coil, which mechanically closes contacts to switch the high-energy power circuit","The power circuit is DC and the control circuit is AC","Building code requires separate drawings"],correct:1,exp:"A relay control circuit has two completely separate electrical circuits. The CONTROL circuit carries low energy (24V or 120V, low current) and energizes the relay coil via pushbuttons and pilot devices. The POWER circuit carries full load voltage and current through the relay's main contacts to the load. The relay's coil and contacts share no electrical connection — they are linked only magnetically/mechanically. This is the fundamental advantage of relay control: operators interact with low-energy circuits to switch high-voltage loads."},
+  {id:'e504',topic:'drawing-diagrams',q:"Converting a wiring diagram to a schematic: you find three conductors entering the same push button station. What likely motor control circuit is this?",opts:["Single-phase 240V circuit — two hots and a neutral","3-wire control — control hot, junction (between Stop and Start), and neutral/coil return","3-phase power — L1, L2, L3","A 3-way switch residential circuit"],correct:1,exp:"Three conductors to a push button station is the signature of 3-wire motor control. Wire 1: control hot from L1 (feeds the Stop NC contact). Wire 2: the junction point between the Stop and Start contacts (or M seal-in). Wire 3: the return from the coil to N/L2. This 3-wire arrangement is why the circuit is called '3-wire control' and it enables the seal-in function that allows the motor to run after releasing Start."},
+  {id:'e505',topic:'drawing-diagrams',q:"On a ladder schematic, a dashed line is drawn from the M coil symbol to an M contact symbol in a lower rung. This dashed line represents:",opts:["A wire connecting the coil to the contact","The electromechanical relationship — when M coil energizes, all M contacts change state; the dashed line is NOT a conductor","A ground connection","A shield or screen conductor"],correct:1,exp:"The dashed line in a ladder diagram between a coil and its contacts is a reference line, not a conductor. It shows which contacts belong to which coil — when M coil energizes, ALL contacts labeled M (both auxiliary and main contacts) change state simultaneously. This helps the reader trace the circuit logic across multiple rungs without confusion."},
+  {id:'e506',topic:'drawing-diagrams',q:"What is the minimum number of cable runs and conductor count to wire a basic single-pole switch controlling one ceiling light from a panel?",opts:["1 cable run, 2 conductors total","2 cable runs: panel to switch (14/2) and switch to light (14/2) — 4 conductors total (plus EGC)","3 cable runs — one for each wire","1 cable run, 3 conductors"],correct:1,exp:"Two separate cable runs are required: (1) Panel to switch box — 14/2 NMD90 carrying the hot and neutral (2 conductors). (2) Switch box to light box — 14/2 NMD90 carrying the switched hot and neutral (2 conductors). The neutral is wire-nutted at the switch box to pass through without interruption. The switch only interrupts the hot conductor. Total: 2 cables × 2 conductors = 4 conductors plus 2 bare EGCs."},
+  {id:'e507',topic:'drawing-diagrams',q:"In a 3-way switch schematic, both switches share two traveler conductors. What happens when you flip Switch 1?",opts:["Both travelers become active simultaneously","The active traveler changes from Traveler A to Traveler B (or vice versa) — the circuit may open or close depending on the position of Switch 2","The light always turns on regardless of Switch 2","Switch 2 is disconnected from the circuit"],correct:1,exp:"Each 3-way switch pivots its common terminal between Traveler A and Traveler B. Flipping SW1 changes which traveler is connected from the hot source. Whether the circuit is completed depends on whether SW2's common is also on the same traveler. If both switches are on the same traveler, the circuit is complete (light ON). If on different travelers, the circuit is open (light OFF). Flipping either switch toggles the light state."},
+  {id:'e508',topic:'drawing-diagrams',q:"The overload relay NC contacts are located in series in the control rung of a motor starter. What happens to the motor if an overload occurs?",opts:["The OL contacts close, adding resistance to the circuit — motor slows down","The OL contacts open, de-energizing the M coil — main contacts open and the motor stops","The OL heaters directly interrupt the motor's power circuit","The motor continues running but at reduced current"],correct:1,exp:"Overload relay NC contacts are in the control rung in series. Under normal operation they are CLOSED, allowing control current to flow. When an overload occurs, the OL heaters (in the power circuit) heat up over time, tripping the OL relay. This OPENS the NC contacts in the control rung, breaking the control circuit, de-energizing the M coil, opening all M contacts, and stopping the motor. The OL relay does NOT directly interrupt power — it interrupts the control circuit."},
+  {id:'e509',topic:'drawing-diagrams',q:"Which diagram type would you give to an electrician who needs to physically install a new push button station and wire it to an existing motor starter?",opts:["Block diagram — shows what devices are needed","Wiring diagram — shows the exact terminal connections, wire colours, and conductor routing between the push button station and starter","Schematic — shows the ladder logic","Either block or schematic would work equally well"],correct:1,exp:"A wiring diagram is required for physical installation work. It shows the exact terminal numbers, conductor colours (or numbered labeling), and which conductors connect where at both the push button station and the starter enclosure. The schematic tells you how the circuit works logically, but the wiring diagram tells you where each wire physically connects — which is what you need to install new equipment correctly."},
+
   {id:'e493',topic:'motor-controls',q:"When a thermal overload relay trips due to motor overload, the correct procedure is:",opts:["Replace the overload heaters immediately","Wait for the relay to cool (bimetallic type), identify and correct the cause of overload, then reset the relay — do not just reset and restart without investigating","Always replace the motor","Increase the overload relay setting by 25%"],correct:1,exp:"Tripped OLRs indicate a real problem: mechanical overload, single-phasing, low voltage, incorrect OLR sizing, or blocked ventilation. Resetting without investigation risks motor burnout on the next trip. Manual reset relays require deliberate reset action. Automatic reset relays restart automatically (hazard in some applications). Always investigate: check motor current with clamp meter, check driven load, check voltage balance, verify OLR setting vs. nameplate FLA."},
 
   // ===== POWER-FACTOR (bulk-up to ~35) =====
@@ -2798,6 +2832,20 @@ const STUDY_CONTENT = {
       { heading: "Sizing Overcurrent Protection", content: "For conductors: based on ampacity per CEC Table 2 — 14 AWG gets 15A max, 12 AWG gets 20A max. For motors: branch circuit protection is sized at 150-300% of motor FLA (allows for starting current), while overload protection is sized at 115-125% of FLA (protects during running). For lighting and receptacles: breaker matches the conductor ampacity. For transformers: primary protection per CEC Rule 26-252. Always check CEC Section 14 for the specific rules that apply to your installation. The overcurrent device protects the conductor first, and the load second." }
     ]
   },
+  'drawing-diagrams': {
+    title: "Drawing & Diagram Conversion",
+    sections: [
+      { heading: "The Three Diagram Types", content: "Every electrical installation uses three types of drawings, each serving a different purpose. A block diagram shows the logical sequence of components using labeled boxes and arrows — it tells you what is there and in what order, but nothing about wires. A wiring diagram shows physical connections: actual conductor colours, cable types, terminal connections, wire nuts, and how devices are interconnected inside their boxes. A schematic (ladder) diagram shows circuit logic using standard IEC/NEMA symbols on two vertical power rails — it is used for troubleshooting and understanding circuit operation. You must be able to read all three and convert between them.", isKeyPoint: true },
+      { heading: "Reading and Drawing Block Diagrams", content: "A block diagram is the starting point for any circuit design. Each block represents one function (power source, switch, relay coil, load). Arrows show the direction of power or signal flow. Block diagrams tell you the order components are connected but reveal nothing about wire colours, cable types, or physical routing. To convert a block diagram to a wiring diagram: identify each block, choose its physical device, then draw the actual conductors connecting each device's terminals with correct colour coding. To convert to a schematic: replace each block with its standard symbol and arrange it on ladder rails." },
+      { heading: "Counting Conductors from Block Diagrams", content: "One of the most important skills is determining how many conductors are needed in each cable run by reading a block diagram. Count the number of electrical connections that must pass between two physical locations. A basic switch-light circuit needs 2 conductors between the switch box and the light box (switched hot + neutral). A 3-way switch circuit needs 3 conductors between the two switch boxes (2 travelers + neutral) — requiring 14/3 cable. A 3-wire motor control circuit needs 3 conductors to the push button station. On a blueprint, the slash marks on a cable run line tell you the same thing: each slash = one conductor.", isKeyPoint: true },
+      { heading: "Wiring Diagrams: Cables and Colour Codes", content: "Canadian colour code: Black = hot (ungrounded) conductor. White = neutral (grounded) conductor. Red = second hot (in 14/3 or multi-wire circuits). Green or bare = equipment grounding conductor (EGC). In a switch loop (switch leg): the white wire is re-identified as hot using black tape or paint — it acts as the switched hot return. All conductor connections must be made inside an approved box. Wire nuts join conductors at splices. In wiring diagrams, every terminal connection, wire nut, and wire routing path is shown explicitly — this is what you build from in the field." },
+      { heading: "Schematic (Ladder) Diagrams", content: "A schematic uses standard symbols on two vertical rails. Left rail = L1 (hot, typically drawn as a solid line). Right rail = N or L2 (neutral or second hot). Each horizontal rung represents one complete circuit path. Contacts (inputs) are always drawn on the left side of a rung; coils and loads (outputs) are always on the right. A normally open (NO) contact is drawn as two vertical lines with a gap. A normally closed (NC) contact has a diagonal line through the gap. A coil is drawn as a circle or parentheses. Current flows left to right through closed contacts to reach the output — trace each rung to determine if the output can energize.", isKeyPoint: true },
+      { heading: "Standard Schematic Symbols You Must Know", content: "NO contact: two short vertical lines (open gap). NC contact: two short vertical lines with a diagonal slash. Relay/contactor coil: letter in a circle or parentheses (M = motor starter coil, CR = control relay). Push button NO: open contact with a curved actuator line above. Push button NC: closed contact with a curved actuator line and diagonal slash. Lamp: circle with an X inside. Motor: circle with the letter M. Fuse: rectangle with a diagonal hash. Circuit breaker: rectangle with a toggle arrow. Overload heater: wavy line in a rectangle. Three-phase lines: bold parallel lines labelled L1, L2, L3. Terminals: circles or squares at connection points." },
+      { heading: "Converting a Wiring Diagram to a Schematic", content: "Step 1 — Identify all control components (coils, contacts, pushbuttons) and power components (main contacts, loads). Step 2 — Draw two vertical rails. Step 3 — Place control rungs first: trace the control circuit from L1, placing contacts in series or parallel as they appear in the wiring diagram, ending with the coil at the right rail. Step 4 — Place power rungs below: trace line-side conductors through main contacts, OL heaters, to the motor. Step 5 — Add auxiliary contacts in their correct positions (seal-in contact in parallel with the start button). Step 6 — Add dashed lines from coil symbol to all contacts operated by that coil. The result is a clean, readable ladder diagram." },
+      { heading: "3-Way Switch Diagrams in Detail", content: "The 3-way switch circuit is the most common multi-wire residential circuit. Block diagram: Source → 3-Way SW1 → 3-Way SW2 → Light. Key points for conductor counting: Source to SW1 = 14/2 (2 conductors). SW1 to SW2 = 14/3 (3 conductors — 2 travelers + neutral passing through). SW2 to Light = 14/2 (2 conductors). Total cable runs: 3 cables. In the schematic, both switches share two traveler conductors. The common terminal of SW1 connects to hot; the common terminal of SW2 connects to the load. Flipping either switch changes which traveler is active and toggles the light — both switches must cooperate to complete the circuit." },
+      { heading: "Relay and Motor Starter Ladder Diagrams", content: "A relay control ladder has two sections: the control rung (top) with pushbutton and coil, and the power rung (bottom) with the main contact and load. The coil symbol and main contact share the same letter (M, CR, etc.) — a dashed line may be drawn between them to show the relationship. In a 3-wire motor starter: Stop NC is in series (in the control rung, between L1 and the Start button). Start NO is in parallel with the M auxiliary seal-in contact. OL NC contact is in series at the end of the control rung (between the coil and L2). Three-phase power rungs show L1/L2/L3 through M main contacts, then OL heaters, then to motor terminals T1/T2/T3.", isKeyPoint: true }
+    ]
+  },
   'inductors-capacitors': {
     title: "Inductors & Capacitors in Circuits",
     sections: [
@@ -2824,13 +2872,13 @@ const OWNER = {
   name: 'Ethan Fischer',
   isOwner: true
 };
-const OWNER_ANALYTICS_LOGIN = { email: 'owner@sparkstudy.com', password: 'sparkadmin2026' };
+const OWNER_ANALYTICS_LOGIN = { email: 'owner@sparkystudy.com', password: 'sparkadmin2026' };
 
 // ===== FIREBASE CONFIG =====
 // HOW TO SET UP (takes ~5 min):
 //   1. Go to https://console.firebase.google.com  and sign in with your Google account
-//   2. Click "Add project" → name it "sparkstudy" → disable Google Analytics → Create
-//   3. In your project: click the </> (Web) icon → register app as "sparkstudy" → Continue
+//   2. Click "Add project" → name it "sparkystudy" → disable Google Analytics → Create
+//   3. In your project: click the </> (Web) icon → register app as "sparkystudy" → Continue
 //   4. Copy the firebaseConfig object values into the fields below
 //   5. In left sidebar: Build → Firestore Database → Create database → Start in test mode → Next → Enable
 //   6. Save and redeploy. Done — all users will now appear in your admin panel!
@@ -2854,14 +2902,14 @@ const FireDB = {
     // Wait for Firebase SDK to load (it's deferred)
     let tries = 0;
     while (!window.firebase && tries++ < 20) await new Promise(r => setTimeout(r, 200));
-    if (!window.firebase) { console.warn('[SparkStudy] Firebase SDK not loaded'); return false; }
+    if (!window.firebase) { console.warn('[sparkystudy] Firebase SDK not loaded'); return false; }
     try {
       if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
       this.db = firebase.firestore();
       this.ready = true;
-      console.log('[SparkStudy] Firebase connected ✓');
+      console.log('[sparkystudy] Firebase connected ✓');
       return true;
-    } catch(e) { console.warn('[SparkStudy] Firebase init failed:', e.message); return false; }
+    } catch(e) { console.warn('[sparkystudy] Firebase init failed:', e.message); return false; }
   },
 
   // Save full user state (password is NEVER sent to cloud)
@@ -2873,7 +2921,7 @@ const FireDB = {
         { ...state, user: userSafe, _synced: firebase.firestore.FieldValue.serverTimestamp() },
         { merge: true }
       );
-    } catch(e) { console.warn('[SparkStudy] saveUser failed:', e.message); }
+    } catch(e) { console.warn('[sparkystudy] saveUser failed:', e.message); }
   },
 
   // Find a user by email in Firestore (for login + signup duplicate check)
@@ -2900,7 +2948,7 @@ const FireDB = {
         const local = Storage.getUserById(data.user.id);
         return local || data;
       });
-    } catch(e) { console.warn('[SparkStudy] getAllUsers failed:', e.message); return null; }
+    } catch(e) { console.warn('[sparkystudy] getAllUsers failed:', e.message); return null; }
   }
 };
 
@@ -4666,7 +4714,7 @@ const Notes = {
             >${savedHtml}</div>
             <!-- Print header (hidden on screen) -->
             <div id="notesPrintHeader" style="display:none;">
-              <h2>${topic.name} — SparkStudy Notes</h2>
+              <h2>${topic.name} — sparkystudy Notes</h2>
               <p style="font-size:0.8rem;color:#666;">Student: ${state.user.name} &nbsp;|&nbsp; Date: ${new Date().toLocaleDateString()}</p>
               <hr>
             </div>
@@ -10814,12 +10862,122 @@ const LESSONS_CONTENT = [
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will identify pilot devices and overcurrent protection devices used in industrial motor control circuits.',
+        outcome: 'The student will identify pilot devices and overcurrent protection devices used in industrial motor control circuits, and correctly size overcurrent protection for conductors and motors.',
         questions: [
           { q: 'A motor control panel has a red mushroom-head button, a green momentary button, an amber selector switch, and a green pilot light. Identify each device\'s likely function.', a: 'Red mushroom-head = Emergency Stop (maintained, hardwired). Green momentary = Start pushbutton (NO, momentary). Amber selector = Mode/caution function (e.g., Hand-Off-Auto or speed select). Green pilot light = Motor running or power available indicator.' },
           { q: 'A 30A, 600V, Class H fuse is installed in a panel where the available fault current is 25,000A. The fuse is rated 10,000A interrupting capacity. Describe the risk and the correct solution.', a: 'The fuse\'s interrupting rating (10 kAIC) is far below the available fault current (25 kA). Under a short circuit, the fuse will rupture violently and fail to clear the fault. The correct solution is to replace it with a fuse rated for at least 25 kAIC — such as Class J (200 kAIC) or Class RK1 (200 kAIC).' },
           { q: 'Describe a scenario where a time-delay fuse is required instead of a non-time-delay fuse, and explain the consequence of using the wrong type.', a: 'A motor circuit drawing 20A FLA with 5-7× starting inrush (100-140A for ~3 seconds). A non-time-delay fuse sized for 20A continuous current would blow on every start due to the inrush. It must be oversized to ~300% (60A), which severely reduces short-circuit protection. A time-delay fuse sized at 125-175% of FLA (25-35A) rides through the inrush while providing superior fault protection.' },
           { q: 'A 20A circuit breaker trips repeatedly on a circuit feeding an electric heater. The electrician replaces it with a 30A breaker to "fix" the problem. Explain what is wrong with this and what the correct approach should be.', a: 'Wrong approach: the 12 AWG wiring on a typical 20A circuit is only rated for 20A. A 30A breaker will allow 30A to flow through conductors rated for 20A, causing overheating, insulation breakdown, and potentially a fire. Correct approach: measure the actual current draw of the heater. If it exceeds 20A, the heater is oversized for the circuit — either replace the heater or upgrade the circuit (wiring and breaker together) to the appropriate ampacity.' }
+        ]
+      }
+    ]
+  }
+  ,{
+    id: 'm24',
+    title: 'Drawing & Diagram Conversion',
+    icon: '📋',
+    subtitle: 'Reading the Language Every Electrician Must Speak',
+    color: '#ec4899',
+    gradient: 'linear-gradient(135deg,rgba(236,72,153,0.12),rgba(139,92,246,0.06))',
+    border: 'rgba(236,72,153,0.3)',
+    readTime: '13 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: '⚡ The Drawing Is the Circuit',
+        body: `Before a single wire is pulled, before a single conduit is bent, the electrician reads the drawing.\n\nThe drawing tells you what to build. And every drawing speaks a specific language — a language of symbols, conventions, and diagram types that took over a century to standardize across the entire electrical industry.\n\nMiss one wire on the wiring diagram? The light doesn't work. Misread a contact symbol on the schematic? The motor won't start — or worse, won't stop. Mistake a 14/2 cable run for a 14/3 on a blueprint? You'll be back in the wall.\n\nThis module is about reading that language fluently.`
+      },
+      {
+        type: 'story',
+        title: '🏗 Three Ways to Describe the Same Circuit',
+        body: `Imagine you need to explain a simple switch-light circuit to three different people.\n\nTo a project manager, you draw boxes: [Panel] → [Switch] → [Light]. Simple. Clean. Shows the logic without any messy details.\n\nTo the apprentice who's pulling wire, you draw a wiring diagram: which wire goes to which terminal, what colour is which, where the wire nut is, and which cable carries how many conductors.\n\nTo the troubleshooter who shows up at 2 AM when the light doesn't work, you hand them a schematic: L1 on the left rail, N on the right, SW1 contact in the rung, lamp symbol at the end. They trace continuity from left to right in 10 seconds and find the problem.\n\nSame circuit. Three completely different drawings. Each one is exactly right for its purpose — and you need to be able to work with all three.`
+      },
+      {
+        type: 'concept',
+        title: '📦 Block Diagrams: The Big Picture',
+        body: `A block diagram is the simplest of the three. It uses labeled rectangles (blocks) connected by arrows to show the functional flow of a circuit.\n\nEach block represents one function:\n• [Power Source] → [Switch] → [Load]\n• [Control Source] → [Pushbutton] → [Relay Coil]\n• [L1/L2/L3] → [Main Contacts] → [OL Heaters] → [Motor]\n\nBlock diagrams tell you:\n✓ What components are in the circuit\n✓ What order they appear in\n✓ Which is the control path and which is the power path\n\nBlock diagrams do NOT tell you:\n✗ Wire colours\n✗ Cable types or sizes\n✗ Physical routing\n✗ Terminal connections\n✗ Whether contacts are NO or NC\n\nUse block diagrams for planning, documentation, and quick communication. They are often the first step in circuit design.`
+      },
+      {
+        type: 'keypoint',
+        title: '🧵 Wiring Diagrams: What the Apprentice Uses',
+        body: `A wiring diagram shows how the circuit is actually built — wire by wire, terminal by terminal.\n\nEvery conductor is shown with its correct colour. Every splice shows a wire nut. Every device shows all its terminals and what connects where. The physical layout of boxes often approximates the actual installation.\n\nCanadian conductor colour code:\n• Black = hot (ungrounded) conductor\n• White = neutral (grounded) conductor\n• Red = second hot in a multi-wire circuit (14/3 or 12/3 cable)\n• Green or bare = equipment grounding conductor (EGC)\n\nSwitch loops (switch legs): In older wiring, the cable from a light box to a switch box carries the hot in the black wire and returns the switched hot in the white wire. The white wire must be re-identified with black tape or paint at both ends — it is acting as a hot conductor, not a neutral.\n\nCounting conductors: each wire in a cable counts. 14/2 has 2 insulated conductors (black + white) plus a bare EGC. 14/3 has 3 insulated conductors (black + red + white) plus a bare EGC. The number after the slash tells you how many insulated conductors.`
+      },
+      {
+        type: 'concept',
+        title: '🪜 Schematic (Ladder) Diagrams: The Troubleshooter\'s Map',
+        body: `The schematic diagram is drawn in ladder format and is the universal language of motor control troubleshooting.\n\nStructure:\n• Two vertical rails: L1 (hot, left) and N/L2 (neutral or second hot, right)\n• Horizontal rungs connect the two rails\n• Each rung is a complete circuit path from L1 through contacts to a load at N/L2\n\nContact symbols:\n• NO contact: two short vertical lines (open gap) — must close for current to flow\n• NC contact: two short vertical lines with a diagonal slash — must NOT open for current to flow\n\nOutput symbols:\n• Coil: letter in parentheses or a circle — (M), (CR), (T)\n• Lamp: circle with X inside\n• Motor: circle with M\n\nReading rule: trace from L1, through each contact in series, to the output at N/L2. If ALL series contacts are closed, the output energizes. Contacts in parallel = OR logic (either one provides a path).\n\nThe most important convention: CONTACTS are on the LEFT side of the rung. OUTPUTS (coils, loads) are on the RIGHT side. Always.`,
+        formula: 'Series contacts: ALL must be closed (AND logic)\nParallel contacts: ANY ONE can close (OR logic)\nA coil energizes when current reaches it from L1 to N/L2'
+      },
+      {
+        type: 'keypoint',
+        title: '🔢 Counting Wires — The Core Skill',
+        body: `When you look at a block diagram and need to know what cable to buy, you count the conductors required between each pair of locations.\n\nBasic switch-light:\n• Panel → Switch box: 2 conductors (hot + neutral) → 14/2\n• Switch box → Light box: 2 conductors (switched hot + neutral) → 14/2\n\n3-way switch circuit:\n• Panel → SW1 box: 2 conductors → 14/2\n• SW1 box → SW2 box: 3 conductors (traveler A + traveler B + neutral) → 14/3\n• SW2 box → Light box: 2 conductors → 14/2\n\n3-wire motor control push button station:\n• 3 conductors to the button station (control hot, junction point, neutral return)\n\nMotor power circuit:\n• 3 conductors from starter to motor (T1, T2, T3)\n\nOn blueprints, slash marks on a circuit line tell you the same thing:\n// = 2 conductors (14/2)\n/// = 3 conductors (14/3)\n//// = 4 conductors\n\nA home run arrow on a floor plan shows which panel the circuit returns to.`
+      },
+      {
+        type: 'concept',
+        title: '🔄 Converting Between Diagram Types',
+        body: `Block → Wiring Diagram:\n1. Identify each block and select the physical device (single-pole switch, relay, motor)\n2. Draw each device's enclosure with all terminals\n3. Connect terminals with conductors using correct colour codes\n4. Show all wire nuts for splices\n5. Label cable types (14/2 NMD90, etc.)\n\nWiring → Schematic:\n1. Identify all loads (coils, motors, lamps) — these become your output symbols on the right rail\n2. Identify all contacts and switches — these become contact symbols on the left side of rungs\n3. Trace current paths in the wiring diagram → replicate as rungs\n4. Series connections in wiring become contacts in series in the rung\n5. Parallel connections become contacts in parallel\n6. Draw dashed lines connecting a coil symbol to all contacts operated by that coil\n\nSchematic → Wiring:\n1. Identify each rung and trace what it energizes\n2. For each component, draw its physical enclosure\n3. Connect terminals per the schematic, adding correct wire colours\n4. Combine circuits sharing the same box into one drawing\n\nThis back-and-forth conversion is what happens every time an electrician plans and then builds a control circuit.`
+      },
+      {
+        type: 'real-world',
+        title: '🛠 The 3-Wire Control Circuit — Reading the Ladder',
+        body: `The 3-wire motor starter is the most common control circuit in industrial electrical work, and you need to read it cold.\n\nControl rung (trace from left to right):\nL1 → [OL NC contact] → [Stop NC] → junction point → [Start NO] → [M coil] → N/L2\n                                              ↕ (parallel)\n                                         [M aux NO seal-in]\n\nHow to read it:\n• OL NC: if the overload trips, this contact opens, killing the coil — motor stops\n• Stop NC: pressing Stop opens this contact — motor stops\n• Junction: current can reach the coil through either the Start NO or the M seal-in\n• Start NO: momentarily closes when Start is pressed — energizes M coil\n• M seal-in: closes when M energizes — holds the circuit after Start is released\n• M coil: energizes to close all M contacts\n\nPower rungs (3-phase):\nL1 → [M contact] → [OL heater 1] → T1 → Motor\nL2 → [M contact] → [OL heater 2] → T2 → Motor\nL3 → [M contact] → [OL heater 3] → T3 → Motor\n\nThe dashed line from the M coil to all M contacts shows: when M coil energizes, ALL M contacts change state simultaneously.`
+      },
+      {
+        type: 'quiz',
+        title: '🧠 Quick Check',
+        questions: [
+          { q: 'A block diagram shows 3 slash marks on the cable run between two switch boxes. What cable type is needed?', a: '14/3 NMD90 — 3 slash marks = 3 conductors. The circuit is a 3-way switch and the two traveler wires plus neutral must run in the same cable between the two switch locations.' },
+          { q: 'In a ladder diagram, where are contacts placed relative to the coil?', a: 'Contacts (inputs/conditions) are always on the LEFT side of the rung. Coils and loads (outputs) are always on the RIGHT side, closest to the neutral rail. Current flows left to right through closed contacts to energize the output.' },
+          { q: 'What does a diagonal line through a contact symbol on a schematic mean?', a: 'It is a Normally Closed (NC) contact — the contacts are CLOSED when no power is applied to the coil. They OPEN when the coil is energized. NC contacts are used for stop buttons and overload contacts.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: '🛠 Pro Tips',
+        tips: [
+          'When counting conductors on a block diagram, draw a line between each pair of adjacent boxes and ask: "How many electrical connections must cross this line?" That number is your conductor count. Each connection needs its own conductor.',
+          'The white wire in a switch loop MUST be re-identified as a hot conductor — typically with a wrap of black electrical tape at both ends. If you see a white wire at a single-pole switch terminal (not at a wire nut), it is a switch leg return and it should be marked. Leaving it white is a code violation and creates a hazard for the next person who works there.',
+          'When troubleshooting from a ladder diagram: cover the right side with your finger, look at only the contacts in the rung, and ask "Can current get through here right now?" If yes, the coil should be energized. If the coil is NOT energized, you found the rung. Now test each contact in that rung until you find the one that won\'t close.'
+        ]
+      },
+      {
+        type: 'objectives',
+        title: 'Module Objectives',
+        objectives: [
+          'Define the three types of electrical diagrams: block diagram, wiring diagram, and schematic (ladder) diagram.',
+          'State the purpose of each diagram type and identify which is used for planning, which for wiring, and which for troubleshooting.',
+          'Read a block diagram and identify the logical sequence of components in a circuit.',
+          'Determine the number of conductors required in each cable run by analyzing a block diagram.',
+          'Identify the Canadian conductor colour code: black (hot), white (neutral), red (second hot), green/bare (EGC).',
+          'Explain the purpose of re-identifying a white conductor in a switch loop and describe how it is done.',
+          'Describe the difference between 14/2 and 14/3 NMD90 cable and explain when each is required.',
+          'Identify the structural elements of a ladder (schematic) diagram: L1 rail, N/L2 rail, rungs, contacts, and coils.',
+          'Distinguish between NO (normally open) and NC (normally closed) contact symbols on a schematic.',
+          'State the rule for placing contacts and loads on a ladder rung: contacts on the left, outputs on the right.',
+          'Trace a circuit path through a ladder rung and determine whether an output is energized given a set of contact states.',
+          'Identify the purpose of each element in a 3-wire motor control schematic: Stop NC, Start NO, M seal-in, M coil, OL NC contacts.',
+          'Explain how the seal-in (M auxiliary) contact allows the motor to run after the Start button is released.',
+          'Explain how the Stop NC contact and OL NC contact each stop the motor.',
+          'Convert a simple block diagram to a wiring diagram by adding conductor colours, cable types, and terminal connections.',
+          'Convert a wiring diagram to a schematic by extracting control rungs and power rungs in ladder format.',
+          'Read slash marks on a blueprint floor plan circuit line and determine the corresponding cable type.',
+          'Identify the schematic symbols for: NO contact, NC contact, relay/contactor coil, lamp, motor, fuse, push button NO/NC.'
+        ],
+        questions: [
+          { q: 'Why does a 3-way switch circuit require 14/3 cable between the two switches, while 14/2 is used for the rest of the circuit?', a: 'Between the two 3-way switches, three conductors are required: traveler A (black), traveler B (red), and neutral (white). 14/3 cable carries these three conductors plus the bare EGC. The source-to-SW1 and SW2-to-light runs only need 2 conductors each (hot + neutral or switched hot + neutral), so 14/2 is sufficient.' },
+          { q: 'In a 3-wire motor control circuit, what would happen if the M seal-in contact failed to close after the Start button was pressed?', a: 'The motor would run only while the Start button is held down. The instant the Start button is released, the control circuit would open (since the seal-in path was never established) and the coil would de-energize, stopping the motor. The seal-in contact is what provides "memory" to keep the motor running after momentary Start is released.' },
+          { q: 'On a schematic, you see a contact symbol with a diagonal slash near the Stop pushbutton. Is this contact normally open or normally closed? What does pressing Stop do to it?', a: 'The diagonal slash indicates an NC (normally closed) contact. In its normal state (with no one pressing Stop), this contact is CLOSED, allowing current to flow through the control rung to the coil. Pressing Stop opens this NC contact, breaking the control circuit, de-energizing the coil, and stopping the motor.' }
+        ]
+      },
+      {
+        type: 'outcome',
+        title: 'Module Desired Outcome',
+        outcome: 'The student will read, interpret, and convert between block diagrams, wiring diagrams, and schematic (ladder) diagrams for residential and motor control circuits, and will correctly count conductors from diagram information.',
+        questions: [
+          { q: 'You are given a block diagram: [Panel] → [3-Way SW1] → [3-Way SW2] → [Light Fixture]. List the three cable runs required, the cable type for each, and the conductor count for each run.', a: 'Run 1: Panel to SW1 box — 14/2 NMD90 — 2 conductors (black hot, white neutral). Run 2: SW1 box to SW2 box — 14/3 NMD90 — 3 conductors (black traveler, red traveler, white neutral). Run 3: SW2 box to Light box — 14/2 NMD90 — 2 conductors (black switched hot, white neutral). Total: 3 cable runs, 7 conductors (plus EGCs in each cable).' },
+          { q: 'Convert the following description to a ladder schematic rung: "A relay coil (CR1) is controlled by a normally open pushbutton (PB1). A normally closed limit switch (LS1) is in series before the pushbutton. A CR1 auxiliary contact is in parallel with PB1."', a: 'L1 rail → [LS1 NC contact] → junction → [PB1 NO contact] → [CR1 coil] → N rail. In parallel with PB1: [CR1 NO auxiliary contact] connected between the junction and the point after PB1. The NC slash on LS1 and NO gap on PB1 and CR1 aux must be correctly drawn.' },
+          { q: 'On a wiring diagram you see a white wire connected to a single-pole switch terminal. Is this correct? What must be done?', a: 'This is a switch loop — the white conductor is returning the switched hot from the switch back to the light box. It is being used as an ungrounded (hot) conductor, not a neutral. The CEC requires the white wire to be re-identified at both ends (at the switch terminal and at the splice in the light box) with black electrical tape or black paint to indicate it is being used as a hot conductor. Leaving it white is a violation and creates a hazard.' }
         ]
       }
     ]
@@ -11137,7 +11295,7 @@ const Settings = {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `sparkstudy-backup-${getToday()}.json`;
+    a.href = url; a.download = `sparkystudy-backup-${getToday()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('Data exported!', 'success');
@@ -11589,9 +11747,9 @@ const OwnerDashboard = {
   _getUserMastery(st) {const cs=Object.values(st.flashcards||{}).filter(c=>c.lastReview);if(!cs.length)return 0;return Math.round(cs.reduce((s,c)=>s+c.correct/Math.max(c.correct+c.incorrect,1),0)/cs.length*100);},
   _timeAgo(ts) {const d=Date.now()-ts;if(d<60000)return 'Just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';if(d<604800000)return Math.floor(d/86400000)+'d ago';return new Date(ts).toLocaleDateString();},
 
-  exportAll() {const d={analytics:SiteAnalytics.getData(),users:UserRegistry.getAll(),date:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkstudy-analytics-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
-  exportUsers() {const d=Storage.getAllUsers().map(s=>({...s,user:{...s.user,password:'[REDACTED]'}}));const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkstudy-users-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
-  exportFull() {const d={analytics:SiteAnalytics.getData(),registry:UserRegistry.getAll(),users:Storage.getAllUsers().map(s=>({...s,user:{...s.user,password:'[REDACTED]'}})),date:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkstudy-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
+  exportAll() {const d={analytics:SiteAnalytics.getData(),users:UserRegistry.getAll(),date:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkystudy-analytics-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
+  exportUsers() {const d=Storage.getAllUsers().map(s=>({...s,user:{...s.user,password:'[REDACTED]'}}));const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkystudy-users-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
+  exportFull() {const d={analytics:SiteAnalytics.getData(),registry:UserRegistry.getAll(),users:Storage.getAllUsers().map(s=>({...s,user:{...s.user,password:'[REDACTED]'}})),date:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sparkystudy-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);showToast('Exported!','success');},
 
   generateTestData() {
     const names = ['Alex Johnson','Sarah Miller','Jake Thompson','Emma Davis','Ryan Wilson','Olivia Brown','Liam Garcia','Mia Anderson','Noah Martinez','Ava Taylor'];
@@ -12088,7 +12246,7 @@ const PWA = {
       // Hide the banner once installed
       const banner = document.getElementById('landingInstallBanner');
       if (banner) banner.style.display = 'none';
-      showToast('SparkStudy installed! Tap the icon on your home screen to launch it.', 'success');
+      showToast('sparkystudy installed! Tap the icon on your home screen to launch it.', 'success');
     });
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -12105,7 +12263,7 @@ const PWA = {
         }
       });
     } else {
-      showToast('Open this page in Chrome or Safari, then use "Add to Home Screen" to install SparkStudy.', 'info');
+      showToast('Open this page in Chrome or Safari, then use "Add to Home Screen" to install sparkystudy.', 'info');
     }
   }
 };
