@@ -5974,201 +5974,318 @@ const Tools = {
   // ===== PARALLEL CIRCUIT BUILDER =====
   _simParallel() {
     return `
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:0;overflow:hidden;">
-        <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(135deg,rgba(139,92,246,0.06),transparent);">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            <div style="font-size:1.5rem;">⚡</div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;overflow:hidden;">
+        <!-- Header -->
+        <div style="padding:20px 24px 18px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.04),transparent);">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.1));border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">⚡</div>
             <div>
-              <div style="font-weight:700;font-size:1rem;">Parallel Circuit Builder</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">Voltage is the same across all branches — current divides</div>
+              <div style="font-weight:800;font-size:1.05rem;color:var(--text-primary);">Parallel Circuit Simulator</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Same voltage across every branch — current divides proportionally</div>
             </div>
           </div>
           <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
             <div>
-              <label style="font-size:0.7rem;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Source Voltage</label>
-              <div style="display:flex;align-items:center;gap:6px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:4px 10px 4px 4px;">
-                <input type="number" id="parSimV" value="120" min="1" max="600" style="width:70px;padding:6px 8px;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:1.1rem;font-weight:700;" oninput="Tools._updateParallelSim()">
-                <span style="font-size:0.85rem;color:#8b5cf6;font-weight:700;">V</span>
+              <label style="font-size:0.68rem;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;">Source Voltage</label>
+              <div style="display:flex;align-items:center;gap:0;background:rgba(139,92,246,0.07);border:1.5px solid rgba(139,92,246,0.3);border-radius:10px;overflow:hidden;">
+                <input type="number" id="parSimV" value="120" min="1" max="600" style="width:75px;padding:9px 10px;background:transparent;border:none;outline:none;color:#c4b5fd;font-size:1.15rem;font-weight:800;" oninput="Tools._updateParallelSim()">
+                <span style="padding:0 12px;font-size:0.9rem;color:#8b5cf6;font-weight:800;border-left:1px solid rgba(139,92,246,0.2);">V</span>
               </div>
             </div>
             <div>
-              <label style="font-size:0.7rem;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Branches</label>
-              <select id="parSimN" style="padding:8px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-weight:600;font-size:0.9rem;" onchange="Tools._updateParallelSim()">
+              <label style="font-size:0.68rem;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;">Branches</label>
+              <select id="parSimN" style="padding:9px 14px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:10px;color:var(--text-primary);font-weight:700;font-size:0.95rem;" onchange="Tools._updateParallelSim()">
                 <option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
               </select>
             </div>
-            <div id="parSimInputs" style="display:flex;gap:8px;flex-wrap:wrap;flex:1;"></div>
+            <div id="parSimInputs" style="display:flex;gap:10px;flex-wrap:wrap;flex:1;"></div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:0;">
-          <div style="padding:20px;border-right:1px solid rgba(255,255,255,0.06);">
-            <canvas id="parSimCanvas" width="460" height="340" style="width:100%;border-radius:10px;background:rgba(0,0,0,0.15);"></canvas>
+        <!-- Canvas + Results two-col -->
+        <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:0;">
+          <div style="padding:20px;border-right:1px solid rgba(255,255,255,0.05);">
+            <canvas id="parSimCanvas" width="480" height="380" style="width:100%;border-radius:14px;background:#0a0a12;display:block;"></canvas>
           </div>
-          <div id="parSimResults" style="font-size:0.85rem;padding:20px;"></div>
+          <div id="parSimResults" style="padding:20px;overflow-y:auto;"></div>
         </div>
       </div>
     `;
   },
 
   _updateParallelSim() {
-    const v = parseFloat(document.getElementById('parSimV').value) || 120;
-    const n = parseInt(document.getElementById('parSimN').value) || 3;
+    const v = parseFloat(document.getElementById('parSimV')?.value) || 120;
+    const n = parseInt(document.getElementById('parSimN')?.value) || 3;
     const inputDiv = document.getElementById('parSimInputs');
-    const colors = ['#f59e0b', '#8b5cf6', '#3b82f6', '#22c55e', '#ef4444'];
+    if (!inputDiv) return;
+    const colors = ['#f59e0b','#8b5cf6','#3b82f6','#22c55e','#ef4444'];
+
+    // Rebuild resistor inputs only if count changed
     const existing = inputDiv.querySelectorAll('input').length;
     if (existing !== n) {
-      inputDiv.innerHTML = Array.from({length: n}, (_, i) => `
+      inputDiv.innerHTML = Array.from({length:n},(_,i)=>`
         <div>
-          <label style="font-size:0.65rem;color:${colors[i % colors.length]};display:block;margin-bottom:4px;font-weight:700;">R${i+1} (Ω)</label>
-          <input type="number" id="parSimR${i}" value="${[100,200,300,150,250][i] || 100}" min="1" max="100000" style="width:76px;padding:7px 8px;background:var(--bg-input);border:2px solid ${colors[i%colors.length]}33;border-radius:8px;color:var(--text-primary);font-weight:600;font-size:0.9rem;" oninput="Tools._updateParallelSim()">
-        </div>
-      `).join('');
+          <label style="font-size:0.68rem;color:${colors[i%colors.length]};display:block;margin-bottom:5px;font-weight:800;letter-spacing:0.3px;">R${i+1} (Ω)</label>
+          <input type="number" id="parSimR${i}" value="${[100,200,300,150,250][i]||100}" min="1" max="100000"
+            style="width:80px;padding:8px 10px;background:${colors[i%colors.length]}14;border:2px solid ${colors[i%colors.length]}44;border-radius:9px;color:var(--text-primary);font-weight:700;font-size:0.95rem;outline:none;"
+            oninput="Tools._updateParallelSim()">
+        </div>`).join('');
     }
-    const rs = Array.from({length: n}, (_, i) => parseFloat(document.getElementById('parSimR' + i)?.value) || 100);
-    const rt = 1 / rs.reduce((s, r) => s + 1/r, 0);
-    const it = v / rt;
-    const branches = rs.map(r => v / r);
-    const powers = rs.map(r => v * v / r);
-    const maxBranch = Math.max(...branches);
 
-    // === Premium Canvas Drawing ===
-    const canvas = document.getElementById('parSimCanvas');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      const W = canvas.width, H = canvas.height;
-      ctx.clearRect(0, 0, W, H);
+    const rs = Array.from({length:n},(_,i)=>parseFloat(document.getElementById('parSimR'+i)?.value)||100);
+    const rt = 1/rs.reduce((s,r)=>s+1/r,0);
+    const it = v/rt;
+    const branches = rs.map(r=>v/r);
+    const powers = rs.map(r=>v*v/r);
+    const maxI = Math.max(...branches);
 
-      // Background
-      const bg = ctx.createLinearGradient(0, 0, W, H);
-      bg.addColorStop(0, 'rgba(139,92,246,0.03)'); bg.addColorStop(1, 'rgba(59,130,246,0.03)');
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    // ── Start / restart animation ──
+    if (this._parAnimFrame) { cancelAnimationFrame(this._parAnimFrame); this._parAnimFrame = null; }
+    this._parPhase = 0;
+    this._parV = v; this._parN = n; this._parRs = rs;
+    this._parBranches = branches; this._parIt = it;
 
-      const busL = 80, busR = W - 40;
-      const topY = 30, botY = H - 30;
-      const branchH = (botY - topY - 20) / n;
+    const animate = () => {
+      this._parAnimFrame = requestAnimationFrame(animate);
+      const canvas = document.getElementById('parSimCanvas');
+      if (!canvas) { cancelAnimationFrame(this._parAnimFrame); this._parAnimFrame = null; return; }
+      this._parPhase = (this._parPhase||0) + 0.8;
+      Tools._drawParallelCanvas(canvas, this._parV, this._parN, this._parRs, this._parBranches, this._parIt, this._parPhase);
+    };
+    animate();
 
-      // Vertical bus bars
-      ctx.shadowColor = 'rgba(139,92,246,0.2)'; ctx.shadowBlur = 8;
-      ctx.strokeStyle = '#374151'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(busL, topY); ctx.lineTo(busL, botY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(busR, topY); ctx.lineTo(busR, botY); ctx.stroke();
+    // ── Results panel ──
+    const resultsDiv = document.getElementById('parSimResults');
+    if (!resultsDiv) return;
+    const totalP = powers.reduce((s,p)=>s+p,0);
+    const fmtI = i => i>=1 ? i.toFixed(3)+'A' : (i*1000).toFixed(1)+'mA';
+
+    resultsDiv.innerHTML = `
+      <!-- Stat row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.03));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Total R</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#a78bfa;">${rt.toFixed(2)}Ω</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);margin-top:3px;">&lt; ${Math.min(...rs)}Ω smallest</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.03));border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Total I</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#4ade80;">${fmtI(it)}</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);margin-top:3px;">sum of all branches</div>
+        </div>
+      </div>
+      <!-- Voltage rule -->
+      <div style="background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.18);border-radius:10px;padding:10px 13px;font-size:0.78rem;color:#a78bfa;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:1rem;">🔁</span> Every branch sees exactly <strong>${v}V</strong>
+      </div>
+      <!-- Branch currents -->
+      <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;margin-bottom:10px;">Branch Currents</div>
+      ${rs.map((r,i)=>{
+        const iStr=fmtI(branches[i]);
+        const pct=(branches[i]/it*100).toFixed(0);
+        return `
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:11px;height:11px;border-radius:50%;background:${colors[i%colors.length]};box-shadow:0 0 6px ${colors[i%colors.length]}88;flex-shrink:0;"></div>
+              <span style="font-size:0.82rem;color:var(--text-secondary);">I<sub>${i+1}</sub> = ${v}V ÷ ${r}Ω</span>
+            </div>
+            <span style="font-weight:800;color:${colors[i%colors.length]};font-size:0.88rem;">${iStr}</span>
+          </div>
+          <div style="height:7px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${colors[i%colors.length]}cc,${colors[i%colors.length]});border-radius:4px;transition:width 0.4s ease;box-shadow:0 0 8px ${colors[i%colors.length]}55;"></div>
+          </div>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-top:3px;text-align:right;">${pct}% of total</div>
+        </div>`;
+      }).join('')}
+      <div style="font-size:0.72rem;color:var(--text-muted);padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);margin-top:2px;">
+        Sum: ${fmtI(branches.reduce((s,b)=>s+b,0))} = ${fmtI(it)} ✓
+      </div>
+      <!-- Power -->
+      <div style="margin-top:14px;">
+        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;margin-bottom:8px;">Power Dissipation</div>
+        ${rs.map((r,i)=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <span style="font-size:0.82rem;color:${colors[i%colors.length]};font-weight:600;">P<sub>${i+1}</sub></span>
+            <span style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">${powers[i]>=1?powers[i].toFixed(1)+'W':(powers[i]*1000).toFixed(1)+'mW'}</span>
+          </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;margin-top:2px;">
+          <span style="font-size:0.9rem;font-weight:800;color:var(--text-primary);">P Total</span>
+          <span style="font-size:1rem;font-weight:900;color:#a78bfa;">${totalP>=1?totalP.toFixed(1)+'W':(totalP*1000).toFixed(1)+'mW'}</span>
+        </div>
+      </div>
+    `;
+  },
+
+  _drawParallelCanvas(canvas, v, n, rs, branches, it, phase) {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const colors = ['#f59e0b','#8b5cf6','#3b82f6','#22c55e','#ef4444'];
+    const maxI = Math.max(...branches);
+
+    ctx.clearRect(0,0,W,H);
+
+    // Dark background with subtle vignette
+    const bgGrad = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.7);
+    bgGrad.addColorStop(0,'#0f0f1c'); bgGrad.addColorStop(1,'#070710');
+    ctx.fillStyle = bgGrad; ctx.fillRect(0,0,W,H);
+
+    // Grid dots
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    for(let gx=20;gx<W;gx+=24) for(let gy=20;gy<H;gy+=24) { ctx.beginPath(); ctx.arc(gx,gy,1,0,Math.PI*2); ctx.fill(); }
+
+    const busLX = 110, busRX = W - 50;
+    const topY = 38, botY = H - 38;
+    const usableH = botY - topY;
+    const branchSpacing = usableH / n;
+
+    // ── Draw branches first (behind bus bars) ──
+    rs.forEach((r,i) => {
+      const branchY = topY + i * branchSpacing + branchSpacing / 2;
+      const color = colors[i % colors.length];
+      const branchFraction = branches[i] / it;
+      // Wire thickness proportional to current (2-7px)
+      const wireW = 2 + branchFraction * 5;
+
+      const resW = 68, resH = 28;
+      const resCX = (busLX + busRX) / 2;
+      const resX = resCX - resW/2, resY = branchY - resH/2;
+
+      // Left wire: busL → resistor
+      ctx.strokeStyle = color + 'aa'; ctx.lineWidth = wireW;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(busLX, branchY); ctx.lineTo(resX, branchY); ctx.stroke();
+      // Right wire: resistor → busR
+      ctx.beginPath(); ctx.moveTo(resX+resW, branchY); ctx.lineTo(busRX, branchY); ctx.stroke();
+
+      // Wire glow
+      ctx.shadowColor = color; ctx.shadowBlur = 8;
+      ctx.strokeStyle = color + '44'; ctx.lineWidth = wireW + 4;
+      ctx.beginPath(); ctx.moveTo(busLX, branchY); ctx.lineTo(resX, branchY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(resX+resW, branchY); ctx.lineTo(busRX, branchY); ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Source on far left
-      const srcX = 30, srcMid = (topY + botY) / 2;
-      ctx.strokeStyle = '#374151'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(srcX, topY); ctx.lineTo(busL, topY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(srcX, botY); ctx.lineTo(busL, botY); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(srcX, topY); ctx.lineTo(srcX, srcMid - 18); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(srcX, botY); ctx.lineTo(srcX, srcMid + 18); ctx.stroke();
-      // Battery plates
-      ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(srcX - 12, srcMid - 18); ctx.lineTo(srcX + 12, srcMid - 18); ctx.stroke();
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(srcX - 8, srcMid - 6); ctx.lineTo(srcX + 8, srcMid - 6); ctx.stroke();
-      ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(srcX - 12, srcMid + 6); ctx.lineTo(srcX + 12, srcMid + 6); ctx.stroke();
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(srcX - 8, srcMid + 18); ctx.lineTo(srcX + 8, srcMid + 18); ctx.stroke();
-      ctx.fillStyle = '#8b5cf6'; ctx.font = 'bold 12px Inter,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(v + 'V', srcX, srcMid + 32);
+      // ── Resistor body ──
+      // Outer glow rect
+      ctx.shadowColor = color; ctx.shadowBlur = 18;
+      const resGrad = ctx.createLinearGradient(resX, resY, resX+resW, resY+resH);
+      resGrad.addColorStop(0, color+'33'); resGrad.addColorStop(0.5, color+'55'); resGrad.addColorStop(1, color+'33');
+      ctx.fillStyle = resGrad;
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(resX, resY, resW, resH, 7); ctx.fill(); ctx.stroke();
+      ctx.shadowBlur = 0;
 
-      // Bus bar labels
-      ctx.fillStyle = 'rgba(139,92,246,0.7)'; ctx.font = 'bold 10px Inter,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('+', busL, topY - 8);
-      ctx.fillText('−', busL, botY + 14);
-      ctx.fillText('V = ' + v + 'V across all', (busL + busR) / 2, botY + 14);
+      // Zig-zag inside the resistor box
+      const zigX1 = resX+6, zigX2 = resX+resW-6, zigY = branchY;
+      const zigW = zigX2-zigX1, zigCount = 5, zigH = 6;
+      const zigStep = zigW / (zigCount*2);
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(zigX1, zigY);
+      for(let z=0;z<zigCount;z++){
+        ctx.lineTo(zigX1+(z*2+1)*zigStep, zigY-zigH);
+        ctx.lineTo(zigX1+(z*2+2)*zigStep, zigY+zigH);
+      }
+      ctx.stroke();
 
-      // Branch resistors
-      rs.forEach((r, i) => {
-        const branchY = topY + 10 + i * branchH + branchH / 2;
-        const color = colors[i % colors.length];
-        const resistorX = busL + (busR - busL) / 2 - 30;
-        const resistorW = 60, resistorH = 24;
+      // Resistor value label above the box
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Inter,sans-serif'; ctx.textAlign = 'center';
+      ctx.shadowColor = color; ctx.shadowBlur = 6;
+      ctx.fillText(r>=1000?(r/1000).toFixed(1)+'kΩ':r+'Ω', resCX, resY-6);
+      ctx.shadowBlur = 0;
 
-        // Branch wire
-        ctx.strokeStyle = color + '44'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(busL, branchY); ctx.lineTo(resistorX, branchY); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(resistorX + resistorW, branchY); ctx.lineTo(busR, branchY); ctx.stroke();
+      // R label below
+      ctx.fillStyle = color+'aa'; ctx.font = '600 9px Inter,sans-serif';
+      ctx.fillText('R'+(i+1), resCX, resY+resH+11);
 
-        // Resistor body
-        ctx.shadowColor = color + '33'; ctx.shadowBlur = 10;
-        const grad = ctx.createLinearGradient(resistorX, branchY - resistorH/2, resistorX + resistorW, branchY + resistorH/2);
-        grad.addColorStop(0, color + '22'); grad.addColorStop(0.5, color + '44'); grad.addColorStop(1, color + '22');
-        ctx.fillStyle = grad; ctx.strokeStyle = color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.roundRect(resistorX, branchY - resistorH/2, resistorW, resistorH, 6); ctx.fill(); ctx.stroke();
-        ctx.shadowBlur = 0;
+      // Current label on left wire
+      const iStr = branches[i]>=1 ? branches[i].toFixed(3)+'A' : (branches[i]*1000).toFixed(1)+'mA';
+      ctx.fillStyle = color; ctx.font = 'bold 11px Inter,sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('I'+(i+1)+' = '+iStr, busLX+10, branchY-10);
 
-        // Resistor label inside
-        ctx.fillStyle = color; ctx.font = 'bold 10px Inter,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(r + 'Ω', resistorX + resistorW/2, branchY + 4);
+      // ── Animated current particles ──
+      const numParticles = Math.max(2, Math.round(branchFraction * 8));
+      const totalLen = (resX - busLX) + resW + (busRX - (resX+resW));
+      for(let p=0;p<numParticles;p++){
+        const offset = (phase * (1 + branchFraction * 0.5) + p * (100/numParticles)) % 100;
+        const dist = (offset/100) * totalLen;
+        let px, py = branchY;
+        if(dist < resX - busLX) { px = busLX + dist; }
+        else if(dist < resX - busLX + resW) { px = resX + (dist - (resX-busLX)); }
+        else { px = resX + resW + (dist - (resX-busLX+resW)); }
 
-        // R label
-        ctx.fillStyle = 'rgba(156,163,175,0.7)'; ctx.font = '9px Inter,sans-serif';
-        ctx.fillText('R' + (i+1), resistorX + resistorW/2, branchY + 16);
+        // Particle
+        const pGrad = ctx.createRadialGradient(px,py,0,px,py,4);
+        pGrad.addColorStop(0,'#fff'); pGrad.addColorStop(0.4,color); pGrad.addColorStop(1,'transparent');
+        ctx.fillStyle = pGrad;
+        ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill();
+        // Tail
+        ctx.strokeStyle = color+'55'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        const tailLen = 8 + branchFraction * 6;
+        const tailDist = Math.max(0, dist - tailLen);
+        let tx, ty = py;
+        if(tailDist < resX-busLX) tx = busLX+tailDist;
+        else if(tailDist < resX-busLX+resW) tx = resX+(tailDist-(resX-busLX));
+        else tx = resX+resW+(tailDist-(resX-busLX+resW));
+        ctx.moveTo(tx, ty); ctx.lineTo(px, py); ctx.stroke();
+      }
+    });
 
-        // Current label
-        const iStr = branches[i] >= 1 ? branches[i].toFixed(3)+'A' : (branches[i]*1000).toFixed(1)+'mA';
-        ctx.fillStyle = color; ctx.font = 'bold 11px Inter,sans-serif';
-        ctx.fillText('I' + (i+1) + ' = ' + iStr, busL + 20, branchY - 12);
+    // ── Left bus bar (hot) ──
+    const busGradL = ctx.createLinearGradient(0,topY,0,botY);
+    busGradL.addColorStop(0,'#a78bfa'); busGradL.addColorStop(1,'#7c3aed');
+    ctx.shadowColor = '#8b5cf6'; ctx.shadowBlur = 20;
+    ctx.strokeStyle = busGradL; ctx.lineWidth = 7; ctx.lineCap = 'square';
+    ctx.beginPath(); ctx.moveTo(busLX,topY); ctx.lineTo(busLX,botY); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // "+" label
+    ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 14px Inter,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('+', busLX, topY-14);
 
-        // Current bar relative width
-        const barW = (busR - busL - 130) * (branches[i] / it);
-        ctx.fillStyle = color + '33'; ctx.lineWidth = 0;
-        ctx.beginPath(); ctx.roundRect(resistorX + resistorW + 5, branchY - 3, Math.max(barW, 4), 6, 3); ctx.fill();
-      });
+    // ── Right bus bar (return) ──
+    ctx.shadowColor = '#475569'; ctx.shadowBlur = 8;
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(busRX,topY); ctx.lineTo(busRX,botY); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px Inter,sans-serif';
+    ctx.fillText('−', busRX, topY-14);
 
-      // Total current label
-      ctx.fillStyle = '#22c55e'; ctx.font = 'bold 13px Inter,sans-serif'; ctx.textAlign = 'left';
-      const itStr2 = it >= 1 ? it.toFixed(3)+'A' : (it*1000).toFixed(1)+'mA';
-      ctx.fillText('IT = ' + itStr2, srcX - 10, topY - 8);
+    // ── Battery (below left bus) ──
+    const batX = 52, batTopY = topY + 10, batBotY = botY - 10, batMid = (batTopY+batBotY)/2;
+    // wire from bus top to battery top
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(busLX,topY); ctx.lineTo(busLX,topY); ctx.stroke();
+    // vertical wires
+    ctx.beginPath(); ctx.moveTo(batX,batTopY); ctx.lineTo(batX,batMid-22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(batX,batBotY); ctx.lineTo(batX,batMid+22); ctx.stroke();
+    // horizontal connectors to bus
+    ctx.beginPath(); ctx.moveTo(batX,batTopY); ctx.lineTo(busLX,topY+6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(batX,batBotY); ctx.lineTo(busLX,botY-6); ctx.stroke();
+    // Battery plates (5 pairs)
+    const plateSep = 8;
+    for(let pi=0;pi<4;pi++){
+      const py2 = batMid - 14 + pi*plateSep;
+      const thick = pi%2===0;
+      ctx.strokeStyle = thick?'#a78bfa':'#64748b';
+      ctx.lineWidth = thick?4:2;
+      const hw = thick?13:9;
+      ctx.beginPath(); ctx.moveTo(batX-hw,py2); ctx.lineTo(batX+hw,py2); ctx.stroke();
     }
+    // Voltage label
+    ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 13px Inter,sans-serif'; ctx.textAlign = 'center';
+    ctx.shadowColor='#8b5cf6'; ctx.shadowBlur=8;
+    ctx.fillText(v+'V', batX, batMid+34);
+    ctx.shadowBlur=0;
 
-    const resultsDiv = document.getElementById('parSimResults');
-    if (resultsDiv) {
-      const totalP = powers.reduce((s,p)=>s+p,0);
-      const itStr = it >= 1 ? it.toFixed(4)+'A' : (it*1000).toFixed(2)+'mA';
-      resultsDiv.innerHTML = `
-        <div style="margin-bottom:16px;">
-          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;">Circuit Summary</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-            <div style="background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(139,92,246,0.02));border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:12px;text-align:center;">
-              <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Total R</div>
-              <div style="font-size:1.1rem;font-weight:800;color:#8b5cf6;">${rt.toFixed(2)}Ω</div>
-              <div style="font-size:0.6rem;color:var(--text-muted);">&lt; smallest (${Math.min(...rs)}Ω)</div>
-            </div>
-            <div style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;text-align:center;">
-              <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Total I</div>
-              <div style="font-size:1.1rem;font-weight:800;color:#22c55e;">${itStr}</div>
-            </div>
-          </div>
-          <div style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.12);border-radius:8px;padding:8px 12px;font-size:0.75rem;color:#8b5cf6;font-weight:600;margin-bottom:12px;">
-            ✓ Voltage is THE SAME across every branch (${v}V)
-          </div>
-        </div>
-        <div style="margin-bottom:14px;">
-          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">Branch Currents</div>
-          ${rs.map((r, i) => {
-            const iStr = branches[i] >= 1 ? branches[i].toFixed(3)+'A' : (branches[i]*1000).toFixed(1)+'mA';
-            return `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <div style="width:10px;height:10px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0;"></div>
-              <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);">I<sub>${i+1}</sub> = ${v}V ÷ ${r}Ω</div>
-              <div style="font-weight:700;color:${colors[i%colors.length]};font-size:0.85rem;">${iStr}</div>
-            </div>
-            <div style="height:4px;background:var(--bg-input);border-radius:2px;margin-bottom:8px;margin-left:18px;">
-              <div style="height:100%;width:${(branches[i]/it*100).toFixed(1)}%;background:${colors[i%colors.length]};border-radius:2px;"></div>
-            </div>`;
-          }).join('')}
-          <div style="font-size:0.72rem;color:var(--text-muted);margin-left:18px;">Sum: ${branches.reduce((s,b)=>s+b,0).toFixed(3)}A = ${itStr} ✓</div>
-        </div>
-        <div>
-          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">Power per Branch</div>
-          ${rs.map((r,i)=>`<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;"><span style="color:${colors[i%colors.length]};">P<sub>${i+1}</sub></span><span style="font-weight:600;">${powers[i]>=1?powers[i].toFixed(2)+'W':(powers[i]*1000).toFixed(1)+'mW'}</span></div>`).join('')}
-          <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:6px 0;border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;"><span style="font-weight:700;">P Total</span><span style="font-weight:800;color:#8b5cf6;">${totalP>=1?totalP.toFixed(2)+'W':(totalP*1000).toFixed(1)+'mW'}</span></div>
-        </div>
-      `;
-    }
+    // ── Total current label at top ──
+    const itStr = it>=1 ? it.toFixed(3)+'A' : (it*1000).toFixed(1)+'mA';
+    ctx.fillStyle='#4ade80'; ctx.font='bold 13px Inter,sans-serif'; ctx.textAlign='left';
+    ctx.shadowColor='#22c55e'; ctx.shadowBlur=8;
+    ctx.fillText('IT = '+itStr, busLX+12, topY-14);
+    ctx.shadowBlur=0;
+
+    // ── V label at bottom ──
+    ctx.fillStyle='rgba(167,139,250,0.6)'; ctx.font='600 10px Inter,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('V = '+v+'V across all branches', (busLX+busRX)/2, botY+20);
   },
 
   // ===== CEC WIRE SIZER =====
