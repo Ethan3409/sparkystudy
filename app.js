@@ -3883,231 +3883,391 @@ const Tools = {
     }
   },
 
-  // ===== OHM'S LAW SIMULATOR =====
+  // ===== OHM'S LAW SIMULATOR (WORLD CLASS) =====
   _simOhm() {
-    const mode = this._ohmMode || 'I';
-    return `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-            <h3 style="margin:0;font-size:1rem;">Circuit Controls</h3>
-            <div style="display:flex;gap:2px;background:var(--bg-input);border-radius:8px;padding:2px;">
-              <button onclick="Tools._ohmMode='I';Tools.open('ohm-sim')" style="padding:4px 10px;border:none;border-radius:6px;font-size:0.7rem;font-weight:700;cursor:pointer;background:${mode==='I'?'var(--accent)':'transparent'};color:${mode==='I'?'#000':'var(--text-muted)'};">Solve I</button>
-              <button onclick="Tools._ohmMode='V';Tools.open('ohm-sim')" style="padding:4px 10px;border:none;border-radius:6px;font-size:0.7rem;font-weight:700;cursor:pointer;background:${mode==='V'?'var(--accent)':'transparent'};color:${mode==='V'?'#000':'var(--text-muted)'};">Solve V</button>
-              <button onclick="Tools._ohmMode='R';Tools.open('ohm-sim')" style="padding:4px 10px;border:none;border-radius:6px;font-size:0.7rem;font-weight:700;cursor:pointer;background:${mode==='R'?'var(--accent)':'transparent'};color:${mode==='R'?'#000':'var(--text-muted)'};">Solve R</button>
-            </div>
-          </div>
-          ${mode === 'I' ? `
-          <div style="margin-bottom:18px;">
-            <label style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;"><span>Voltage (V)</span><strong id="ohmSimV_val" style="color:var(--accent);">120 V</strong></label>
-            <input type="range" id="ohmSimV" min="1" max="480" value="120" style="width:100%;" oninput="Tools._updateOhmSim()">
-          </div>
-          <div style="margin-bottom:18px;">
-            <label style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;"><span>Resistance (&Omega;)</span><strong id="ohmSimR_val" style="color:#8b5cf6;">100 &Omega;</strong></label>
-            <input type="range" id="ohmSimR" min="1" max="1000" value="100" class="range-purple" style="width:100%;" oninput="Tools._updateOhmSim()">
-          </div>
-          ` : mode === 'V' ? `
-          <div style="margin-bottom:18px;">
-            <label style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;"><span>Current (A)</span><strong id="ohmSimI_in" style="color:#22c55e;">1.2 A</strong></label>
-            <input type="range" id="ohmSimIin" min="0.1" max="20" value="1.2" step="0.1" class="range-green" style="width:100%;" oninput="Tools._updateOhmSim()">
-          </div>
-          <div style="margin-bottom:18px;">
-            <label style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;"><span>Resistance (&Omega;)</span><strong id="ohmSimR_val" style="color:#8b5cf6;">100 &Omega;</strong></label>
-            <input type="range" id="ohmSimR" min="1" max="1000" value="100" class="range-purple" style="width:100%;" oninput="Tools._updateOhmSim()">
-          </div>
-          ` : `
-          <div style="margin-bottom:18px;">
-            <label style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;"><span>Voltage (V)</span><strong id="ohmSimV_val" style="color:var(--accent);">120 V</strong></label>
-            <input type="range" id="ohmSimV" min="1" max="480" value="120" style="width:100%;" oninput="Tools._updateOhmSim()">
-          </div>
-          <div style="margin-bottom:18px;">
-            <label style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;"><span>Current (A)</span><strong id="ohmSimI_in" style="color:#22c55e;">1.2 A</strong></label>
-            <input type="range" id="ohmSimIin" min="0.1" max="20" value="1.2" step="0.1" class="range-green" style="width:100%;" oninput="Tools._updateOhmSim()">
-          </div>
-          `}
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
-            <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Voltage</div>
-              <div id="ohmOutV" style="font-size:1.4rem;font-weight:800;color:var(--accent);">120 V</div>
-            </div>
-            <div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.15);border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Current</div>
-              <div id="ohmOutI" style="font-size:1.4rem;font-weight:800;color:#22c55e;">1.200 A</div>
-            </div>
-            <div style="background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.02));border:1px solid rgba(139,92,246,0.15);border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Resistance</div>
-              <div id="ohmOutR" style="font-size:1.4rem;font-weight:800;color:#8b5cf6;">100 &Omega;</div>
-            </div>
-            <div style="background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(239,68,68,0.02));border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Power</div>
-              <div id="ohmOutP" style="font-size:1.4rem;font-weight:800;color:#ef4444;">144.0 W</div>
-            </div>
-          </div>
-          <div id="ohmSimFormulas" style="margin-top:14px;padding:12px;background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.1);border-radius:10px;font-size:0.78rem;color:var(--text-secondary);line-height:1.9;font-family:'Fira Code',monospace;"></div>
+    if (this._ohmAnimFrame) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
+    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
+    const st = this._ohmSt;
+    const sf = st.sf;
+    const presets = [
+      {n:'120V Outlet', v:120, r:100, sf:'I'},
+      {n:'Car Battery', v:12,  r:0.5, sf:'I'},
+      {n:'40W Lamp',    v:120, p:40,  sf:'R'},
+      {n:'Hair Dryer',  v:120, p:1500,sf:'I'},
+      {n:'USB Charger', v:5,   i:0.5, sf:'R'},
+      {n:'240V Dryer',  v:240, p:5400,sf:'I'},
+    ];
+    const sfBtn = (x, lbl) => {
+      const active = sf === x;
+      return `<button onclick="Tools._ohmSetSF('${x}')" style="padding:10px 4px;border:2px solid ${active?'var(--accent)':'var(--border)'};border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;background:${active?'rgba(245,158,11,0.14)':'var(--bg-input)'};color:${active?'var(--accent)':'var(--text-secondary)'};transition:all 0.15s;text-align:center;">${x}<br><span style="font-size:0.52rem;font-weight:400;opacity:0.65;">${lbl}</span></button>`;
+    };
+    const inBlock = (key, label, color, idN, idSl, val, minV, maxSl) => {
+      if (sf === key) return '';
+      const valStr = key==='I' ? parseFloat(val).toFixed(4) : key==='R' ? parseFloat(val).toFixed(2) : parseFloat(val).toFixed(1);
+      return `<div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-size:0.74rem;color:${color};font-weight:600;">${label}</span>
+          <input type="number" id="${idN}" value="${valStr}" min="${minV}" max="999999" step="any" style="width:80px;text-align:right;background:transparent;border:none;border-bottom:1.5px solid ${color}55;color:${color};font-weight:800;font-size:0.88rem;outline:none;padding:2px 0;" oninput="Tools._ohmFromInput()">
         </div>
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-          <canvas id="ohmSimCanvas" width="380" height="340"></canvas>
-          <div style="display:flex;gap:16px;margin-top:10px;font-size:0.7rem;">
-            <span style="color:#3b82f6;">&#x25CF; Electrons</span>
-            <span style="color:#f59e0b;">&#x25CF; Voltage</span>
-            <span style="color:#8b5cf6;">&#x25CF; Resistance</span>
+        <input type="range" id="${idSl}" min="${minV}" max="${maxSl}" value="${Math.min(maxSl, parseFloat(val))}" step="any" style="width:100%;accent-color:${color};height:5px;" oninput="document.getElementById('${idN}').value=this.value;Tools._ohmFromInput()">
+      </div>`;
+    };
+    const resCard = (k, c, l) => {
+      const isActive = k === sf;
+      return `<div style="background:${isActive?c+'18':'var(--bg-input)'};border:1.5px solid ${isActive?c:'rgba(255,255,255,0.07)'};border-radius:10px;padding:10px;text-align:center;${isActive?'box-shadow:0 0 14px '+c+'33;':''}">
+        <div style="font-size:0.56rem;text-transform:uppercase;letter-spacing:0.8px;color:${c};opacity:${isActive?1:0.7};margin-bottom:4px;">${l}</div>
+        <div id="ohmOut${k}" style="font-size:1.1rem;font-weight:800;color:${isActive?c:'var(--text-primary)'};">—</div>
+      </div>`;
+    };
+    return `<div style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+        <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">⚡ Presets:</span>
+        ${presets.map((p,idx) => `<button onclick="Tools._ohmPreset(${idx})" style="padding:4px 13px;border:1px solid var(--border);border-radius:16px;font-size:0.71rem;background:transparent;color:var(--text-secondary);cursor:pointer;font-weight:600;transition:all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.1)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--border)'">${p.n}</button>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;">
+        <div style="background:#060613;border:1.5px solid rgba(245,158,11,0.18);border-radius:14px;padding:12px;box-shadow:inset 0 0 40px rgba(245,158,11,0.03);">
+          <canvas id="ohmSimCanvas" width="500" height="360" style="width:100%;display:block;border-radius:8px;"></canvas>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">
+            <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">Solve For</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+              ${sfBtn('V','Volts')}${sfBtn('I','Amps')}${sfBtn('R','Ohms')}${sfBtn('P','Watts')}
+            </div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">
+            <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;">Inputs</div>
+            ${inBlock('V','\u26a1 Voltage (V)','#f59e0b','ohmInV','ohmSlV',st.v,0.1,480)}
+            ${inBlock('I','\u007e Current (A)','#22c55e','ohmInI','ohmSlI',st.i,0.001,20)}
+            ${inBlock('R','\u2B21 Resistance (\u03a9)','#8b5cf6','ohmInR','ohmSlR',st.r,0.001,1000)}
+            ${inBlock('P','\u25c8 Power (W)','#ef4444','ohmInP','ohmSlP',st.p,0.001,5000)}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+            ${resCard('V','#f59e0b','Voltage')}${resCard('I','#22c55e','Current')}${resCard('R','#8b5cf6','Resistance')}${resCard('P','#ef4444','Power')}
           </div>
         </div>
       </div>
-    `;
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;">\ud83d\udcd0 Step-by-Step</div>
+          <div id="ohmFormBreakdown" style="font-family:'Fira Code',monospace;font-size:0.8rem;line-height:2;"></div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;align-items:center;">
+          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">\u2b55 All 12 Formulas</div>
+          <canvas id="ohmWheelCanvas" width="260" height="260" style="max-width:100%;"></canvas>
+        </div>
+      </div>
+    </div>`;
   },
 
-  _ohmMode: 'I',
-  _updateOhmSim() {
-    const mode = this._ohmMode || 'I';
-    let v, i, r, p;
-    if (mode === 'I') {
-      v = parseFloat(document.getElementById('ohmSimV')?.value || 120);
-      r = parseFloat(document.getElementById('ohmSimR')?.value || 100);
-      i = v / r; p = v * i;
-      if (document.getElementById('ohmSimV_val')) document.getElementById('ohmSimV_val').textContent = v + ' V';
-      if (document.getElementById('ohmSimR_val')) document.getElementById('ohmSimR_val').textContent = r + ' \u2126';
-    } else if (mode === 'V') {
-      i = parseFloat(document.getElementById('ohmSimIin')?.value || 1.2);
-      r = parseFloat(document.getElementById('ohmSimR')?.value || 100);
-      v = i * r; p = v * i;
-      if (document.getElementById('ohmSimI_in')) document.getElementById('ohmSimI_in').textContent = i.toFixed(1) + ' A';
-      if (document.getElementById('ohmSimR_val')) document.getElementById('ohmSimR_val').textContent = r + ' \u2126';
-    } else {
-      v = parseFloat(document.getElementById('ohmSimV')?.value || 120);
-      i = parseFloat(document.getElementById('ohmSimIin')?.value || 1.2);
-      r = v / i; p = v * i;
-      if (document.getElementById('ohmSimV_val')) document.getElementById('ohmSimV_val').textContent = v + ' V';
-      if (document.getElementById('ohmSimI_in')) document.getElementById('ohmSimI_in').textContent = i.toFixed(1) + ' A';
-    }
-    const fmtP = p >= 1000 ? (p/1000).toFixed(2) + ' kW' : p.toFixed(1) + ' W';
-    if (document.getElementById('ohmOutV')) document.getElementById('ohmOutV').textContent = v.toFixed(1) + ' V';
-    if (document.getElementById('ohmOutI')) document.getElementById('ohmOutI').textContent = i.toFixed(3) + ' A';
-    if (document.getElementById('ohmOutR')) document.getElementById('ohmOutR').textContent = r.toFixed(1) + ' \u2126';
-    if (document.getElementById('ohmOutP')) document.getElementById('ohmOutP').textContent = fmtP;
-    const fm = document.getElementById('ohmSimFormulas');
-    if (fm) fm.innerHTML =
-      'V = I &times; R = <strong style="color:var(--accent);">' + v.toFixed(1) + ' V</strong><br>' +
-      'I = V / R = ' + v.toFixed(1) + ' / ' + r.toFixed(1) + ' = <strong style="color:#22c55e;">' + i.toFixed(3) + ' A</strong><br>' +
-      'R = V / I = ' + v.toFixed(1) + ' / ' + i.toFixed(3) + ' = <strong style="color:#8b5cf6;">' + r.toFixed(1) + ' &Omega;</strong><br>' +
-      'P = V &times; I = <strong style="color:#ef4444;">' + fmtP + '</strong>';
-    Tools._drawOhmCircuit(v, r, i);
+  _ohmSt: null,
+  _ohmAnimFrame: null,
+
+  _ohmSetSF(sf) {
+    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
+    this._ohmSt.sf = sf;
+    if (this._ohmAnimFrame) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
+    Tools.open('ohm-sim');
   },
 
-  _drawOhmCircuit(v, r, i) {
-    const c = document.getElementById('ohmSimCanvas');
-    if (!c) return;
-    const ctx = c.getContext('2d');
-    const w = c.width, h = c.height;
-    ctx.clearRect(0, 0, w, h);
-
-    // Dark background
-    ctx.fillStyle = '#0d0d1a';
-    ctx.beginPath(); ctx.roundRect(0, 0, w, h, 10); ctx.fill();
-    // Subtle radial glow
-    const grd = ctx.createRadialGradient(w/2, h/2, 10, w/2, h/2, 200);
-    grd.addColorStop(0, 'rgba(245,158,11,0.05)'); grd.addColorStop(1, 'transparent');
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, w, h);
-
-    // Circuit path with glow
-    ctx.shadowColor = 'rgba(245,158,11,0.2)'; ctx.shadowBlur = 8;
-    ctx.strokeStyle = '#444'; ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(70, 70); ctx.lineTo(310, 70);
-    ctx.lineTo(310, 270); ctx.lineTo(70, 270);
-    ctx.lineTo(70, 70);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Battery symbol
-    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(70, 140); ctx.lineTo(70, 120); ctx.stroke();
-    ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.moveTo(55, 140); ctx.lineTo(85, 140); ctx.stroke();
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(60, 152); ctx.lineTo(80, 152); ctx.stroke();
-    ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.moveTo(55, 164); ctx.lineTo(85, 164); ctx.stroke();
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(70, 164); ctx.lineTo(70, 184); ctx.stroke();
-
-    ctx.fillStyle = '#f59e0b'; ctx.font = 'bold 14px Inter, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(v.toFixed(0) + 'V', 48, 155);
-
-    // Resistor (zigzag) with glow
-    ctx.shadowColor = 'rgba(139,92,246,0.3)'; ctx.shadowBlur = 6;
-    ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(250, 70);
-    const zw = 10, zn = 5;
-    for (let j = 0; j < zn; j++) {
-      ctx.lineTo(250 + zw, 70 + (j * 2 + 1) * 7);
-      ctx.lineTo(250 - zw, 70 + (j * 2 + 2) * 7);
-    }
-    ctx.lineTo(250, 70 + zn * 14 + 7);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    ctx.fillStyle = '#8b5cf6'; ctx.textAlign = 'left';
-    ctx.fillText(r.toFixed(0) + '\u2126', 272, 115);
-
-    // Current arrow & label
-    ctx.fillStyle = '#22c55e'; ctx.font = 'bold 14px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(i.toFixed(3) + 'A  \u2192', 190, 58);
-
-    // Power label bottom
-    const fmtP = v * i >= 1000 ? ((v*i)/1000).toFixed(2) + 'kW' : (v*i).toFixed(1) + 'W';
-    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 12px Inter, sans-serif';
-    ctx.fillText('P = ' + fmtP, 190, 290);
-
-    // Electron dots (animated via requestAnimationFrame)
-    if (!this._ohmAnimFrame) {
-      this._ohmPhase = 0;
-      const animate = () => {
-        this._ohmAnimFrame = requestAnimationFrame(animate);
-        const canvas = document.getElementById('ohmSimCanvas');
-        if (!canvas) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; return; }
-        const voltage = parseFloat(document.getElementById('ohmSimV')?.value || 120);
-        const resistance = parseFloat(document.getElementById('ohmSimR')?.value || 100);
-        const current = voltage / resistance;
-        const spd = Math.max(0.3, Math.min(current / 3, 3));
-        this._ohmPhase = (this._ohmPhase + spd) % 100;
-        Tools._drawOhmElectrons(canvas, this._ohmPhase, current);
-      };
-      animate();
-    }
-  },
-
-  _drawOhmElectrons(canvas, phase, current) {
-    const ctx = canvas.getContext('2d');
-    const numDots = Math.max(4, Math.min(Math.round(current * 3), 16));
-    const path = [
-      // Top: left to right
-      ...Array.from({length: 10}, (_, j) => ({x: 60 + j * 24, y: 60})),
-      // Right: top to bottom
-      ...Array.from({length: 8}, (_, j) => ({x: 300, y: 60 + j * 25})),
-      // Bottom: right to left
-      ...Array.from({length: 10}, (_, j) => ({x: 300 - j * 24, y: 260})),
-      // Left: bottom to top
-      ...Array.from({length: 8}, (_, j) => ({x: 60, y: 260 - j * 25})),
+  _ohmPreset(idx) {
+    const presets = [
+      {v:120, r:100,  sf:'I'},
+      {v:12,  r:0.5,  sf:'I'},
+      {v:120, p:40,   sf:'R'},
+      {v:120, p:1500, sf:'I'},
+      {v:5,   i:0.5,  sf:'R'},
+      {v:240, p:5400, sf:'I'},
     ];
-    const totalPts = path.length;
-    for (let d = 0; d < numDots; d++) {
-      const idx = (Math.floor(phase + d * (totalPts / numDots))) % totalPts;
-      const pt = path[idx];
-      if (!pt) continue;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#3b82f6';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(59,130,246,0.3)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+    const p = presets[idx]; if (!p) return;
+    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
+    const st = this._ohmSt;
+    st.sf = p.sf;
+    if (p.v !== undefined) st.v = p.v;
+    if (p.r !== undefined) st.r = p.r;
+    if (p.i !== undefined) st.i = p.i;
+    if (p.p !== undefined) st.p = p.p;
+    if (p.sf==='I' && st.v && st.r)      { st.i = st.v/st.r; st.p = st.v*st.i; }
+    else if (p.sf==='R' && st.v && st.p) { st.r = st.v*st.v/st.p; st.i = st.v/st.r; }
+    else if (p.sf==='R' && st.v && st.i) { st.r = st.v/st.i; st.p = st.v*st.i; }
+    if (this._ohmAnimFrame) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
+    Tools.open('ohm-sim');
+  },
+
+  _ohmFromInput() {
+    if (!this._ohmSt) return;
+    const st = this._ohmSt;
+    const gn = id => { const el=document.getElementById(id); return el ? parseFloat(el.value)||0 : 0; };
+    if (st.sf!=='V') st.v = Math.max(0.0001, gn('ohmInV'));
+    if (st.sf!=='I') st.i = Math.max(0.0001, gn('ohmInI'));
+    if (st.sf!=='R') st.r = Math.max(0.0001, gn('ohmInR'));
+    if (st.sf!=='P') st.p = Math.max(0.0001, gn('ohmInP'));
+    if (st.sf==='I')      { st.i = st.v/st.r; st.p = st.v*st.i; }
+    else if (st.sf==='V') { st.v = st.i*st.r; st.p = st.v*st.i; }
+    else if (st.sf==='R') { st.r = st.v/st.i; st.p = st.v*st.i; }
+    else if (st.sf==='P') { st.p = st.v*st.v/st.r; st.i = st.v/st.r; }
+    this._updateOhmSim();
+  },
+
+  _updateOhmSim() {
+    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
+    const st = this._ohmSt;
+    const sf = st.sf;
+    const gn = id => { const el=document.getElementById(id); return el ? parseFloat(el.value) : null; };
+    const rv=gn('ohmInV'), ri=gn('ohmInI'), rr=gn('ohmInR'), rp=gn('ohmInP');
+    if (sf!=='V' && rv!==null && rv>0) st.v = rv;
+    if (sf!=='I' && ri!==null && ri>0) st.i = ri;
+    if (sf!=='R' && rr!==null && rr>0) st.r = rr;
+    if (sf!=='P' && rp!==null && rp>0) st.p = rp;
+    if (sf==='I')      { st.i = st.v/st.r; st.p = st.v*st.i; }
+    else if (sf==='V') { st.v = st.i*st.r; st.p = st.v*st.i; }
+    else if (sf==='R') { st.r = st.v/st.i; st.p = st.v*st.i; }
+    else if (sf==='P') { st.p = st.v*st.v/st.r; st.i = st.v/st.r; }
+    const {v, i, r, p} = st;
+    const fmtV = x => x>=1000?(x/1000).toFixed(2)+'kV':x.toFixed(1)+'V';
+    const fmtI = x => x<0.001?(x*1000000).toFixed(0)+'\u00b5A':x<1?(x*1000).toFixed(1)+'mA':x.toFixed(3)+'A';
+    const fmtR = x => x>=1000000?(x/1000000).toFixed(2)+'M\u03a9':x>=1000?(x/1000).toFixed(2)+'k\u03a9':x.toFixed(1)+'\u03a9';
+    const fmtP = x => x>=1000?(x/1000).toFixed(2)+'kW':x.toFixed(1)+'W';
+    const se = (id,t) => { const e=document.getElementById(id); if(e) e.textContent=t; };
+    const sh = (id,h) => { const e=document.getElementById(id); if(e) e.innerHTML=h; };
+    se('ohmOutV',fmtV(v)); se('ohmOutI',fmtI(i)); se('ohmOutR',fmtR(r)); se('ohmOutP',fmtP(p));
+    const ss = (slId,val,max) => { const s=document.getElementById(slId); if(s) s.value=Math.min(max,val); };
+    ss('ohmSlV',v,480); ss('ohmSlI',i,20); ss('ohmSlR',r,1000); ss('ohmSlP',p,5000);
+    const fc = {
+      V: [`<span style="opacity:0.6">Given:</span>  I = <b style="color:#22c55e">${fmtI(i)}</b>,  R = <b style="color:#8b5cf6">${fmtR(r)}</b>`,
+          `<span style="opacity:0.6">Formula:</span> <b>V = I \u00d7 R</b>`,
+          `<span style="opacity:0.6">Solve:</span>   V = ${i.toFixed(3)} \u00d7 ${r.toFixed(1)}`,
+          `<span style="opacity:0.6">Answer:</span>  <b style="color:#f59e0b;font-size:1.1em">V = ${fmtV(v)}</b>`,
+          `<span style="opacity:0.6">Power:</span>   P = V \u00d7 I = <b style="color:#ef4444">${fmtP(p)}</b>`],
+      I: [`<span style="opacity:0.6">Given:</span>  V = <b style="color:#f59e0b">${fmtV(v)}</b>,  R = <b style="color:#8b5cf6">${fmtR(r)}</b>`,
+          `<span style="opacity:0.6">Formula:</span> <b>I = V \u00f7 R</b>`,
+          `<span style="opacity:0.6">Solve:</span>   I = ${v.toFixed(1)} \u00f7 ${r.toFixed(1)}`,
+          `<span style="opacity:0.6">Answer:</span>  <b style="color:#22c55e;font-size:1.1em">I = ${fmtI(i)}</b>`,
+          `<span style="opacity:0.6">Power:</span>   P = V \u00d7 I = <b style="color:#ef4444">${fmtP(p)}</b>`],
+      R: [`<span style="opacity:0.6">Given:</span>  V = <b style="color:#f59e0b">${fmtV(v)}</b>,  I = <b style="color:#22c55e">${fmtI(i)}</b>`,
+          `<span style="opacity:0.6">Formula:</span> <b>R = V \u00f7 I</b>`,
+          `<span style="opacity:0.6">Solve:</span>   R = ${v.toFixed(1)} \u00f7 ${i.toFixed(3)}`,
+          `<span style="opacity:0.6">Answer:</span>  <b style="color:#8b5cf6;font-size:1.1em">R = ${fmtR(r)}</b>`,
+          `<span style="opacity:0.6">Power:</span>   P = V \u00d7 I = <b style="color:#ef4444">${fmtP(p)}</b>`],
+      P: [`<span style="opacity:0.6">Given:</span>  V = <b style="color:#f59e0b">${fmtV(v)}</b>,  R = <b style="color:#8b5cf6">${fmtR(r)}</b>`,
+          `<span style="opacity:0.6">Formula:</span> <b>P = V\u00b2 \u00f7 R</b>`,
+          `<span style="opacity:0.6">Solve:</span>   P = ${v.toFixed(1)}\u00b2 \u00f7 ${r.toFixed(1)} = ${(v*v).toFixed(0)} \u00f7 ${r.toFixed(1)}`,
+          `<span style="opacity:0.6">Answer:</span>  <b style="color:#ef4444;font-size:1.1em">P = ${fmtP(p)}</b>`,
+          `<span style="opacity:0.6">Current:</span> I = V \u00f7 R = <b style="color:#22c55e">${fmtI(i)}</b>`],
+    };
+    sh('ohmFormBreakdown', (fc[sf]||[]).join('<br>'));
+    this._drawOhmWheel(sf);
+    if (!this._ohmAnimFrame) {
+      const loop = () => {
+        this._ohmAnimFrame = requestAnimationFrame(loop);
+        const c = document.getElementById('ohmSimCanvas');
+        if (!c) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; return; }
+        const s = Tools._ohmSt; if (!s) return;
+        s.phase = (s.phase + Math.max(0.2, Math.min(s.i / 4, 5))) % 300;
+        Tools._drawOhmFrame(c, s);
+      };
+      loop();
     }
   },
 
-  // ===== SERIES CIRCUIT BUILDER =====
+  _drawOhmFrame(c, st) {
+    const ctx = c.getContext('2d');
+    const W = c.width, H = c.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#060613'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)'; ctx.lineWidth = 1;
+    for (let gx=0; gx<W; gx+=30) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+    for (let gy=0; gy<H; gy+=30) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+    const {v, i, r, p} = st;
+    // Formatted labels
+    const vLbl = v>=1000?(v/1000).toFixed(2)+'kV':v.toFixed(1)+'V';
+    const iLbl = i<0.001?(i*1000000).toFixed(0)+'\u00b5A':i<1?(i*1000).toFixed(1)+'mA':i.toFixed(3)+'A';
+    const rLbl = r>=1000000?(r/1000000).toFixed(2)+'M\u03a9':r>=1000?(r/1000).toFixed(2)+'k\u03a9':r.toFixed(1)+'\u03a9';
+    const pLbl = p>=1000?(p/1000).toFixed(2)+'kW':p.toFixed(1)+'W';
+    // Wire heat color: blue(cold) -> amber(warm) -> red(hot)
+    const ht = Math.min(1, i / 20);
+    let wR, wG, wB;
+    if (ht < 0.5) { const t=ht*2; wR=Math.round(59+t*(245-59)); wG=Math.round(130+t*(158-130)); wB=Math.round(246+t*(11-246)); }
+    else          { const t=(ht-0.5)*2; wR=245; wG=Math.round(158+t*(68-158)); wB=Math.round(11+t*(68-11)); }
+    const wc  = `rgb(${wR},${wG},${wB})`;
+    const wcA = `rgba(${wR},${wG},${wB},0.35)`;
+    // Circuit layout
+    const x1=70, y1=60, x2=440, y2=296;
+    const batY1=120, batY2=240;
+    const bulbX=330, bulbY=y1;
+    const resY1=128, resY2=200;
+    const amX=200, amY=y2;
+    // Draw wire helper
+    const dw = (ax,ay,bx,by) => {
+      ctx.save(); ctx.shadowColor=wcA; ctx.shadowBlur=10;
+      ctx.strokeStyle=wc; ctx.lineWidth=3.5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); ctx.restore();
+    };
+    // Top wire (gap at bulb), right wire (gap at resistor), bottom wire (gap at ammeter), left wire (gap at battery)
+    dw(x1,y1,bulbX-25,y1); dw(bulbX+25,y1,x2,y1);
+    dw(x2,y1,x2,resY1);    dw(x2,resY2,x2,y2);
+    dw(x2,y2,amX+19,y2);   dw(amX-19,y2,x1,y2);
+    dw(x1,y2,x1,batY2);    dw(x1,batY1,x1,y1);
+    // Corner junction dots
+    ctx.save(); ctx.fillStyle=wc; ctx.shadowColor=wcA; ctx.shadowBlur=8;
+    [[x1,y1],[x2,y1],[x2,y2],[x1,y2]].forEach(([jx,jy])=>{ctx.beginPath();ctx.arc(jx,jy,4.5,0,Math.PI*2);ctx.fill();});
+    ctx.restore();
+    // Current direction arrows
+    const arw = (ax,ay,ang) => { ctx.save(); ctx.translate(ax,ay); ctx.rotate(ang); ctx.strokeStyle=wc; ctx.lineWidth=2; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.lineTo(2,5); ctx.moveTo(6,0); ctx.lineTo(2,-5); ctx.stroke(); ctx.restore(); };
+    arw(190,y1,0); arw(x2,180,Math.PI/2); arw(310,y2,Math.PI); arw(x1,195,-Math.PI/2);
+    // ---- BATTERY ----
+    const bmY = (batY1+batY2)/2;
+    ctx.save();
+    ctx.fillStyle='rgba(245,158,11,0.07)'; ctx.strokeStyle='rgba(245,158,11,0.25)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(x1-24,batY1,48,batY2-batY1,8); ctx.fill(); ctx.stroke();
+    for (let pi=0; pi<5; pi++) {
+      const py=batY1+10+pi*((batY2-batY1-20)/4);
+      ctx.strokeStyle=pi%2===0?'#f59e0b':'#555'; ctx.lineWidth=pi%2===0?5:2.5;
+      const hw=pi%2===0?17:10; ctx.beginPath(); ctx.moveTo(x1-hw,py); ctx.lineTo(x1+hw,py); ctx.stroke();
+    }
+    ctx.shadowColor='rgba(245,158,11,0.5)'; ctx.shadowBlur=6;
+    ctx.fillStyle='#f59e0b'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(vLbl, x1-38, bmY+5);
+    ctx.font='bold 10px sans-serif';
+    ctx.fillStyle='#f59e0b'; ctx.fillText('+',x1-38,batY1+4);
+    ctx.fillStyle='#777'; ctx.fillText('\u2212',x1-38,batY2+4);
+    ctx.restore();
+    // ---- BULB ----
+    const bR=22, bright=Math.min(1, p/200);
+    ctx.save();
+    if (bright>0.02) {
+      const gr=ctx.createRadialGradient(bulbX,bulbY,2,bulbX,bulbY,bR+bright*60);
+      gr.addColorStop(0,`rgba(255,230,100,${bright*0.7})`);
+      gr.addColorStop(0.5,`rgba(255,180,40,${bright*0.22})`);
+      gr.addColorStop(1,'rgba(255,120,0,0)');
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(bulbX,bulbY,bR+bright*60,0,Math.PI*2); ctx.fill();
+    }
+    const bg=ctx.createRadialGradient(bulbX-6,bulbY-6,2,bulbX,bulbY,bR);
+    if (bright>0.04) { bg.addColorStop(0,`rgba(255,255,220,${0.3+bright*0.7})`); bg.addColorStop(0.6,`rgba(255,200,80,${0.1+bright*0.65})`); bg.addColorStop(1,`rgba(180,100,0,${0.05+bright*0.45})`); }
+    else             { bg.addColorStop(0,'rgba(70,70,90,0.7)'); bg.addColorStop(1,'rgba(30,30,50,0.9)'); }
+    ctx.fillStyle=bg; ctx.strokeStyle=bright>0.04?'rgba(255,200,80,0.9)':'rgba(80,80,120,0.5)';
+    ctx.lineWidth=2; ctx.shadowColor=bright>0.02?`rgba(255,200,60,${bright})`:'transparent'; ctx.shadowBlur=bright>0.02?16:0;
+    ctx.beginPath(); ctx.arc(bulbX,bulbY,bR,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle=bright>0.04?`rgba(255,255,180,${0.4+bright*0.6})`:'rgba(100,100,130,0.4)';
+    ctx.lineWidth=1.5; ctx.shadowBlur=bright>0.04?8:0;
+    ctx.beginPath(); ctx.moveTo(bulbX-9,bulbY-5); ctx.lineTo(bulbX-2,bulbY+2); ctx.lineTo(bulbX+3,bulbY-8); ctx.lineTo(bulbX+9,bulbY+1); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle=bright>0.1?'#ffd060':'#666'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(pLbl, bulbX, bulbY-bR-10);
+    ctx.restore();
+    // ---- RESISTOR (right side vertical zigzag) ----
+    ctx.save();
+    ctx.shadowColor='rgba(139,92,246,0.5)'; ctx.shadowBlur=8;
+    ctx.strokeStyle='#8b5cf6'; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+    const zN=7, zW=15, zS=(resY2-resY1)/(zN*2);
+    ctx.beginPath(); ctx.moveTo(x2,resY1);
+    for (let zi=0; zi<zN; zi++) { ctx.lineTo(x2+(zi%2===0?zW:-zW),resY1+(zi*2+1)*zS); ctx.lineTo(x2-(zi%2===0?zW:-zW),resY1+(zi*2+2)*zS); }
+    ctx.lineTo(x2,resY2); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.fillStyle='#8b5cf6'; ctx.font='bold 12px sans-serif'; ctx.textAlign='left';
+    ctx.fillText(rLbl, x2+22, (resY1+resY2)/2+4); ctx.restore();
+    // ---- AMMETER ----
+    ctx.save();
+    ctx.fillStyle='rgba(34,197,94,0.1)'; ctx.strokeStyle='#22c55e'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(amX,amY,17,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#22c55e'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('A', amX, amY+4.5);
+    ctx.font='9.5px sans-serif'; ctx.fillText(iLbl, amX, amY+31); ctx.restore();
+    // ---- VOLTMETER (floating panel) ----
+    ctx.save();
+    ctx.fillStyle='rgba(245,158,11,0.08)'; ctx.strokeStyle='rgba(245,158,11,0.35)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(4, (y1+y2)/2-20, 52, 40, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#f59e0b'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('V', 30, (y1+y2)/2-5);
+    ctx.font='9px sans-serif'; ctx.fillText(vLbl, 30, (y1+y2)/2+9);
+    ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(245,158,11,0.22)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(56,(y1+y2)/2-10); ctx.lineTo(x1,batY1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(56,(y1+y2)/2+10); ctx.lineTo(x1,batY2); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+    // ---- ELECTRON PARTICLES ----
+    const epath = [];
+    for (let ex=x1+8;  ex<=bulbX-29; ex+=11) epath.push({x:ex,  y:y1});
+    for (let ex=bulbX+29; ex<=x2-8;  ex+=11) epath.push({x:ex,  y:y1});
+    for (let ey=y1+11; ey<=resY1-8;  ey+=11) epath.push({x:x2,  y:ey});
+    for (let ey=resY2+8; ey<=y2-11;  ey+=11) epath.push({x:x2,  y:ey});
+    for (let ex=x2-8;  ex>=amX+23;   ex-=11) epath.push({x:ex,  y:y2});
+    for (let ex=amX-23; ex>=x1+8;    ex-=11) epath.push({x:ex,  y:y2});
+    for (let ey=y2-11; ey>=batY2+8;  ey-=11) epath.push({x:x1,  y:ey});
+    for (let ey=batY1-8; ey>=y1+11;  ey-=11) epath.push({x:x1,  y:ey});
+    const nPts=epath.length, nE=Math.max(3,Math.min(Math.round(i*2.5),22));
+    for (let d=0; d<nE; d++) {
+      const idx=Math.floor((st.phase + d*(nPts/nE)) % nPts);
+      const pt=epath[idx]; if (!pt) continue;
+      ctx.save();
+      const eg=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,9);
+      eg.addColorStop(0,'rgba(99,179,237,0.9)'); eg.addColorStop(0.5,'rgba(59,130,246,0.3)'); eg.addColorStop(1,'rgba(59,130,246,0)');
+      ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(pt.x,pt.y,9,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#bfdbfe'; ctx.shadowColor='#3b82f6'; ctx.shadowBlur=10;
+      ctx.beginPath(); ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    // ---- STATUS BAR ----
+    ctx.save();
+    ctx.fillStyle='rgba(255,255,255,0.04)';
+    ctx.beginPath(); ctx.roundRect(8,H-34,W-16,24,7); ctx.fill();
+    const bars=[{l:'V',v:vLbl,c:'#f59e0b'},{l:'I',v:iLbl,c:'#22c55e'},{l:'R',v:rLbl,c:'#8b5cf6'},{l:'P',v:pLbl,c:'#ef4444'}];
+    const bw=(W-16)/4;
+    bars.forEach((it,idx)=>{ const sx=8+idx*bw+bw/2; ctx.fillStyle=it.c; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText(`${it.l}: ${it.v}`,sx,H-18); });
+    ctx.restore();
+  },
+
+  _drawOhmWheel(activeSF) {
+    const c=document.getElementById('ohmWheelCanvas'); if (!c) return;
+    const ctx=c.getContext('2d');
+    const W=c.width, H=c.height, cx=W/2, cy=H/2, R=Math.min(W,H)/2-8;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+    const sectors=[
+      {k:'V',lbl:'V', ang:-Math.PI/2, col:'#f59e0b', fmls:['V=I\u00d7R','V=P\u00f7I','V=\u221a(PR)']},
+      {k:'I',lbl:'I', ang:0,          col:'#22c55e', fmls:['I=V\u00f7R','I=P\u00f7V','I=\u221a(P/R)']},
+      {k:'P',lbl:'P', ang:Math.PI/2,  col:'#ef4444', fmls:['P=V\u00d7I','P=I\u00b2R','P=V\u00b2/R']},
+      {k:'R',lbl:'R', ang:Math.PI,    col:'#8b5cf6', fmls:['R=V\u00f7I','R=P/I\u00b2','R=V\u00b2/P']},
+    ];
+    sectors.forEach(s => {
+      const sa=s.ang-Math.PI/4, ea=s.ang+Math.PI/4, isA=s.k===activeSF;
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R-2,sa,ea); ctx.closePath();
+      ctx.fillStyle=isA?s.col+'28':s.col+'0c'; ctx.fill();
+      ctx.strokeStyle=isA?s.col:s.col+'44'; ctx.lineWidth=isA?2.5:1;
+      if (isA) { ctx.shadowColor=s.col; ctx.shadowBlur=14; }
+      ctx.stroke(); ctx.restore();
+      const mA=s.ang, lR=R*0.55, lx=cx+Math.cos(mA)*lR, ly=cy+Math.sin(mA)*lR;
+      ctx.save();
+      ctx.fillStyle=isA?s.col:s.col+'99';
+      ctx.font=`bold ${isA?22:17}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      if(isA){ctx.shadowColor=s.col;ctx.shadowBlur=16;}
+      ctx.fillText(s.lbl,lx,ly);
+      ctx.font=`${isA?8.5:7.5}px monospace`; ctx.shadowBlur=0;
+      ctx.fillStyle=isA?s.col+'cc':s.col+'55';
+      s.fmls.forEach((fml,fi)=>{
+        const fA=mA+(fi-1)*0.24, fR=R*0.83;
+        const fx=cx+Math.cos(fA)*fR, fy=cy+Math.sin(fA)*fR;
+        ctx.save(); ctx.translate(fx,fy);
+        const rot=fA>Math.PI/2&&fA<3*Math.PI/2?fA+Math.PI:fA;
+        ctx.rotate(rot+Math.PI/2); ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(fml,0,0); ctx.restore();
+      }); ctx.restore();
+    });
+    ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
+    for(let a=0;a<4;a++){const ang=a*Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);ctx.stroke();}
+    ctx.restore();
+    const ig=ctx.createRadialGradient(cx,cy,0,cx,cy,30);
+    ig.addColorStop(0,'#1e1e38'); ig.addColorStop(1,'#0d0d20');
+    ctx.fillStyle=ig; ctx.beginPath(); ctx.arc(cx,cy,30,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(cx,cy,30,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.font='bold 8.5px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText("Ohm's",cx,cy-5); ctx.fillText("Law",cx,cy+7);
+    ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(cx,cy,R-1,0,Math.PI*2); ctx.stroke(); ctx.restore();
+  },
+
+
+    // ===== SERIES CIRCUIT BUILDER =====
   _simSeries() {
     return `
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:0;overflow:hidden;">

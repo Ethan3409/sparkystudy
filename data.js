@@ -428,6 +428,20 @@ const FLASHCARD_BANK = [
   { id:'fc151', topic:'drawing-diagrams', q:"How do you convert a block diagram cable run to a required cable type?", a:"Count the number of electrical connections that must cross between two boxes (the conductor count). 2 conductors = 14/2 NMD90. 3 conductors = 14/3 NMD90. Each unique conductor (hot, neutral, traveler, etc.) needs its own wire in the cable." },
   { id:'fc152', topic:'drawing-diagrams', q:"What is the dashed line on a schematic between a coil symbol and a contact?", a:"The dashed line shows that the coil and contact are mechanically linked — when the coil (M) energizes, all contacts labeled M change state simultaneously. It is not a wire; it shows the electromechanical relationship between the coil and its contacts." },
   { id:'fc153', topic:'drawing-diagrams', q:"Stop buttons are wired in series; Start buttons in parallel. Why?", a:"Series stops: ANY stop button can break the circuit and stop the motor (fail-safe). Parallel starts: ANY start button can energize the coil (convenience from multiple locations). This is universal in motor control circuits." },
+
+  // Grounding & Bonding additions
+  { id:'fc154', topic:'grounding-bonding', q:"What is the difference between grounding and bonding?", a:"Grounding connects the system to earth to stabilize voltage; bonding connects metal parts together to equalize potential and provide a fault-current path back to the source." },
+  { id:'fc155', topic:'grounding-bonding', q:"What is a grounding electrode conductor (GEC)?", a:"The conductor connecting the grounding electrode (ground rod, water pipe, etc.) to the system neutral or equipment grounding conductor, as required by CEC Rule 10-700." },
+  { id:'fc156', topic:'grounding-bonding', q:"What is the minimum size ground rod required by the CEC?", a:"A ground rod must be at least 2.4 m (8 ft) long and 16 mm (5/8 in) diameter for copper-clad steel, driven vertically into the earth." },
+  { id:'fc157', topic:'grounding-bonding', q:"Why must metallic conduit, cable trays, and equipment enclosures be bonded?", a:"To ensure a low-impedance fault path exists so overcurrent devices (fuses/breakers) will operate quickly during a ground fault, protecting people from shock." },
+  { id:'fc158', topic:'grounding-bonding', q:"What is a main bonding jumper?", a:"The conductor, screw, or strap that connects the equipment grounding conductor to the grounded (neutral) conductor at the service entrance — required by CEC Rule 10-614." },
+
+  // Industrial additions
+  { id:'fc159', topic:'industrial', q:"What does LOTO stand for and when is it required?", a:"Lockout/Tagout — it is required before any maintenance, servicing, or repair work on equipment where unexpected energization or startup could injure workers." },
+  { id:'fc160', topic:'industrial', q:"What is a 600V TECK cable?", a:"A multi-conductor armoured cable rated for 600V with cross-linked polyethylene (XLPE) insulation and an aluminum interlocked armour, commonly used in industrial branch circuits." },
+  { id:'fc161', topic:'industrial', q:"What is the purpose of a power factor correction capacitor bank?", a:"To offset the inductive (lagging) reactive power drawn by motors and other inductive loads, bringing power factor closer to unity and reducing reactive current on feeders." },
+  { id:'fc162', topic:'industrial', q:"What is a Class I, Division 1 hazardous location?", a:"A location where flammable gases or vapours are present in the air continuously, intermittently, or periodically under normal operating conditions — requiring explosion-proof equipment." },
+  { id:'fc163', topic:'industrial', q:"In a 3-phase 4-wire 600V wye system, what is the phase-to-neutral voltage?", a:"600V ÷ √3 ≈ 347V — each phase conductor is 347V above the neutral/ground." },
 ];
 
 // ====== EXAM QUESTION BANK ======
