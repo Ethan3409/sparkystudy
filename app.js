@@ -9773,156 +9773,158 @@ const MathPractice = {
   render(state) {
     const container = document.getElementById('mathContent');
     if (!container) return;
-    const period = state ? state.user.period : 1;
     const cat = this.categories.find(c => c.id === this.currentCategory) || this.categories[0];
     const enabledCats = state && state.mathSettings && state.mathSettings.enabledCategories;
     const mathStats = (state && state.mathStats) || {};
+    const enabledCount = enabledCats ? enabledCats.length : this.categories.length;
+    const formulaLines = this._formulaRef(this.currentCategory);
+
     container.innerHTML = `
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <div>
-          <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:4px;">🧮 Math Practice</h1>
-          <p style="color:var(--text-secondary);">Practice every formula with randomly generated problems. Get instant feedback.</p>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button onclick="MathPractice.generateProblem(true)" class="btn btn-secondary btn-sm">🎲 Random Module</button>
-          <button onclick="MathPractice.toggleConfig()" class="btn btn-sm ${this.showingConfig ? 'btn-primary' : 'btn-secondary'}">⚙️ Configure Modules</button>
-        </div>
+      <!-- Header -->
+      <div style="margin-bottom:18px;">
+        <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:2px;">🧮 Math Practice</h1>
+        <p style="color:var(--text-secondary);font-size:0.85rem;">Formulas are always shown. Pick only the modules you need.</p>
       </div>
 
-      ${this.showingConfig ? `
-      <div style="background:var(--bg-card);border:1px solid var(--accent);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-          <strong style="font-size:0.95rem;">Select which modules to include in practice</strong>
-          <div style="display:flex;gap:8px;">
-            <button onclick="MathPractice._setAll(true)" class="btn btn-ghost btn-sm">Enable All</button>
-            <button onclick="MathPractice._setAll(false)" class="btn btn-ghost btn-sm">Disable All</button>
+      <!-- Module selector — always visible, chip-style toggles -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <span style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);">
+            MODULES — <span style="color:var(--accent);">${enabledCount} active</span>
+          </span>
+          <div style="display:flex;gap:6px;">
+            <button onclick="MathPractice._setAll(true)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All on</button>
+            <button onclick="MathPractice._setAll(false)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All off</button>
+            <button onclick="MathPractice.generateProblem(true)" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 12px;">🎲 Random</button>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
-          ${[1,2].flatMap(p => [
-            `<div style="grid-column:1/-1;font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-bottom:4px;">Period ${p}</div>`,
-            ...this.categories.filter(c=>c.period===p).map(c => {
-              const isEnabled = !enabledCats || enabledCats.includes(c.id);
-              const s = mathStats[c.id] || { attempts:0, correct:0 };
-              const acc = s.attempts > 0 ? Math.round(s.correct/s.attempts*100) : null;
-              const accColor = acc === null ? 'var(--text-muted)' : acc >= 80 ? '#22c55e' : acc >= 50 ? '#f59e0b' : '#ef4444';
-              return `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${isEnabled ? 'var(--accent-soft)' : 'var(--bg-secondary)'};border:1px solid ${isEnabled ? 'var(--accent)' : 'transparent'};border-radius:8px;cursor:pointer;transition:var(--transition);">
-                <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="MathPractice.toggleCategory('${c.id}')" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
-                <div style="flex:1;min-width:0;">
-                  <div style="font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.icon} ${c.name}</div>
-                  <div style="font-size:0.7rem;color:${accColor};margin-top:1px;">${acc !== null ? `${s.correct}/${s.attempts} (${acc}%)` : 'Not yet practiced'}</div>
-                </div>
-              </label>`;
-            })
-          ]).join('')}
-        </div>
-        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;">Enabled modules are used when clicking "Random Module". You can still click any module directly to practice it.</p>
-      </div>` : ''}
-
-      <div style="display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start;" class="math-layout">
-
-        <!-- Category sidebar -->
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
-          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Period 1</div>
-          ${this.categories.filter(c=>c.period===1).map(c=>{
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${this.categories.map(c => {
             const isEnabled = !enabledCats || enabledCats.includes(c.id);
+            const isActive = c.id === this.currentCategory;
             const s = mathStats[c.id] || { attempts:0, correct:0 };
             const acc = s.attempts > 0 ? Math.round(s.correct/s.attempts*100) : null;
-            const accColor = acc === null ? 'var(--text-muted)' : acc >= 80 ? '#22c55e' : acc >= 50 ? '#f59e0b' : '#ef4444';
-            return `<div onclick="MathPractice.selectCategory('${c.id}')" style="padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${c.id===this.currentCategory?'var(--accent-soft)':'transparent'};border:1px solid ${c.id===this.currentCategory?'var(--accent)':'transparent'};opacity:${isEnabled?'1':'0.45'};transition:var(--transition);">
-              <div style="font-weight:${c.id===this.currentCategory?'700':'500'};font-size:0.85rem;color:${c.id===this.currentCategory?'var(--accent)':'var(--text-primary)'};">${c.icon} ${c.name}</div>
-              <div style="display:flex;justify-content:space-between;margin-top:2px;">
-                <div style="font-size:0.7rem;color:var(--text-muted);font-family:monospace;">${c.formula}</div>
-                ${acc !== null ? `<div style="font-size:0.68rem;color:${accColor};font-weight:600;">${acc}%</div>` : ''}
-              </div>
-            </div>`;
+            const accDot = acc === null ? '' : acc >= 80 ? ' 🟢' : acc >= 50 ? ' 🟡' : ' 🔴';
+            return `<button onclick="MathPractice._chipClick('${c.id}', event)"
+              data-chipid="${c.id}"
+              title="${isEnabled ? 'Click to practice · Right-click to toggle on/off' : 'Disabled — click to enable & practice'}"
+              style="padding:6px 12px;border-radius:20px;font-size:0.8rem;font-weight:${isActive?'700':'500'};
+                border:2px solid ${isActive ? 'var(--accent)' : isEnabled ? 'var(--border)' : 'transparent'};
+                background:${isActive ? 'var(--accent-soft)' : isEnabled ? 'var(--bg-secondary)' : 'rgba(0,0,0,0.3)'};
+                color:${isActive ? 'var(--accent)' : isEnabled ? 'var(--text-primary)' : 'var(--text-muted)'};
+                opacity:${isEnabled?'1':'0.5'};cursor:pointer;transition:var(--transition);white-space:nowrap;">
+              ${c.icon} ${c.name}${accDot}
+            </button>`;
           }).join('')}
-          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin:16px 0 12px;">Period 2</div>
-          ${this.categories.filter(c=>c.period===2).map(c=>{
-            const isEnabled = !enabledCats || enabledCats.includes(c.id);
-            const s = mathStats[c.id] || { attempts:0, correct:0 };
-            const acc = s.attempts > 0 ? Math.round(s.correct/s.attempts*100) : null;
-            const accColor = acc === null ? 'var(--text-muted)' : acc >= 80 ? '#22c55e' : acc >= 50 ? '#f59e0b' : '#ef4444';
-            return `<div onclick="MathPractice.selectCategory('${c.id}')" style="padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${c.id===this.currentCategory?'var(--accent-soft)':'transparent'};border:1px solid ${c.id===this.currentCategory?'var(--accent)':'transparent'};opacity:${isEnabled?'1':'0.45'};transition:var(--transition);">
-              <div style="font-weight:${c.id===this.currentCategory?'700':'500'};font-size:0.85rem;color:${c.id===this.currentCategory?'var(--accent)':'var(--text-primary)'};">${c.icon} ${c.name}</div>
-              <div style="display:flex;justify-content:space-between;margin-top:2px;">
-                <div style="font-size:0.7rem;color:var(--text-muted);font-family:monospace;">${c.formula}</div>
-                ${acc !== null ? `<div style="font-size:0.68rem;color:${accColor};font-weight:600;">${acc}%</div>` : ''}
-              </div>
-            </div>`;
-          }).join('')}
-          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
-            <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">🖨️ Print Worksheet</button>
-          </div>
         </div>
+        <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;">
+          Tap a module to practice it. <strong>Long-press</strong> or <strong>right-click</strong> a chip to enable/disable it from the random rotation.
+        </p>
+      </div>
 
-        <!-- Practice area -->
+      <!-- Practice layout -->
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;" class="math-layout">
+
+        <!-- Main practice card -->
         <div>
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-              <div>
-                <span style="font-size:1.2rem;">${cat.icon}</span>
-                <strong style="font-size:1.1rem;margin-left:6px;">${cat.name}</strong>
-                <span style="font-size:0.8rem;color:var(--text-muted);margin-left:8px;font-family:monospace;">${cat.formula}</span>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:14px;">
+
+            <!-- Active module label + score -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:1.3rem;">${cat.icon}</span>
+                <div>
+                  <div style="font-weight:700;font-size:1rem;">${cat.name}</div>
+                  <div style="font-size:0.72rem;color:var(--text-muted);font-family:monospace;">${cat.formula}</div>
+                </div>
               </div>
               <div style="font-size:0.85rem;color:var(--text-muted);">Score: <strong id="mathScore" style="color:var(--accent);">${this.score}/${this.attempts} (${this.attempts>0?Math.round(this.score/this.attempts*100):0}%)</strong></div>
             </div>
 
             ${this.currentProblem ? `
-              <div style="background:var(--bg-input);border-radius:12px;padding:20px;margin-bottom:20px;font-size:1.05rem;line-height:1.7;">
+              <!-- Problem -->
+              <div style="background:var(--bg-input);border-radius:10px;padding:18px;margin-bottom:16px;font-size:1.05rem;line-height:1.7;">
                 ${this.currentProblem.q}
               </div>
 
-              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
-                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
-                  <input id="mathAnswer" type="number" step="any" placeholder="Your answer..."
-                    style="flex:1;padding:12px 16px;font-size:1.1rem;background:var(--bg-input);border:2px solid var(--accent);border-radius:10px;color:var(--text-primary);outline:none;"
+              <!-- Answer row -->
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;">
+                  <input id="mathAnswer" type="number" step="any" placeholder="Your answer…"
+                    style="flex:1;padding:12px 14px;font-size:1.1rem;background:var(--bg-input);border:2px solid var(--accent);border-radius:10px;color:var(--text-primary);outline:none;"
                     onkeydown="if(event.key==='Enter')MathPractice.checkAnswer()">
                   <span style="font-weight:600;color:var(--text-secondary);">${this.currentProblem.unit}</span>
                 </div>
-                <button onclick="MathPractice.checkAnswer()" class="btn btn-primary" style="padding:12px 28px;font-size:1rem;">Check ✓</button>
+                <button onclick="MathPractice.checkAnswer()" class="btn btn-primary" style="padding:12px 24px;font-size:1rem;">Check ✓</button>
                 <button onclick="MathPractice.generateProblem()" class="btn btn-ghost btn-sm">Skip →</button>
               </div>
 
-              <div id="mathSolution" style="display:${this.showingSolution?'block':'none'};background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:0.9rem;">
+              <!-- Wrong answer feedback / hint -->
+              <div id="mathSolution" style="display:${this.showingSolution?'block':'none'};background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:0.88rem;">
                 <strong>💡 Hint:</strong> ${this.currentProblem.hint}<br>
-                <strong>Formula:</strong> <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">${this.currentProblem.formula}</code><br>
-                <strong>Answer:</strong> ${this.currentProblem.a} ${this.currentProblem.unit}
+                <strong>Formula used:</strong> <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">${this.currentProblem.formula}</code><br>
+                <strong>Answer:</strong> <span style="color:var(--accent);font-weight:700;">${this.currentProblem.a} ${this.currentProblem.unit}</span>
               </div>
+              ${!this.showingSolution ? `<button onclick="document.getElementById('mathSolution').style.display='block';this.style.display='none';" style="margin-top:10px;font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;">💡 Show hint</button>` : ''}
 
-              <div style="margin-top:12px;">
-                <button onclick="document.getElementById('mathSolution').style.display='block'" style="font-size:0.8rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:4px;">💡 Show hint / formula</button>
-              </div>
             ` : `
-              <div style="text-align:center;padding:40px;color:var(--text-muted);">
-                <div style="font-size:3rem;margin-bottom:12px;">🧮</div>
-                <p>Click "New Problem" to start practicing ${cat.name}</p>
+              <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:10px;">${cat.icon}</div>
+                <p style="font-size:0.95rem;">Ready to practice <strong>${cat.name}</strong></p>
+                <p style="font-size:0.82rem;margin-top:4px;">The formula sheet is on the right →</p>
               </div>
             `}
           </div>
 
-          <button onclick="MathPractice.generateProblem()" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;">
+          <button onclick="MathPractice.generateProblem()" class="btn btn-primary" style="width:100%;font-size:1rem;padding:14px;">
             ${this.currentProblem ? '➡️ Next Problem' : '▶️ Start Practicing'}
           </button>
+        </div>
 
-          <!-- Formula reference card -->
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:16px;">
-            <h3 style="margin:0 0 12px;font-size:0.95rem;font-weight:700;">📋 Formula Reference — ${cat.name}</h3>
-            <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.9;font-family:monospace;">
-              ${this._formulaRef(this.currentCategory)}
+        <!-- Formula sheet — always visible, right column -->
+        <div style="position:sticky;top:74px;">
+          <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:var(--radius);padding:18px;">
+            <div style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📋 Formula Sheet — ${cat.name}</div>
+            <div style="font-size:0.88rem;color:var(--text-primary);line-height:2;font-family:'Courier New',monospace;font-weight:500;">
+              ${formulaLines}
             </div>
           </div>
+          <div style="margin-top:12px;">
+            <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">🖨️ Print Worksheet</button>
+          </div>
         </div>
+
       </div>
 
       <style>
         @media(max-width:768px){.math-layout{grid-template-columns:1fr!important;}}
+        @media(max-width:768px){.math-layout > div:last-child{order:-1;position:static!important;}}
       </style>
     `;
     if (this.currentProblem) {
       const inp = document.getElementById('mathAnswer');
       if (inp) setTimeout(() => inp.focus(), 50);
     }
+    // Attach long-press handlers to chips for toggle on/off
+    container.querySelectorAll('[data-chipid]').forEach(btn => {
+      let t;
+      btn.addEventListener('pointerdown', () => { t = setTimeout(() => MathPractice.toggleCategory(btn.dataset.chipid), 600); });
+      btn.addEventListener('pointerup', () => clearTimeout(t));
+      btn.addEventListener('contextmenu', e => { e.preventDefault(); MathPractice.toggleCategory(btn.dataset.chipid); });
+    });
+  },
+
+  _chipClick(id, event) {
+    // Left-click → select this module and generate a problem.
+    // If the module was disabled, re-enable it so it joins the random rotation too.
+    const state = Storage.get();
+    if (state && state.mathSettings && state.mathSettings.enabledCategories && !state.mathSettings.enabledCategories.includes(id)) {
+      state.mathSettings.enabledCategories.push(id);
+      Storage.set(state);
+      FireDB.saveUser(state);
+    }
+    this.selectCategory(id);
+    this.generateProblem();
   },
 
   selectCategory(id) {
