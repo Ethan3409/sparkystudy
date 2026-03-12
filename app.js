@@ -9591,6 +9591,46 @@ const MathPractice = {
     { id:'three-phase',    name:'Three-Phase',         icon:'🔺', period:2, formula:'VL=√3×Vp (wye), IL=√3×Ip (delta)' },
   ],
 
+  // Maps each math category to its actual lesson/study content.
+  // type:'lessons' → opens a specific lesson module by module ID (m1, m2, etc.)
+  // type:'study-guide' → opens the Study Guide for that topic (period 1 content or modules without a written lesson yet)
+  _studyTopicMap: {
+    // Period 1 — Study Guide only (no MODULES exist for period 1)
+    'ohms-law':       { type:'study-guide', id:'ohms-law',          label:"Ohm's Law & Basic Theory" },
+    'power':          { type:'study-guide', id:'ohms-law',          label:"Ohm's Law & Basic Theory" },
+    'series':         { type:'study-guide', id:'series-circuits',   label:'Series Circuits' },
+    'parallel':       { type:'study-guide', id:'parallel-circuits', label:'Parallel Circuits' },
+    'series-parallel':{ type:'study-guide', id:'series-circuits',   label:'Series Circuits' },
+    // Period 2 — real curriculum modules (hasContent:true)
+    'ac-basics':      { type:'lessons', id:'m1',  label:'Fundamentals of Alternating Current' },
+    'reactance':      { type:'lessons', id:'m2',  label:'Properties of Inductors and Capacitors' },
+    'impedance':      { type:'lessons', id:'m3',  label:'Inductors and Capacitors in Circuits' },
+    'three-phase':    { type:'lessons', id:'m4',  label:'Principles of AC Circuits' },
+    // Period 2 — Study Guide fallback (no written lesson module yet)
+    'power-factor':   { type:'study-guide', id:'power-factor', label:'Power Factor' },
+    'transformers':   { type:'study-guide', id:'transformers', label:'Transformers' },
+    'motors':         { type:'study-guide', id:'motors',       label:'Motors & Generators' },
+  },
+
+  openLesson(catId) {
+    const mapping = this._studyTopicMap[catId];
+    if (!mapping) { App.navigate('study-guide'); return; }
+    if (mapping.type === 'lessons') {
+      Lessons.activeLesson = mapping.id;
+      App.navigate('lessons');
+    } else {
+      StudyGuide.currentTopic = mapping.id;
+      StudyGuide.currentLesson = 0;
+      App.navigate('study-guide');
+    }
+    window.scrollTo(0, 0);
+  },
+
+  _lessonLabel(catId) {
+    const m = this._studyTopicMap[catId];
+    return m ? m.label : 'Study Guide';
+  },
+
   _r(min, max, step=1) { return Math.round((Math.random()*(max-min)+min)/step)*step; },
   _round(v, dp=2) { return Math.round(v*Math.pow(10,dp))/Math.pow(10,dp); },
 
@@ -9865,13 +9905,23 @@ const MathPractice = {
                 <strong>Formula used:</strong> <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">${this.currentProblem.formula}</code><br>
                 <strong>Answer:</strong> <span style="color:var(--accent);font-weight:700;">${this.currentProblem.a} ${this.currentProblem.unit}</span>
               </div>
-              ${!this.showingSolution ? `<button onclick="document.getElementById('mathSolution').style.display='block';this.style.display='none';" style="margin-top:10px;font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;">💡 Show hint</button>` : ''}
+              <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+                ${!this.showingSolution ? `<button onclick="document.getElementById('mathSolution').style.display='block';this.style.display='none';" style="font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;">💡 Show hint</button>` : ''}
+                <button onclick="MathPractice.openLesson('${this.currentCategory}')" style="font-size:0.78rem;color:#818cf8;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px;">
+                  📖 ${this._lessonLabel(this.currentCategory)} →
+                </button>
+              </div>
 
             ` : `
-              <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+              <div style="text-align:center;padding:32px 20px 24px;color:var(--text-muted);">
                 <div style="font-size:3rem;margin-bottom:10px;">${cat.icon}</div>
-                <p style="font-size:0.95rem;">Ready to practice <strong>${cat.name}</strong></p>
-                <p style="font-size:0.82rem;margin-top:4px;">The formula sheet is on the right →</p>
+                <p style="font-size:0.95rem;color:var(--text-primary);font-weight:600;">Ready to practice ${cat.name}</p>
+                <p style="font-size:0.82rem;margin:4px 0 20px;">Formulas are on the right — hit Start when you're ready.</p>
+                <button onclick="MathPractice.openLesson('${this.currentCategory}')"
+                  style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);border-radius:8px;cursor:pointer;font-size:0.85rem;color:#818cf8;font-weight:600;"
+                  onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
+                  📖 Not sure? Read: ${this._lessonLabel(this.currentCategory)}
+                </button>
               </div>
             `}
           </div>
@@ -9889,7 +9939,16 @@ const MathPractice = {
               ${formulaLines}
             </div>
           </div>
-          <div style="margin-top:12px;">
+
+          <!-- Link to the lesson page for this topic -->
+          <button onclick="MathPractice.openLesson('${this.currentCategory}')"
+            style="width:100%;margin-top:10px;padding:12px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);border-radius:var(--radius);cursor:pointer;text-align:left;transition:var(--transition);"
+            onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
+            <div style="font-size:0.8rem;font-weight:700;color:#818cf8;margin-bottom:2px;">📖 ${this._lessonLabel(this.currentCategory)}</div>
+            <div style="font-size:0.73rem;color:var(--text-muted);line-height:1.4;">Read the lesson, see worked examples, and take a mini-quiz on this topic.</div>
+          </button>
+
+          <div style="margin-top:10px;">
             <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">🖨️ Print Worksheet</button>
           </div>
         </div>
