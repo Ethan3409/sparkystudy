@@ -10918,6 +10918,275 @@ const Leaderboard = {
   }
 };
 
+
+// ═══════════════════════════════════════════════════════════════════
+// AskAI — Smart module search assistant (no external API)
+// Searches LESSONS_CONTENT for answers using keyword matching
+// ═══════════════════════════════════════════════════════════════════
+const AskAI = {
+  _open: false,
+  _history: [],   // [{role:'user'|'ai', text}]
+  _typing: false,
+
+  // ── Public ──────────────────────────────────────────────────────
+  toggle() { this._open ? this.close() : this.open(); },
+
+  open() {
+    this._open = true;
+    const panel = document.getElementById('askaiPanel');
+    if (panel) {
+      panel.style.display = 'flex';
+      requestAnimationFrame(() => panel.classList.add('askai-visible'));
+      this._focusInput();
+      return;
+    }
+    this._createPanel();
+  },
+
+  close() {
+    this._open = false;
+    const panel = document.getElementById('askaiPanel');
+    if (!panel) return;
+    panel.classList.remove('askai-visible');
+    setTimeout(() => { if (panel) panel.style.display = 'none'; }, 280);
+  },
+
+  // ── Search engine ────────────────────────────────────────────────
+  _stopWords: new Set(['the','a','an','is','are','was','were','be','been','being',
+    'have','has','had','do','does','did','will','would','could','should','may',
+    'might','shall','can','need','dare','ought','used','what','which','who','how',
+    'when','where','why','this','that','these','those','and','or','but','if',
+    'in','on','at','to','for','of','with','by','from','as','into','through',
+    'during','before','after','above','below','between','out','about','up','down',
+    'it','its','i','you','we','they','he','she','my','your','our','their']),
+
+  _keywords(q) {
+    return q.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !this._stopWords.has(w));
+  },
+
+  _sectionText(section) {
+    let text = (section.title || '') + ' ' + (section.body || '');
+    if (section.formula) text += ' ' + section.formula;
+    if (section.questions) {
+      text += ' ' + section.questions.map(q => q.q + ' ' + q.a).join(' ');
+    }
+    return text.toLowerCase();
+  },
+
+  _score(text, keywords) {
+    if (!keywords.length) return 0;
+    let score = 0;
+    for (const kw of keywords) {
+      // Exact word match = 3pts, partial/substring = 1pt
+      const wordRe = new RegExp('\\b' + kw + '\\b', 'g');
+      const partRe = new RegExp(kw, 'g');
+      const wordMatches = (text.match(wordRe) || []).length;
+      const partMatches = (text.match(partRe) || []).length;
+      score += wordMatches * 3 + (partMatches - wordMatches) * 1;
+    }
+    return score;
+  },
+
+  _search(question) {
+    const keywords = this._keywords(question);
+    if (!keywords.length) return [];
+
+    const results = [];
+    for (const lesson of LESSONS_CONTENT) {
+      for (const section of lesson.sections) {
+        const text = this._sectionText(section);
+        const score = this._score(text, keywords);
+        if (score > 0) {
+          results.push({ lesson, section, score });
+        }
+      }
+    }
+
+    // Sort by score desc, return top 3
+    results.sort((a, b) => b.score - a.score);
+    return results.slice(0, 3);
+  },
+
+  _excerpt(text, keywords, maxLen = 220) {
+    // Find the first keyword hit and return surrounding context
+    const lower = text.toLowerCase();
+    let bestIdx = -1;
+    for (const kw of keywords) {
+      const idx = lower.indexOf(kw);
+      if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) bestIdx = idx;
+    }
+    if (bestIdx === -1) return text.slice(0, maxLen) + (text.length > maxLen ? '…' : '');
+    const start = Math.max(0, bestIdx - 80);
+    const end = Math.min(text.length, start + maxLen);
+    const raw = text.slice(start, end);
+    return (start > 0 ? '…' : '') + raw + (end < text.length ? '…' : '');
+  },
+
+  _formatResponse(question, results) {
+    if (!results.length) {
+      return {
+        text: "I couldn't find anything in the loaded modules that matches your question. Try rephrasing, or check if that topic is covered in an unlocked module.",
+        sources: []
+      };
+    }
+
+    const keywords = this._keywords(question);
+    const top = results[0];
+    const body = top.section.body || '';
+    const formula = top.section.formula || '';
+
+    let text = this._excerpt(body, keywords);
+    if (formula) text += '\n\n📐 ' + formula.split('\n')[0];
+
+    const sources = results.map(r => ({
+      lessonTitle: r.lesson.title,
+      sectionTitle: r.section.title,
+      icon: r.lesson.icon
+    }));
+
+    return { text, sources };
+  },
+
+  // ── Ask & respond ────────────────────────────────────────────────
+  ask(question) {
+    if (!question.trim() || this._typing) return;
+    question = question.trim();
+
+    this._history.push({ role: 'user', text: question });
+    this._renderMessages();
+    this._typing = true;
+
+    // Simulate a brief "thinking" delay so it feels snappy but not instant
+    setTimeout(() => {
+      const results = this._search(question);
+      const { text, sources } = this._formatResponse(question, results);
+      this._history.push({ role: 'ai', text, sources });
+      this._typing = false;
+      this._renderMessages();
+      this._scrollBottom();
+    }, 350);
+
+    this._scrollBottom();
+  },
+
+  // ── UI ───────────────────────────────────────────────────────────
+  _createPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'askaiPanel';
+    panel.className = 'askai-panel';
+    panel.style.display = 'flex';
+    panel.innerHTML = `
+      <div class="askai-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.3rem;">🤖</span>
+          <div>
+            <div style="font-weight:700;font-size:0.95rem;color:var(--text-primary);">SparkyAI</div>
+            <div style="font-size:0.72rem;color:var(--accent);font-weight:600;">Searches your IBEW modules</div>
+          </div>
+        </div>
+        <button onclick="AskAI.close()" class="askai-close-btn">✕</button>
+      </div>
+      <div id="askaiMessages" class="askai-messages">
+        <div class="askai-bubble askai-ai">
+          <div class="askai-bubble-text">Hey! Ask me anything about the material in your loaded modules — AC theory, inductors, capacitors, three-phase circuits, motor controls, and more. I'll pull the relevant info and tell you exactly where it came from. 🔌</div>
+        </div>
+      </div>
+      <div class="askai-input-row">
+        <input id="askaiInput" class="askai-input" type="text"
+          placeholder="e.g. What is RMS voltage?"
+          onkeydown="if(event.key==='Enter')AskAI._submitInput()"
+          maxlength="300" />
+        <button class="askai-send-btn" onclick="AskAI._submitInput()">➤</button>
+      </div>
+    `;
+    document.body.appendChild(panel);
+    requestAnimationFrame(() => panel.classList.add('askai-visible'));
+    this._focusInput();
+  },
+
+  _submitInput() {
+    const inp = document.getElementById('askaiInput');
+    if (!inp) return;
+    const q = inp.value.trim();
+    if (!q) return;
+    inp.value = '';
+    this.ask(q);
+  },
+
+  _renderMessages() {
+    const container = document.getElementById('askaiMessages');
+    if (!container) return;
+
+    // Rebuild all messages
+    const bubbles = this._history.map(msg => {
+      if (msg.role === 'user') {
+        return `<div class="askai-bubble askai-user"><div class="askai-bubble-text">${this._esc(msg.text)}</div></div>`;
+      } else {
+        const sourceHtml = msg.sources && msg.sources.length
+          ? `<div class="askai-sources">${msg.sources.map((s,i) =>
+              `<span class="askai-source-tag">${s.icon} ${s.lessonTitle} — ${this._esc(s.sectionTitle)}</span>`
+            ).join('')}</div>`
+          : '';
+        return `<div class="askai-bubble askai-ai">
+          <div class="askai-bubble-text">${this._esc(msg.text)}</div>
+          ${sourceHtml}
+        </div>`;
+      }
+    }).join('');
+
+    const typingHtml = this._typing
+      ? `<div class="askai-bubble askai-ai"><div class="askai-typing"><span></span><span></span><span></span></div></div>`
+      : '';
+
+    container.innerHTML = `
+      <div class="askai-bubble askai-ai">
+        <div class="askai-bubble-text">Hey! Ask me anything about the material in your loaded modules — AC theory, inductors, capacitors, three-phase circuits, motor controls, and more. I'll pull the relevant info and tell you exactly where it came from. 🔌</div>
+      </div>
+      ${bubbles}
+      ${typingHtml}
+    `;
+    this._scrollBottom();
+  },
+
+  _scrollBottom() {
+    setTimeout(() => {
+      const c = document.getElementById('askaiMessages');
+      if (c) c.scrollTop = c.scrollHeight;
+    }, 30);
+  },
+
+  _focusInput() {
+    setTimeout(() => {
+      const inp = document.getElementById('askaiInput');
+      if (inp) inp.focus();
+    }, 300);
+  },
+
+  _esc(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/\n/g,'<br>');
+  }
+};
+
+// Floating SparkyAI trigger button
+function createAskAIFAB() {
+  if (document.getElementById('askaiBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'askaiBtn';
+  btn.className = 'askai-fab';
+  btn.innerHTML = '🤖';
+  btn.title = 'Ask SparkyAI';
+  btn.onclick = () => AskAI.toggle();
+  document.body.appendChild(btn);
+}
+
 // One-time analytics wipe — clears all pre-launch test traffic (was 100% owner)
 (function purgeTestTraffic() {
   const FLAG = 'sparkstudy_traffic_purged_v1';
@@ -10938,6 +11207,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   App.init();
   createFAB();
+  createAskAIFAB();
   PWA.init();
 
   // Click-based dropdowns (no hover gap glitch)
