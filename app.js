@@ -682,6 +682,7 @@ const App = {
 
     // Clean up floating notes button when leaving exam page
     NotesSidePanel.close();
+    if (Notes._fullscreen) { Notes._fullscreen = false; document.body.style.overflow = ''; }
 
     // Track page view
     const uid = state ? state.user.id : (Auth.isOwnerAnalytics ? 'owner-analytics' : null);
@@ -2124,6 +2125,8 @@ const Notes = {
   _autocorrect: (localStorage.getItem('sparky_autocorrect') === 'true'),
   _autocorrectTimer: null,
   _currentPage: {},  // { [topicId]: pageId }
+  _fullscreen: false,
+  _sidebarCollapsed: (localStorage.getItem('sparky_notes_sidebar_collapsed') === 'true'),
 
   CHARS: [
     { label:'\u03a9', tip:'Ohm' }, { label:'\u03bc', tip:'Micro' }, { label:'\u00b0', tip:'Degree' },
@@ -2376,30 +2379,55 @@ const Notes = {
       </div>
     `).join('');
 
+    const sc = this._sidebarCollapsed;
+    const fs = this._fullscreen;
+    const gridCols = sc ? '44px 1fr' : '220px 1fr';
+    const stickyTop = fs ? '8px' : '80px';
+
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:start;">
+      <div class="${fs ? 'notes-fullscreen-wrap' : ''}">
+      <div style="display:grid;grid-template-columns:${gridCols};gap:${sc?'12px':'20px'};align-items:start;">
 
         <!-- Sidebar -->
-        <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:12px;height:fit-content;position:sticky;top:80px;">
-          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:700;padding:2px 6px;margin-bottom:8px;">Topics</div>
-          ${topics.map(t => `
-            <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
-                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.icon} ${t.name}</span>
-                ${t.has ? '<span style="color:var(--accent);font-size:0.6rem;flex-shrink:0;">\u25cf</span>' : ''}
-              </div>
-              ${t.has ? `<div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;">
-                <span>${t.wordCount} words</span><span>\u00b7</span><span>${this._relTime(t.timestamp)}</span>
-              </div>` : ''}
+        <div class="notes-no-print notes-sidebar-outer ${sc ? 'collapsed' : ''}" style="position:sticky;top:${stickyTop};">
+          ${sc ? `
+            <!-- Collapsed: icon strip -->
+            <div class="notes-sidebar-collapsed-strip">
+              <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Expand sidebar">\u203a</button>
+              ${topics.map(t => `
+                <button class="notes-sidebar-icon-btn ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')" title="${t.name}">
+                  ${t.icon}
+                  ${t.has ? '<span class="nsi-dot"></span>' : ''}
+                </button>
+              `).join('')}
             </div>
-          `).join('')}
+          ` : `
+            <!-- Expanded: full sidebar -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:12px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:700;padding:2px 0;">Topics</div>
+                <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Collapse sidebar">\u2039</button>
+              </div>
+              ${topics.map(t => `
+                <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.icon} ${t.name}</span>
+                    ${t.has ? '<span style="color:var(--accent);font-size:0.6rem;flex-shrink:0;">\u25cf</span>' : ''}
+                  </div>
+                  ${t.has ? `<div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;">
+                    <span>${t.wordCount} words</span><span>\u00b7</span><span>${this._relTime(t.timestamp)}</span>
+                  </div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          `}
         </div>
 
         <!-- Editor pane -->
         <div>
 
-          <!-- Sticky header: title + buttons + toolbar + char bar -->
-          <div class="notes-sticky-header notes-no-print">
+          <!-- Sticky header -->
+          <div class="notes-sticky-header notes-no-print" style="top:${stickyTop};">
             <!-- Title row -->
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
@@ -2409,12 +2437,13 @@ const Notes = {
                   <div style="font-size:0.72rem;color:var(--text-muted);" id="notesStatus">Auto-saved</div>
                 </div>
               </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                 <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON' : 'Autocorrect OFF'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">\ud83d\udcd6 Study Mode</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">\u26a1 Make Quiz</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._download('${userId}')" title="Download all pages as HTML file">\u2b07\ufe0f Download</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print">\ud83d\udda8\ufe0f Print</button>
+                <button class="btn btn-sm notes-fs-btn" onclick="Notes._toggleFullscreen('${userId}')" title="${fs ? 'Exit full screen' : 'Full screen'}">${fs ? '\u26f6 Exit' : '\u26f6 Full Screen'}</button>
               </div>
             </div>
 
@@ -2494,6 +2523,7 @@ const Notes = {
           </div>
 
         </div>
+      </div>
       </div>
     `;
 
@@ -2601,6 +2631,25 @@ const Notes = {
     const state = Storage.get();
     this.render(state);
     setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 100);
+  },
+
+  _toggleFullscreen(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
+    this._fullscreen = !this._fullscreen;
+    // Prevent body scroll while fullscreen
+    document.body.style.overflow = this._fullscreen ? 'hidden' : '';
+    this._renderEditor(document.getElementById('notesContent'), Storage.get());
+    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
+  },
+
+  _toggleSidebar(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
+    this._sidebarCollapsed = !this._sidebarCollapsed;
+    localStorage.setItem('sparky_notes_sidebar_collapsed', this._sidebarCollapsed);
+    this._renderEditor(document.getElementById('notesContent'), Storage.get());
+    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
   },
 
   _toggleInsertPanel(e) {
