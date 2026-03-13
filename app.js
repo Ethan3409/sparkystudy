@@ -680,6 +680,9 @@ const App = {
     if (pageEl) pageEl.classList.add('active');
     this.currentPage = page;
 
+    // Clean up floating notes button when leaving exam page
+    NotesSidePanel.close();
+
     // Track page view
     const uid = state ? state.user.id : (Auth.isOwnerAnalytics ? 'owner-analytics' : null);
     if (uid && !publicPages.includes(page)) SiteAnalytics.trackPageView(page, uid);
@@ -1878,6 +1881,17 @@ const Exams = {
         </div>
       </div>
     `;
+
+    // Floating notes button
+    const nb = document.createElement('button');
+    nb.id = 'floatNotesBtn';
+    nb.innerHTML = '\ud83d\udcdd';
+    nb.title = 'Open my notes';
+    nb.style.cssText = 'position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#000;border:none;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 20px rgba(245,158,11,0.4);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,box-shadow 0.15s;';
+    nb.onmouseover = () => { nb.style.transform='scale(1.1)'; nb.style.boxShadow='0 6px 28px rgba(245,158,11,0.55)'; };
+    nb.onmouseout  = () => { nb.style.transform='scale(1)';   nb.style.boxShadow='0 4px 20px rgba(245,158,11,0.4)'; };
+    nb.onclick = () => NotesSidePanel.toggle(Storage.get());
+    document.body.appendChild(nb);
   },
 
   selectAnswer(idx) {
@@ -2007,6 +2021,107 @@ const Exams = {
   }
 };
 
+// ===== NOTES SIDE PANEL (accessible during exams & quizzes) =====
+const NotesSidePanel = {
+  _panelId: 'notesSidePanelOverlay',
+
+  toggle(state) {
+    const existing = document.getElementById(this._panelId);
+    if (existing) { this.close(); return; }
+    this.open(state);
+  },
+
+  open(state) {
+    if (document.getElementById(this._panelId)) return;
+    const userId = state?.user?.id;
+    const topics = Notes.TOPICS_LIST;
+    const activeTopic = Notes.currentTopic || 'general';
+
+    const overlay = document.createElement('div');
+    overlay.id = this._panelId;
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;display:flex;justify-content:flex-end;';
+
+    // Backdrop
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);';
+    backdrop.onclick = () => this.close();
+    overlay.appendChild(backdrop);
+
+    // Panel
+    const panel = document.createElement('div');
+    panel.style.cssText = 'position:relative;width:min(480px,95vw);height:100%;background:var(--bg-card);border-left:1px solid var(--border);display:flex;flex-direction:column;animation:slideInRight 0.22s ease;';
+    panel.innerHTML = `
+      <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div style="font-weight:800;font-size:1rem;">\ud83d\udcdd My Notes</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="spTopicSel" style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);padding:5px 10px;font-size:0.82rem;cursor:pointer;outline:none;" onchange="NotesSidePanel._switchTopic(this.value,'${userId}')">
+            ${topics.map(t => `<option value="${t.id}" ${t.id===activeTopic?'selected':''}>${t.icon} ${t.name}</option>`).join('')}
+          </select>
+          <button onclick="NotesSidePanel.close()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.3rem;padding:0;line-height:1;">\u00d7</button>
+        </div>
+      </div>
+      <div id="spEditorWrap" style="flex:1;overflow-y:auto;position:relative;">
+        <div id="spEditor" contenteditable="true" spellcheck="true"
+          style="padding:18px;min-height:100%;outline:none;font-size:0.92rem;line-height:1.75;color:var(--text-primary);"
+          data-placeholder="Take notes here..."
+          oninput="NotesSidePanel._onInput('${userId}')">
+        </div>
+      </div>
+      <div style="padding:8px 18px;border-top:1px solid var(--border);font-size:0.7rem;color:var(--text-muted);display:flex;justify-content:space-between;flex-shrink:0;">
+        <span id="spWordCount">0 words</span><span>Auto-saved \u2713</span>
+      </div>
+    `;
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    // Load content for active topic
+    const ed = document.getElementById('spEditor');
+    if (ed && userId) {
+      const html = localStorage.getItem(Notes._storageKey(userId, activeTopic)) || '';
+      ed.innerHTML = html;
+      const wc = document.getElementById('spWordCount');
+      if (wc) wc.textContent = Notes._wordCount(html) + ' words';
+      // Placeholder
+      if (!html) { ed.style.color = 'var(--text-muted)'; ed.textContent = 'Take notes here...'; ed.style.fontStyle='italic'; }
+      ed.addEventListener('focus', () => {
+        if (ed.textContent === 'Take notes here...') { ed.textContent=''; ed.style.color='var(--text-primary)'; ed.style.fontStyle='normal'; }
+      });
+      // Move cursor to end
+      const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    }
+  },
+
+  close() {
+    const el = document.getElementById(this._panelId);
+    const btn = document.getElementById('floatNotesBtn');
+    if (el) el.remove();
+    if (btn) btn.remove();
+  },
+
+  _switchTopic(topicId, userId) {
+    const ed = document.getElementById('spEditor');
+    const wc = document.getElementById('spWordCount');
+    if (!ed || !userId) return;
+    const html = localStorage.getItem(Notes._storageKey(userId, topicId)) || '';
+    ed.innerHTML = html;
+    if (!html) { ed.style.color='var(--text-muted)'; ed.textContent='Take notes here...'; ed.style.fontStyle='italic'; }
+    else { ed.style.color='var(--text-primary)'; ed.style.fontStyle='normal'; }
+    if (wc) wc.textContent = Notes._wordCount(html) + ' words';
+    Notes.currentTopic = topicId;
+  },
+
+  _onInput(userId) {
+    const ed = document.getElementById('spEditor');
+    const sel = document.getElementById('spTopicSel');
+    const wc = document.getElementById('spWordCount');
+    if (!ed || !userId || !sel) return;
+    const topicId = sel.value;
+    Notes._save(userId, topicId, ed.innerHTML);
+    if (wc) wc.textContent = Notes._wordCount(ed.innerHTML) + ' words';
+  },
+};
+
 // ===== NOTES MODULE =====
 const Notes = {
   currentTopic: 'general',
@@ -2043,39 +2158,22 @@ const Notes = {
   ],
 
   TOPICS_LIST: [
-    { id:'general',          name:'\ud83d\udcdd General Notes',       icon:'\ud83d\udcdd' },
-    { id:'safety',           name:'Safety',                           icon:'\ud83e\uddba' },
-    { id:'tools',            name:'Tools & Equipment',                icon:'\ud83d\udd27' },
-    { id:'conductors',       name:'Conductors & Cables',              icon:'\ud83d\udd0c' },
-    { id:'wiring-methods',   name:'Wiring Methods',                   icon:'\ud83d\udcd0' },
-    { id:'residential',      name:'Residential Wiring',               icon:'\ud83c\udfe0' },
-    { id:'grounding-bonding',name:'Grounding & Bonding',              icon:'\u23da' },
-    { id:'overcurrent',      name:'Overcurrent Protection',           icon:'\u26a1' },
-    { id:'motors',           name:'Motors',                           icon:'\u2699\ufe0f' },
-    { id:'transformers',     name:'Transformers',                     icon:'\ud83d\udd04' },
-    { id:'ac-theory',        name:'AC Theory',                        icon:'\u3030\ufe0f' },
-    { id:'dc-theory',        name:'DC Theory',                        icon:'\ud83d\udd0b' },
-    { id:'code-cec',         name:'CEC Code',                         icon:'\ud83d\udcd6' },
-    { id:'exam-prep',        name:'Exam Prep',                        icon:'\ud83c\udfaf' },
+    { id:'general',   name:'General Notes', icon:'\ud83d\udcdd' },
+    { id:'theory',    name:'Theory',        icon:'\u26a1' },
+    { id:'code',      name:'Code',          icon:'\ud83d\udcd6' },
+    { id:'lab',       name:'Lab',           icon:'\ud83d\udd2c' },
+    { id:'formulas',  name:'Formulas',      icon:'\ud83e\uddee' },
+    { id:'exam-prep', name:'Exam Prep',     icon:'\ud83c\udfaf' },
   ],
 
   TEMPLATES: {
-    'general':    '<h2>General Notes</h2><p>Use this space for anything that doesn\'t fit another topic.</p>',
-    'safety':     '<h2>\ud83e\uddba Safety</h2><h3>PPE Requirements</h3><ul><li><b>Safety boots</b> \u2014 CSA Grade 1 rated</li><li><b>Hard hat</b> \u2014 Class E (electrical)</li><li><b>Safety glasses</b> \u2014 CSA Z94.3</li><li><b>High-visibility vest</b> \u2014 when near traffic</li><li><b>Arc flash PPE</b> \u2014 rated for the incident energy level</li></ul><h3>Lockout / Tagout (LOTO)</h3><ol><li>Notify affected workers</li><li>Identify all energy sources</li><li>Shut down equipment</li><li>Isolate energy source</li><li>Apply <b>personal lock and tag</b></li><li>Verify zero energy state</li></ol><h3>Working Near Energized Equipment</h3><p><b>Limit of approach</b> must be observed. Never work alone on energized circuits above 50 V without proper authorization.</p>',
-    'tools':      '<h2>\ud83d\udd27 Tools &amp; Equipment</h2><h3>Hand Tools</h3><ul><li><b>Lineman pliers</b> \u2014 cutting, twisting wire</li><li><b>Needle-nose pliers</b> \u2014 bending terminals</li><li><b>Wire strippers</b> \u2014 match gauge to wire size</li><li><b>Conduit benders</b> \u2014 EMT, rigid; know the take-up for each size</li><li><b>Fish tape</b> \u2014 pulling wire through conduit</li></ul><h3>Measuring Tools</h3><ul><li><b>Multimeter</b> \u2014 volts, amps (clamp), resistance, continuity</li><li><b>Clamp meter</b> \u2014 non-contact current measurement</li><li><b>Voltage tester</b> \u2014 quick live/dead check</li><li><b>Insulation resistance tester (Megger)</b> \u2014 checks insulation integrity</li></ul><h3>Power Tools</h3><ul><li><b>Hammer drill</b> \u2014 masonry anchors</li><li><b>Hole saw / knockout punch</b> \u2014 panel and box knockouts</li><li><b>Cable cutter</b> \u2014 large conductors</li></ul>',
-    'conductors': '<h2>\ud83d\udd0c Conductors &amp; Cables</h2><h3>Wire Gauge &amp; Ampacity (Table 2)</h3><ul><li><b>14 AWG</b> \u2014 15 A (copper)</li><li><b>12 AWG</b> \u2014 20 A</li><li><b>10 AWG</b> \u2014 30 A</li><li><b>8 AWG</b> \u2014 40 A</li><li><b>6 AWG</b> \u2014 55 A</li></ul><h3>Insulation Types</h3><ul><li><b>RW90</b> \u2014 90\u00b0C wet/dry, general wiring</li><li><b>THHN/THWN</b> \u2014 heat/moisture resistant, in conduit</li><li><b>NMD90</b> \u2014 Romex, residential only, not in conduit</li></ul><h3>Conductor Colour Code (Canada)</h3><ul><li><b>Black/Red</b> \u2014 ungrounded (hot)</li><li><b>White</b> \u2014 grounded (neutral)</li><li><b>Green / bare</b> \u2014 grounding conductor</li></ul>',
-    'wiring-methods': '<h2>\ud83d\udcd0 Wiring Methods</h2><h3>EMT (Electrical Metallic Tubing)</h3><ul><li>Thin-wall steel conduit</li><li>Setscrew or compression couplings</li><li>Max wire fill: see CEC Table 8</li></ul><h3>RMC (Rigid Metal Conduit)</h3><ul><li>Threaded, heaviest wall \u2014 outdoor &amp; hazardous locations</li></ul><h3>FMC / LFMC (Flexible Metal Conduit)</h3><ul><li>Used for final connections to motors, equipment with vibration</li><li>Max 1.8 m (6 ft) unsupported</li></ul><h3>NMD90</h3><ul><li>Non-metallic sheathed cable for dry residential</li><li>Cannot be used in commercial or industrial</li></ul><h3>Key Conduit Bends</h3><ul><li><b>90\u00b0 stub-up</b> \u2014 take-up depends on conduit size</li><li><b>Offset</b> \u2014 two equal bends, angles 22\u00b0\u201345\u00b0</li><li><b>Saddle</b> \u2014 three or four bends to clear an obstacle</li></ul>',
-    'residential': '<h2>\ud83c\udfe0 Residential Wiring</h2><h3>Branch Circuit Requirements</h3><ul><li><b>Kitchen small appliance circuits</b> \u2014 two 20 A circuits minimum</li><li><b>Bathroom</b> \u2014 dedicated 20 A circuit</li><li><b>Laundry</b> \u2014 dedicated 20 A circuit</li></ul><h3>Box Fill (CEC Rule 12-3034)</h3><p>Each conductor entering the box counts as one volume allowance. Add for fittings, devices. Formula: <b>Number of conductors \u00d7 volume per conductor (Table 13)</b></p><h3>GFCI / AFCI Requirements</h3><ul><li><b>GFCI</b>: bathrooms, garages, outdoors, kitchens within 1.5 m of sink</li><li><b>AFCI</b>: bedrooms (some jurisdictions \u2014 check local amendment)</li></ul>',
-    'grounding-bonding': '<h2>\u23da Grounding &amp; Bonding</h2><h3>System Grounding</h3><p>Connects the <b>neutral</b> of the system to earth. Limits voltage rise during faults.</p><h3>Equipment Grounding</h3><p>Connects <b>metal enclosures</b> to earth. Provides fault-current return path so the overcurrent device trips.</p><h3>Bonding</h3><p>Low-impedance connection between <b>conductive parts</b> to keep them at the same potential. Prevents sparks between metal objects.</p><h3>Key Rules</h3><ul><li>Main bonding jumper connects neutral to ground at the <b>service entrance only</b></li><li>In sub-panels: keep neutral and ground <b>separated</b></li><li>Grounding electrode conductor sizing from CEC Table 17</li></ul>',
-    'overcurrent': '<h2>\u26a1 Overcurrent Protection</h2><h3>Fuses vs Circuit Breakers</h3><ul><li><b>Fuse</b>: one-time device, fast response, must be replaced</li><li><b>Breaker</b>: resettable, has magnetic (instantaneous) and thermal (time-delay) trip</li></ul><h3>Sizing Rules</h3><ul><li>Overcurrent device \u2264 wire ampacity (standard rule)</li><li>Motors: breaker can be up to <b>250%</b> of FLA (CEC Rule 28-200)</li></ul><h3>OCPD Types</h3><ul><li><b>Standard</b> \u2014 for general lighting/outlets</li><li><b>GFCI breaker</b> \u2014 entire circuit protection</li><li><b>AFCI breaker</b> \u2014 arc-fault detection</li><li><b>Dual-function GFCI/AFCI</b> \u2014 both protections in one</li></ul>',
-    'motors':      '<h2>\u2699\ufe0f Motors</h2><h3>Motor Types</h3><ul><li><b>Single-phase induction</b> \u2014 split-phase, capacitor-start</li><li><b>Three-phase induction</b> \u2014 squirrel cage (most common)</li><li><b>DC motors</b> \u2014 series, shunt, compound</li></ul><h3>Key Nameplate Values</h3><ul><li><b>FLA</b> \u2014 Full Load Amps</li><li><b>Service Factor (SF)</b> \u2014 overload allowance</li><li><b>Efficiency &amp; Power Factor</b></li></ul><h3>CEC Motor Rules</h3><ul><li>Branch circuit conductor: <b>125% of FLA</b></li><li>Overload protection: <b>125% of FLA</b> (SF \u2265 1.15) or 115%</li><li>Short-circuit protection (breaker): up to <b>250% of FLA</b></li></ul><h3>Starters</h3><ul><li><b>DOL</b> \u2014 direct on line (small motors)</li><li><b>Star-delta</b> \u2014 reduced starting current</li><li><b>VFD</b> \u2014 variable frequency drive, full control</li></ul>',
-    'transformers':'<h2>\ud83d\udd04 Transformers</h2><h3>Turns Ratio</h3><p>N1 \u00f7 N2 = V1 \u00f7 V2 = I2 \u00f7 I1</p><h3>kVA Rating</h3><p>Single-phase: <b>kVA = (V \u00d7 A) \u00f7 1000</b></p><p>Three-phase: <b>kVA = (V \u00d7 A \u00d7 \u221a3) \u00f7 1000</b></p><h3>Connections</h3><ul><li><b>Delta-Delta</b> \u2014 no neutral, good for unbalanced loads</li><li><b>Wye-Wye</b> \u2014 neutral available</li><li><b>Delta-Wye</b> \u2014 most common step-up/step-down</li></ul><h3>Losses</h3><ul><li><b>Core losses</b> (hysteresis, eddy current) \u2014 constant</li><li><b>Copper losses</b> \u2014 I\u00b2R in windings, vary with load</li></ul>',
-    'ac-theory':   '<h2>\u3030\ufe0f AC Theory</h2><h3>Key Values</h3><ul><li><b>Frequency</b> \u2014 60 Hz (Canada)</li><li><b>Period</b> T = 1 \u00f7 f = 16.67 ms</li><li><b>RMS = Peak \u00d7 0.707</b> \u2014 equivalent DC heating value</li><li><b>Peak = RMS \u00d7 1.414</b></li></ul><h3>Impedance</h3><p>Z = \u221a(R\u00b2 + X\u00b2) &nbsp;&nbsp; XL = 2\u03c0fL &nbsp;&nbsp; XC = 1 \u00f7 (2\u03c0fC)</p><h3>Power</h3><ul><li><b>True power (P)</b> \u2014 watts, consumed by resistance</li><li><b>Reactive power (Q)</b> \u2014 VAR, stored/returned by reactance</li><li><b>Apparent power (S)</b> \u2014 VA, total from source</li><li><b>Power factor</b> = P \u00f7 S = cos(\u03c6)</li></ul>',
-    'dc-theory':   '<h2>\ud83d\udd0b DC Theory</h2><h3>Ohm\u2019s Law</h3><p>V = I \u00d7 R &nbsp;&nbsp; I = V \u00f7 R &nbsp;&nbsp; R = V \u00f7 I</p><h3>Power</h3><p>P = V \u00d7 I &nbsp;&nbsp; P = I\u00b2R &nbsp;&nbsp; P = V\u00b2 \u00f7 R</p><h3>Series Circuits</h3><ul><li>Same current everywhere: <b>I = same</b></li><li>Total resistance: <b>RT = R1 + R2 + R3\u2026</b></li><li>Voltage divides: <b>VT = V1 + V2 + V3\u2026</b></li></ul><h3>Parallel Circuits</h3><ul><li>Same voltage everywhere: <b>V = same</b></li><li>Total resistance: <b>1/RT = 1/R1 + 1/R2\u2026</b></li><li>Current divides: <b>IT = I1 + I2 + I3\u2026</b></li></ul><h3>Kirchhoff\u2019s Laws</h3><ul><li><b>KVL</b> \u2014 sum of voltages around any loop = 0</li><li><b>KCL</b> \u2014 sum of currents at any node = 0</li></ul>',
-    'code-cec':    '<h2>\ud83d\udcd6 CEC Code</h2><h3>How to Navigate the CEC</h3><ul><li>Rules numbered by section (e.g. Rule <b>12-3034</b> = Section 12, Rule 3034)</li><li>Tables referenced within rules (Table 2, 4, 8, 13, etc.)</li><li>Appendix B \u2014 explanatory notes</li></ul><h3>Key Sections to Know</h3><ul><li><b>Section 2</b> \u2014 General rules, definitions</li><li><b>Section 4</b> \u2014 Conductors</li><li><b>Section 6</b> \u2014 Services</li><li><b>Section 8</b> \u2014 Circuit loading and demand</li><li><b>Section 10</b> \u2014 Grounding and bonding</li><li><b>Section 12</b> \u2014 Wiring methods</li><li><b>Section 14</b> \u2014 Protection and control</li><li><b>Section 26</b> \u2014 Installation of electrical equipment</li><li><b>Section 28</b> \u2014 Motors and generators</li></ul>',
-    'exam-prep':   '<h2>\ud83c\udfaf Exam Prep</h2><h3>Must-Know Formulas</h3><ul><li>V = I \u00d7 R (Ohm\u2019s Law)</li><li>P = V \u00d7 I &nbsp; P = I\u00b2R &nbsp; P = V\u00b2/R</li><li>Z = \u221a(R\u00b2+X\u00b2) &nbsp; XL = 2\u03c0fL &nbsp; XC = 1/(2\u03c0fC)</li><li>kVA (1\u03c6) = VA \u00f7 1000 &nbsp; kVA (3\u03c6) = V\u00d7A\u00d7\u221a3 \u00f7 1000</li><li>VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM</li></ul><h3>Common CEC Tables</h3><ul><li><b>Table 2</b> \u2014 Ampacity of conductors</li><li><b>Table 4</b> \u2014 Conduit fill</li><li><b>Table 8</b> \u2014 Conductor properties (resistance, area)</li><li><b>Table 13</b> \u2014 Box fill volume allowances</li></ul><h3>Weak Areas to Review</h3><ul><li>[ ] </li><li>[ ] </li><li>[ ] </li></ul><h3>Exam Day Tips</h3><ul><li>Read the question <b>twice</b> before selecting</li><li>Eliminate obviously wrong answers first</li><li>Mark difficult ones and come back</li></ul>',
+    'general':   '<h2>\ud83d\udcdd General Notes</h2><p>Use this space for anything that doesn\'t fit another topic — reminders, questions to look up, things your instructor mentioned.</p><h3>Key Points from Today</h3><ul><li></li><li></li></ul><h3>Questions to Follow Up</h3><ul><li></li></ul>',
+    'theory':    '<h2>\u26a1 Theory Notes</h2><h3>AC Fundamentals</h3><ul><li><b>Frequency</b> \u2014 60 Hz in Canada; Period T = 1/f = 16.67 ms</li><li><b>RMS</b> = Peak \u00d7 0.707 (equivalent DC heating value)</li><li><b>Impedance</b> Z = \u221a(R\u00b2 + X\u00b2)</li></ul><h3>DC Fundamentals</h3><ul><li><b>Ohm\u2019s Law</b>: V = I \u00d7 R &nbsp; I = V \u00f7 R &nbsp; R = V \u00f7 I</li><li><b>Series</b>: same I everywhere, voltages add</li><li><b>Parallel</b>: same V everywhere, currents add</li></ul><h3>Power</h3><ul><li><b>True power (P)</b> \u2014 watts, consumed by R</li><li><b>Reactive power (Q)</b> \u2014 VAR, stored by L or C</li><li><b>Apparent power (S)</b> \u2014 VA = V \u00d7 I from source</li><li><b>PF</b> = P \u00f7 S = cos(\u03c6)</li></ul>',
+    'code':      '<h2>\ud83d\udcd6 CEC Code Notes</h2><h3>How to Read a Rule Number</h3><p>Rule <b>12-3034</b> = Section 12, Rule 3034. Appendix B has explanatory notes.</p><h3>Key Sections</h3><ul><li><b>Section 2</b> \u2014 Definitions</li><li><b>Section 4</b> \u2014 Conductors</li><li><b>Section 8</b> \u2014 Circuit loading &amp; demand</li><li><b>Section 10</b> \u2014 Grounding &amp; bonding</li><li><b>Section 12</b> \u2014 Wiring methods</li><li><b>Section 14</b> \u2014 Protection &amp; control</li><li><b>Section 28</b> \u2014 Motors &amp; generators</li></ul><h3>Rules I Keep Forgetting</h3><ul><li></li><li></li></ul>',
+    'lab':       '<h2>\ud83d\udd2c Lab Notes</h2><h3>Safety Checks Before Starting</h3><ul><li>\u2610 PPE on (safety glasses, boots)</li><li>\u2610 LOTO applied and verified</li><li>\u2610 Area clear</li></ul><h3>Today\'s Lab</h3><p><b>Objective:</b></p><p><b>Equipment Used:</b></p><h3>Measurements</h3><p>Record your readings here:</p><ul><li>Voltage: </li><li>Current: </li><li>Resistance: </li></ul><h3>Results / Observations</h3><p></p><h3>What Went Wrong / What I Learned</h3><p></p>',
+    'formulas':  '<h2>\ud83e\uddee Formula Reference</h2><h3>Ohm\'s Law &amp; Power</h3><ul><li>V = I \u00d7 R</li><li>P = V \u00d7 I = I\u00b2R = V\u00b2 \u00f7 R</li></ul><h3>AC &amp; Impedance</h3><ul><li>Z = \u221a(R\u00b2 + X\u00b2)</li><li>XL = 2\u03c0fL &nbsp;&nbsp; XC = 1 \u00f7 (2\u03c0fC)</li><li>PF = cos(\u03c6) = P \u00f7 S</li></ul><h3>Voltage Drop</h3><ul><li>VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM</li><li>K = 12.9 (copper) or 21.2 (aluminum)</li></ul><h3>Transformers</h3><ul><li>N1/N2 = V1/V2 = I2/I1</li><li>kVA (1\u03c6) = (V \u00d7 A) \u00f7 1000</li><li>kVA (3\u03c6) = (V \u00d7 A \u00d7 \u221a3) \u00f7 1000</li></ul><h3>Motors (CEC)</h3><ul><li>Branch conductor: 125% FLA</li><li>Overload protection: 125% FLA (SF\u22651.15)</li><li>Short-circuit breaker: up to 250% FLA</li></ul>',
+    'exam-prep': '<h2>\ud83c\udfaf Exam Prep</h2><h3>Must-Know Formulas</h3><ul><li>V = IR &nbsp; P = VI = I\u00b2R = V\u00b2/R</li><li>Z = \u221a(R\u00b2+X\u00b2) &nbsp; XL = 2\u03c0fL &nbsp; XC = 1/(2\u03c0fC)</li><li>VD = 2KID/CM &nbsp; kVA(3\u03c6) = V\u00d7A\u00d7\u221a3/1000</li></ul><h3>CEC Tables to Know</h3><ul><li><b>Table 2</b> \u2014 Conductor ampacity</li><li><b>Table 4</b> \u2014 Conduit fill</li><li><b>Table 8</b> \u2014 Conductor resistance &amp; area</li><li><b>Table 13</b> \u2014 Box fill volume</li></ul><h3>My Weak Areas</h3><ul><li>[ ] </li><li>[ ] </li><li>[ ] </li></ul><h3>Exam Day Tips</h3><ul><li>Read the question <b>twice</b></li><li>Eliminate obviously wrong answers first</li><li>Mark hard ones, come back at end</li></ul>',
   },
-
   _storageKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}`; },
 
   _load(userId, topicId) {
@@ -2171,6 +2269,7 @@ const Notes = {
                 </div>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="notesGrammarBtn" class="btn btn-secondary btn-sm" onclick="Notes._grammarCheck('${userId}')" title="Check spelling and grammar">\u2713 Grammar</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms and review">\ud83d\udcd6 Study Mode</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-generate quiz from your notes">\u26a1 Make Quiz</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print clean notes">\ud83d\udda8\ufe0f Print</button>
@@ -2240,6 +2339,9 @@ const Notes = {
             <span id="notesWordCount">0 words</span>
             <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card</span>
           </div>
+
+          <!-- Grammar results panel -->
+          <div id="notesGrammarPanel" class="notes-no-print" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-top:8px;overflow:hidden;font-size:0.82rem;max-height:320px;overflow-y:auto;"></div>
         </div>
       </div>
     `;
@@ -2254,6 +2356,83 @@ const Notes = {
   _hideEmpty() {
     const el = document.getElementById('notesEmptyState');
     if (el) el.style.display = 'none';
+  },
+
+  async _grammarCheck(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (!editor) return;
+    const text = (editor.innerText || editor.textContent || '').trim();
+    if (!text) { showToast('Write something first!', 'info'); return; }
+    const btn = document.getElementById('notesGrammarBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '\u23f3 Checking\u2026'; }
+    const panel = document.getElementById('notesGrammarPanel');
+    if (panel) panel.style.display = 'block';
+    try {
+      const res = await fetch('https://api.languagetool.org/v2/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ text, language: 'en-CA', disabledRules: 'WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE' })
+      });
+      const data = await res.json();
+      if (!panel) return;
+      const matches = (data.matches || []).filter(m => m.rule.issueType !== 'typographical');
+      if (matches.length === 0) {
+        panel.innerHTML = '<div style="padding:14px 16px;display:flex;align-items:center;gap:8px;color:var(--success);font-size:0.84rem;font-weight:600;">\u2705 Looks great \u2014 no issues found</div>';
+      } else {
+        panel.innerHTML = `
+          <div style="padding:10px 16px 8px;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;">
+            <span>${matches.length} issue${matches.length!==1?'s':''} found</span>
+            <button onclick="document.getElementById('notesGrammarPanel').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:0;">\u00d7</button>
+          </div>
+          ${matches.slice(0,15).map((m,i) => {
+            const snip = text.slice(m.offset, m.offset + m.length);
+            const isSpell = m.rule.issueType === 'misspelling';
+            const badge = isSpell ? '<span style="background:rgba(239,68,68,0.15);color:#ef4444;border-radius:4px;padding:1px 5px;font-size:0.65rem;font-weight:700;">SPELL</span>' : '<span style="background:rgba(245,158,11,0.15);color:var(--accent);border-radius:4px;padding:1px 5px;font-size:0.65rem;font-weight:700;">GRAMMAR</span>';
+            const fixes = m.replacements.slice(0,3).map(r => `<button onclick="Notes._grammarFix(${m.offset},${m.length},'${r.value.replace(/\/g,'\\\\').replace(/'/g,"\\'")}')" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.75rem;cursor:pointer;transition:all 0.12s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-primary)'">${r.value}</button>`).join('');
+            return `<div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.05);">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">${badge}<span style="font-size:0.78rem;color:var(--text-secondary);background:rgba(255,255,255,0.04);padding:1px 6px;border-radius:4px;">"${snip}"</span></div>
+              <div style="font-size:0.77rem;color:var(--text-muted);margin-bottom:${fixes?'7px':'0'}">${m.message}</div>
+              ${fixes ? `<div style="display:flex;gap:5px;flex-wrap:wrap;">${fixes}</div>` : ''}
+            </div>`;
+          }).join('')}
+        `;
+      }
+    } catch(e) {
+      if (panel) panel.innerHTML = '<div style="padding:14px 16px;color:var(--danger);font-size:0.82rem;">\u26a0\ufe0f Grammar check unavailable \u2014 check your connection</div>';
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '\u2713 Grammar'; }
+    }
+  },
+
+  _grammarFix(offset, length, replacement) {
+    const editor = document.getElementById('notesEditor');
+    if (!editor) return;
+    // Walk text nodes to find and replace the span at the given offset
+    let pos = 0, found = false;
+    const walk = (node) => {
+      if (found) return;
+      if (node.nodeType === 3) {
+        const end = pos + node.length;
+        if (pos <= offset && offset < end) {
+          const localOff = offset - pos;
+          const localEnd = Math.min(localOff + length, node.length);
+          const before = node.textContent.slice(0, localOff);
+          const after  = node.textContent.slice(localEnd);
+          node.textContent = before + replacement + after;
+          found = true;
+        }
+        pos = end;
+      } else {
+        node.childNodes.forEach(walk);
+      }
+    };
+    walk(editor);
+    const st = Storage.get();
+    if (st) Notes._save(st.user.id, Notes.currentTopic, editor.innerHTML);
+    const wc = document.getElementById('notesWordCount');
+    if (wc) wc.textContent = Notes._wordCount(editor.innerHTML) + ' words';
+    showToast('Fixed!', 'success');
+    setTimeout(() => Notes._grammarCheck(), 600);
   },
 
   _switchTopic(topicId, userId) {
@@ -10776,6 +10955,11 @@ const Leaderboard = {
 
 // Initialize app
 document.addEventListener("DOMContentLoaded", () => {
+  // Slide-in animation for notes side panel
+  const _animStyle = document.createElement('style');
+  _animStyle.textContent = '@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}';
+  document.head.appendChild(_animStyle);
+
   App.init();
   createFAB();
   PWA.init();
