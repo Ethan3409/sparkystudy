@@ -1440,8 +1440,8 @@ input[type="radio"]:checked::after {
 .notes-fullscreen-wrap {
   position: fixed;
   inset: 0;
-  z-index: 500;
-  background: #3c3c3c;
+  z-index: 1002; /* above navbar (1000) and mobile menu button (1001) */
+  background: #404040;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1449,26 +1449,54 @@ input[type="radio"]:checked::after {
 
 /* Top toolbar strip */
 .notes-fs-topbar {
-  background: #252526;
-  border-bottom: 1px solid #484848;
-  padding: 10px 20px 8px;
+  background: #1e1e1e;
+  border-bottom: 2px solid #555;
+  padding: 10px 20px 10px;
   flex-shrink: 0;
-  z-index: 10;
 }
 .notes-fs-topbar .notes-toolbar {
-  background: #2d2d2d;
-  border-color: #484848;
-  border-radius: 6px;
-  margin-top: 6px;
+  background: #2a2a2a;
+  border: 1px solid #484848;
+  border-radius: 8px;
+  margin-top: 8px;
+  padding: 4px 8px;
 }
 .notes-fs-topbar .ntb {
-  color: #c8c8c8;
+  color: #ccc;
   border-color: transparent;
+  background: transparent;
 }
 .notes-fs-topbar .ntb:hover {
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.1);
   color: #fff;
-  border-color: transparent;
+  border-color: rgba(255,255,255,0.15);
+}
+.notes-fs-topbar .ntb-sep {
+  background: #555;
+}
+.notes-fs-topbar .notes-insert-btn {
+  color: #a5b4fc !important;
+}
+/* Action buttons in the topbar */
+.notes-fs-topbar .btn {
+  font-size: 0.73rem !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: #ccc !important;
+  background: rgba(255,255,255,0.06) !important;
+}
+.notes-fs-topbar .btn:hover {
+  background: rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+}
+.notes-fs-topbar .notes-fs-btn {
+  color: #a5b4fc !important;
+  border-color: rgba(165,180,252,0.25) !important;
+  background: rgba(99,102,241,0.1) !important;
+}
+.notes-fs-topbar .notes-fs-btn:hover {
+  background: rgba(99,102,241,0.2) !important;
 }
 
 /* Body row: sidebar + canvas */
@@ -1481,17 +1509,17 @@ input[type="radio"]:checked::after {
 
 /* Left sidebar in fullscreen */
 .notes-fs-sidebar {
-  background: #2d2d2d;
-  border-right: 1px solid #484848;
+  background: #272727;
+  border-right: 1px solid #505050;
   overflow-y: auto;
   flex-shrink: 0;
-  width: 220px;
-  padding: 12px 8px;
-  transition: width 0.15s ease;
+  width: 210px;
+  padding: 16px 10px;
+  transition: width 0.18s ease;
 }
 .notes-fs-sidebar.collapsed {
-  width: 48px;
-  padding: 8px 0;
+  width: 50px;
+  padding: 10px 0;
 }
 .notes-fs-sidebar .notes-sidebar-collapsed-strip {
   background: transparent;
@@ -1500,35 +1528,65 @@ input[type="radio"]:checked::after {
   padding: 0;
 }
 .notes-fs-sidebar .notes-sidebar-item {
-  color: #c0c0c0;
+  color: #b8b8b8;
+  border-radius: 8px;
+  margin-bottom: 2px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
 }
 .notes-fs-sidebar .notes-sidebar-item:hover {
   background: rgba(255,255,255,0.07);
-  color: #e0e0e0;
+  color: #e8e8e8;
 }
 .notes-fs-sidebar .notes-sidebar-item.active {
-  background: rgba(99,102,241,0.2);
+  background: rgba(99,102,241,0.22);
   color: #a5b4fc;
 }
 .notes-fs-sidebar .notes-sidebar-toggle {
-  color: #999;
+  color: #888;
   background: transparent;
   border: none;
   font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.notes-fs-sidebar .notes-sidebar-toggle:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ccc;
 }
 .notes-fs-sidebar .notes-sidebar-icon-btn {
-  color: #aaa;
+  color: #999;
+  font-size: 1.1rem;
+  width: 50px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+}
+.notes-fs-sidebar .notes-sidebar-icon-btn:hover {
+  background: rgba(255,255,255,0.06);
+  color: #ddd;
 }
 .notes-fs-sidebar .notes-sidebar-icon-btn.active {
   color: #a5b4fc;
+  background: rgba(99,102,241,0.15);
+}
+.notes-fs-sidebar .nsi-dot {
+  background: #6366f1;
+}
+/* Topics heading in expanded fullscreen sidebar */
+.notes-fs-sidebar > div > div {
+  color: #888;
 }
 
 /* Scrollable document canvas */
 .notes-fs-canvas {
   flex: 1;
   overflow-y: auto;
-  padding: 28px 40px 80px;
-  background: #3c3c3c;
+  padding: 32px 40px 80px;
+  background: #404040;
 }
 
 /* The white paper "page" */
@@ -1539,7 +1597,7 @@ input[type="radio"]:checked::after {
   min-height: 1056px;
   margin: 0 auto;
   padding: 64px 80px 80px;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 40px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3);
   border-radius: 2px;
   position: relative;
 }
@@ -1553,7 +1611,7 @@ input[type="radio"]:checked::after {
   padding: 0 !important;
   min-height: 700px;
   font-size: 0.96rem;
-  line-height: 1.75;
+  line-height: 1.8;
 }
 .notes-doc-page .notes-editor:focus {
   outline: none !important;
@@ -1563,35 +1621,52 @@ input[type="radio"]:checked::after {
 /* Page tabs above doc page in fullscreen */
 .notes-fullscreen-wrap .notes-pages-bar {
   max-width: 816px;
-  margin: 0 auto 0;
+  margin: 0 auto;
   border-radius: 8px 8px 0 0;
-  background: #4a4a4a;
-  border: 1px solid #5a5a5a;
+  background: #333;
+  border: 1px solid #555;
   border-bottom: none;
-  padding: 4px 8px 0;
+  padding: 5px 10px 0;
+  gap: 4px;
 }
 .notes-fullscreen-wrap .notes-page-tab {
-  background: transparent;
-  border-color: transparent;
+  background: #404040;
+  border-color: #555;
   color: #bbb;
+  font-size: 0.78rem;
+  border-radius: 6px 6px 0 0;
 }
 .notes-fullscreen-wrap .notes-page-tab.active {
   background: #fff;
   color: #1a1a1a;
-  border-color: transparent;
+  border-color: #fff;
+  font-weight: 600;
+}
+.notes-fullscreen-wrap .notes-page-tab:hover:not(.active) {
+  background: #4a4a4a;
+  color: #ddd;
 }
 .notes-fullscreen-wrap .notes-page-add {
-  color: #aaa;
+  color: #888;
   background: transparent;
   border-color: transparent;
+  font-size: 0.78rem;
 }
 .notes-fullscreen-wrap .notes-page-add:hover {
-  color: #fff;
+  color: #ddd;
+  background: #4a4a4a;
+}
+/* Word count bar in fullscreen */
+.notes-fullscreen-wrap #notesWordBar {
+  max-width: 816px;
+  margin: 0 auto;
+  padding: 8px 4px;
+  color: #888 !important;
 }
 
 /* Insert panel z-index boost in fullscreen */
 .notes-fullscreen-wrap .notes-insert-panel {
-  z-index: 600;
+  z-index: 1100;
 }
 
 /* ── Notes: fullscreen button ────────────────────────────── */
