@@ -1617,6 +1617,10 @@ input[type="radio"]:checked::after {
   outline: none !important;
   box-shadow: none !important;
 }
+/* Placeholder text on white page */
+.notes-doc-page .notes-editor:empty:before {
+  color: #aaa !important;
+}
 
 /* Page tabs above doc page in fullscreen */
 .notes-fullscreen-wrap .notes-pages-bar {

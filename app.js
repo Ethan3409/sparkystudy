@@ -2472,16 +2472,17 @@ const Notes = {
     `;
 
     // ── Shared: editor area ───────────────────────────────────
+    const emptyTextColor = fs ? '#888' : 'var(--text-muted)';
     const editorArea = `
-      <div id="notesEditorWrap" class="${fs ? 'notes-doc-page notes-print-area' : 'notes-print-area'}" style="${fs ? '' : 'background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;'}position:relative;">
+      <div id="notesEditorWrap" class="${fs ? 'notes-doc-page notes-print-area' : 'notes-print-area'}" style="${fs ? 'background:#fff;' : 'background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;'}position:relative;">
         ${isEmpty ? `
         <div id="notesEmptyState" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;pointer-events:none;z-index:1;">
-          <div style="font-size:2.5rem;opacity:0.3;">${topic.icon}</div>
+          <div style="font-size:2.5rem;opacity:0.25;${fs?'filter:grayscale(1);':''}">${topic.icon}</div>
           <div style="text-align:center;pointer-events:none;">
-            <div style="font-size:0.95rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;">No notes yet for ${topic.name}</div>
-            <div style="font-size:0.78rem;color:var(--text-muted);opacity:0.7;">Start typing \u2014 press <b>Tab</b> for bullets, <b>Tab</b> again to nest</div>
+            <div style="font-size:0.95rem;font-weight:600;color:${emptyTextColor};margin-bottom:6px;">No notes yet for ${topic.name}</div>
+            <div style="font-size:0.78rem;color:${emptyTextColor};opacity:0.7;">Start typing \u2014 press <b>Tab</b> for bullets, <b>Tab</b> again to nest</div>
           </div>
-          <button class="btn btn-secondary btn-sm" style="pointer-events:all;" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
+          <button class="btn btn-secondary btn-sm" style="pointer-events:all;${fs?'background:#f0f0f0;color:#333;border-color:#ccc;':''}" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
             \ud83d\udcc4 Use Starter Template
           </button>
         </div>` : ''}
@@ -2490,6 +2491,7 @@ const Notes = {
           spellcheck="true"
           autocorrect="on"
           data-placeholder="Start typing... Press Tab for bullets, Tab again to nest them."
+          style="${fs ? 'background:transparent;color:#1a1a1a;border:none;padding:0;' : ''}"
           oninput="Notes._onInput('${userId}');Notes._hideEmpty();Notes._scheduleAutocorrect('${userId}');"
           onkeydown="Notes._handleEditorKey(event,'${userId}');"
         >${savedHtml}</div>
