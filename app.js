@@ -3883,387 +3883,422 @@ const Tools = {
     }
   },
 
-  // ===== OHM'S LAW SIMULATOR (WORLD CLASS) =====
+  // ===== OHM'S LAW SIMULATOR (INSTRUMENT DESIGN) =====
   _simOhm() {
-    if (this._ohmAnimFrame) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
-    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
-    const st = this._ohmSt;
-    const sf = st.sf;
-    const presets = [
-      {n:'120V Outlet', v:120, r:100, sf:'I'},
-      {n:'Car Battery', v:12,  r:0.5, sf:'I'},
-      {n:'40W Lamp',    v:120, p:40,  sf:'R'},
-      {n:'Hair Dryer',  v:120, p:1500,sf:'I'},
-      {n:'USB Charger', v:5,   i:0.5, sf:'R'},
-      {n:'240V Dryer',  v:240, p:5400,sf:'I'},
-    ];
-    const sfBtn = (x, lbl) => {
-      const active = sf === x;
-      return `<button onclick="Tools._ohmSetSF('${x}')" style="padding:10px 4px;border:2px solid ${active?'var(--accent)':'var(--border)'};border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;background:${active?'rgba(245,158,11,0.14)':'var(--bg-input)'};color:${active?'var(--accent)':'var(--text-secondary)'};transition:all 0.15s;text-align:center;">${x}<br><span style="font-size:0.52rem;font-weight:400;opacity:0.65;">${lbl}</span></button>`;
-    };
-    const inBlock = (key, label, color, idN, idSl, val, minV, maxSl) => {
-      if (sf === key) return '';
-      const valStr = key==='I' ? parseFloat(val).toFixed(4) : key==='R' ? parseFloat(val).toFixed(2) : parseFloat(val).toFixed(1);
-      return `<div style="margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-          <span style="font-size:0.74rem;color:${color};font-weight:600;">${label}</span>
-          <input type="number" id="${idN}" value="${valStr}" min="${minV}" max="999999" step="any" style="width:80px;text-align:right;background:transparent;border:none;border-bottom:1.5px solid ${color}55;color:${color};font-weight:800;font-size:0.88rem;outline:none;padding:2px 0;" oninput="Tools._ohmFromInput()">
+    if (this._ohmResRAF)       { cancelAnimationFrame(this._ohmResRAF); this._ohmResRAF = null; }
+    if (this._ohmWireIntervals){ this._ohmWireIntervals.forEach(clearInterval); this._ohmWireIntervals = []; }
+    if (!this._ohmV) { this._ohmV = 4.5; this._ohmR = 500; }
+    return `
+<style>
+@keyframes eflow{from{stroke-dashoffset:50}to{stroke-dashoffset:0}}
+.ohm-inst{
+  --oi-bg:#070b14;--oi-panel:#0b1220;--oi-panel2:#0f1a2e;
+  --oi-border:rgba(56,120,200,0.28);--oi-border2:rgba(56,120,200,0.5);
+  --oi-sky:#4da6ff;--oi-sky2:#1e6fbf;
+  --oi-V:#ffd166;--oi-I:#06d6a0;--oi-R:#ef476f;--oi-P:#a8dadc;
+  --oi-muted:#7a9cc4;--oi-text:#e8f2ff;
+  color:var(--oi-text);font-family:'Rajdhani',sans-serif;
+  display:flex;flex-direction:column;gap:14px;
+}
+.ohm-inst .presets{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ohm-inst .plbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--oi-muted)}
+.ohm-inst .chip{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:4px 11px;border-radius:3px;border:1px solid var(--oi-border);background:var(--oi-panel);color:var(--oi-muted);cursor:pointer;transition:all .12s}
+.ohm-inst .chip:hover{border-color:var(--oi-sky);color:var(--oi-sky)}
+.ohm-inst .chip.on{border-color:var(--oi-sky);color:var(--oi-sky);background:rgba(77,166,255,0.08);box-shadow:0 0 10px rgba(77,166,255,0.15)}
+.ohm-inst .main{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+.ohm-inst .left{display:flex;flex-direction:column;gap:14px}
+.ohm-inst .pnl{background:var(--oi-panel);border:1px solid var(--oi-border);border-radius:8px;position:relative;overflow:hidden}
+.ohm-inst .pnl::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 5%,var(--oi-sky2) 30%,var(--oi-sky) 50%,var(--oi-sky2) 70%,transparent 95%);opacity:0.6}
+.ohm-inst .pnl-hdr{padding:10px 18px;border-bottom:1px solid var(--oi-border);display:flex;align-items:center;justify-content:space-between}
+.ohm-inst .pnl-title{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#9ab8d8}
+.ohm-inst .pnl-body{padding:18px}
+.ohm-inst .formula{display:flex;align-items:baseline;justify-content:center;gap:6px;padding:12px 20px 16px}
+.ohm-inst .fl{font-family:'Rajdhani',sans-serif;font-weight:700;line-height:1;transition:font-size .38s cubic-bezier(.34,1.56,.64,1),text-shadow .3s}
+.ohm-inst .fl-V{color:var(--oi-V);font-size:116px;text-shadow:0 0 40px rgba(255,209,102,.35)}
+.ohm-inst .fl-eq{color:#5a7fa8;font-size:70px;font-weight:400;margin:0 8px}
+.ohm-inst .fl-I{color:var(--oi-I);font-size:70px;text-shadow:0 0 30px rgba(6,214,160,.3)}
+.ohm-inst .fl-dot{color:#5a7fa8;font-size:70px;font-weight:400;margin:0 4px}
+.ohm-inst .fl-R{color:var(--oi-R);font-size:70px;text-shadow:0 0 30px rgba(239,71,111,.3)}
+.ohm-inst .fl-legend{display:flex;justify-content:center;gap:24px;border-top:1px solid var(--oi-border);padding:10px 0}
+.ohm-inst .fll{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--oi-muted);display:flex;align-items:center;gap:7px}
+.ohm-inst .fll-dot{width:6px;height:6px;border-radius:50%}
+.ohm-inst .sl-group{margin-bottom:20px}.ohm-inst .sl-group:last-child{margin-bottom:0}
+.ohm-inst .sl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ohm-inst .sl-name{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9ab8d8}
+.ohm-inst .sl-val{font-family:'Share Tech Mono',monospace;font-size:15px;font-weight:500}
+.ohm-inst .sv-V{color:var(--oi-V)}.ohm-inst .sv-R{color:var(--oi-R)}
+.ohm-inst .sl-row{display:flex;align-items:center;gap:8px}
+.ohm-inst .sl-b{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--oi-muted);width:22px;text-align:center;flex-shrink:0}
+.ohm-inst input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;border-radius:2px;outline:none;cursor:pointer}
+.ohm-inst input[type=range].trV{background:linear-gradient(to right,var(--oi-V) var(--p,0%),#0f1a2e var(--p,0%))}
+.ohm-inst input[type=range].trR{background:linear-gradient(to right,var(--oi-R) var(--p,50%),#0f1a2e var(--p,50%))}
+.ohm-inst input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--oi-text);border:2px solid #070b14;box-shadow:0 0 8px rgba(77,166,255,.4);transition:transform .1s}
+.ohm-inst input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25)}
+.ohm-inst .cur-meter{padding:16px 18px 14px;border-bottom:1px solid var(--oi-border)}
+.ohm-inst .cur-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.ohm-inst .cur-lbl-col .c-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab8d8;margin-bottom:6px}
+.ohm-inst .cur-val{font-family:'Share Tech Mono',monospace;font-size:36px;font-weight:400;color:var(--oi-I);text-shadow:0 0 24px rgba(6,214,160,.45);transition:all .2s;letter-spacing:-1px}
+.ohm-inst .bar-bg{height:4px;background:#0f1a2e;border-radius:2px;overflow:hidden;margin-bottom:4px}
+.ohm-inst .bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--oi-I),var(--oi-sky));box-shadow:0 0 8px rgba(6,214,160,.4);transition:width .35s cubic-bezier(.34,1.56,.64,1)}
+.ohm-inst .bar-lbs{display:flex;justify-content:space-between}
+.ohm-inst .bar-lbs span{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--oi-muted)}
+.ohm-inst .rg{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 18px}
+.ohm-inst .rc{border:1px solid var(--oi-border);border-radius:6px;padding:12px;background:var(--oi-panel2);position:relative;overflow:hidden}
+.ohm-inst .rc::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.ohm-inst .rc.cV::before{background:var(--oi-V)}.ohm-inst .rc.cI::before{background:var(--oi-I)}
+.ohm-inst .rc.cR::before{background:var(--oi-R)}.ohm-inst .rc.cP::before{background:var(--oi-P)}
+.ohm-inst .rc-l{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab8d8;margin-bottom:5px}
+.ohm-inst .rc-v{font-family:'Share Tech Mono',monospace;font-size:17px;transition:color .2s}
+.ohm-inst .rc.cV .rc-v{color:var(--oi-V)}.ohm-inst .rc.cI .rc-v{color:var(--oi-I)}
+.ohm-inst .rc.cR .rc-v{color:var(--oi-R)}.ohm-inst .rc.cP .rc-v{color:var(--oi-P)}
+</style>
+<div class="ohm-inst">
+
+  <div class="presets">
+    <span class="plbl">Presets \u2192</span>
+    <button class="chip on"  onclick="Tools._ohmInstrPreset(4.5,500,this)">PhET Default</button>
+    <button class="chip"     onclick="Tools._ohmInstrPreset(1.5,100,this)">1\u00d7 AA</button>
+    <button class="chip"     onclick="Tools._ohmInstrPreset(9,47,this)">9V Dev Kit</button>
+    <button class="chip"     onclick="Tools._ohmInstrPreset(12,10,this)">12V / 10\u03a9</button>
+    <button class="chip"     onclick="Tools._ohmInstrPreset(5,220,this)">USB 5V</button>
+  </div>
+
+  <div class="main">
+    <div class="left">
+
+      <div class="pnl">
+        <div class="pnl-hdr">
+          <span class="pnl-title">Ohm's Law Formula</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#7a9cc4">V = I \u00b7 R</span>
         </div>
-        <input type="range" id="${idSl}" min="${minV}" max="${maxSl}" value="${Math.min(maxSl, parseFloat(val))}" step="any" style="width:100%;accent-color:${color};height:5px;" oninput="document.getElementById('${idN}').value=this.value;Tools._ohmFromInput()">
-      </div>`;
-    };
-    const resCard = (k, c, l) => {
-      const isActive = k === sf;
-      return `<div style="background:${isActive?c+'18':'var(--bg-input)'};border:1.5px solid ${isActive?c:'rgba(255,255,255,0.07)'};border-radius:10px;padding:10px;text-align:center;${isActive?'box-shadow:0 0 14px '+c+'33;':''}">
-        <div style="font-size:0.56rem;text-transform:uppercase;letter-spacing:0.8px;color:${c};opacity:${isActive?1:0.7};margin-bottom:4px;">${l}</div>
-        <div id="ohmOut${k}" style="font-size:1.1rem;font-weight:800;color:${isActive?c:'var(--text-primary)'};">—</div>
-      </div>`;
-    };
-    return `<div style="display:flex;flex-direction:column;gap:14px;">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
-        <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">⚡ Presets:</span>
-        ${presets.map((p,idx) => `<button onclick="Tools._ohmPreset(${idx})" style="padding:4px 13px;border:1px solid var(--border);border-radius:16px;font-size:0.71rem;background:transparent;color:var(--text-secondary);cursor:pointer;font-weight:600;transition:all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.1)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--border)'">${p.n}</button>`).join('')}
+        <div class="formula">
+          <span class="fl fl-V" id="fl-V">V</span>
+          <span class="fl fl-eq">=</span>
+          <span class="fl fl-I" id="fl-I">I</span>
+          <span class="fl fl-dot">\u00b7</span>
+          <span class="fl fl-R" id="fl-R">R</span>
+        </div>
+        <div class="fl-legend">
+          <span class="fll"><span class="fll-dot" style="background:#ffd166"></span>Voltage \u2014 V</span>
+          <span class="fll"><span class="fll-dot" style="background:#06d6a0"></span>Current \u2014 I</span>
+          <span class="fll"><span class="fll-dot" style="background:#ef476f"></span>Resistance \u2014 R</span>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start;">
-        <div style="background:#060613;border:1.5px solid rgba(245,158,11,0.18);border-radius:14px;padding:12px;box-shadow:inset 0 0 40px rgba(245,158,11,0.03);">
-          <canvas id="ohmSimCanvas" width="500" height="360" style="width:100%;display:block;border-radius:8px;"></canvas>
+
+      <div class="pnl">
+        <div class="pnl-hdr"><span class="pnl-title">Circuit Diagram</span></div>
+        <div style="padding:16px 20px 18px">
+          <svg id="cct-svg" viewBox="60 0 520 230" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible">
+            <defs>
+              <filter id="ge"><feGaussianBlur stdDeviation="3"/></filter>
+              <filter id="ge-soft"><feGaussianBlur stdDeviation="1.5"/></filter>
+              <filter id="gr"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <clipPath id="res-clip"><rect x="211" y="168" width="178" height="34" rx="5"/></clipPath>
+            </defs>
+            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#0d1f35" stroke-width="10" stroke-linejoin="round"/>
+            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#2a5f96" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#4da6ff" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/>
+            <rect id="cur-wire" x="100" y="35" width="400" height="155"
+              fill="none" stroke="#06d6a0" stroke-width="1.8" stroke-linejoin="round"
+              stroke-dasharray="7 15" opacity=".75"
+              style="animation:eflow 1s linear infinite"/>
+            <circle cx="100" cy="35"  r="5" fill="#4da6ff" opacity=".55"/>
+            <circle cx="500" cy="35"  r="5" fill="#4da6ff" opacity=".55"/>
+            <circle cx="500" cy="190" r="5" fill="#4da6ff" opacity=".55"/>
+            <circle cx="100" cy="190" r="5" fill="#4da6ff" opacity=".55"/>
+            <circle cx="100" cy="35"  r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
+            <circle cx="500" cy="35"  r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
+            <circle cx="500" cy="190" r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
+            <circle cx="100" cy="190" r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
+            <rect x="76" y="72" width="48" height="76" rx="7" fill="#0b1220" stroke="#3a6fa8" stroke-width="1.5"/>
+            <line x1="88" y1="92"  x2="112" y2="92"  stroke="#4a7fba" stroke-width="2"/>
+            <line x1="88" y1="101" x2="112" y2="101" stroke="#4a7fba" stroke-width="2"/>
+            <line x1="88" y1="117" x2="112" y2="117" stroke="#4a7fba" stroke-width="2"/>
+            <line x1="88" y1="126" x2="112" y2="126" stroke="#4a7fba" stroke-width="2"/>
+            <text x="100" y="90"  fill="#ffd166" font-family="'Rajdhani',sans-serif" font-size="13" text-anchor="middle" font-weight="700">+</text>
+            <text x="100" y="144" fill="#9ab8d8" font-family="'Share Tech Mono',monospace" font-size="15" text-anchor="middle">\u2212</text>
+            <polygon points="93,54 100,46 107,54" fill="#06d6a0" opacity=".85"/>
+            <polygon points="93,175 100,183 107,175" fill="#06d6a0" opacity=".85"/>
+            <text id="bat-v" x="70" y="110" fill="#ffd166"
+              font-family="'Share Tech Mono',monospace"
+              font-size="11" font-weight="400" text-anchor="middle"
+              transform="rotate(-90,70,110)">4.5V</text>
+            <rect x="210" y="168" width="180" height="44" rx="6"
+              fill="#0b1220" stroke="#ef476f" stroke-width="1.5" filter="url(#gr)"/>
+            <g id="rdots" clip-path="url(#res-clip)"></g>
+            <g id="eg-res" clip-path="url(#res-clip)"></g>
+            <text id="res-lbl" x="300" y="224"
+              fill="#ef476f" font-family="'Share Tech Mono',monospace"
+              font-size="11" text-anchor="middle">500 \u03a9</text>
+            <rect x="212" y="14" width="176" height="38" rx="5"
+              fill="#0b1220" stroke="#06d6a0" stroke-width="1.2"/>
+            <text x="300" y="28" fill="#7a9cc4" font-family="'Share Tech Mono',monospace"
+              font-size="8" text-anchor="middle" letter-spacing="2">CURRENT</text>
+            <text id="cur-svg" x="300" y="46" fill="#06d6a0"
+              font-family="'Share Tech Mono',monospace" font-size="14" font-weight="400"
+              text-anchor="middle">9.00 mA</text>
+            <g id="eg-top"></g>
+            <g id="eg-right"></g>
+            <g id="eg-bottom-L"></g>
+            <g id="eg-bottom-R"></g>
+            <g id="eg-left"></g>
+          </svg>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">
-            <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">Solve For</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
-              ${sfBtn('V','Volts')}${sfBtn('I','Amps')}${sfBtn('R','Ohms')}${sfBtn('P','Watts')}
+      </div>
+
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <div class="pnl">
+        <div class="pnl-hdr"><span class="pnl-title">Input Values</span></div>
+        <div class="pnl-body">
+          <div class="sl-group">
+            <div class="sl-top">
+              <span class="sl-name">Voltage</span>
+              <span class="sl-val sv-V" id="sv-V">4.5 V</span>
+            </div>
+            <div class="sl-row">
+              <span class="sl-b">0.1</span>
+              <input type="range" class="trV" id="sl-V" min="0.1" max="12" step="0.1" value="4.5" oninput="Tools._ohmSlide('V',this.value)">
+              <span class="sl-b">12</span>
             </div>
           </div>
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;">
-            <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;">Inputs</div>
-            ${inBlock('V','\u26a1 Voltage (V)','#f59e0b','ohmInV','ohmSlV',st.v,0.1,480)}
-            ${inBlock('I','\u007e Current (A)','#22c55e','ohmInI','ohmSlI',st.i,0.001,20)}
-            ${inBlock('R','\u2B21 Resistance (\u03a9)','#8b5cf6','ohmInR','ohmSlR',st.r,0.001,1000)}
-            ${inBlock('P','\u25c8 Power (W)','#ef4444','ohmInP','ohmSlP',st.p,0.001,5000)}
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
-            ${resCard('V','#f59e0b','Voltage')}${resCard('I','#22c55e','Current')}${resCard('R','#8b5cf6','Resistance')}${resCard('P','#ef4444','Power')}
+          <div class="sl-group">
+            <div class="sl-top">
+              <span class="sl-name">Resistance</span>
+              <span class="sl-val sv-R" id="sv-R">500 \u03a9</span>
+            </div>
+            <div class="sl-row">
+              <span class="sl-b">10</span>
+              <input type="range" class="trR" id="sl-R" min="10" max="1000" step="10" value="500" oninput="Tools._ohmSlide('R',this.value)">
+              <span class="sl-b">1k</span>
+            </div>
           </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;">
-          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;">\ud83d\udcd0 Step-by-Step</div>
-          <div id="ohmFormBreakdown" style="font-family:'Fira Code',monospace;font-size:0.8rem;line-height:2;"></div>
+
+      <div class="pnl">
+        <div class="cur-meter">
+          <div class="cur-row">
+            <div class="cur-lbl-col">
+              <div class="c-lbl">Current Output</div>
+              <div class="cur-val" id="cv-big">9.00 mA</div>
+            </div>
+          </div>
         </div>
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;align-items:center;">
-          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">\u2b55 All 12 Formulas</div>
-          <canvas id="ohmWheelCanvas" width="260" height="260" style="max-width:100%;"></canvas>
+        <div style="padding:12px 18px 14px">
+          <div class="bar-bg"><div class="bar-fill" id="cur-bar" style="width:0.75%"></div></div>
+          <div class="bar-lbs"><span>0 A</span><span>1.2 A max</span></div>
         </div>
       </div>
-    </div>`;
+
+      <div class="pnl">
+        <div class="pnl-hdr"><span class="pnl-title">All Readings</span></div>
+        <div class="rg">
+          <div class="rc cV"><div class="rc-l">Voltage</div><div class="rc-v" id="rd-V">4.5 V</div></div>
+          <div class="rc cI"><div class="rc-l">Current</div><div class="rc-v" id="rd-I">9.00 mA</div></div>
+          <div class="rc cR"><div class="rc-l">Resistance</div><div class="rc-v" id="rd-R">500 \u03a9</div></div>
+          <div class="rc cP"><div class="rc-l">Power</div><div class="rc-v" id="rd-P">40.5 \u03bcW</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>`;
   },
 
+  _ohmV: 4.5,
+  _ohmR: 500,
+  _ohmResRAF: null,
+  _ohmWireIntervals: [],
+  _ohmResParticles: [],
+  _ohmResNodes: [],
   _ohmSt: null,
   _ohmAnimFrame: null,
 
-  _ohmSetSF(sf) {
-    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
-    this._ohmSt.sf = sf;
-    if (this._ohmAnimFrame) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
-    Tools.open('ohm-sim');
+  _ohmFmtI(i){ if(i>=1) return i.toFixed(3)+' A'; if(i>=0.001) return (i*1000).toFixed(2)+' mA'; return (i*1e6).toFixed(1)+' \u03bcA'; },
+  _ohmFmtV(v){ return v.toFixed(1)+' V'; },
+  _ohmFmtR(r){ return r>=1000 ? (r/1000).toFixed(2)+'k\u03a9' : r.toFixed(0)+' \u03a9'; },
+  _ohmFmtP(p){ if(p>=1) return p.toFixed(3)+' W'; if(p>=0.001) return (p*1000).toFixed(2)+' mW'; return (p*1e6).toFixed(1)+' \u03bcW'; },
+
+  _ohmFp(id, mn, mx, v){
+    const el = document.getElementById(id);
+    if (el) el.style.setProperty('--p', ((v-mn)/(mx-mn)*100)+'%');
   },
 
-  _ohmPreset(idx) {
-    const presets = [
-      {v:120, r:100,  sf:'I'},
-      {v:12,  r:0.5,  sf:'I'},
-      {v:120, p:40,   sf:'R'},
-      {v:120, p:1500, sf:'I'},
-      {v:5,   i:0.5,  sf:'R'},
-      {v:240, p:5400, sf:'I'},
-    ];
-    const p = presets[idx]; if (!p) return;
-    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
-    const st = this._ohmSt;
-    st.sf = p.sf;
-    if (p.v !== undefined) st.v = p.v;
-    if (p.r !== undefined) st.r = p.r;
-    if (p.i !== undefined) st.i = p.i;
-    if (p.p !== undefined) st.p = p.p;
-    if (p.sf==='I' && st.v && st.r)      { st.i = st.v/st.r; st.p = st.v*st.i; }
-    else if (p.sf==='R' && st.v && st.p) { st.r = st.v*st.v/st.p; st.i = st.v/st.r; }
-    else if (p.sf==='R' && st.v && st.i) { st.r = st.v/st.i; st.p = st.v*st.i; }
-    if (this._ohmAnimFrame) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
-    Tools.open('ohm-sim');
+  _ohmUpdateFormula(I){
+    const V = this._ohmV, R = this._ohmR;
+    const Vs = 0.6 + 0.7*(V/12);
+    const Is = 0.55 + 0.7*(I/1.2);
+    const Rs = 0.55 + 0.7*(R/1000);
+    const fV = document.getElementById('fl-V');
+    const fI = document.getElementById('fl-I');
+    const fR = document.getElementById('fl-R');
+    if (fV) { fV.style.fontSize = Math.round(118*Vs)+'px'; fV.style.textShadow = `0 0 ${Math.round(20+50*Vs)}px rgba(255,209,102,${(0.2+0.6*Vs).toFixed(2)})`; }
+    if (fI) { fI.style.fontSize = Math.round(74*Is)+'px';  fI.style.textShadow = `0 0 ${Math.round(15+40*Is)}px rgba(6,214,160,${(0.15+0.55*Is).toFixed(2)})`; }
+    if (fR) { fR.style.fontSize = Math.round(74*Rs)+'px';  fR.style.textShadow = `0 0 ${Math.round(15+40*Rs)}px rgba(239,71,111,${(0.15+0.55*Rs).toFixed(2)})`; }
   },
 
-  _ohmFromInput() {
-    if (!this._ohmSt) return;
-    const st = this._ohmSt;
-    const gn = id => { const el=document.getElementById(id); return el ? parseFloat(el.value)||0 : 0; };
-    if (st.sf!=='V') st.v = Math.max(0.0001, gn('ohmInV'));
-    if (st.sf!=='I') st.i = Math.max(0.0001, gn('ohmInI'));
-    if (st.sf!=='R') st.r = Math.max(0.0001, gn('ohmInR'));
-    if (st.sf!=='P') st.p = Math.max(0.0001, gn('ohmInP'));
-    if (st.sf==='I')      { st.i = st.v/st.r; st.p = st.v*st.i; }
-    else if (st.sf==='V') { st.v = st.i*st.r; st.p = st.v*st.i; }
-    else if (st.sf==='R') { st.r = st.v/st.i; st.p = st.v*st.i; }
-    else if (st.sf==='P') { st.p = st.v*st.v/st.r; st.i = st.v/st.r; }
-    this._updateOhmSim();
-  },
-
-  _updateOhmSim() {
-    if (!this._ohmSt) this._ohmSt = {v:120, i:1.2, r:100, p:144, sf:'I', phase:0};
-    const st = this._ohmSt;
-    const sf = st.sf;
-    const gn = id => { const el=document.getElementById(id); return el ? parseFloat(el.value) : null; };
-    const rv=gn('ohmInV'), ri=gn('ohmInI'), rr=gn('ohmInR'), rp=gn('ohmInP');
-    if (sf!=='V' && rv!==null && rv>0) st.v = rv;
-    if (sf!=='I' && ri!==null && ri>0) st.i = ri;
-    if (sf!=='R' && rr!==null && rr>0) st.r = rr;
-    if (sf!=='P' && rp!==null && rp>0) st.p = rp;
-    if (sf==='I')      { st.i = st.v/st.r; st.p = st.v*st.i; }
-    else if (sf==='V') { st.v = st.i*st.r; st.p = st.v*st.i; }
-    else if (sf==='R') { st.r = st.v/st.i; st.p = st.v*st.i; }
-    else if (sf==='P') { st.p = st.v*st.v/st.r; st.i = st.v/st.r; }
-    const {v, i, r, p} = st;
-    const fmtV = x => x>=1000?(x/1000).toFixed(2)+'kV':x.toFixed(1)+'V';
-    const fmtI = x => x<0.001?(x*1000000).toFixed(0)+'\u00b5A':x<1?(x*1000).toFixed(1)+'mA':x.toFixed(3)+'A';
-    const fmtR = x => x>=1000000?(x/1000000).toFixed(2)+'M\u03a9':x>=1000?(x/1000).toFixed(2)+'k\u03a9':x.toFixed(1)+'\u03a9';
-    const fmtP = x => x>=1000?(x/1000).toFixed(2)+'kW':x.toFixed(1)+'W';
-    const se = (id,t) => { const e=document.getElementById(id); if(e) e.textContent=t; };
-    const sh = (id,h) => { const e=document.getElementById(id); if(e) e.innerHTML=h; };
-    se('ohmOutV',fmtV(v)); se('ohmOutI',fmtI(i)); se('ohmOutR',fmtR(r)); se('ohmOutP',fmtP(p));
-    const ss = (slId,val,max) => { const s=document.getElementById(slId); if(s) s.value=Math.min(max,val); };
-    ss('ohmSlV',v,480); ss('ohmSlI',i,20); ss('ohmSlR',r,1000); ss('ohmSlP',p,5000);
-    const fc = {
-      V: [`<span style="opacity:0.6">Given:</span>  I = <b style="color:#22c55e">${fmtI(i)}</b>,  R = <b style="color:#8b5cf6">${fmtR(r)}</b>`,
-          `<span style="opacity:0.6">Formula:</span> <b>V = I \u00d7 R</b>`,
-          `<span style="opacity:0.6">Solve:</span>   V = ${i.toFixed(3)} \u00d7 ${r.toFixed(1)}`,
-          `<span style="opacity:0.6">Answer:</span>  <b style="color:#f59e0b;font-size:1.1em">V = ${fmtV(v)}</b>`,
-          `<span style="opacity:0.6">Power:</span>   P = V \u00d7 I = <b style="color:#ef4444">${fmtP(p)}</b>`],
-      I: [`<span style="opacity:0.6">Given:</span>  V = <b style="color:#f59e0b">${fmtV(v)}</b>,  R = <b style="color:#8b5cf6">${fmtR(r)}</b>`,
-          `<span style="opacity:0.6">Formula:</span> <b>I = V \u00f7 R</b>`,
-          `<span style="opacity:0.6">Solve:</span>   I = ${v.toFixed(1)} \u00f7 ${r.toFixed(1)}`,
-          `<span style="opacity:0.6">Answer:</span>  <b style="color:#22c55e;font-size:1.1em">I = ${fmtI(i)}</b>`,
-          `<span style="opacity:0.6">Power:</span>   P = V \u00d7 I = <b style="color:#ef4444">${fmtP(p)}</b>`],
-      R: [`<span style="opacity:0.6">Given:</span>  V = <b style="color:#f59e0b">${fmtV(v)}</b>,  I = <b style="color:#22c55e">${fmtI(i)}</b>`,
-          `<span style="opacity:0.6">Formula:</span> <b>R = V \u00f7 I</b>`,
-          `<span style="opacity:0.6">Solve:</span>   R = ${v.toFixed(1)} \u00f7 ${i.toFixed(3)}`,
-          `<span style="opacity:0.6">Answer:</span>  <b style="color:#8b5cf6;font-size:1.1em">R = ${fmtR(r)}</b>`,
-          `<span style="opacity:0.6">Power:</span>   P = V \u00d7 I = <b style="color:#ef4444">${fmtP(p)}</b>`],
-      P: [`<span style="opacity:0.6">Given:</span>  V = <b style="color:#f59e0b">${fmtV(v)}</b>,  R = <b style="color:#8b5cf6">${fmtR(r)}</b>`,
-          `<span style="opacity:0.6">Formula:</span> <b>P = V\u00b2 \u00f7 R</b>`,
-          `<span style="opacity:0.6">Solve:</span>   P = ${v.toFixed(1)}\u00b2 \u00f7 ${r.toFixed(1)} = ${(v*v).toFixed(0)} \u00f7 ${r.toFixed(1)}`,
-          `<span style="opacity:0.6">Answer:</span>  <b style="color:#ef4444;font-size:1.1em">P = ${fmtP(p)}</b>`,
-          `<span style="opacity:0.6">Current:</span> I = V \u00f7 R = <b style="color:#22c55e">${fmtI(i)}</b>`],
-    };
-    sh('ohmFormBreakdown', (fc[sf]||[]).join('<br>'));
-    this._drawOhmWheel(sf);
-    if (!this._ohmAnimFrame) {
-      const loop = () => {
-        this._ohmAnimFrame = requestAnimationFrame(loop);
-        const c = document.getElementById('ohmSimCanvas');
-        if (!c) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; return; }
-        const s = Tools._ohmSt; if (!s) return;
-        s.phase = (s.phase + Math.max(0.2, Math.min(s.i / 4, 5))) % 300;
-        Tools._drawOhmFrame(c, s);
-      };
-      loop();
+  _ohmUpdateDots(){
+    const g = document.getElementById('rdots'); if (!g) return;
+    g.innerHTML = '';
+    const n = Math.round(12 + (this._ohmR/1000)*55);
+    for (let i=0; i<n; i++){
+      const x = 215 + Math.random()*170;
+      const y = 171 + Math.random()*38;
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx', x); c.setAttribute('cy', y);
+      c.setAttribute('r', 1.1 + Math.random()*1.6);
+      c.setAttribute('fill','#ef476f');
+      c.setAttribute('opacity', 0.18 + Math.random()*0.38);
+      g.appendChild(c);
     }
   },
 
-  _drawOhmFrame(c, st) {
-    const ctx = c.getContext('2d');
-    const W = c.width, H = c.height;
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#060613'; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = 'rgba(255,255,255,0.025)'; ctx.lineWidth = 1;
-    for (let gx=0; gx<W; gx+=30) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
-    for (let gy=0; gy<H; gy+=30) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
-    const {v, i, r, p} = st;
-    // Formatted labels
-    const vLbl = v>=1000?(v/1000).toFixed(2)+'kV':v.toFixed(1)+'V';
-    const iLbl = i<0.001?(i*1000000).toFixed(0)+'\u00b5A':i<1?(i*1000).toFixed(1)+'mA':i.toFixed(3)+'A';
-    const rLbl = r>=1000000?(r/1000000).toFixed(2)+'M\u03a9':r>=1000?(r/1000).toFixed(2)+'k\u03a9':r.toFixed(1)+'\u03a9';
-    const pLbl = p>=1000?(p/1000).toFixed(2)+'kW':p.toFixed(1)+'W';
-    // Wire heat color: blue(cold) -> amber(warm) -> red(hot)
-    const ht = Math.min(1, i / 20);
-    let wR, wG, wB;
-    if (ht < 0.5) { const t=ht*2; wR=Math.round(59+t*(245-59)); wG=Math.round(130+t*(158-130)); wB=Math.round(246+t*(11-246)); }
-    else          { const t=(ht-0.5)*2; wR=245; wG=Math.round(158+t*(68-158)); wB=Math.round(11+t*(68-11)); }
-    const wc  = `rgb(${wR},${wG},${wB})`;
-    const wcA = `rgba(${wR},${wG},${wB},0.35)`;
-    // Circuit layout
-    const x1=70, y1=60, x2=440, y2=296;
-    const batY1=120, batY2=240;
-    const bulbX=330, bulbY=y1;
-    const resY1=128, resY2=200;
-    const amX=200, amY=y2;
-    // Draw wire helper
-    const dw = (ax,ay,bx,by) => {
-      ctx.save(); ctx.shadowColor=wcA; ctx.shadowBlur=10;
-      ctx.strokeStyle=wc; ctx.lineWidth=3.5; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); ctx.restore();
-    };
-    // Top wire (gap at bulb), right wire (gap at resistor), bottom wire (gap at ammeter), left wire (gap at battery)
-    dw(x1,y1,bulbX-25,y1); dw(bulbX+25,y1,x2,y1);
-    dw(x2,y1,x2,resY1);    dw(x2,resY2,x2,y2);
-    dw(x2,y2,amX+19,y2);   dw(amX-19,y2,x1,y2);
-    dw(x1,y2,x1,batY2);    dw(x1,batY1,x1,y1);
-    // Corner junction dots
-    ctx.save(); ctx.fillStyle=wc; ctx.shadowColor=wcA; ctx.shadowBlur=8;
-    [[x1,y1],[x2,y1],[x2,y2],[x1,y2]].forEach(([jx,jy])=>{ctx.beginPath();ctx.arc(jx,jy,4.5,0,Math.PI*2);ctx.fill();});
-    ctx.restore();
-    // Current direction arrows
-    const arw = (ax,ay,ang) => { ctx.save(); ctx.translate(ax,ay); ctx.rotate(ang); ctx.strokeStyle=wc; ctx.lineWidth=2; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.lineTo(2,5); ctx.moveTo(6,0); ctx.lineTo(2,-5); ctx.stroke(); ctx.restore(); };
-    arw(190,y1,0); arw(x2,180,Math.PI/2); arw(310,y2,Math.PI); arw(x1,195,-Math.PI/2);
-    // ---- BATTERY ----
-    const bmY = (batY1+batY2)/2;
-    ctx.save();
-    ctx.fillStyle='rgba(245,158,11,0.07)'; ctx.strokeStyle='rgba(245,158,11,0.25)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.roundRect(x1-24,batY1,48,batY2-batY1,8); ctx.fill(); ctx.stroke();
-    for (let pi=0; pi<5; pi++) {
-      const py=batY1+10+pi*((batY2-batY1-20)/4);
-      ctx.strokeStyle=pi%2===0?'#f59e0b':'#555'; ctx.lineWidth=pi%2===0?5:2.5;
-      const hw=pi%2===0?17:10; ctx.beginPath(); ctx.moveTo(x1-hw,py); ctx.lineTo(x1+hw,py); ctx.stroke();
-    }
-    ctx.shadowColor='rgba(245,158,11,0.5)'; ctx.shadowBlur=6;
-    ctx.fillStyle='#f59e0b'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(vLbl, x1-38, bmY+5);
-    ctx.font='bold 10px sans-serif';
-    ctx.fillStyle='#f59e0b'; ctx.fillText('+',x1-38,batY1+4);
-    ctx.fillStyle='#777'; ctx.fillText('\u2212',x1-38,batY2+4);
-    ctx.restore();
-    // ---- BULB ----
-    const bR=22, bright=Math.min(1, p/200);
-    ctx.save();
-    if (bright>0.02) {
-      const gr=ctx.createRadialGradient(bulbX,bulbY,2,bulbX,bulbY,bR+bright*60);
-      gr.addColorStop(0,`rgba(255,230,100,${bright*0.7})`);
-      gr.addColorStop(0.5,`rgba(255,180,40,${bright*0.22})`);
-      gr.addColorStop(1,'rgba(255,120,0,0)');
-      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(bulbX,bulbY,bR+bright*60,0,Math.PI*2); ctx.fill();
-    }
-    const bg=ctx.createRadialGradient(bulbX-6,bulbY-6,2,bulbX,bulbY,bR);
-    if (bright>0.04) { bg.addColorStop(0,`rgba(255,255,220,${0.3+bright*0.7})`); bg.addColorStop(0.6,`rgba(255,200,80,${0.1+bright*0.65})`); bg.addColorStop(1,`rgba(180,100,0,${0.05+bright*0.45})`); }
-    else             { bg.addColorStop(0,'rgba(70,70,90,0.7)'); bg.addColorStop(1,'rgba(30,30,50,0.9)'); }
-    ctx.fillStyle=bg; ctx.strokeStyle=bright>0.04?'rgba(255,200,80,0.9)':'rgba(80,80,120,0.5)';
-    ctx.lineWidth=2; ctx.shadowColor=bright>0.02?`rgba(255,200,60,${bright})`:'transparent'; ctx.shadowBlur=bright>0.02?16:0;
-    ctx.beginPath(); ctx.arc(bulbX,bulbY,bR,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle=bright>0.04?`rgba(255,255,180,${0.4+bright*0.6})`:'rgba(100,100,130,0.4)';
-    ctx.lineWidth=1.5; ctx.shadowBlur=bright>0.04?8:0;
-    ctx.beginPath(); ctx.moveTo(bulbX-9,bulbY-5); ctx.lineTo(bulbX-2,bulbY+2); ctx.lineTo(bulbX+3,bulbY-8); ctx.lineTo(bulbX+9,bulbY+1); ctx.stroke();
-    ctx.shadowBlur=0;
-    ctx.fillStyle=bright>0.1?'#ffd060':'#666'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(pLbl, bulbX, bulbY-bR-10);
-    ctx.restore();
-    // ---- RESISTOR (right side vertical zigzag) ----
-    ctx.save();
-    ctx.shadowColor='rgba(139,92,246,0.5)'; ctx.shadowBlur=8;
-    ctx.strokeStyle='#8b5cf6'; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
-    const zN=7, zW=15, zS=(resY2-resY1)/(zN*2);
-    ctx.beginPath(); ctx.moveTo(x2,resY1);
-    for (let zi=0; zi<zN; zi++) { ctx.lineTo(x2+(zi%2===0?zW:-zW),resY1+(zi*2+1)*zS); ctx.lineTo(x2-(zi%2===0?zW:-zW),resY1+(zi*2+2)*zS); }
-    ctx.lineTo(x2,resY2); ctx.stroke(); ctx.restore();
-    ctx.save(); ctx.fillStyle='#8b5cf6'; ctx.font='bold 12px sans-serif'; ctx.textAlign='left';
-    ctx.fillText(rLbl, x2+22, (resY1+resY2)/2+4); ctx.restore();
-    // ---- AMMETER ----
-    ctx.save();
-    ctx.fillStyle='rgba(34,197,94,0.1)'; ctx.strokeStyle='#22c55e'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(amX,amY,17,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle='#22c55e'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('A', amX, amY+4.5);
-    ctx.font='9.5px sans-serif'; ctx.fillText(iLbl, amX, amY+31); ctx.restore();
-    // ---- VOLTMETER (floating panel) ----
-    ctx.save();
-    ctx.fillStyle='rgba(245,158,11,0.08)'; ctx.strokeStyle='rgba(245,158,11,0.35)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.roundRect(4, (y1+y2)/2-20, 52, 40, 8); ctx.fill(); ctx.stroke();
-    ctx.fillStyle='#f59e0b'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('V', 30, (y1+y2)/2-5);
-    ctx.font='9px sans-serif'; ctx.fillText(vLbl, 30, (y1+y2)/2+9);
-    ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(245,158,11,0.22)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(56,(y1+y2)/2-10); ctx.lineTo(x1,batY1); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(56,(y1+y2)/2+10); ctx.lineTo(x1,batY2); ctx.stroke();
-    ctx.setLineDash([]); ctx.restore();
-    // ---- ELECTRON PARTICLES ----
-    const epath = [];
-    for (let ex=x1+8;  ex<=bulbX-29; ex+=11) epath.push({x:ex,  y:y1});
-    for (let ex=bulbX+29; ex<=x2-8;  ex+=11) epath.push({x:ex,  y:y1});
-    for (let ey=y1+11; ey<=resY1-8;  ey+=11) epath.push({x:x2,  y:ey});
-    for (let ey=resY2+8; ey<=y2-11;  ey+=11) epath.push({x:x2,  y:ey});
-    for (let ex=x2-8;  ex>=amX+23;   ex-=11) epath.push({x:ex,  y:y2});
-    for (let ex=amX-23; ex>=x1+8;    ex-=11) epath.push({x:ex,  y:y2});
-    for (let ey=y2-11; ey>=batY2+8;  ey-=11) epath.push({x:x1,  y:ey});
-    for (let ey=batY1-8; ey>=y1+11;  ey-=11) epath.push({x:x1,  y:ey});
-    const nPts=epath.length, nE=Math.max(3,Math.min(Math.round(i*2.5),22));
-    for (let d=0; d<nE; d++) {
-      const idx=Math.floor((st.phase + d*(nPts/nE)) % nPts);
-      const pt=epath[idx]; if (!pt) continue;
-      ctx.save();
-      const eg=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,9);
-      eg.addColorStop(0,'rgba(99,179,237,0.9)'); eg.addColorStop(0.5,'rgba(59,130,246,0.3)'); eg.addColorStop(1,'rgba(59,130,246,0)');
-      ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(pt.x,pt.y,9,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#bfdbfe'; ctx.shadowColor='#3b82f6'; ctx.shadowBlur=10;
-      ctx.beginPath(); ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2); ctx.fill();
-      ctx.restore();
-    }
-    // ---- STATUS BAR ----
-    ctx.save();
-    ctx.fillStyle='rgba(255,255,255,0.04)';
-    ctx.beginPath(); ctx.roundRect(8,H-34,W-16,24,7); ctx.fill();
-    const bars=[{l:'V',v:vLbl,c:'#f59e0b'},{l:'I',v:iLbl,c:'#22c55e'},{l:'R',v:rLbl,c:'#8b5cf6'},{l:'P',v:pLbl,c:'#ef4444'}];
-    const bw=(W-16)/4;
-    bars.forEach((it,idx)=>{ const sx=8+idx*bw+bw/2; ctx.fillStyle=it.c; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText(`${it.l}: ${it.v}`,sx,H-18); });
-    ctx.restore();
+  _ohmUpdateWireSpeed(I){
+    const el = document.getElementById('cur-wire'); if (!el) return;
+    const dur = Math.max(0.05, 1.0 / Math.max(0.005, I * 28));
+    el.style.animationDuration = dur + 's';
   },
 
-  _drawOhmWheel(activeSF) {
-    const c=document.getElementById('ohmWheelCanvas'); if (!c) return;
-    const ctx=c.getContext('2d');
-    const W=c.width, H=c.height, cx=W/2, cy=H/2, R=Math.min(W,H)/2-8;
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#0a0a1a'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
-    const sectors=[
-      {k:'V',lbl:'V', ang:-Math.PI/2, col:'#f59e0b', fmls:['V=I\u00d7R','V=P\u00f7I','V=\u221a(PR)']},
-      {k:'I',lbl:'I', ang:0,          col:'#22c55e', fmls:['I=V\u00f7R','I=P\u00f7V','I=\u221a(P/R)']},
-      {k:'P',lbl:'P', ang:Math.PI/2,  col:'#ef4444', fmls:['P=V\u00d7I','P=I\u00b2R','P=V\u00b2/R']},
-      {k:'R',lbl:'R', ang:Math.PI,    col:'#8b5cf6', fmls:['R=V\u00f7I','R=P/I\u00b2','R=V\u00b2/P']},
-    ];
-    sectors.forEach(s => {
-      const sa=s.ang-Math.PI/4, ea=s.ang+Math.PI/4, isA=s.k===activeSF;
-      ctx.save();
-      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R-2,sa,ea); ctx.closePath();
-      ctx.fillStyle=isA?s.col+'28':s.col+'0c'; ctx.fill();
-      ctx.strokeStyle=isA?s.col:s.col+'44'; ctx.lineWidth=isA?2.5:1;
-      if (isA) { ctx.shadowColor=s.col; ctx.shadowBlur=14; }
-      ctx.stroke(); ctx.restore();
-      const mA=s.ang, lR=R*0.55, lx=cx+Math.cos(mA)*lR, ly=cy+Math.sin(mA)*lR;
-      ctx.save();
-      ctx.fillStyle=isA?s.col:s.col+'99';
-      ctx.font=`bold ${isA?22:17}px sans-serif`;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      if(isA){ctx.shadowColor=s.col;ctx.shadowBlur=16;}
-      ctx.fillText(s.lbl,lx,ly);
-      ctx.font=`${isA?8.5:7.5}px monospace`; ctx.shadowBlur=0;
-      ctx.fillStyle=isA?s.col+'cc':s.col+'55';
-      s.fmls.forEach((fml,fi)=>{
-        const fA=mA+(fi-1)*0.24, fR=R*0.83;
-        const fx=cx+Math.cos(fA)*fR, fy=cy+Math.sin(fA)*fR;
-        ctx.save(); ctx.translate(fx,fy);
-        const rot=fA>Math.PI/2&&fA<3*Math.PI/2?fA+Math.PI:fA;
-        ctx.rotate(rot+Math.PI/2); ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(fml,0,0); ctx.restore();
-      }); ctx.restore();
+  _ohmSvgCircle(fill, r, glowFill, glowR){
+    const ns = 'http://www.w3.org/2000/svg';
+    const g  = document.createElementNS(ns,'g');
+    const b  = document.createElementNS(ns,'circle');
+    b.setAttribute('r', glowR||6); b.setAttribute('fill', glowFill||fill);
+    b.setAttribute('opacity','0.18'); b.setAttribute('filter','url(#ge-soft)');
+    const c  = document.createElementNS(ns,'circle');
+    c.setAttribute('r', r||2.8); c.setAttribute('fill', fill); c.setAttribute('opacity','0.92');
+    g.appendChild(b); g.appendChild(c);
+    return { g, c, b };
+  },
+
+  _ohmClearWireElectrons(){
+    if (this._ohmWireIntervals) { this._ohmWireIntervals.forEach(clearInterval); }
+    this._ohmWireIntervals = [];
+    ['eg-top','eg-right','eg-bottom-L','eg-bottom-R','eg-left'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.innerHTML = '';
     });
-    ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
-    for(let a=0;a<4;a++){const ang=a*Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);ctx.stroke();}
-    ctx.restore();
-    const ig=ctx.createRadialGradient(cx,cy,0,cx,cy,30);
-    ig.addColorStop(0,'#1e1e38'); ig.addColorStop(1,'#0d0d20');
-    ctx.fillStyle=ig; ctx.beginPath(); ctx.arc(cx,cy,30,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(cx,cy,30,0,Math.PI*2); ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.font='bold 8.5px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText("Ohm's",cx,cy-5); ctx.fillText("Law",cx,cy+7);
-    ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.arc(cx,cy,R-1,0,Math.PI*2); ctx.stroke(); ctx.restore();
+  },
+
+  _ohmMakeWireElectron(groupId, axis, fixedCoord, rangeMin, rangeMax, dir, speed){
+    const g = document.getElementById(groupId); if (!g) return;
+    const {g:node, c, b} = this._ohmSvgCircle('#06d6a0', 2.8, '#06d6a0', 5);
+    g.appendChild(node);
+    let pos = rangeMin + Math.random()*(rangeMax - rangeMin);
+    const id = setInterval(()=>{
+      pos += dir * speed;
+      if (pos > rangeMax) pos = rangeMin;
+      if (pos < rangeMin) pos = rangeMax;
+      if (axis==='x'){ c.setAttribute('cx',pos); c.setAttribute('cy',fixedCoord); b.setAttribute('cx',pos); b.setAttribute('cy',fixedCoord); }
+      else            { c.setAttribute('cy',pos); c.setAttribute('cx',fixedCoord); b.setAttribute('cy',pos); b.setAttribute('cx',fixedCoord); }
+    }, 16);
+    this._ohmWireIntervals.push(id);
+  },
+
+  _ohmSpawnWireElectrons(I){
+    this._ohmClearWireElectrons();
+    const spd = Math.max(0.5, Math.min(28, I * 32));
+    const cnt = Math.max(1, Math.min(8, Math.round(1 + I * 7)));
+    for (let i=0; i<cnt; i++){
+      this._ohmMakeWireElectron('eg-top',      'x', 35,  100, 500,  1, spd);
+      this._ohmMakeWireElectron('eg-right',    'y', 500,  35, 190,  1, spd);
+      this._ohmMakeWireElectron('eg-bottom-L', 'x', 190, 100, 210, -1, spd);
+      this._ohmMakeWireElectron('eg-bottom-R', 'x', 190, 390, 500, -1, spd);
+      this._ohmMakeWireElectron('eg-left',     'y', 100,  35, 190, -1, spd);
+    }
+  },
+
+  _ohmClearResElectrons(){
+    if (this._ohmResRAF) { cancelAnimationFrame(this._ohmResRAF); this._ohmResRAF = null; }
+    this._ohmResParticles = []; this._ohmResNodes = [];
+    const g = document.getElementById('eg-res'); if (g) g.innerHTML = '';
+  },
+
+  _ohmSpawnResElectrons(I){
+    this._ohmClearResElectrons();
+    const R = this._ohmR;
+    const RX1=212, RX2=388, RY1=170, RY2=210;
+    const cnt = Math.max(2, Math.min(14, Math.round(2 + I * 12)));
+    const driftSpeed  = Math.max(0.5, Math.min(14, I * 18));
+    const bounceAmp   = Math.max(0.5, Math.min(3.5, (R/1000)*3.0 + 0.4));
+    const bounceSpeed = driftSpeed * bounceAmp;
+    const ns = 'http://www.w3.org/2000/svg';
+    const g  = document.getElementById('eg-res'); if (!g) return;
+    for (let i=0; i<cnt; i++){
+      const x  = RX1 + Math.random()*(RX2-RX1);
+      const y  = RY1 + 4 + Math.random()*(RY2-RY1-8);
+      const vx = driftSpeed * (0.6 + Math.random()*0.8);
+      const vy = bounceSpeed * (Math.random()<0.5?1:-1) * (0.5+Math.random());
+      this._ohmResParticles.push({x, y, vx, vy});
+      const {g:node, c, b} = this._ohmSvgCircle('#06d6a0', 2.4, '#06d6a0', 5);
+      g.appendChild(node);
+      this._ohmResNodes.push({c, b});
+    }
+    const tick = () => {
+      for (let i=0; i<this._ohmResParticles.length; i++){
+        const p = this._ohmResParticles[i];
+        p.x += p.vx; p.y += p.vy;
+        if (p.y <= RY1+2){ p.y=RY1+2; p.vy=Math.abs(p.vy); }
+        if (p.y >= RY2-2){ p.y=RY2-2; p.vy=-Math.abs(p.vy); }
+        if (p.x > RX2+4) p.x = RX1-4;
+        if (p.x < RX1-4) p.x = RX2+4;
+        const collisionChance = 0.01 + (R/1000)*0.04;
+        if (Math.random() < collisionChance){
+          p.vy = bounceSpeed * (Math.random()<0.5?1:-1) * (0.5+Math.random());
+          p.vx = driftSpeed * (0.4 + Math.random()*0.8);
+        }
+        const n = this._ohmResNodes[i];
+        if (n){ n.c.setAttribute('cx',p.x); n.c.setAttribute('cy',p.y); n.b.setAttribute('cx',p.x); n.b.setAttribute('cy',p.y); }
+      }
+      this._ohmResRAF = requestAnimationFrame(tick);
+    };
+    this._ohmResRAF = requestAnimationFrame(tick);
+  },
+
+  _ohmRecalc(){
+    const V = this._ohmV, R = this._ohmR;
+    const I = V / R, P = V * I;
+    this._ohmFp('sl-V', 0.1, 12, V);
+    this._ohmFp('sl-R', 10, 1000, R);
+    const se = (id,t) => { const e=document.getElementById(id); if(e) e.textContent=t; };
+    se('sv-V', this._ohmFmtV(V));
+    se('sv-R', this._ohmFmtR(R));
+    const cs = this._ohmFmtI(I);
+    se('cv-big', cs); se('cur-svg', cs);
+    const bar = document.getElementById('cur-bar');
+    if (bar) bar.style.width = Math.min(100,(I/1.2)*100)+'%';
+    se('rd-V', this._ohmFmtV(V));
+    se('rd-I', cs);
+    se('rd-R', this._ohmFmtR(R));
+    se('rd-P', this._ohmFmtP(P));
+    se('bat-v', this._ohmFmtV(V).replace(' ',''));
+    se('res-lbl', this._ohmFmtR(R));
+    this._ohmUpdateFormula(I);
+    this._ohmUpdateDots();
+    this._ohmUpdateWireSpeed(I);
+    this._ohmSpawnWireElectrons(I);
+    this._ohmSpawnResElectrons(I);
+  },
+
+  _ohmSlide(w, v){
+    if (w==='V') this._ohmV = parseFloat(v);
+    else         this._ohmR = parseFloat(v);
+    this._ohmRecalc();
+  },
+
+  _ohmInstrPreset(v, r, btn){
+    this._ohmV = v; this._ohmR = r;
+    const slV = document.getElementById('sl-V'); if (slV) slV.value = v;
+    const slR = document.getElementById('sl-R'); if (slR) slR.value = r;
+    document.querySelectorAll('.ohm-inst .chip').forEach(c => c.classList.remove('on'));
+    if (btn) btn.classList.add('on');
+    this._ohmRecalc();
+  },
+
+  _updateOhmSim(){
+    Tools._ohmRecalc();
   },
 
 
@@ -7566,11 +7601,13 @@ const Tools = {
 
   // Stop all animations when leaving page
   cleanup() {
-    if (this._ohmAnimFrame) { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
-    if (this._acAnimId) { cancelAnimationFrame(this._acAnimId); this._acAnimId = null; }
-    if (this._motorAnimId) { cancelAnimationFrame(this._motorAnimId); this._motorAnimId = null; }
-    if (this._serAnimFrame) { cancelAnimationFrame(this._serAnimFrame); this._serAnimFrame = null; }
-    if (this._parAnimFrame) { cancelAnimationFrame(this._parAnimFrame); this._parAnimFrame = null; }
+    if (this._ohmAnimFrame)    { cancelAnimationFrame(this._ohmAnimFrame); this._ohmAnimFrame = null; }
+    if (this._ohmResRAF)       { cancelAnimationFrame(this._ohmResRAF); this._ohmResRAF = null; }
+    if (this._ohmWireIntervals){ this._ohmWireIntervals.forEach(clearInterval); this._ohmWireIntervals = []; }
+    if (this._acAnimId)        { cancelAnimationFrame(this._acAnimId); this._acAnimId = null; }
+    if (this._motorAnimId)     { cancelAnimationFrame(this._motorAnimId); this._motorAnimId = null; }
+    if (this._serAnimFrame)    { cancelAnimationFrame(this._serAnimFrame); this._serAnimFrame = null; }
+    if (this._parAnimFrame)    { cancelAnimationFrame(this._parAnimFrame); this._parAnimFrame = null; }
     this.activeSim = null;
   }
 };
@@ -10688,4 +10725,23 @@ document.addEventListener("DOMContentLoaded", () => {
   App.init();
   createFAB();
   PWA.init();
+
+  // Click-based dropdowns (no hover gap glitch)
+  document.querySelectorAll('.nav-dropdown-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const li = btn.closest('.nav-dropdown');
+      const isOpen = li.classList.contains('open');
+      document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+      if (!isOpen) li.classList.add('open');
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+  });
+  document.querySelectorAll('.nav-dropdown-menu a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.querySelectorAll('.nav-dropdown').forEach(d => d.classList.remove('open'));
+    });
+  });
 });

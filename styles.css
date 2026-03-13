@@ -235,7 +235,7 @@ input[type="radio"]:checked::after {
   color: var(--accent); background: var(--accent-soft);
 }
 .nav-dropdown-btn svg { transition: transform 0.2s; }
-.nav-dropdown:hover .nav-dropdown-btn svg { transform: rotate(180deg); }
+.nav-dropdown.open .nav-dropdown-btn svg { transform: rotate(180deg); }
 .nav-dropdown-menu {
   display: none; position: absolute; top: calc(100% + 6px); left: 0;
   background: var(--bg-card); border: 1px solid var(--border);
@@ -243,7 +243,7 @@ input[type="radio"]:checked::after {
   box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 200;
   padding: 6px;
 }
-.nav-dropdown:hover .nav-dropdown-menu { display: block; }
+.nav-dropdown.open .nav-dropdown-menu { display: block; }
 .nav-dropdown-menu a {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; border-radius: 8px;
