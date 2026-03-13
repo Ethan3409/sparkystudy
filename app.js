@@ -10976,16 +10976,47 @@ const AskAI = {
     return text.toLowerCase();
   },
 
+  // Bigram similarity — handles typos like "impeatence" → "impedance"
+  _bigrams(word) {
+    const bg = new Set();
+    for (let i = 0; i < word.length - 1; i++) bg.add(word.slice(i, i + 2));
+    return bg;
+  },
+
+  _bigramSim(a, b) {
+    if (a.length < 2 || b.length < 2) return 0;
+    const bA = this._bigrams(a), bB = this._bigrams(b);
+    let shared = 0;
+    for (const bg of bA) if (bB.has(bg)) shared++;
+    return (2 * shared) / (bA.size + bB.size);
+  },
+
+  // Returns true if keyword fuzzy-matches any word in text (Dice coeff > 0.55)
+  _fuzzyHit(textWords, kw) {
+    if (kw.length < 4) return false; // short words: skip fuzzy, too many false positives
+    for (const tw of textWords) {
+      if (Math.abs(tw.length - kw.length) > 4) continue; // length too different
+      if (this._bigramSim(kw, tw) >= 0.55) return true;
+    }
+    return false;
+  },
+
   _score(text, keywords) {
     if (!keywords.length) return 0;
+    // Pre-split text into word array for fuzzy matching (cached per call)
+    const textWords = text.match(/[a-z0-9]+/g) || [];
     let score = 0;
     for (const kw of keywords) {
-      // Exact word match = 3pts, partial/substring = 1pt
+      // Exact word match = 3pts, substring = 1pt, fuzzy bigram match = 1pt
       const wordRe = new RegExp('\\b' + kw + '\\b', 'g');
       const partRe = new RegExp(kw, 'g');
       const wordMatches = (text.match(wordRe) || []).length;
       const partMatches = (text.match(partRe) || []).length;
       score += wordMatches * 3 + (partMatches - wordMatches) * 1;
+      // Fuzzy fallback — catches misspellings when exact/partial both miss
+      if (wordMatches === 0 && partMatches === 0 && this._fuzzyHit(textWords, kw)) {
+        score += 1;
+      }
     }
     return score;
   },
