@@ -1622,20 +1622,12 @@ const Exams = {
           <div>
             <label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Select Module or Topic</label>
             <select id="customExamSelect" style="width:100%;padding:10px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;" onchange="Exams._updateCustomCount()">
-              <option value="">-- Choose a module or topic --</option>
-              <optgroup label="&#x1F4D6; By Module">
-                ${MODULES.filter(m => m.hasContent).map(m => {
-                  const topicIds = m.topics;
-                  const qCount = EXAM_BANK.filter(eq => topicIds.includes(eq.topic)).length;
-                  return '<option value="module:' + m.id + '">' + m.num + '. ' + m.name + ' (' + qCount + ' questions)</option>';
-                }).join('')}
-              </optgroup>
-              <optgroup label="&#x1F4CA; By Topic (All)">
-                ${Object.values(TOPICS).filter(t => t.period <= state.user.period).sort((a,b)=>a.order-b.order).map(t => {
-                  const qCount = EXAM_BANK.filter(eq => eq.topic === t.id).length;
-                  return qCount > 0 ? '<option value="topic:' + t.id + '">' + t.icon + ' ' + t.name + ' (' + qCount + ' questions)</option>' : '';
-                }).join('')}
-              </optgroup>
+              <option value="">-- Choose a module --</option>
+              ${MODULES.filter(m => m.hasContent).map(m => {
+                const topicIds = m.topics;
+                const qCount = EXAM_BANK.filter(eq => topicIds.includes(eq.topic)).length;
+                return '<option value="module:' + m.id + '">' + m.num + '. ' + m.name + ' (' + qCount + ' questions)</option>';
+              }).join('')}
             </select>
           </div>
           <button class="btn btn-primary" onclick="Exams.startCustom()" id="customExamBtn" disabled style="white-space:nowrap;padding:10px 24px;">
@@ -2129,6 +2121,8 @@ const Notes = {
   quizCards: [],
   quizIdx: 0,
   quizAnswers: {},
+  _autocorrect: (localStorage.getItem('sparky_autocorrect') === 'true'),
+  _autocorrectTimer: null,
 
   CHARS: [
     { label:'\u03a9', tip:'Ohm' }, { label:'\u03bc', tip:'Micro' }, { label:'\u00b0', tip:'Degree' },
@@ -2269,7 +2263,7 @@ const Notes = {
                 </div>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button id="notesGrammarBtn" class="btn btn-secondary btn-sm" onclick="Notes._grammarCheck('${userId}')" title="Check spelling and grammar">\u2713 Grammar</button>
+                <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON — click to turn off' : 'Autocorrect OFF — click to turn on'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms and review">\ud83d\udcd6 Study Mode</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-generate quiz from your notes">\u26a1 Make Quiz</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print clean notes">\ud83d\udda8\ufe0f Print</button>
@@ -2325,7 +2319,7 @@ const Notes = {
               spellcheck="true"
               autocorrect="on"
               data-placeholder="Start typing your notes here..."
-              oninput="Notes._onInput('${userId}');Notes._hideEmpty();"
+              oninput="Notes._onInput('${userId}');Notes._hideEmpty();Notes._scheduleAutocorrect('${userId}');"
             >${savedHtml}</div>
             <div id="notesPrintHeader" style="display:none;">
               <h2>${topic.name} \u2014 sparkystudy Notes</h2>
@@ -2340,8 +2334,6 @@ const Notes = {
             <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card</span>
           </div>
 
-          <!-- Grammar results panel -->
-          <div id="notesGrammarPanel" class="notes-no-print" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-top:8px;overflow:hidden;font-size:0.82rem;max-height:320px;overflow-y:auto;"></div>
         </div>
       </div>
     `;
@@ -2358,81 +2350,84 @@ const Notes = {
     if (el) el.style.display = 'none';
   },
 
-  async _grammarCheck(userId) {
+  _toggleAutocorrect(userId) {
+    this._autocorrect = !this._autocorrect;
+    localStorage.setItem('sparky_autocorrect', this._autocorrect);
+    const btn = document.getElementById('notesAutocorrectBtn');
+    if (btn) {
+      btn.innerHTML = this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect';
+      btn.title = this._autocorrect ? 'Autocorrect ON \u2014 click to turn off' : 'Autocorrect OFF \u2014 click to turn on';
+      if (this._autocorrect) {
+        btn.style.background = 'rgba(34,197,94,0.15)';
+        btn.style.color = '#22c55e';
+        btn.style.borderColor = 'rgba(34,197,94,0.4)';
+        showToast('\u2713 Autocorrect on \u2014 spelling fixes as you type', 'success');
+      } else {
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        showToast('Autocorrect off', 'info');
+      }
+    }
+  },
+
+  _scheduleAutocorrect(userId) {
+    if (!this._autocorrect) return;
+    clearTimeout(this._autocorrectTimer);
+    this._autocorrectTimer = setTimeout(() => this._runAutocorrect(userId), 1800);
+  },
+
+  async _runAutocorrect(userId) {
+    if (!this._autocorrect) return;
     const editor = document.getElementById('notesEditor');
     if (!editor) return;
-    const text = (editor.innerText || editor.textContent || '').trim();
-    if (!text) { showToast('Write something first!', 'info'); return; }
-    const btn = document.getElementById('notesGrammarBtn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '\u23f3 Checking\u2026'; }
-    const panel = document.getElementById('notesGrammarPanel');
-    if (panel) panel.style.display = 'block';
+    const text = editor.innerText || editor.textContent || '';
+    if (text.trim().length < 3) return;
     try {
       const res = await fetch('https://api.languagetool.org/v2/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ text, language: 'en-CA', disabledRules: 'WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE' })
+        body: new URLSearchParams({ text, language: 'en-CA', disabledRules: 'WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE', enabledOnly: 'false' })
       });
       const data = await res.json();
-      if (!panel) return;
-      const matches = (data.matches || []).filter(m => m.rule.issueType !== 'typographical');
-      if (matches.length === 0) {
-        panel.innerHTML = '<div style="padding:14px 16px;display:flex;align-items:center;gap:8px;color:var(--success);font-size:0.84rem;font-weight:600;">\u2705 Looks great \u2014 no issues found</div>';
-      } else {
-        panel.innerHTML = `
-          <div style="padding:10px 16px 8px;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;">
-            <span>${matches.length} issue${matches.length!==1?'s':''} found</span>
-            <button onclick="document.getElementById('notesGrammarPanel').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;padding:0;">\u00d7</button>
-          </div>
-          ${matches.slice(0,15).map((m,i) => {
-            const snip = text.slice(m.offset, m.offset + m.length);
-            const isSpell = m.rule.issueType === 'misspelling';
-            const badge = isSpell ? '<span style="background:rgba(239,68,68,0.15);color:#ef4444;border-radius:4px;padding:1px 5px;font-size:0.65rem;font-weight:700;">SPELL</span>' : '<span style="background:rgba(245,158,11,0.15);color:var(--accent);border-radius:4px;padding:1px 5px;font-size:0.65rem;font-weight:700;">GRAMMAR</span>';
-            const fixes = m.replacements.slice(0,3).map(r => { const enc = encodeURIComponent(r.value); return `<button onclick="Notes._grammarFix(${m.offset},${m.length},decodeURIComponent('${enc}'))" style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.75rem;cursor:pointer;transition:all 0.12s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-primary)'">${r.value}</button>`; }).join('');
-            return `<div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.05);">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">${badge}<span style="font-size:0.78rem;color:var(--text-secondary);background:rgba(255,255,255,0.04);padding:1px 6px;border-radius:4px;">"${snip}"</span></div>
-              <div style="font-size:0.77rem;color:var(--text-muted);margin-bottom:${fixes?'7px':'0'}">${m.message}</div>
-              ${fixes ? `<div style="display:flex;gap:5px;flex-wrap:wrap;">${fixes}</div>` : ''}
-            </div>`;
-          }).join('')}
-        `;
+      // Only auto-fix clear misspellings that have exactly one top suggestion
+      const fixes = (data.matches || []).filter(m =>
+        m.rule.issueType === 'misspelling' && m.replacements.length >= 1
+      );
+      if (fixes.length === 0) return;
+      // Apply fixes in reverse order so offsets stay valid
+      fixes.sort((a, b) => b.offset - a.offset);
+      let count = 0;
+      fixes.forEach(m => {
+        const replacement = m.replacements[0].value;
+        let pos = 0, found = false;
+        const walk = (node) => {
+          if (found) return;
+          if (node.nodeType === 3) {
+            const end = pos + node.length;
+            if (pos <= m.offset && m.offset < end) {
+              const lo = m.offset - pos;
+              const le = Math.min(lo + m.length, node.length);
+              const before = node.textContent.slice(0, lo);
+              const after  = node.textContent.slice(le);
+              node.textContent = before + replacement + after;
+              found = true;
+              count++;
+            }
+            pos = end;
+          } else { node.childNodes.forEach(walk); }
+        };
+        walk(editor);
+      });
+      if (count > 0) {
+        this._save(userId, this.currentTopic, editor.innerHTML);
+        const wc = document.getElementById('notesWordCount');
+        if (wc) wc.textContent = this._wordCount(editor.innerHTML) + ' words';
+        // Subtle indicator in status line — no intrusive toast
+        const st = document.getElementById('notesStatus');
+        if (st) { st.textContent = '\u2713 ' + count + ' spelling fix' + (count>1?'es':'') + ' applied'; setTimeout(() => { if (st) st.textContent = 'Auto-saved'; }, 2500); }
       }
-    } catch(e) {
-      if (panel) panel.innerHTML = '<div style="padding:14px 16px;color:var(--danger);font-size:0.82rem;">\u26a0\ufe0f Grammar check unavailable \u2014 check your connection</div>';
-    } finally {
-      if (btn) { btn.disabled = false; btn.innerHTML = '\u2713 Grammar'; }
-    }
-  },
-
-  _grammarFix(offset, length, replacement) {
-    const editor = document.getElementById('notesEditor');
-    if (!editor) return;
-    // Walk text nodes to find and replace the span at the given offset
-    let pos = 0, found = false;
-    const walk = (node) => {
-      if (found) return;
-      if (node.nodeType === 3) {
-        const end = pos + node.length;
-        if (pos <= offset && offset < end) {
-          const localOff = offset - pos;
-          const localEnd = Math.min(localOff + length, node.length);
-          const before = node.textContent.slice(0, localOff);
-          const after  = node.textContent.slice(localEnd);
-          node.textContent = before + replacement + after;
-          found = true;
-        }
-        pos = end;
-      } else {
-        node.childNodes.forEach(walk);
-      }
-    };
-    walk(editor);
-    const st = Storage.get();
-    if (st) Notes._save(st.user.id, Notes.currentTopic, editor.innerHTML);
-    const wc = document.getElementById('notesWordCount');
-    if (wc) wc.textContent = Notes._wordCount(editor.innerHTML) + ' words';
-    showToast('Fixed!', 'success');
-    setTimeout(() => Notes._grammarCheck(), 600);
+    } catch(e) { /* silent — don't interrupt typing */ }
   },
 
   _switchTopic(topicId, userId) {
@@ -9156,7 +9151,7 @@ const Settings = {
   _scheduleHTML(state) {
     const sched = state.schedule || {};
     const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const topics = Object.values(TOPICS).filter(t => t.period === (state.user.period||1)).sort((a,b)=>a.order-b.order);
+    const topics = MODULES.filter(m => m.hasContent);
     const hasSchedule = Object.keys(sched).some(k => days.includes(k) && sched[k]);
     return `
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
@@ -9186,7 +9181,7 @@ const Settings = {
             <select id="sched_${day}" onchange="Settings.saveScheduleDay('${day}',this.value)"
               style="flex:1;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.82rem;">
               <option value="">— No class —</option>
-              ${topics.map(t=>`<option value="${t.id}" ${sched[day]===t.id?'selected':''}>${t.name}</option>`).join('')}
+              ${topics.map(m=>`<option value="${m.id}" ${sched[day]===m.id?'selected':''}>${m.num}. ${m.name}</option>`).join('')}
             </select>
           </div>`).join('')}
       </div>
