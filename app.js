@@ -11823,5 +11823,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-  });
-});
