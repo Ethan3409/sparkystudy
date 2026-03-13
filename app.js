@@ -2123,6 +2123,7 @@ const Notes = {
   quizAnswers: {},
   _autocorrect: (localStorage.getItem('sparky_autocorrect') === 'true'),
   _autocorrectTimer: null,
+  _currentPage: {},  // { [topicId]: pageId }
 
   CHARS: [
     { label:'\u03a9', tip:'Ohm' }, { label:'\u03bc', tip:'Micro' }, { label:'\u00b0', tip:'Degree' },
@@ -2137,18 +2138,44 @@ const Notes = {
   ],
 
   FORMULAS: [
-    { label:"V=IR",      insert:"V = I \u00d7 R",               tip:"Ohm\u2019s Law" },
-    { label:"I=V/R",     insert:"I = V \u00f7 R",               tip:"Current" },
-    { label:"R=V/I",     insert:"R = V \u00f7 I",               tip:"Resistance" },
-    { label:"P=VI",      insert:"P = V \u00d7 I",               tip:"Power" },
-    { label:"P=I\u00b2R",insert:"P = I\u00b2 \u00d7 R",         tip:"Power (resistance)" },
-    { label:"P=V\u00b2/R",insert:"P = V\u00b2 \u00f7 R",        tip:"Power (voltage)" },
+    // Ohm's Law & DC Power
+    { label:"V=IR",           insert:"V = I \u00d7 R",                             tip:"Ohm\u2019s Law \u2014 Voltage" },
+    { label:"I=V/R",          insert:"I = V \u00f7 R",                             tip:"Ohm\u2019s Law \u2014 Current" },
+    { label:"R=V/I",          insert:"R = V \u00f7 I",                             tip:"Ohm\u2019s Law \u2014 Resistance" },
+    { label:"P=VI",           insert:"P = V \u00d7 I",                             tip:"Power" },
+    { label:"P=I\u00b2R",    insert:"P = I\u00b2 \u00d7 R",                     tip:"Power (current & resistance)" },
+    { label:"P=V\u00b2/R",   insert:"P = V\u00b2 \u00f7 R",                     tip:"Power (voltage & resistance)" },
+    // AC Fundamentals (M1)
+    { label:"VRMS=Vp\u00d70.707", insert:"VRMS = Vpeak \u00d7 0.707",            tip:"RMS Voltage" },
+    { label:"Vp=VRMS\u00d71.414",insert:"Vpeak = VRMS \u00d7 1.414",             tip:"Peak Voltage" },
+    { label:"v(t)=Vp\u00d7sin(2\u03c0ft)", insert:"v(t) = Vpeak \u00d7 sin(2\u03c0ft)", tip:"Instantaneous AC voltage" },
+    { label:"f=1/T",          insert:"f = 1 \u00f7 T",                             tip:"Frequency from period" },
+    { label:"T=1/f",          insert:"T = 1 \u00f7 f",                             tip:"Period from frequency (60Hz = 16.7ms)" },
+    { label:"Sync RPM",       insert:"Sync Speed = (120 \u00d7 f) \u00f7 poles",  tip:"Synchronous motor speed" },
+    // Inductors & Capacitors (M2)
+    { label:"XL=2\u03c0fL",  insert:"XL = 2\u03c0fL",                            tip:"Inductive reactance" },
+    { label:"XC=1/(2\u03c0fC)",insert:"XC = 1 \u00f7 (2\u03c0fC)",              tip:"Capacitive reactance" },
+    { label:"EL=\u00bdLI\u00b2", insert:"E = \u00bd \u00d7 L \u00d7 I\u00b2", tip:"Energy stored in inductor (joules)" },
+    { label:"EC=\u00bdCV\u00b2", insert:"E = \u00bd \u00d7 C \u00d7 V\u00b2", tip:"Energy stored in capacitor (joules)" },
+    { label:"\u03c4=L/R",    insert:"\u03c4 = L \u00f7 R",                       tip:"Inductor time constant (seconds)" },
+    { label:"\u03c4=RC",     insert:"\u03c4 = R \u00d7 C",                       tip:"Capacitor time constant (seconds)" },
+    // Impedance & Power Factor (M3)
     { label:"Z=\u221a(R\u00b2+X\u00b2)", insert:"Z = \u221a(R\u00b2 + X\u00b2)", tip:"Impedance" },
-    { label:"XL=2\u03c0fL", insert:"XL = 2\u03c0fL",            tip:"Inductive reactance" },
-    { label:"XC=1/2\u03c0fC", insert:"XC = 1 \u00f7 (2\u03c0fC)", tip:"Capacitive reactance" },
-    { label:"VD=2KID/CM", insert:"VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM", tip:"Voltage drop" },
-    { label:"N1/N2=V1/V2", insert:"N1 \u00f7 N2 = V1 \u00f7 V2", tip:"Transformer turns ratio" },
-    { label:"kVA=VA/1000", insert:"kVA = (V \u00d7 A) \u00f7 1000", tip:"Single-phase kVA" },
+    { label:"\u03b8=arctan(X/R)", insert:"\u03b8 = arctan(X \u00f7 R)",          tip:"Phase angle" },
+    { label:"PF=cos(\u03b8)", insert:"PF = cos(\u03b8) = R \u00f7 Z = P \u00f7 S", tip:"Power factor" },
+    { label:"P=VI\u00d7cos\u03b8", insert:"P = V \u00d7 I \u00d7 cos(\u03b8)", tip:"True (real) power \u2014 watts" },
+    { label:"Q=VI\u00d7sin\u03b8", insert:"Q = V \u00d7 I \u00d7 sin(\u03b8)", tip:"Reactive power \u2014 VAR" },
+    { label:"S=VI",           insert:"S = V \u00d7 I",                             tip:"Apparent power \u2014 VA" },
+    { label:"S=\u221a(P\u00b2+Q\u00b2)", insert:"S = \u221a(P\u00b2 + Q\u00b2)", tip:"Apparent power from P & Q" },
+    // Three-Phase (M4)
+    { label:"VL=\u221a3\u00d7Vp(Y)", insert:"VL = \u221a3 \u00d7 VP  (wye)",   tip:"Wye: line voltage from phase voltage" },
+    { label:"IL=\u221a3\u00d7Ip(\u0394)", insert:"IL = \u221a3 \u00d7 IP  (delta)", tip:"Delta: line current from phase current" },
+    { label:"P(3\u03c6)=\u221a3\u00d7VL\u00d7IL\u00d7PF", insert:"P = \u221a3 \u00d7 VL \u00d7 IL \u00d7 PF  (3\u03c6)", tip:"Three-phase true power" },
+    { label:"kVA(3\u03c6)=VL\u00d7IL\u00d7\u221a3/1000", insert:"kVA = (VL \u00d7 IL \u00d7 \u221a3) \u00f7 1000  (3\u03c6)", tip:"Three-phase apparent power" },
+    // Voltage Drop & Transformer
+    { label:"VD=2KID/CM",     insert:"VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM", tip:"Voltage drop (K=12.9 Cu, 21.2 Al)" },
+    { label:"N1/N2=V1/V2",    insert:"N1 \u00f7 N2 = V1 \u00f7 V2",              tip:"Transformer turns ratio" },
+    { label:"kVA(1\u03c6)=VA/1000", insert:"kVA = (V \u00d7 A) \u00f7 1000",   tip:"Single-phase kVA" },
   ],
 
   TOPICS_LIST: [
@@ -2165,18 +2192,121 @@ const Notes = {
     'theory':    '<h2>\u26a1 Theory Notes</h2><h3>AC Fundamentals</h3><ul><li><b>Frequency</b> \u2014 60 Hz in Canada; Period T = 1/f = 16.67 ms</li><li><b>RMS</b> = Peak \u00d7 0.707 (equivalent DC heating value)</li><li><b>Impedance</b> Z = \u221a(R\u00b2 + X\u00b2)</li></ul><h3>DC Fundamentals</h3><ul><li><b>Ohm\u2019s Law</b>: V = I \u00d7 R &nbsp; I = V \u00f7 R &nbsp; R = V \u00f7 I</li><li><b>Series</b>: same I everywhere, voltages add</li><li><b>Parallel</b>: same V everywhere, currents add</li></ul><h3>Power</h3><ul><li><b>True power (P)</b> \u2014 watts, consumed by R</li><li><b>Reactive power (Q)</b> \u2014 VAR, stored by L or C</li><li><b>Apparent power (S)</b> \u2014 VA = V \u00d7 I from source</li><li><b>PF</b> = P \u00f7 S = cos(\u03c6)</li></ul>',
     'code':      '<h2>\ud83d\udcd6 CEC Code Notes</h2><h3>How to Read a Rule Number</h3><p>Rule <b>12-3034</b> = Section 12, Rule 3034. Appendix B has explanatory notes.</p><h3>Key Sections</h3><ul><li><b>Section 2</b> \u2014 Definitions</li><li><b>Section 4</b> \u2014 Conductors</li><li><b>Section 8</b> \u2014 Circuit loading &amp; demand</li><li><b>Section 10</b> \u2014 Grounding &amp; bonding</li><li><b>Section 12</b> \u2014 Wiring methods</li><li><b>Section 14</b> \u2014 Protection &amp; control</li><li><b>Section 28</b> \u2014 Motors &amp; generators</li></ul><h3>Rules I Keep Forgetting</h3><ul><li></li><li></li></ul>',
     'lab':       '<h2>\ud83d\udd2c Lab Notes</h2><h3>Safety Checks Before Starting</h3><ul><li>\u2610 PPE on (safety glasses, boots)</li><li>\u2610 LOTO applied and verified</li><li>\u2610 Area clear</li></ul><h3>Today\'s Lab</h3><p><b>Objective:</b></p><p><b>Equipment Used:</b></p><h3>Measurements</h3><p>Record your readings here:</p><ul><li>Voltage: </li><li>Current: </li><li>Resistance: </li></ul><h3>Results / Observations</h3><p></p><h3>What Went Wrong / What I Learned</h3><p></p>',
-    'formulas':  '<h2>\ud83e\uddee Formula Reference</h2><h3>Ohm\'s Law &amp; Power</h3><ul><li>V = I \u00d7 R</li><li>P = V \u00d7 I = I\u00b2R = V\u00b2 \u00f7 R</li></ul><h3>AC &amp; Impedance</h3><ul><li>Z = \u221a(R\u00b2 + X\u00b2)</li><li>XL = 2\u03c0fL &nbsp;&nbsp; XC = 1 \u00f7 (2\u03c0fC)</li><li>PF = cos(\u03c6) = P \u00f7 S</li></ul><h3>Voltage Drop</h3><ul><li>VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM</li><li>K = 12.9 (copper) or 21.2 (aluminum)</li></ul><h3>Transformers</h3><ul><li>N1/N2 = V1/V2 = I2/I1</li><li>kVA (1\u03c6) = (V \u00d7 A) \u00f7 1000</li><li>kVA (3\u03c6) = (V \u00d7 A \u00d7 \u221a3) \u00f7 1000</li></ul><h3>Motors (CEC)</h3><ul><li>Branch conductor: 125% FLA</li><li>Overload protection: 125% FLA (SF\u22651.15)</li><li>Short-circuit breaker: up to 250% FLA</li></ul>',
+    'formulas':  '<h2>\ud83e\uddee Complete Formula Reference</h2><h3>\ud83d\udd0c Ohm\u2019s Law &amp; DC Power</h3><ul><li><b>V = I \u00d7 R</b> &mdash; Voltage</li><li><b>I = V \u00f7 R</b> &mdash; Current</li><li><b>R = V \u00f7 I</b> &mdash; Resistance</li><li><b>P = V \u00d7 I</b> &mdash; Power (watts)</li><li><b>P = I\u00b2 \u00d7 R</b> &mdash; Power from current &amp; resistance</li><li><b>P = V\u00b2 \u00f7 R</b> &mdash; Power from voltage &amp; resistance</li><li>Series: R\u1d1c = R1 + R2 + R3...</li><li>Parallel: 1/R\u1d1c = 1/R1 + 1/R2 + 1/R3...</li></ul><h3>\u007e AC Fundamentals (M1)</h3><ul><li><b>v(t) = Vpeak \u00d7 sin(2\u03c0ft)</b> &mdash; Instantaneous voltage</li><li><b>VRMS = Vpeak \u00d7 0.707</b> &mdash; RMS from peak</li><li><b>Vpeak = VRMS \u00d7 1.414</b> &mdash; Peak from RMS</li><li><b>f = 1/T</b> &mdash; Frequency (Hz); at 60 Hz: T = 16.7 ms</li><li><b>T = 1/f</b> &mdash; Period (seconds)</li><li><b>Sync Speed = (120 \u00d7 f) \u00f7 poles</b> &mdash; Motor synchronous RPM</li></ul><h3>\ud83d\udce1 Inductors &amp; Capacitors (M2)</h3><ul><li><b>XL = 2\u03c0fL</b> &mdash; Inductive reactance (\u03a9); L in henries</li><li><b>XC = 1 \u00f7 (2\u03c0fC)</b> &mdash; Capacitive reactance (\u03a9); C in farads</li><li><b>E = \u00bd \u00d7 L \u00d7 I\u00b2</b> &mdash; Energy stored in inductor (joules)</li><li><b>E = \u00bd \u00d7 C \u00d7 V\u00b2</b> &mdash; Energy stored in capacitor (joules)</li><li><b>\u03c4 = L \u00f7 R</b> &mdash; Inductor time constant (seconds)</li><li><b>\u03c4 = R \u00d7 C</b> &mdash; Capacitor time constant (seconds)</li></ul><h3>\ud83d\udcd0 Impedance &amp; Power Factor (M3)</h3><ul><li><b>Z = \u221a(R\u00b2 + X\u00b2)</b> &mdash; Impedance (\u03a9)</li><li><b>\u03b8 = arctan(X \u00f7 R)</b> &mdash; Phase angle</li><li><b>PF = cos(\u03b8) = R \u00f7 Z = P \u00f7 S</b> &mdash; Power factor</li><li><b>P = V \u00d7 I \u00d7 cos(\u03b8)</b> &mdash; True/real power (watts)</li><li><b>Q = V \u00d7 I \u00d7 sin(\u03b8)</b> &mdash; Reactive power (VAR)</li><li><b>S = V \u00d7 I</b> &mdash; Apparent power (VA)</li><li><b>S = \u221a(P\u00b2 + Q\u00b2)</b> &mdash; Apparent power from P &amp; Q</li></ul><h3>\ud83d\udd3a Three-Phase Power (M4)</h3><ul><li><b>Wye (Y):</b> VL = \u221a3 \u00d7 VP &nbsp;&nbsp; IL = IP</li><li><b>Delta (\u0394):</b> VL = VP &nbsp;&nbsp; IL = \u221a3 \u00d7 IP</li><li><b>P = \u221a3 \u00d7 VL \u00d7 IL \u00d7 PF</b> &mdash; 3\u03c6 true power (W)</li><li><b>kVA = (VL \u00d7 IL \u00d7 \u221a3) \u00f7 1000</b> &mdash; 3\u03c6 apparent power</li></ul><h3>\u26a1 Voltage Drop &amp; Conductors</h3><ul><li><b>VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM</b></li><li>K = 12.9 (copper) &nbsp;|&nbsp; K = 21.2 (aluminum)</li><li>CM = circular mils of conductor &nbsp;|&nbsp; D = one-way distance (ft)</li></ul><h3>\ud83d\udd04 Transformers</h3><ul><li><b>N1/N2 = V1/V2 = I2/I1</b> &mdash; Turns ratio</li><li><b>kVA (1\u03c6) = (V \u00d7 A) \u00f7 1000</b></li><li><b>kVA (3\u03c6) = (V \u00d7 A \u00d7 \u221a3) \u00f7 1000</b></li></ul><h3>\u2699\ufe0f Motor Control (CEC Rules)</h3><ul><li>Branch circuit conductor: <b>125% \u00d7 FLA</b></li><li>Overload protection: <b>125% \u00d7 FLA</b> (SF \u2265 1.15)</li><li>Short-circuit/ground-fault protection: up to <b>250% FLA</b> (breaker)</li><li>Sync RPM = (120 \u00d7 f) \u00f7 poles</li></ul>',
     'exam-prep': '<h2>\ud83c\udfaf Exam Prep</h2><h3>Must-Know Formulas</h3><ul><li>V = IR &nbsp; P = VI = I\u00b2R = V\u00b2/R</li><li>Z = \u221a(R\u00b2+X\u00b2) &nbsp; XL = 2\u03c0fL &nbsp; XC = 1/(2\u03c0fC)</li><li>VD = 2KID/CM &nbsp; kVA(3\u03c6) = V\u00d7A\u00d7\u221a3/1000</li></ul><h3>CEC Tables to Know</h3><ul><li><b>Table 2</b> \u2014 Conductor ampacity</li><li><b>Table 4</b> \u2014 Conduit fill</li><li><b>Table 8</b> \u2014 Conductor resistance &amp; area</li><li><b>Table 13</b> \u2014 Box fill volume</li></ul><h3>My Weak Areas</h3><ul><li>[ ] </li><li>[ ] </li><li>[ ] </li></ul><h3>Exam Day Tips</h3><ul><li>Read the question <b>twice</b></li><li>Eliminate obviously wrong answers first</li><li>Mark hard ones, come back at end</li></ul>',
   },
   _storageKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}`; },
 
+  // ── Pages system ──────────────────────────────────────────────────
+  _pagesMetaKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}_pages_meta`; },
+  _pageContentKey(userId, topicId, pageId) { return `sparky_notes_${userId}_${topicId}_p_${pageId}`; },
+
+  _getPages(userId, topicId) {
+    try {
+      const raw = localStorage.getItem(this._pagesMetaKey(userId, topicId));
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    // First visit — migrate any existing single note to Page 1
+    const existing = localStorage.getItem(this._storageKey(userId, topicId)) || '';
+    const pages = [{ id: 'p1', name: 'Page 1' }];
+    if (existing) localStorage.setItem(this._pageContentKey(userId, topicId, 'p1'), existing);
+    localStorage.setItem(this._pagesMetaKey(userId, topicId), JSON.stringify(pages));
+    return pages;
+  },
+
+  _savePagesMeta(userId, topicId, pages) {
+    localStorage.setItem(this._pagesMetaKey(userId, topicId), JSON.stringify(pages));
+  },
+
+  _currentPageId(topicId) {
+    if (!this._currentPage[topicId]) this._currentPage[topicId] = 'p1';
+    return this._currentPage[topicId];
+  },
+
+  _loadPage(userId, topicId, pageId) {
+    return localStorage.getItem(this._pageContentKey(userId, topicId, pageId)) || '';
+  },
+
+  _savePage(userId, topicId, pageId, html) {
+    localStorage.setItem(this._pageContentKey(userId, topicId, pageId), html);
+    localStorage.setItem(`sparky_notes_ts_${userId}_${topicId}`, Date.now());
+    // Keep old key in sync with current page so word count still works
+    localStorage.setItem(this._storageKey(userId, topicId), html);
+  },
+
+  _addPage(userId, topicId) {
+    const pages = this._getPages(userId, topicId);
+    const id = 'p' + Date.now();
+    pages.push({ id, name: 'Page ' + (pages.length + 1) });
+    this._savePagesMeta(userId, topicId, pages);
+    this._currentPage[topicId] = id;
+    this._renderEditor(document.getElementById('notesContent'), Storage.get());
+    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
+  },
+
+  _switchPage(userId, topicId, pageId) {
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._savePage(userId, topicId, this._currentPageId(topicId), editor.innerHTML);
+    this._currentPage[topicId] = pageId;
+    this._renderEditor(document.getElementById('notesContent'), Storage.get());
+    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
+  },
+
+  _deletePage(userId, topicId, pageId) {
+    const pages = this._getPages(userId, topicId);
+    if (pages.length <= 1) return;
+    const idx = pages.findIndex(p => p.id === pageId);
+    if (idx === -1) return;
+    localStorage.removeItem(this._pageContentKey(userId, topicId, pageId));
+    pages.splice(idx, 1);
+    this._savePagesMeta(userId, topicId, pages);
+    if (this._currentPage[topicId] === pageId) {
+      this._currentPage[topicId] = pages[Math.max(0, idx - 1)].id;
+    }
+    this._renderEditor(document.getElementById('notesContent'), Storage.get());
+  },
+
+  _renamePage(userId, topicId, pageId) {
+    const pages = this._getPages(userId, topicId);
+    const page = pages.find(p => p.id === pageId);
+    if (!page) return;
+    const name = prompt('Rename page:', page.name);
+    if (name && name.trim()) {
+      page.name = name.trim();
+      this._savePagesMeta(userId, topicId, pages);
+      this._renderEditor(document.getElementById('notesContent'), Storage.get());
+    }
+  },
+
+  // Tab key handler — Tab = start/indent bullet, Shift+Tab = outdent
+  _handleEditorKey(e, userId) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      let node = sel.anchorNode;
+      const editor = document.getElementById('notesEditor');
+      let inList = false;
+      while (node && node !== editor) {
+        if (node.nodeName === 'LI') { inList = true; break; }
+        node = node.parentNode;
+      }
+      if (inList) {
+        document.execCommand(e.shiftKey ? 'outdent' : 'indent', false, null);
+      } else if (!e.shiftKey) {
+        document.execCommand('insertUnorderedList', false, null);
+      }
+    }
+  },
+
   _load(userId, topicId) {
-    return localStorage.getItem(this._storageKey(userId, topicId)) || '';
+    const pageId = this._currentPageId(topicId);
+    return this._loadPage(userId, topicId, pageId);
   },
 
   _save(userId, topicId, html) {
-    localStorage.setItem(this._storageKey(userId, topicId), html);
-    localStorage.setItem(`sparky_notes_ts_${userId}_${topicId}`, Date.now());
+    const pageId = this._currentPageId(topicId);
+    this._savePage(userId, topicId, pageId, html);
   },
 
   _wordCount(html) {
@@ -2227,12 +2357,24 @@ const Notes = {
   _renderEditor(container, state) {
     const userId = state.user.id;
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
+    const pages = this._getPages(userId, this.currentTopic);
+    const currentPageId = this._currentPageId(this.currentTopic);
     const savedHtml = this._load(userId, this.currentTopic);
     const topics = this._allNoteIds(userId);
     const isEmpty = !savedHtml.trim();
 
+    const pageTabs = pages.map(p => `
+      <div class="notes-page-tab ${p.id === currentPageId ? 'active' : ''}"
+        onclick="Notes._switchPage('${userId}','${this.currentTopic}','${p.id}')"
+        ondblclick="Notes._renamePage('${userId}','${this.currentTopic}','${p.id}')"
+        title="Double-click to rename">
+        ${this._esc(p.name)}
+        ${pages.length > 1 ? `<span class="notes-page-del" onclick="event.stopPropagation();Notes._deletePage('${userId}','${this.currentTopic}','${p.id}')">\u00d7</span>` : ''}
+      </div>
+    `).join('');
+
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:230px 1fr;gap:20px;min-height:calc(100vh - 120px);">
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:start;">
 
         <!-- Sidebar -->
         <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:12px;height:fit-content;position:sticky;top:80px;">
@@ -2252,9 +2394,11 @@ const Notes = {
 
         <!-- Editor pane -->
         <div>
-          <!-- Header -->
-          <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+
+          <!-- Sticky header: title + buttons + toolbar + char bar -->
+          <div class="notes-sticky-header notes-no-print">
+            <!-- Title row -->
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:1.4rem;">${topic.icon}</span>
                 <div>
@@ -2263,10 +2407,10 @@ const Notes = {
                 </div>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON — click to turn off' : 'Autocorrect OFF — click to turn on'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms and review">\ud83d\udcd6 Study Mode</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-generate quiz from your notes">\u26a1 Make Quiz</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print clean notes">\ud83d\udda8\ufe0f Print</button>
+                <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON' : 'Autocorrect OFF'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">\ud83d\udcd6 Study Mode</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">\u26a1 Make Quiz</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print">\ud83d\udda8\ufe0f Print</button>
               </div>
             </div>
 
@@ -2277,7 +2421,7 @@ const Notes = {
               <button class="ntb" onclick="Notes._fmt('underline')" title="Underline"><u>U</u></button>
               <button class="ntb" onclick="Notes._fmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
               <div class="ntb-sep"></div>
-              <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list">\u2022 List</button>
+              <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list (or press Tab)">\u2022 List</button>
               <button class="ntb" onclick="Notes._fmt('insertOrderedList')" title="Numbered list">1. List</button>
               <div class="ntb-sep"></div>
               <button class="ntb" onclick="Notes._heading(1)" title="Heading 1" style="font-size:0.9rem;font-weight:900;">H1</button>
@@ -2285,20 +2429,26 @@ const Notes = {
               <button class="ntb" onclick="Notes._heading(3)" title="Heading 3" style="font-size:0.8rem;font-weight:700;">H3</button>
               <div class="ntb-sep"></div>
               <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">\u2715 Format</button>
-              <button class="ntb" onclick="Notes._highlight()" title="Highlight (marks as quiz term)" style="background:rgba(245,158,11,0.15);color:var(--accent);">\u2605 Key Term</button>
+              <button class="ntb" onclick="Notes._highlight()" title="Mark as quiz term" style="background:rgba(245,158,11,0.15);color:var(--accent);">\u2605 Key Term</button>
+            </div>
+
+            <!-- Symbols + Formulas bar -->
+            <div class="notes-char-bar">
+              <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;">
+                <span class="notes-bar-label">Symbols:</span>
+                ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">
+                <span class="notes-bar-label">Formulas:</span>
+                ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
+              </div>
             </div>
           </div>
 
-          <!-- Special chars + Formulas bar -->
-          <div class="notes-char-bar notes-no-print">
-            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;">
-              <span class="notes-bar-label">Symbols:</span>
-              ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">
-              <span class="notes-bar-label">Formulas:</span>
-              ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
-            </div>
+          <!-- Page tabs row -->
+          <div class="notes-pages-bar notes-no-print">
+            ${pageTabs}
+            <button class="notes-page-add" onclick="Notes._addPage('${userId}','${this.currentTopic}')" title="Add new page">+ Page</button>
           </div>
 
           <!-- Editor -->
@@ -2308,7 +2458,7 @@ const Notes = {
               <div style="font-size:2.5rem;opacity:0.3;">${topic.icon}</div>
               <div style="text-align:center;pointer-events:none;">
                 <div style="font-size:0.95rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;">No notes yet for ${topic.name}</div>
-                <div style="font-size:0.78rem;color:var(--text-muted);opacity:0.7;">Start typing, or use a starter template</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);opacity:0.7;">Start typing — press <b>Tab</b> for bullets, <b>Tab</b> again to nest</div>
               </div>
               <button class="btn btn-secondary btn-sm" style="pointer-events:all;" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
                 \ud83d\udcc4 Use Starter Template
@@ -2318,8 +2468,9 @@ const Notes = {
               contenteditable="true"
               spellcheck="true"
               autocorrect="on"
-              data-placeholder="Start typing your notes here..."
+              data-placeholder="Start typing... Press Tab for bullets, Tab again to nest them."
               oninput="Notes._onInput('${userId}');Notes._hideEmpty();Notes._scheduleAutocorrect('${userId}');"
+              onkeydown="Notes._handleEditorKey(event,'${userId}');"
             >${savedHtml}</div>
             <div id="notesPrintHeader" style="display:none;">
               <h2>${topic.name} \u2014 sparkystudy Notes</h2>
@@ -2331,7 +2482,7 @@ const Notes = {
           <!-- Word count bar -->
           <div class="notes-no-print" id="notesWordBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:0.72rem;color:var(--text-muted);">
             <span id="notesWordCount">0 words</span>
-            <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card</span>
+            <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card &nbsp;|&nbsp; <strong>Tab</strong> = bullet &nbsp;|&nbsp; double-click page tab to rename</span>
           </div>
 
         </div>
