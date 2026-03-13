@@ -3883,7 +3883,7 @@ const Tools = {
     }
   },
 
-  // ===== OHM'S LAW SIMULATOR (INSTRUMENT DESIGN) =====
+  // ===== OHM'S LAW SIMULATOR (AMBER INSTRUMENT DESIGN) =====
   _simOhm() {
     if (this._ohmResRAF)       { cancelAnimationFrame(this._ohmResRAF); this._ohmResRAF = null; }
     if (this._ohmWireIntervals){ this._ohmWireIntervals.forEach(clearInterval); this._ohmWireIntervals = []; }
@@ -3892,11 +3892,11 @@ const Tools = {
 <style>
 @keyframes eflow{from{stroke-dashoffset:50}to{stroke-dashoffset:0}}
 .ohm-inst{
-  --oi-bg:#070b14;--oi-panel:#0b1220;--oi-panel2:#0f1a2e;
-  --oi-border:rgba(56,120,200,0.28);--oi-border2:rgba(56,120,200,0.5);
-  --oi-sky:#4da6ff;--oi-sky2:#1e6fbf;
-  --oi-V:#ffd166;--oi-I:#06d6a0;--oi-R:#ef476f;--oi-P:#a8dadc;
-  --oi-muted:#7a9cc4;--oi-text:#e8f2ff;
+  --oi-bg:#0d1117;--oi-panel:#141b26;--oi-panel2:#1a2336;
+  --oi-border:rgba(245,166,35,0.15);--oi-border2:rgba(245,166,35,0.35);
+  --oi-sky:#f5a623;--oi-sky2:#c47e0f;
+  --oi-V:#f5a623;--oi-I:#ffd166;--oi-R:#e8850a;--oi-P:#ffeaa0;
+  --oi-muted:#8a95a8;--oi-text:#f0f4fa;
   color:var(--oi-text);font-family:'Rajdhani',sans-serif;
   display:flex;flex-direction:column;gap:14px;
 }
@@ -3904,21 +3904,21 @@ const Tools = {
 .ohm-inst .plbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--oi-muted)}
 .ohm-inst .chip{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:4px 11px;border-radius:3px;border:1px solid var(--oi-border);background:var(--oi-panel);color:var(--oi-muted);cursor:pointer;transition:all .12s}
 .ohm-inst .chip:hover{border-color:var(--oi-sky);color:var(--oi-sky)}
-.ohm-inst .chip.on{border-color:var(--oi-sky);color:var(--oi-sky);background:rgba(77,166,255,0.08);box-shadow:0 0 10px rgba(77,166,255,0.15)}
+.ohm-inst .chip.on{border-color:var(--oi-sky);color:var(--oi-sky);background:rgba(245,166,35,0.08);box-shadow:0 0 10px rgba(245,166,35,0.15)}
 .ohm-inst .main{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
 .ohm-inst .left{display:flex;flex-direction:column;gap:14px}
 .ohm-inst .pnl{background:var(--oi-panel);border:1px solid var(--oi-border);border-radius:8px;position:relative;overflow:hidden}
-.ohm-inst .pnl::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 5%,var(--oi-sky2) 30%,var(--oi-sky) 50%,var(--oi-sky2) 70%,transparent 95%);opacity:0.6}
+.ohm-inst .pnl::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 5%,var(--oi-sky2) 30%,var(--oi-sky) 50%,var(--oi-sky2) 70%,transparent 95%);opacity:0.7}
 .ohm-inst .pnl-hdr{padding:10px 18px;border-bottom:1px solid var(--oi-border);display:flex;align-items:center;justify-content:space-between}
 .ohm-inst .pnl-title{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#9ab8d8}
 .ohm-inst .pnl-body{padding:18px}
 .ohm-inst .formula{display:flex;align-items:baseline;justify-content:center;gap:6px;padding:12px 20px 16px}
 .ohm-inst .fl{font-family:'Rajdhani',sans-serif;font-weight:700;line-height:1;transition:font-size .38s cubic-bezier(.34,1.56,.64,1),text-shadow .3s}
-.ohm-inst .fl-V{color:var(--oi-V);font-size:116px;text-shadow:0 0 40px rgba(255,209,102,.35)}
+.ohm-inst .fl-V{color:var(--oi-V);font-size:116px;text-shadow:0 0 40px rgba(245,166,35,.35)}
 .ohm-inst .fl-eq{color:#5a7fa8;font-size:70px;font-weight:400;margin:0 8px}
-.ohm-inst .fl-I{color:var(--oi-I);font-size:70px;text-shadow:0 0 30px rgba(6,214,160,.3)}
+.ohm-inst .fl-I{color:var(--oi-I);font-size:70px;text-shadow:0 0 30px rgba(255,209,102,.3)}
 .ohm-inst .fl-dot{color:#5a7fa8;font-size:70px;font-weight:400;margin:0 4px}
-.ohm-inst .fl-R{color:var(--oi-R);font-size:70px;text-shadow:0 0 30px rgba(239,71,111,.3)}
+.ohm-inst .fl-R{color:var(--oi-R);font-size:70px;text-shadow:0 0 30px rgba(232,133,10,.3)}
 .ohm-inst .fl-legend{display:flex;justify-content:center;gap:24px;border-top:1px solid var(--oi-border);padding:10px 0}
 .ohm-inst .fll{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--oi-muted);display:flex;align-items:center;gap:7px}
 .ohm-inst .fll-dot{width:6px;height:6px;border-radius:50%}
@@ -3932,14 +3932,14 @@ const Tools = {
 .ohm-inst input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;border-radius:2px;outline:none;cursor:pointer}
 .ohm-inst input[type=range].trV{background:linear-gradient(to right,var(--oi-V) var(--p,0%),#0f1a2e var(--p,0%))}
 .ohm-inst input[type=range].trR{background:linear-gradient(to right,var(--oi-R) var(--p,50%),#0f1a2e var(--p,50%))}
-.ohm-inst input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--oi-text);border:2px solid #070b14;box-shadow:0 0 8px rgba(77,166,255,.4);transition:transform .1s}
+.ohm-inst input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--oi-text);border:2px solid var(--oi-bg);box-shadow:0 0 8px rgba(245,166,35,.5);transition:transform .1s}
 .ohm-inst input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25)}
 .ohm-inst .cur-meter{padding:16px 18px 14px;border-bottom:1px solid var(--oi-border)}
 .ohm-inst .cur-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .ohm-inst .cur-lbl-col .c-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab8d8;margin-bottom:6px}
-.ohm-inst .cur-val{font-family:'Share Tech Mono',monospace;font-size:36px;font-weight:400;color:var(--oi-I);text-shadow:0 0 24px rgba(6,214,160,.45);transition:all .2s;letter-spacing:-1px}
-.ohm-inst .bar-bg{height:4px;background:#0f1a2e;border-radius:2px;overflow:hidden;margin-bottom:4px}
-.ohm-inst .bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--oi-I),var(--oi-sky));box-shadow:0 0 8px rgba(6,214,160,.4);transition:width .35s cubic-bezier(.34,1.56,.64,1)}
+.ohm-inst .cur-val{font-family:'Share Tech Mono',monospace;font-size:36px;font-weight:400;color:var(--oi-I);text-shadow:0 0 24px rgba(255,209,102,.5);transition:all .2s;letter-spacing:-1px}
+.ohm-inst .bar-bg{height:4px;background:#1a2336;border-radius:2px;overflow:hidden;margin-bottom:4px}
+.ohm-inst .bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--oi-sky2),var(--oi-sky));box-shadow:0 0 8px rgba(245,166,35,.5);transition:width .35s cubic-bezier(.34,1.56,.64,1)}
 .ohm-inst .bar-lbs{display:flex;justify-content:space-between}
 .ohm-inst .bar-lbs span{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--oi-muted)}
 .ohm-inst .rg{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 18px}
@@ -3979,9 +3979,9 @@ const Tools = {
           <span class="fl fl-R" id="fl-R">R</span>
         </div>
         <div class="fl-legend">
-          <span class="fll"><span class="fll-dot" style="background:#ffd166"></span>Voltage \u2014 V</span>
-          <span class="fll"><span class="fll-dot" style="background:#06d6a0"></span>Current \u2014 I</span>
-          <span class="fll"><span class="fll-dot" style="background:#ef476f"></span>Resistance \u2014 R</span>
+          <span class="fll"><span class="fll-dot" style="background:#f5a623"></span>Voltage \u2014 V</span>
+          <span class="fll"><span class="fll-dot" style="background:#ffd166"></span>Current \u2014 I</span>
+          <span class="fll"><span class="fll-dot" style="background:#e8850a"></span>Resistance \u2014 R</span>
         </div>
       </div>
 
@@ -3995,46 +3995,46 @@ const Tools = {
               <filter id="gr"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
               <clipPath id="res-clip"><rect x="211" y="168" width="178" height="34" rx="5"/></clipPath>
             </defs>
-            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#0d1f35" stroke-width="10" stroke-linejoin="round"/>
-            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#2a5f96" stroke-width="3" stroke-linejoin="round"/>
-            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#4da6ff" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/>
+            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#0d1117" stroke-width="10" stroke-linejoin="round"/>
+            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#7a4f0a" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="100" y="35" width="400" height="155" fill="none" stroke="#f5a623" stroke-width="1.2" stroke-linejoin="round" opacity=".5"/>
             <rect id="cur-wire" x="100" y="35" width="400" height="155"
-              fill="none" stroke="#06d6a0" stroke-width="1.8" stroke-linejoin="round"
-              stroke-dasharray="7 15" opacity=".75"
+              fill="none" stroke="#ffd166" stroke-width="1.8" stroke-linejoin="round"
+              stroke-dasharray="7 15" opacity=".8"
               style="animation:eflow 1s linear infinite"/>
-            <circle cx="100" cy="35"  r="5" fill="#4da6ff" opacity=".55"/>
-            <circle cx="500" cy="35"  r="5" fill="#4da6ff" opacity=".55"/>
-            <circle cx="500" cy="190" r="5" fill="#4da6ff" opacity=".55"/>
-            <circle cx="100" cy="190" r="5" fill="#4da6ff" opacity=".55"/>
-            <circle cx="100" cy="35"  r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
-            <circle cx="500" cy="35"  r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
-            <circle cx="500" cy="190" r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
-            <circle cx="100" cy="190" r="11" fill="#4da6ff" opacity=".07" filter="url(#ge)"/>
-            <rect x="76" y="72" width="48" height="76" rx="7" fill="#0b1220" stroke="#3a6fa8" stroke-width="1.5"/>
-            <line x1="88" y1="92"  x2="112" y2="92"  stroke="#4a7fba" stroke-width="2"/>
-            <line x1="88" y1="101" x2="112" y2="101" stroke="#4a7fba" stroke-width="2"/>
-            <line x1="88" y1="117" x2="112" y2="117" stroke="#4a7fba" stroke-width="2"/>
-            <line x1="88" y1="126" x2="112" y2="126" stroke="#4a7fba" stroke-width="2"/>
-            <text x="100" y="90"  fill="#ffd166" font-family="'Rajdhani',sans-serif" font-size="13" text-anchor="middle" font-weight="700">+</text>
-            <text x="100" y="144" fill="#9ab8d8" font-family="'Share Tech Mono',monospace" font-size="15" text-anchor="middle">\u2212</text>
-            <polygon points="93,54 100,46 107,54" fill="#06d6a0" opacity=".85"/>
-            <polygon points="93,175 100,183 107,175" fill="#06d6a0" opacity=".85"/>
+            <circle cx="100" cy="35"  r="5" fill="#f5a623" opacity=".7"/>
+            <circle cx="500" cy="35"  r="5" fill="#f5a623" opacity=".7"/>
+            <circle cx="500" cy="190" r="5" fill="#f5a623" opacity=".7"/>
+            <circle cx="100" cy="190" r="5" fill="#f5a623" opacity=".7"/>
+            <circle cx="100" cy="35"  r="11" fill="#f5a623" opacity=".08" filter="url(#ge)"/>
+            <circle cx="500" cy="35"  r="11" fill="#f5a623" opacity=".08" filter="url(#ge)"/>
+            <circle cx="500" cy="190" r="11" fill="#f5a623" opacity=".08" filter="url(#ge)"/>
+            <circle cx="100" cy="190" r="11" fill="#f5a623" opacity=".08" filter="url(#ge)"/>
+            <rect x="76" y="72" width="48" height="76" rx="7" fill="#141b26" stroke="#c47e0f" stroke-width="1.5"/>
+            <line x1="88" y1="92"  x2="112" y2="92"  stroke="#7a4f0a" stroke-width="2"/>
+            <line x1="88" y1="101" x2="112" y2="101" stroke="#7a4f0a" stroke-width="2"/>
+            <line x1="88" y1="117" x2="112" y2="117" stroke="#7a4f0a" stroke-width="2"/>
+            <line x1="88" y1="126" x2="112" y2="126" stroke="#7a4f0a" stroke-width="2"/>
+            <text x="100" y="90"  fill="#f5a623" font-family="'Rajdhani',sans-serif" font-size="13" text-anchor="middle" font-weight="700">+</text>
+            <text x="100" y="144" fill="#8a95a8" font-family="'Share Tech Mono',monospace" font-size="15" text-anchor="middle">\u2212</text>
+            <polygon points="93,54 100,46 107,54" fill="#ffd166" opacity=".9"/>
+            <polygon points="93,175 100,183 107,175" fill="#ffd166" opacity=".9"/>
             <text id="bat-v" x="70" y="110" fill="#ffd166"
               font-family="'Share Tech Mono',monospace"
               font-size="11" font-weight="400" text-anchor="middle"
               transform="rotate(-90,70,110)">4.5V</text>
             <rect x="210" y="168" width="180" height="44" rx="6"
-              fill="#0b1220" stroke="#ef476f" stroke-width="1.5" filter="url(#gr)"/>
+              fill="#141b26" stroke="#e8850a" stroke-width="1.5" filter="url(#gr)"/>
             <g id="rdots" clip-path="url(#res-clip)"></g>
             <g id="eg-res" clip-path="url(#res-clip)"></g>
             <text id="res-lbl" x="300" y="224"
-              fill="#ef476f" font-family="'Share Tech Mono',monospace"
+              fill="#e8850a" font-family="'Share Tech Mono',monospace"
               font-size="11" text-anchor="middle">500 \u03a9</text>
             <rect x="212" y="14" width="176" height="38" rx="5"
-              fill="#0b1220" stroke="#06d6a0" stroke-width="1.2"/>
+              fill="#141b26" stroke="#f5a623" stroke-width="1.2"/>
             <text x="300" y="28" fill="#7a9cc4" font-family="'Share Tech Mono',monospace"
               font-size="8" text-anchor="middle" letter-spacing="2">CURRENT</text>
-            <text id="cur-svg" x="300" y="46" fill="#06d6a0"
+            <text id="cur-svg" x="300" y="46" fill="#ffd166"
               font-family="'Share Tech Mono',monospace" font-size="14" font-weight="400"
               text-anchor="middle">9.00 mA</text>
             <g id="eg-top"></g>
@@ -4135,9 +4135,9 @@ const Tools = {
     const fV = document.getElementById('fl-V');
     const fI = document.getElementById('fl-I');
     const fR = document.getElementById('fl-R');
-    if (fV) { fV.style.fontSize = Math.round(118*Vs)+'px'; fV.style.textShadow = `0 0 ${Math.round(20+50*Vs)}px rgba(255,209,102,${(0.2+0.6*Vs).toFixed(2)})`; }
-    if (fI) { fI.style.fontSize = Math.round(74*Is)+'px';  fI.style.textShadow = `0 0 ${Math.round(15+40*Is)}px rgba(6,214,160,${(0.15+0.55*Is).toFixed(2)})`; }
-    if (fR) { fR.style.fontSize = Math.round(74*Rs)+'px';  fR.style.textShadow = `0 0 ${Math.round(15+40*Rs)}px rgba(239,71,111,${(0.15+0.55*Rs).toFixed(2)})`; }
+    if (fV) { fV.style.fontSize = Math.round(118*Vs)+'px'; fV.style.textShadow = `0 0 ${Math.round(20+50*Vs)}px rgba(245,166,35,${(0.2+0.6*Vs).toFixed(2)})`; }
+    if (fI) { fI.style.fontSize = Math.round(74*Is)+'px';  fI.style.textShadow = `0 0 ${Math.round(15+40*Is)}px rgba(255,209,102,${(0.15+0.55*Is).toFixed(2)})`; }
+    if (fR) { fR.style.fontSize = Math.round(74*Rs)+'px';  fR.style.textShadow = `0 0 ${Math.round(15+40*Rs)}px rgba(232,133,10,${(0.15+0.55*Rs).toFixed(2)})`; }
   },
 
   _ohmUpdateDots(){
@@ -4150,7 +4150,7 @@ const Tools = {
       const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
       c.setAttribute('cx', x); c.setAttribute('cy', y);
       c.setAttribute('r', 1.1 + Math.random()*1.6);
-      c.setAttribute('fill','#ef476f');
+      c.setAttribute('fill','#e8850a');
       c.setAttribute('opacity', 0.18 + Math.random()*0.38);
       g.appendChild(c);
     }
@@ -4175,8 +4175,7 @@ const Tools = {
   },
 
   _ohmClearWireElectrons(){
-    if (this._ohmWireIntervals) { this._ohmWireIntervals.forEach(clearInterval); }
-    this._ohmWireIntervals = [];
+    if (this._ohmWireIntervals){ this._ohmWireIntervals.forEach(clearInterval); this._ohmWireIntervals = []; }
     ['eg-top','eg-right','eg-bottom-L','eg-bottom-R','eg-left'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = '';
     });
@@ -4184,7 +4183,7 @@ const Tools = {
 
   _ohmMakeWireElectron(groupId, axis, fixedCoord, rangeMin, rangeMax, dir, speed){
     const g = document.getElementById(groupId); if (!g) return;
-    const {g:node, c, b} = this._ohmSvgCircle('#06d6a0', 2.8, '#06d6a0', 5);
+    const {g:node, c, b} = this._ohmSvgCircle('#ffd166', 2.8, '#ffd166', 5);
     g.appendChild(node);
     let pos = rangeMin + Math.random()*(rangeMax - rangeMin);
     const id = setInterval(()=>{
@@ -4232,7 +4231,7 @@ const Tools = {
       const vx = driftSpeed * (0.6 + Math.random()*0.8);
       const vy = bounceSpeed * (Math.random()<0.5?1:-1) * (0.5+Math.random());
       this._ohmResParticles.push({x, y, vx, vy});
-      const {g:node, c, b} = this._ohmSvgCircle('#06d6a0', 2.4, '#06d6a0', 5);
+      const {g:node, c, b} = this._ohmSvgCircle('#ffd166', 2.4, '#ffd166', 5);
       g.appendChild(node);
       this._ohmResNodes.push({c, b});
     }
