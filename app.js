@@ -2430,18 +2430,22 @@ const Notes = {
               <div class="ntb-sep"></div>
               <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">\u2715 Format</button>
               <button class="ntb" onclick="Notes._highlight()" title="Mark as quiz term" style="background:rgba(245,158,11,0.15);color:var(--accent);">\u2605 Key Term</button>
+              <div class="ntb-sep"></div>
+              <button class="ntb notes-insert-btn" id="notesInsertBtn" onclick="Notes._toggleInsertPanel(event)" title="Insert symbol or formula">\u03a9 Insert \u25be</button>
             </div>
+          </div>
 
-            <!-- Symbols + Formulas bar -->
-            <div class="notes-char-bar">
-              <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;">
-                <span class="notes-bar-label">Symbols:</span>
-                ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
-              </div>
-              <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">
-                <span class="notes-bar-label">Formulas:</span>
-                ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
-              </div>
+          <!-- Insert popover (symbols + formulas) -->
+          <div id="notesInsertPanel" class="notes-insert-panel" style="display:none;">
+            <div class="notes-insert-tabs">
+              <button class="notes-insert-tab active" id="niTabSymbols" onclick="Notes._switchInsertTab('symbols')">Symbols</button>
+              <button class="notes-insert-tab" id="niTabFormulas" onclick="Notes._switchInsertTab('formulas')">Formulas</button>
+            </div>
+            <div id="niSymbols" class="notes-insert-grid">
+              ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
+            </div>
+            <div id="niFormulas" class="notes-insert-grid" style="display:none;">
+              ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
             </div>
           </div>
 
@@ -2593,6 +2597,38 @@ const Notes = {
     const state = Storage.get();
     this.render(state);
     setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 100);
+  },
+
+  _toggleInsertPanel(e) {
+    const panel = document.getElementById('notesInsertPanel');
+    if (!panel) return;
+    const btn = document.getElementById('notesInsertBtn');
+    if (panel.style.display === 'none') {
+      // Position panel below the button
+      const rect = btn.getBoundingClientRect();
+      panel.style.display = 'block';
+      panel.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
+      panel.style.left = Math.max(8, rect.left + window.scrollX - 200) + 'px';
+      // Close on outside click
+      setTimeout(() => {
+        const close = (ev) => {
+          if (!panel.contains(ev.target) && ev.target !== btn) {
+            panel.style.display = 'none';
+            document.removeEventListener('click', close);
+          }
+        };
+        document.addEventListener('click', close);
+      }, 50);
+    } else {
+      panel.style.display = 'none';
+    }
+  },
+
+  _switchInsertTab(tab) {
+    document.getElementById('niSymbols').style.display  = tab === 'symbols'  ? 'flex' : 'none';
+    document.getElementById('niFormulas').style.display = tab === 'formulas' ? 'flex' : 'none';
+    document.getElementById('niTabSymbols').classList.toggle('active',  tab === 'symbols');
+    document.getElementById('niTabFormulas').classList.toggle('active', tab === 'formulas');
   },
 
   _fmt(cmd) {

@@ -1369,3 +1369,69 @@ input[type="radio"]:checked::after {
   flex-shrink: 0;
 }
 .notes-page-add:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Notes: Insert popover ──────────────────────────────── */
+.notes-insert-btn {
+  background: rgba(99,102,241,0.12) !important;
+  border-color: rgba(99,102,241,0.3) !important;
+  color: #a5b4fc !important;
+  font-weight: 600;
+}
+.notes-insert-btn:hover {
+  background: rgba(99,102,241,0.22) !important;
+}
+
+.notes-insert-panel {
+  position: absolute;
+  z-index: 200;
+  width: 420px;
+  max-width: calc(100vw - 24px);
+  background: var(--bg-card, #1a1a2e);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  padding: 12px;
+  animation: niPop 0.15s ease;
+}
+@keyframes niPop {
+  from { opacity:0; transform:translateY(-6px) scale(0.97); }
+  to   { opacity:1; transform:translateY(0)   scale(1); }
+}
+
+.notes-insert-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 8px;
+}
+.notes-insert-tab {
+  padding: 4px 14px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.notes-insert-tab.active {
+  background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.3);
+  color: #a5b4fc;
+}
+.notes-insert-tab:hover:not(.active) {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-primary);
+}
+
+.notes-insert-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.notes-insert-grid::-webkit-scrollbar { width: 4px; }
+.notes-insert-grid::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 2px; }
