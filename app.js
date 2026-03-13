@@ -2472,26 +2472,25 @@ const Notes = {
     `;
 
     // ── Shared: editor area ───────────────────────────────────
-    const emptyTextColor = fs ? '#888' : 'var(--text-muted)';
+    const emptyTextColor = fs ? '#3a3a3a' : 'var(--text-muted)';
     const editorArea = `
-      <div id="notesEditorWrap" class="${fs ? 'notes-doc-page notes-print-area' : 'notes-print-area'}" style="${fs ? 'background:#fff;' : 'background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;'}position:relative;">
+      <div id="notesEditorWrap" class="notes-print-area" style="${fs ? '' : 'background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;'}position:relative;">
         ${isEmpty ? `
         <div id="notesEmptyState" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;pointer-events:none;z-index:1;">
-          <div style="font-size:2.5rem;opacity:0.25;${fs?'filter:grayscale(1);':''}">${topic.icon}</div>
+          <div style="font-size:2.5rem;opacity:0.15;">${topic.icon}</div>
           <div style="text-align:center;pointer-events:none;">
-            <div style="font-size:0.95rem;font-weight:600;color:${emptyTextColor};margin-bottom:6px;">No notes yet for ${topic.name}</div>
-            <div style="font-size:0.78rem;color:${emptyTextColor};opacity:0.7;">Start typing \u2014 press <b>Tab</b> for bullets, <b>Tab</b> again to nest</div>
+            <div style="font-size:0.9rem;font-weight:600;color:${emptyTextColor};margin-bottom:6px;">No notes yet for ${topic.name}</div>
+            <div style="font-size:0.75rem;color:${emptyTextColor};opacity:0.8;">Start typing \u2014 press Tab for bullets</div>
           </div>
-          <button class="btn btn-secondary btn-sm" style="pointer-events:all;${fs?'background:#f0f0f0;color:#333;border-color:#ccc;':''}" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
-            \ud83d\udcc4 Use Starter Template
+          <button class="btn btn-secondary btn-sm" style="pointer-events:all;" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
+            Use Starter Template
           </button>
         </div>` : ''}
         <div id="notesEditor" class="notes-editor"
           contenteditable="true"
           spellcheck="true"
           autocorrect="on"
-          data-placeholder="Start typing... Press Tab for bullets, Tab again to nest them."
-          style="${fs ? 'background:transparent;color:#1a1a1a;border:none;padding:0;' : ''}"
+          data-placeholder="Start typing..."
           oninput="Notes._onInput('${userId}');Notes._hideEmpty();Notes._scheduleAutocorrect('${userId}');"
           onkeydown="Notes._handleEditorKey(event,'${userId}');"
         >${savedHtml}</div>
@@ -2512,22 +2511,29 @@ const Notes = {
     `;
 
     if (fs) {
-      // ═══ FULLSCREEN: Google Docs / Word layout ═══════════════
+      // ═══ FULLSCREEN: clean dark editor ═══════════════════════
       container.innerHTML = `
         <div class="notes-fullscreen-wrap">
 
-          <!-- Top toolbar -->
+          <!-- Top bar -->
           <div class="notes-fs-topbar notes-no-print">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:1.2rem;">${topic.icon}</span>
+            <div class="notes-fs-titlerow">
+              <div class="notes-fs-title">
+                <span class="nft-icon">${topic.icon}</span>
                 <div>
-                  <div style="font-weight:800;font-size:0.95rem;color:#e0e0e0;">${topic.name}</div>
-                  <div style="font-size:0.7rem;color:#888;" id="notesStatus">Auto-saved</div>
+                  <div class="nft-name">${topic.name}</div>
+                  <div class="nft-status" id="notesStatus">Auto-saved</div>
                 </div>
               </div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                ${actionButtons}
+              <div class="notes-fs-actions">
+                <button class="nfa-btn ${this._autocorrect ? 'on' : ''}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON \u2014 click to disable' : 'Autocorrect OFF \u2014 click to enable'}">AC</button>
+                <div class="nfa-sep"></div>
+                <button class="nfa-btn" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">Study</button>
+                <button class="nfa-btn" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">Quiz</button>
+                <button class="nfa-btn" onclick="Notes._download('${userId}')" title="Download notes as HTML">\u2193 Save</button>
+                <button class="nfa-btn" onclick="Notes._print('${userId}')" title="Print">Print</button>
+                <div class="nfa-sep"></div>
+                <button class="nfa-exit" onclick="Notes._toggleFullscreen('${userId}')" title="Exit full screen">\u2715 Exit</button>
               </div>
             </div>
             ${formattingBar}
@@ -2535,7 +2541,7 @@ const Notes = {
 
           ${insertPanel}
 
-          <!-- Body: sidebar + scrollable document canvas -->
+          <!-- Body -->
           <div class="notes-fs-body">
 
             <!-- Left sidebar -->
@@ -2543,7 +2549,7 @@ const Notes = {
               ${sidebarInner}
             </div>
 
-            <!-- Document canvas -->
+            <!-- Canvas -->
             <div class="notes-fs-canvas">
               ${pageTabsRow}
               ${editorArea}
