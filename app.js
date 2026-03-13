@@ -11638,7 +11638,7 @@ const AskAI = {
     setTimeout(() => { if (panel) panel.style.display = 'none'; }, 280);
   },
 
-  ask(async function(question) {
+  async ask(question) {
     if (!question.trim() || this._typing) return;
     question = question.trim();
     this._history.push({ role: 'user', text: question });
@@ -11660,7 +11660,7 @@ const AskAI = {
     this._typing = false;
     this._renderMessages();
     this._scrollBottom();
-  }),
+  },
 
   // ── UI ───────────────────────────────────────────────────────────
   _createPanel() {
