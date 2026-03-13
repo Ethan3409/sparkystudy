@@ -2010,40 +2010,71 @@ const Exams = {
 // ===== NOTES MODULE =====
 const Notes = {
   currentTopic: 'general',
-  mode: 'edit',   // 'edit' | 'quiz' | 'study'
+  mode: 'edit',
   quizCards: [],
   quizIdx: 0,
   quizAnswers: {},
 
-  // Special characters for electrical trade
   CHARS: [
-    { label:'Ω', tip:'Ohm' }, { label:'μ', tip:'Micro' }, { label:'°', tip:'Degree' },
-    { label:'∠', tip:'Angle' }, { label:'Δ', tip:'Delta' }, { label:'φ', tip:'Phi (phase)' },
-    { label:'π', tip:'Pi' }, { label:'√', tip:'Square root' }, { label:'²', tip:'Squared' },
-    { label:'³', tip:'Cubed' }, { label:'±', tip:'Plus/minus' }, { label:'×', tip:'Multiply' },
-    { label:'÷', tip:'Divide' }, { label:'≤', tip:'Less/equal' }, { label:'≥', tip:'Greater/equal' },
-    { label:'≠', tip:'Not equal' }, { label:'∑', tip:'Sum' }, { label:'∞', tip:'Infinity' },
-    { label:'→', tip:'Arrow' }, { label:'↑', tip:'Up' }, { label:'↓', tip:'Down' },
-    { label:'✓', tip:'Check' }, { label:'✗', tip:'Cross' }, { label:'⚡', tip:'Lightning' },
-    { label:'½', tip:'Half' }, { label:'¼', tip:'Quarter' }, { label:'¾', tip:'3/4' },
+    { label:'\u03a9', tip:'Ohm' }, { label:'\u03bc', tip:'Micro' }, { label:'\u00b0', tip:'Degree' },
+    { label:'\u2220', tip:'Angle' }, { label:'\u0394', tip:'Delta' }, { label:'\u03c6', tip:'Phi (phase)' },
+    { label:'\u03c0', tip:'Pi' }, { label:'\u221a', tip:'Square root' }, { label:'\u00b2', tip:'Squared' },
+    { label:'\u00b3', tip:'Cubed' }, { label:'\u00b1', tip:'Plus/minus' }, { label:'\u00d7', tip:'Multiply' },
+    { label:'\u00f7', tip:'Divide' }, { label:'\u2264', tip:'Less/equal' }, { label:'\u2265', tip:'Greater/equal' },
+    { label:'\u2260', tip:'Not equal' }, { label:'\u2211', tip:'Sum' }, { label:'\u221e', tip:'Infinity' },
+    { label:'\u2192', tip:'Arrow' }, { label:'\u2191', tip:'Up' }, { label:'\u2193', tip:'Down' },
+    { label:'\u2713', tip:'Check' }, { label:'\u2717', tip:'Cross' }, { label:'\u26a1', tip:'Lightning' },
+    { label:'\u00bd', tip:'Half' }, { label:'\u00bc', tip:'Quarter' }, { label:'\u00be', tip:'3/4' },
+  ],
+
+  FORMULAS: [
+    { label:"V=IR",      insert:"V = I \u00d7 R",               tip:"Ohm\u2019s Law" },
+    { label:"I=V/R",     insert:"I = V \u00f7 R",               tip:"Current" },
+    { label:"R=V/I",     insert:"R = V \u00f7 I",               tip:"Resistance" },
+    { label:"P=VI",      insert:"P = V \u00d7 I",               tip:"Power" },
+    { label:"P=I\u00b2R",insert:"P = I\u00b2 \u00d7 R",         tip:"Power (resistance)" },
+    { label:"P=V\u00b2/R",insert:"P = V\u00b2 \u00f7 R",        tip:"Power (voltage)" },
+    { label:"Z=\u221a(R\u00b2+X\u00b2)", insert:"Z = \u221a(R\u00b2 + X\u00b2)", tip:"Impedance" },
+    { label:"XL=2\u03c0fL", insert:"XL = 2\u03c0fL",            tip:"Inductive reactance" },
+    { label:"XC=1/2\u03c0fC", insert:"XC = 1 \u00f7 (2\u03c0fC)", tip:"Capacitive reactance" },
+    { label:"VD=2KID/CM", insert:"VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM", tip:"Voltage drop" },
+    { label:"N1/N2=V1/V2", insert:"N1 \u00f7 N2 = V1 \u00f7 V2", tip:"Transformer turns ratio" },
+    { label:"kVA=VA/1000", insert:"kVA = (V \u00d7 A) \u00f7 1000", tip:"Single-phase kVA" },
   ],
 
   TOPICS_LIST: [
-    { id:'general', name:'📝 General Notes', icon:'📝' },
-    { id:'safety', name:'Safety', icon:'🦺' },
-    { id:'tools', name:'Tools & Equipment', icon:'🔧' },
-    { id:'conductors', name:'Conductors & Cables', icon:'🔌' },
-    { id:'wiring-methods', name:'Wiring Methods', icon:'📐' },
-    { id:'residential', name:'Residential Wiring', icon:'🏠' },
-    { id:'grounding-bonding', name:'Grounding & Bonding', icon:'⏚' },
-    { id:'overcurrent', name:'Overcurrent Protection', icon:'⚡' },
-    { id:'motors', name:'Motors', icon:'⚙️' },
-    { id:'transformers', name:'Transformers', icon:'🔄' },
-    { id:'ac-theory', name:'AC Theory', icon:'〰️' },
-    { id:'dc-theory', name:'DC Theory', icon:'🔋' },
-    { id:'code-cec', name:'CEC Code', icon:'📖' },
-    { id:'exam-prep', name:'Exam Prep', icon:'🎯' },
+    { id:'general',          name:'\ud83d\udcdd General Notes',       icon:'\ud83d\udcdd' },
+    { id:'safety',           name:'Safety',                           icon:'\ud83e\uddba' },
+    { id:'tools',            name:'Tools & Equipment',                icon:'\ud83d\udd27' },
+    { id:'conductors',       name:'Conductors & Cables',              icon:'\ud83d\udd0c' },
+    { id:'wiring-methods',   name:'Wiring Methods',                   icon:'\ud83d\udcd0' },
+    { id:'residential',      name:'Residential Wiring',               icon:'\ud83c\udfe0' },
+    { id:'grounding-bonding',name:'Grounding & Bonding',              icon:'\u23da' },
+    { id:'overcurrent',      name:'Overcurrent Protection',           icon:'\u26a1' },
+    { id:'motors',           name:'Motors',                           icon:'\u2699\ufe0f' },
+    { id:'transformers',     name:'Transformers',                     icon:'\ud83d\udd04' },
+    { id:'ac-theory',        name:'AC Theory',                        icon:'\u3030\ufe0f' },
+    { id:'dc-theory',        name:'DC Theory',                        icon:'\ud83d\udd0b' },
+    { id:'code-cec',         name:'CEC Code',                         icon:'\ud83d\udcd6' },
+    { id:'exam-prep',        name:'Exam Prep',                        icon:'\ud83c\udfaf' },
   ],
+
+  TEMPLATES: {
+    'general':    '<h2>General Notes</h2><p>Use this space for anything that doesn\'t fit another topic.</p>',
+    'safety':     '<h2>\ud83e\uddba Safety</h2><h3>PPE Requirements</h3><ul><li><b>Safety boots</b> \u2014 CSA Grade 1 rated</li><li><b>Hard hat</b> \u2014 Class E (electrical)</li><li><b>Safety glasses</b> \u2014 CSA Z94.3</li><li><b>High-visibility vest</b> \u2014 when near traffic</li><li><b>Arc flash PPE</b> \u2014 rated for the incident energy level</li></ul><h3>Lockout / Tagout (LOTO)</h3><ol><li>Notify affected workers</li><li>Identify all energy sources</li><li>Shut down equipment</li><li>Isolate energy source</li><li>Apply <b>personal lock and tag</b></li><li>Verify zero energy state</li></ol><h3>Working Near Energized Equipment</h3><p><b>Limit of approach</b> must be observed. Never work alone on energized circuits above 50 V without proper authorization.</p>',
+    'tools':      '<h2>\ud83d\udd27 Tools &amp; Equipment</h2><h3>Hand Tools</h3><ul><li><b>Lineman pliers</b> \u2014 cutting, twisting wire</li><li><b>Needle-nose pliers</b> \u2014 bending terminals</li><li><b>Wire strippers</b> \u2014 match gauge to wire size</li><li><b>Conduit benders</b> \u2014 EMT, rigid; know the take-up for each size</li><li><b>Fish tape</b> \u2014 pulling wire through conduit</li></ul><h3>Measuring Tools</h3><ul><li><b>Multimeter</b> \u2014 volts, amps (clamp), resistance, continuity</li><li><b>Clamp meter</b> \u2014 non-contact current measurement</li><li><b>Voltage tester</b> \u2014 quick live/dead check</li><li><b>Insulation resistance tester (Megger)</b> \u2014 checks insulation integrity</li></ul><h3>Power Tools</h3><ul><li><b>Hammer drill</b> \u2014 masonry anchors</li><li><b>Hole saw / knockout punch</b> \u2014 panel and box knockouts</li><li><b>Cable cutter</b> \u2014 large conductors</li></ul>',
+    'conductors': '<h2>\ud83d\udd0c Conductors &amp; Cables</h2><h3>Wire Gauge &amp; Ampacity (Table 2)</h3><ul><li><b>14 AWG</b> \u2014 15 A (copper)</li><li><b>12 AWG</b> \u2014 20 A</li><li><b>10 AWG</b> \u2014 30 A</li><li><b>8 AWG</b> \u2014 40 A</li><li><b>6 AWG</b> \u2014 55 A</li></ul><h3>Insulation Types</h3><ul><li><b>RW90</b> \u2014 90\u00b0C wet/dry, general wiring</li><li><b>THHN/THWN</b> \u2014 heat/moisture resistant, in conduit</li><li><b>NMD90</b> \u2014 Romex, residential only, not in conduit</li></ul><h3>Conductor Colour Code (Canada)</h3><ul><li><b>Black/Red</b> \u2014 ungrounded (hot)</li><li><b>White</b> \u2014 grounded (neutral)</li><li><b>Green / bare</b> \u2014 grounding conductor</li></ul>',
+    'wiring-methods': '<h2>\ud83d\udcd0 Wiring Methods</h2><h3>EMT (Electrical Metallic Tubing)</h3><ul><li>Thin-wall steel conduit</li><li>Setscrew or compression couplings</li><li>Max wire fill: see CEC Table 8</li></ul><h3>RMC (Rigid Metal Conduit)</h3><ul><li>Threaded, heaviest wall \u2014 outdoor &amp; hazardous locations</li></ul><h3>FMC / LFMC (Flexible Metal Conduit)</h3><ul><li>Used for final connections to motors, equipment with vibration</li><li>Max 1.8 m (6 ft) unsupported</li></ul><h3>NMD90</h3><ul><li>Non-metallic sheathed cable for dry residential</li><li>Cannot be used in commercial or industrial</li></ul><h3>Key Conduit Bends</h3><ul><li><b>90\u00b0 stub-up</b> \u2014 take-up depends on conduit size</li><li><b>Offset</b> \u2014 two equal bends, angles 22\u00b0\u201345\u00b0</li><li><b>Saddle</b> \u2014 three or four bends to clear an obstacle</li></ul>',
+    'residential': '<h2>\ud83c\udfe0 Residential Wiring</h2><h3>Branch Circuit Requirements</h3><ul><li><b>Kitchen small appliance circuits</b> \u2014 two 20 A circuits minimum</li><li><b>Bathroom</b> \u2014 dedicated 20 A circuit</li><li><b>Laundry</b> \u2014 dedicated 20 A circuit</li></ul><h3>Box Fill (CEC Rule 12-3034)</h3><p>Each conductor entering the box counts as one volume allowance. Add for fittings, devices. Formula: <b>Number of conductors \u00d7 volume per conductor (Table 13)</b></p><h3>GFCI / AFCI Requirements</h3><ul><li><b>GFCI</b>: bathrooms, garages, outdoors, kitchens within 1.5 m of sink</li><li><b>AFCI</b>: bedrooms (some jurisdictions \u2014 check local amendment)</li></ul>',
+    'grounding-bonding': '<h2>\u23da Grounding &amp; Bonding</h2><h3>System Grounding</h3><p>Connects the <b>neutral</b> of the system to earth. Limits voltage rise during faults.</p><h3>Equipment Grounding</h3><p>Connects <b>metal enclosures</b> to earth. Provides fault-current return path so the overcurrent device trips.</p><h3>Bonding</h3><p>Low-impedance connection between <b>conductive parts</b> to keep them at the same potential. Prevents sparks between metal objects.</p><h3>Key Rules</h3><ul><li>Main bonding jumper connects neutral to ground at the <b>service entrance only</b></li><li>In sub-panels: keep neutral and ground <b>separated</b></li><li>Grounding electrode conductor sizing from CEC Table 17</li></ul>',
+    'overcurrent': '<h2>\u26a1 Overcurrent Protection</h2><h3>Fuses vs Circuit Breakers</h3><ul><li><b>Fuse</b>: one-time device, fast response, must be replaced</li><li><b>Breaker</b>: resettable, has magnetic (instantaneous) and thermal (time-delay) trip</li></ul><h3>Sizing Rules</h3><ul><li>Overcurrent device \u2264 wire ampacity (standard rule)</li><li>Motors: breaker can be up to <b>250%</b> of FLA (CEC Rule 28-200)</li></ul><h3>OCPD Types</h3><ul><li><b>Standard</b> \u2014 for general lighting/outlets</li><li><b>GFCI breaker</b> \u2014 entire circuit protection</li><li><b>AFCI breaker</b> \u2014 arc-fault detection</li><li><b>Dual-function GFCI/AFCI</b> \u2014 both protections in one</li></ul>',
+    'motors':      '<h2>\u2699\ufe0f Motors</h2><h3>Motor Types</h3><ul><li><b>Single-phase induction</b> \u2014 split-phase, capacitor-start</li><li><b>Three-phase induction</b> \u2014 squirrel cage (most common)</li><li><b>DC motors</b> \u2014 series, shunt, compound</li></ul><h3>Key Nameplate Values</h3><ul><li><b>FLA</b> \u2014 Full Load Amps</li><li><b>Service Factor (SF)</b> \u2014 overload allowance</li><li><b>Efficiency &amp; Power Factor</b></li></ul><h3>CEC Motor Rules</h3><ul><li>Branch circuit conductor: <b>125% of FLA</b></li><li>Overload protection: <b>125% of FLA</b> (SF \u2265 1.15) or 115%</li><li>Short-circuit protection (breaker): up to <b>250% of FLA</b></li></ul><h3>Starters</h3><ul><li><b>DOL</b> \u2014 direct on line (small motors)</li><li><b>Star-delta</b> \u2014 reduced starting current</li><li><b>VFD</b> \u2014 variable frequency drive, full control</li></ul>',
+    'transformers':'<h2>\ud83d\udd04 Transformers</h2><h3>Turns Ratio</h3><p>N1 \u00f7 N2 = V1 \u00f7 V2 = I2 \u00f7 I1</p><h3>kVA Rating</h3><p>Single-phase: <b>kVA = (V \u00d7 A) \u00f7 1000</b></p><p>Three-phase: <b>kVA = (V \u00d7 A \u00d7 \u221a3) \u00f7 1000</b></p><h3>Connections</h3><ul><li><b>Delta-Delta</b> \u2014 no neutral, good for unbalanced loads</li><li><b>Wye-Wye</b> \u2014 neutral available</li><li><b>Delta-Wye</b> \u2014 most common step-up/step-down</li></ul><h3>Losses</h3><ul><li><b>Core losses</b> (hysteresis, eddy current) \u2014 constant</li><li><b>Copper losses</b> \u2014 I\u00b2R in windings, vary with load</li></ul>',
+    'ac-theory':   '<h2>\u3030\ufe0f AC Theory</h2><h3>Key Values</h3><ul><li><b>Frequency</b> \u2014 60 Hz (Canada)</li><li><b>Period</b> T = 1 \u00f7 f = 16.67 ms</li><li><b>RMS = Peak \u00d7 0.707</b> \u2014 equivalent DC heating value</li><li><b>Peak = RMS \u00d7 1.414</b></li></ul><h3>Impedance</h3><p>Z = \u221a(R\u00b2 + X\u00b2) &nbsp;&nbsp; XL = 2\u03c0fL &nbsp;&nbsp; XC = 1 \u00f7 (2\u03c0fC)</p><h3>Power</h3><ul><li><b>True power (P)</b> \u2014 watts, consumed by resistance</li><li><b>Reactive power (Q)</b> \u2014 VAR, stored/returned by reactance</li><li><b>Apparent power (S)</b> \u2014 VA, total from source</li><li><b>Power factor</b> = P \u00f7 S = cos(\u03c6)</li></ul>',
+    'dc-theory':   '<h2>\ud83d\udd0b DC Theory</h2><h3>Ohm\u2019s Law</h3><p>V = I \u00d7 R &nbsp;&nbsp; I = V \u00f7 R &nbsp;&nbsp; R = V \u00f7 I</p><h3>Power</h3><p>P = V \u00d7 I &nbsp;&nbsp; P = I\u00b2R &nbsp;&nbsp; P = V\u00b2 \u00f7 R</p><h3>Series Circuits</h3><ul><li>Same current everywhere: <b>I = same</b></li><li>Total resistance: <b>RT = R1 + R2 + R3\u2026</b></li><li>Voltage divides: <b>VT = V1 + V2 + V3\u2026</b></li></ul><h3>Parallel Circuits</h3><ul><li>Same voltage everywhere: <b>V = same</b></li><li>Total resistance: <b>1/RT = 1/R1 + 1/R2\u2026</b></li><li>Current divides: <b>IT = I1 + I2 + I3\u2026</b></li></ul><h3>Kirchhoff\u2019s Laws</h3><ul><li><b>KVL</b> \u2014 sum of voltages around any loop = 0</li><li><b>KCL</b> \u2014 sum of currents at any node = 0</li></ul>',
+    'code-cec':    '<h2>\ud83d\udcd6 CEC Code</h2><h3>How to Navigate the CEC</h3><ul><li>Rules numbered by section (e.g. Rule <b>12-3034</b> = Section 12, Rule 3034)</li><li>Tables referenced within rules (Table 2, 4, 8, 13, etc.)</li><li>Appendix B \u2014 explanatory notes</li></ul><h3>Key Sections to Know</h3><ul><li><b>Section 2</b> \u2014 General rules, definitions</li><li><b>Section 4</b> \u2014 Conductors</li><li><b>Section 6</b> \u2014 Services</li><li><b>Section 8</b> \u2014 Circuit loading and demand</li><li><b>Section 10</b> \u2014 Grounding and bonding</li><li><b>Section 12</b> \u2014 Wiring methods</li><li><b>Section 14</b> \u2014 Protection and control</li><li><b>Section 26</b> \u2014 Installation of electrical equipment</li><li><b>Section 28</b> \u2014 Motors and generators</li></ul>',
+    'exam-prep':   '<h2>\ud83c\udfaf Exam Prep</h2><h3>Must-Know Formulas</h3><ul><li>V = I \u00d7 R (Ohm\u2019s Law)</li><li>P = V \u00d7 I &nbsp; P = I\u00b2R &nbsp; P = V\u00b2/R</li><li>Z = \u221a(R\u00b2+X\u00b2) &nbsp; XL = 2\u03c0fL &nbsp; XC = 1/(2\u03c0fC)</li><li>kVA (1\u03c6) = VA \u00f7 1000 &nbsp; kVA (3\u03c6) = V\u00d7A\u00d7\u221a3 \u00f7 1000</li><li>VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM</li></ul><h3>Common CEC Tables</h3><ul><li><b>Table 2</b> \u2014 Ampacity of conductors</li><li><b>Table 4</b> \u2014 Conduit fill</li><li><b>Table 8</b> \u2014 Conductor properties (resistance, area)</li><li><b>Table 13</b> \u2014 Box fill volume allowances</li></ul><h3>Weak Areas to Review</h3><ul><li>[ ] </li><li>[ ] </li><li>[ ] </li></ul><h3>Exam Day Tips</h3><ul><li>Read the question <b>twice</b> before selecting</li><li>Eliminate obviously wrong answers first</li><li>Mark difficult ones and come back</li></ul>',
+  },
 
   _storageKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}`; },
 
@@ -2053,7 +2084,6 @@ const Notes = {
 
   _save(userId, topicId, html) {
     localStorage.setItem(this._storageKey(userId, topicId), html);
-    // Update last-edited timestamp
     localStorage.setItem(`sparky_notes_ts_${userId}_${topicId}`, Date.now());
   },
 
@@ -2062,15 +2092,42 @@ const Notes = {
     return text ? text.split(/\s+/).filter(Boolean).length : 0;
   },
 
+  _relTime(ts) {
+    if (!ts) return '';
+    const d = Date.now() - ts;
+    const m = Math.floor(d/60000), h = Math.floor(d/3600000), dy = Math.floor(d/86400000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    if (h < 24) return h + 'h ago';
+    if (dy === 1) return 'yesterday';
+    return dy + 'd ago';
+  },
+
   _allNoteIds(userId) {
-    return this.TOPICS_LIST.map(t => ({ ...t, has: !!localStorage.getItem(this._storageKey(userId, t.id)) }));
+    return this.TOPICS_LIST.map(t => {
+      const html = localStorage.getItem(this._storageKey(userId, t.id)) || '';
+      const ts   = parseInt(localStorage.getItem(`sparky_notes_ts_${userId}_${t.id}`) || '0');
+      return { ...t, has: !!html, wordCount: this._wordCount(html), timestamp: ts };
+    });
+  },
+
+  _applyTemplate(userId, topicId) {
+    const html = this.TEMPLATES[topicId] || '<h2>Notes</h2><p>Start writing here...</p>';
+    const editor = document.getElementById('notesEditor');
+    if (editor) {
+      editor.innerHTML = html;
+      this._save(userId, topicId, html);
+      const wc = document.getElementById('notesWordCount');
+      if (wc) wc.textContent = this._wordCount(html) + ' words';
+      showToast('Starter template applied!', 'success');
+    }
   },
 
   render(state) {
     const container = document.getElementById('notesContent');
     if (!container || !state) return;
     const userId = state.user.id;
-    if (this.mode === 'quiz') { this._renderQuiz(container, userId); return; }
+    if (this.mode === 'quiz')  { this._renderQuiz(container, userId); return; }
     if (this.mode === 'study') { this._renderStudy(container, userId); return; }
     this._renderEditor(container, state);
   },
@@ -2080,21 +2137,28 @@ const Notes = {
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
     const savedHtml = this._load(userId, this.currentTopic);
     const topics = this._allNoteIds(userId);
+    const isEmpty = !savedHtml.trim();
 
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;min-height:calc(100vh - 120px);">
+      <div style="display:grid;grid-template-columns:230px 1fr;gap:20px;min-height:calc(100vh - 120px);">
+
         <!-- Sidebar -->
-        <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:14px;height:fit-content;position:sticky;top:80px;">
-          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;padding:0 4px;margin-bottom:10px;">Topics</div>
+        <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:12px;height:fit-content;position:sticky;top:80px;">
+          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:700;padding:2px 6px;margin-bottom:8px;">Topics</div>
           ${topics.map(t => `
             <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
-              ${t.icon} ${t.name}
-              ${t.has ? '<span style="float:right;font-size:0.65rem;color:var(--accent);">●</span>' : ''}
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.icon} ${t.name}</span>
+                ${t.has ? '<span style="color:var(--accent);font-size:0.6rem;flex-shrink:0;">\u25cf</span>' : ''}
+              </div>
+              ${t.has ? `<div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;">
+                <span>${t.wordCount} words</span><span>\u00b7</span><span>${this._relTime(t.timestamp)}</span>
+              </div>` : ''}
             </div>
           `).join('')}
         </div>
 
-        <!-- Main editor pane -->
+        <!-- Editor pane -->
         <div>
           <!-- Header -->
           <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
@@ -2107,11 +2171,12 @@ const Notes = {
                 </div>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms and review">📖 Study Mode</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-generate quiz from your notes">⚡ Make Quiz</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print clean notes">🖨️ Print</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms and review">\ud83d\udcd6 Study Mode</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-generate quiz from your notes">\u26a1 Make Quiz</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print clean notes">\ud83d\udda8\ufe0f Print</button>
               </div>
             </div>
+
             <!-- Formatting toolbar -->
             <div class="notes-toolbar">
               <button class="ntb" onclick="Notes._fmt('bold')" title="Bold"><b>B</b></button>
@@ -2119,36 +2184,52 @@ const Notes = {
               <button class="ntb" onclick="Notes._fmt('underline')" title="Underline"><u>U</u></button>
               <button class="ntb" onclick="Notes._fmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
               <div class="ntb-sep"></div>
-              <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list">• List</button>
+              <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list">\u2022 List</button>
               <button class="ntb" onclick="Notes._fmt('insertOrderedList')" title="Numbered list">1. List</button>
               <div class="ntb-sep"></div>
               <button class="ntb" onclick="Notes._heading(1)" title="Heading 1" style="font-size:0.9rem;font-weight:900;">H1</button>
               <button class="ntb" onclick="Notes._heading(2)" title="Heading 2" style="font-size:0.85rem;font-weight:800;">H2</button>
               <button class="ntb" onclick="Notes._heading(3)" title="Heading 3" style="font-size:0.8rem;font-weight:700;">H3</button>
               <div class="ntb-sep"></div>
-              <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">✕ Format</button>
-              <button class="ntb" onclick="Notes._highlight()" title="Highlight (marks as quiz term)" style="background:rgba(245,158,11,0.15);color:var(--accent);">★ Key Term</button>
+              <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">\u2715 Format</button>
+              <button class="ntb" onclick="Notes._highlight()" title="Highlight (marks as quiz term)" style="background:rgba(245,158,11,0.15);color:var(--accent);">\u2605 Key Term</button>
             </div>
           </div>
 
-          <!-- Special character bar -->
+          <!-- Special chars + Formulas bar -->
           <div class="notes-char-bar notes-no-print">
-            <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);font-weight:700;align-self:center;white-space:nowrap;margin-right:4px;">Quick Insert:</span>
-            ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
+            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;">
+              <span class="notes-bar-label">Symbols:</span>
+              ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">
+              <span class="notes-bar-label">Formulas:</span>
+              ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
+            </div>
           </div>
 
           <!-- Editor -->
-          <div id="notesEditorWrap" class="notes-print-area" style="background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;">
+          <div id="notesEditorWrap" class="notes-print-area" style="background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;position:relative;">
+            ${isEmpty ? `
+            <div id="notesEmptyState" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;pointer-events:none;z-index:1;">
+              <div style="font-size:2.5rem;opacity:0.3;">${topic.icon}</div>
+              <div style="text-align:center;pointer-events:none;">
+                <div style="font-size:0.95rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;">No notes yet for ${topic.name}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);opacity:0.7;">Start typing, or use a starter template</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" style="pointer-events:all;" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
+                \ud83d\udcc4 Use Starter Template
+              </button>
+            </div>` : ''}
             <div id="notesEditor" class="notes-editor"
               contenteditable="true"
               spellcheck="true"
               autocorrect="on"
-              data-placeholder="Start typing your notes here...&#10;&#10;Tip: Bold important terms with the toolbar — they'll become quiz cards automatically. Use the special character buttons above to insert Ω, μ, °, ∠ and more."
-              oninput="Notes._onInput('${userId}')"
+              data-placeholder="Start typing your notes here..."
+              oninput="Notes._onInput('${userId}');Notes._hideEmpty();"
             >${savedHtml}</div>
-            <!-- Print header (hidden on screen) -->
             <div id="notesPrintHeader" style="display:none;">
-              <h2>${topic.name} — sparkystudy Notes</h2>
+              <h2>${topic.name} \u2014 sparkystudy Notes</h2>
               <p style="font-size:0.8rem;color:#666;">Student: ${state.user.name} &nbsp;|&nbsp; Date: ${new Date().toLocaleDateString()}</p>
               <hr>
             </div>
@@ -2157,21 +2238,25 @@ const Notes = {
           <!-- Word count bar -->
           <div class="notes-no-print" id="notesWordBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:0.72rem;color:var(--text-muted);">
             <span id="notesWordCount">0 words</span>
-            <span>Tip: <strong style="color:var(--accent);">★ Key Term</strong> = auto-quiz card</span>
+            <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card</span>
           </div>
         </div>
       </div>
     `;
 
-    // Init word count
     const editor = document.getElementById('notesEditor');
     if (editor) {
       document.getElementById('notesWordCount').textContent = this._wordCount(editor.innerHTML) + ' words';
+      if (!isEmpty) this._hideEmpty();
     }
   },
 
+  _hideEmpty() {
+    const el = document.getElementById('notesEmptyState');
+    if (el) el.style.display = 'none';
+  },
+
   _switchTopic(topicId, userId) {
-    // Save current before switching
     const editor = document.getElementById('notesEditor');
     if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
     this.currentTopic = topicId;
@@ -2192,15 +2277,11 @@ const Notes = {
 
   _highlight() {
     document.getElementById('notesEditor')?.focus();
-    // Wrap selection in a mark span that signals "quiz term"
     const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) {
-      showToast('Select a word or phrase first, then click Key Term', 'info');
-      return;
-    }
+    if (!sel || sel.isCollapsed) { showToast('Select a word or phrase first, then click Key Term', 'info'); return; }
     document.execCommand('hiliteColor', false, 'rgba(245,158,11,0.3)');
     document.execCommand('bold', false, null);
-    showToast('Key term marked — it\'ll appear in your auto-quiz!', 'success');
+    showToast('Key term marked \u2014 it\'ll appear in your auto-quiz!', 'success');
   },
 
   _insertChar(char) {
@@ -2218,7 +2299,7 @@ const Notes = {
     } else {
       document.execCommand('insertText', false, char);
     }
-    // Trigger save
+    this._hideEmpty();
     const userId = Storage.get()?.user?.id;
     if (userId) this._save(userId, this.currentTopic, editor.innerHTML);
   },
@@ -2226,14 +2307,12 @@ const Notes = {
   _onInput(userId) {
     const editor = document.getElementById('notesEditor');
     if (!editor) return;
-    // Debounced auto-save
     clearTimeout(this._saveTimer);
     this._saveTimer = setTimeout(() => {
       this._save(userId, this.currentTopic, editor.innerHTML);
       const status = document.getElementById('notesStatus');
       if (status) { status.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
     }, 800);
-    // Word count
     const wc = document.getElementById('notesWordCount');
     if (wc) wc.textContent = this._wordCount(editor.innerHTML) + ' words';
   },
@@ -2248,7 +2327,6 @@ const Notes = {
     if (header) header.style.display = 'none';
   },
 
-  // ── Study Mode: render notes with key terms highlighted, show glossary ──
   _studyMode(userId) {
     const editor = document.getElementById('notesEditor');
     if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
@@ -2260,8 +2338,6 @@ const Notes = {
   _renderStudy(container, userId) {
     const html = this._load(userId, this.currentTopic);
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
-
-    // Extract highlighted/bolded terms for glossary
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     const terms = new Set();
@@ -2276,26 +2352,22 @@ const Notes = {
           <div style="display:flex;align-items:center;gap:12px;">
             <span style="font-size:1.5rem;">${topic.icon}</span>
             <div>
-              <h2 style="margin:0;font-size:1.1rem;">Study Mode — ${topic.name}</h2>
-              <div style="font-size:0.75rem;color:var(--text-muted);">Key terms highlighted · Read through, then test yourself</div>
+              <h2 style="margin:0;font-size:1.1rem;">Study Mode \u2014 ${topic.name}</h2>
+              <div style="font-size:0.75rem;color:var(--text-muted);">Key terms highlighted \u00b7 Read through, then test yourself</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-primary btn-sm" onclick="Notes.mode='quiz';Notes._generateQuiz('${userId}')">⚡ Take Quiz</button>
-            <button class="btn btn-secondary btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">← Back to Notes</button>
+            <button class="btn btn-primary btn-sm" onclick="Notes.mode='quiz';Notes._generateQuiz('${userId}')">\u26a1 Take Quiz</button>
+            <button class="btn btn-secondary btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">\u2190 Back to Notes</button>
           </div>
         </div>
-
         <div style="display:grid;grid-template-columns:1fr ${terms.size>0?'260px':'0'};gap:20px;align-items:start;">
-          <!-- Notes content -->
           <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;font-size:0.95rem;line-height:1.9;color:var(--text-primary);">
             ${html || '<p style="color:var(--text-muted);">No notes yet for this topic.</p>'}
           </div>
-
-          <!-- Key terms sidebar -->
           ${terms.size > 0 ? `
             <div style="background:linear-gradient(135deg,rgba(245,158,11,0.07),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.2);border-radius:16px;padding:16px;position:sticky;top:80px;">
-              <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700;margin-bottom:12px;">⭐ Key Terms (${terms.size})</div>
+              <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700;margin-bottom:12px;">\u2b50 Key Terms (${terms.size})</div>
               ${[...terms].map(t=>`
                 <div style="padding:7px 10px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:0.83rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;border-left:3px solid var(--accent);">${t}</div>
               `).join('')}
@@ -2307,7 +2379,6 @@ const Notes = {
     `;
   },
 
-  // ── Quiz Generation ──
   _generateQuiz(userId) {
     const editor = document.getElementById('notesEditor');
     if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
@@ -2319,7 +2390,6 @@ const Notes = {
     const cards = [];
     const usedTerms = new Set();
 
-    // Method 1: Sentences containing bolded terms
     tempDiv.querySelectorAll('p, li, div, h1, h2, h3').forEach(el => {
       const bolds = el.querySelectorAll('b, strong');
       bolds.forEach(b => {
@@ -2328,16 +2398,14 @@ const Notes = {
         usedTerms.add(term.toLowerCase());
         const sentence = el.textContent.trim();
         if (sentence.length < 10) return;
-        // Make fill-in-blank by removing the term
         const blanked = sentence.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), '________');
         cards.push({ type:'blank', question: blanked, answer: term, hint: sentence });
       });
     });
 
-    // Method 2: Definition patterns "X is Y" / "X = Y" / "X: Y" from text nodes
     const fullText = tempDiv.textContent;
     const defPatterns = [
-      /([A-Za-zΩμ°∠Δφ \d]+?)\s*=\s*([^.\n,]{5,60})/g,
+      /([A-Za-z\u03a9\u03bc\u00b0\u2220\u0394\u03c6 \d]+?)\s*=\s*([^.\n,]{5,60})/g,
       /([A-Z][a-z]+(?:\s[a-z]+)?)\s+(?:is|are|means?)\s+([^.\n]{10,80})/g,
     ];
     defPatterns.forEach(re => {
@@ -2350,12 +2418,8 @@ const Notes = {
       }
     });
 
-    if (cards.length === 0) {
-      showToast('No quiz cards found! Bold important terms or write "X is Y" definitions.', 'info');
-      return;
-    }
+    if (cards.length === 0) { showToast('No quiz cards found! Bold important terms or write "X is Y" definitions.', 'info'); return; }
 
-    // Shuffle
     this.quizCards = cards.sort(() => Math.random() - 0.5).slice(0, 20);
     this.quizIdx = 0;
     this.quizAnswers = {};
@@ -2370,7 +2434,6 @@ const Notes = {
     const done = this.quizIdx >= cards.length;
 
     if (done) {
-      // Results
       let correct = 0;
       cards.forEach((c,i) => {
         const ua = (this.quizAnswers[i]||'').trim().toLowerCase();
@@ -2383,12 +2446,12 @@ const Notes = {
       container.innerHTML = `
         <div style="max-width:600px;margin:0 auto;text-align:center;padding:48px 20px;">
           <div style="font-size:4rem;font-weight:900;color:${pct>=80?'var(--success)':'var(--danger)'};">${pct}%</div>
-          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${pct>=90?'You nailed it! 🏆':pct>=70?'Solid work! 🎉':'Keep reviewing! 💪'}</div>
-          <div style="color:var(--text-muted);margin-bottom:28px;">${correct}/${cards.length} correct · based on your own notes</div>
+          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${pct>=90?'You nailed it! \ud83c\udfc6':pct>=70?'Solid work! \ud83c\udf89':'Keep reviewing! \ud83d\udcaa'}</div>
+          <div style="color:var(--text-muted);margin-bottom:28px;">${correct}/${cards.length} correct \u00b7 based on your own notes</div>
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="Notes._generateQuiz('${userId}')">🔁 New Quiz</button>
-            <button class="btn btn-secondary" onclick="Notes._studyMode('${userId}')">📖 Study Mode</button>
-            <button class="btn btn-secondary" onclick="Notes.mode='edit';Notes.render(Storage.get())">← Notes</button>
+            <button class="btn btn-primary" onclick="Notes._generateQuiz('${userId}')">\ud83d\udd01 New Quiz</button>
+            <button class="btn btn-secondary" onclick="Notes._studyMode('${userId}')">\ud83d\udcd6 Study Mode</button>
+            <button class="btn btn-secondary" onclick="Notes.mode='edit';Notes.render(Storage.get())">\u2190 Notes</button>
           </div>
           <div style="margin-top:32px;text-align:left;">
             <div style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:12px;">Answer Review</div>
@@ -2398,7 +2461,7 @@ const Notes = {
               const ok = ua && (ans.includes(ua)||ua.includes(ans)||ua===ans);
               return `<div style="background:var(--bg-card);border:1px solid ${ok?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.2)'};border-left:3px solid ${ok?'#22c55e':'#ef4444'};border-radius:10px;padding:12px 14px;margin-bottom:8px;">
                 <div style="font-size:0.83rem;color:var(--text-primary);margin-bottom:4px;">${c.question}</div>
-                <div style="font-size:0.8rem;color:#22c55e;">✓ ${c.answer}</div>
+                <div style="font-size:0.8rem;color:#22c55e;">\u2713 ${c.answer}</div>
                 ${!ok&&this.quizAnswers[i]?`<div style="font-size:0.78rem;color:#ef4444;">You wrote: ${this.quizAnswers[i]}</div>`:''}
               </div>`;
             }).join('')}
@@ -2414,13 +2477,11 @@ const Notes = {
       <div style="max-width:640px;margin:0 auto;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
           <div>
-            <h2 style="margin:0;font-size:1.05rem;font-weight:800;">📝 Notes Quiz — ${topic.name}</h2>
+            <h2 style="margin:0;font-size:1.05rem;font-weight:800;">\ud83d\udcdd Notes Quiz \u2014 ${topic.name}</h2>
             <div style="font-size:0.75rem;color:var(--text-muted);">Questions generated from your own notes</div>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">✕ Exit</button>
+          <button class="btn btn-ghost btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">\u2715 Exit</button>
         </div>
-
-        <!-- Progress -->
         <div style="margin-bottom:20px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.8rem;">
             <span style="color:var(--text-muted);">Card ${this.quizIdx+1} of ${cards.length}</span>
@@ -2430,16 +2491,12 @@ const Notes = {
             <div style="height:100%;width:${this.quizIdx/cards.length*100}%;background:var(--accent);border-radius:3px;transition:width 0.4s;"></div>
           </div>
         </div>
-
-        <!-- Card -->
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:16px;">
           <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:12px;">
             ${card.type==='blank'?'FILL IN THE BLANK':'DEFINITION'}
           </div>
           <div style="font-size:1.05rem;font-weight:600;line-height:1.7;color:var(--text-primary);">${card.question}</div>
         </div>
-
-        <!-- Answer input -->
         <div style="margin-bottom:16px;">
           <input type="text" id="notesQuizInput" placeholder="Type your answer..."
             style="width:100%;padding:14px 16px;background:var(--bg-card);border:2px solid ${answered?'rgba(34,197,94,0.4)':'var(--border)'};border-radius:12px;color:var(--text-primary);font-size:1rem;outline:none;box-sizing:border-box;"
@@ -2447,23 +2504,21 @@ const Notes = {
             onkeydown="if(event.key==='Enter'){Notes._submitQuizAnswer('${userId}');}"
             ${answered?'disabled':''}>
         </div>
-
         ${answered ? `
           <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
-            <div style="font-size:0.7rem;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;">✓ From your notes</div>
+            <div style="font-size:0.7rem;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;">\u2713 From your notes</div>
             <div style="font-size:0.88rem;color:var(--text-primary);">${card.hint}</div>
           </div>
           <button class="btn btn-primary" style="width:100%;" onclick="Notes._nextQuiz('${userId}')">
-            ${this.quizIdx+1<cards.length?'Next →':'See Results'}
+            ${this.quizIdx+1<cards.length?'Next \u2192':'See Results'}
           </button>
         ` : `
-          <button class="btn btn-primary" style="width:100%;opacity:${document.getElementById('notesQuizInput')?.value?'1':'0.5'};" onclick="Notes._submitQuizAnswer('${userId}')">
+          <button class="btn btn-primary" style="width:100%;" onclick="Notes._submitQuizAnswer('${userId}')">
             Confirm Answer
           </button>
         `}
       </div>
     `;
-    // Focus input
     setTimeout(() => document.getElementById('notesQuizInput')?.focus(), 50);
   },
 
