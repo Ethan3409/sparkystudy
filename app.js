@@ -11821,7 +11821,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// -- Override AskAI to use Railway CEC API --
+// Override AskAI to use Railway CEC API
 AskAI.ask = async function(question) {
   if (!question.trim() || this._typing) return;
   question = question.trim();
@@ -11836,44 +11836,12 @@ AskAI.ask = async function(question) {
       body: JSON.stringify({ question, history: this._history.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) })
     });
     const data = await res.json();
-    const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: '??' }));
+    const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: '📖' }));
     this._history.push({ role: 'ai', text: data.answer || data.error || 'No response.', sources, followUps: [] });
   } catch(err) {
-    this._history.push({ role: 'ai', text: 'Connection error. Make sure you are online.', sources: [], followUps: [] });
+    this._history.push({ role: 'ai', text: 'Connection error. Check your internet.', sources: [], followUps: [] });
   }
   this._typing = false;
   this._renderMessages();
   this._scrollBottom();
-};
-AskAI._welcomeBubble = function() {
-  return '<div class="askai-bubble askai-ai"><div class="askai-bubble-text">Hey! I am your SparkStudy AI, trained on the <strong>2024 Canadian Electrical Code</strong>.<br><br>Ask me CEC rules, get practice exam questions, or have me explain any concept. Red Seal ready! \u26a1</div><div class="askai-sources" style="margin-top:10px;"><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'Practice exam: branch circuits\')">&#128161; Practice exam: branch circuits</span><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'Explain bonding vs grounding\')">&#128161; Explain bonding vs grounding</span><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'GFCI requirements dwelling\')">&#128161; GFCI requirements</span></div></div>';
-};
-
-
-// -- Override AskAI to use Railway CEC API --
-AskAI.ask = async function(question) {
-  if (!question.trim() || this._typing) return;
-  question = question.trim();
-  this._history.push({ role: 'user', text: question });
-  this._renderMessages();
-  this._typing = true;
-  this._scrollBottom();
-  try {
-    const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, history: this._history.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) })
-    });
-    const data = await res.json();
-    const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: '??' }));
-    this._history.push({ role: 'ai', text: data.answer || data.error || 'No response.', sources, followUps: [] });
-  } catch(err) {
-    this._history.push({ role: 'ai', text: 'Connection error. Make sure you are online.', sources: [], followUps: [] });
-  }
-  this._typing = false;
-  this._renderMessages();
-  this._scrollBottom();
-};
-AskAI._welcomeBubble = function() {
-  return '<div class="askai-bubble askai-ai"><div class="askai-bubble-text">Hey! I am your SparkStudy AI, trained on the <strong>2024 Canadian Electrical Code</strong>.<br><br>Ask me CEC rules, get practice exam questions, or have me explain any concept. Red Seal ready! ?</div><div class="askai-sources" style="margin-top:10px;"><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'Practice exam: branch circuits\')">?? Practice exam: branch circuits</span><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'Explain bonding vs grounding\')">?? Explain bonding vs grounding</span><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'GFCI requirements dwelling\')">?? GFCI requirements</span></div></div>';
 };
