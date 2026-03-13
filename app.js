@@ -9994,7 +9994,7 @@ function getExamPrediction(state) {
 
 // ===== MATH PRACTICE =====
 const MathPractice = {
-  currentCategory: 'ohms-law',
+  currentCategory: 'ac-basics',
   currentProblem: null,
   score: 0,
   attempts: 0,
@@ -10002,39 +10002,20 @@ const MathPractice = {
   showingConfig: false,
 
   categories: [
-    { id:'ohms-law',       name:"Ohm's Law",          icon:'⚡', period:1, formula:'V = IR' },
-    { id:'power',          name:'Power',               icon:'💡', period:1, formula:'P = VI = I²R = V²/R' },
-    { id:'series',         name:'Series Circuits',     icon:'➡️', period:1, formula:'Rt = R1+R2+... Vt = V1+V2+...' },
-    { id:'parallel',       name:'Parallel Circuits',   icon:'⑂',  period:1, formula:'1/Rt = 1/R1+1/R2+...' },
-    { id:'series-parallel',name:'Series-Parallel',     icon:'🔧', period:1, formula:'Combined Rt, V drops, I' },
-    { id:'ac-basics',      name:'AC Basics',           icon:'📈', period:2, formula:'Vrms = Vp×0.707, f = 1/T' },
-    { id:'reactance',      name:'Reactance (XL & XC)', icon:'🌊', period:2, formula:'XL=2πfL, XC=1/(2πfC)' },
-    { id:'impedance',      name:'Impedance',           icon:'📐', period:2, formula:'Z = √(R²+X²)' },
-    { id:'power-factor',   name:'Power Factor',        icon:'📊', period:2, formula:'PF=cosθ, P=S×PF, S=VI' },
-    { id:'transformers',   name:'Transformers',        icon:'🔁', period:2, formula:'V1/V2 = N1/N2 = I2/I1' },
-    { id:'motors',         name:'Motor Speed & Slip',  icon:'⚙️', period:2, formula:'Ns=120f/P, slip=(Ns-Nr)/Ns' },
-    { id:'three-phase',    name:'Three-Phase',         icon:'🔺', period:2, formula:'VL=√3×Vp (wye), IL=√3×Ip (delta)' },
+    { id:'ac-basics',   name:'Module 1 — Fundamentals of Alternating Current',    icon:'〜',  formula:'Vrms = Vp × 0.707  |  f = 1/T  |  T = 1/f' },
+    { id:'reactance',   name:'Module 2 — Properties of Inductors & Capacitors',   icon:'📡',  formula:'XL = 2πfL  |  XC = 1/(2πfC)' },
+    { id:'impedance',   name:'Module 3 — Inductors & Capacitors in Circuits',     icon:'📐',  formula:'Z = √(R² + X²)  |  θ = arctan(X/R)' },
+    { id:'three-phase', name:'Module 4 — Principles of AC Circuits',              icon:'🔺',  formula:'VL = √3 × Vp  |  IL = √3 × Ip (delta)' },
   ],
 
   // Maps each math category to its actual lesson/study content.
   // type:'lessons' → opens a specific lesson module by module ID (m1, m2, etc.)
   // type:'study-guide' → opens the Study Guide for that topic (period 1 content or modules without a written lesson yet)
   _studyTopicMap: {
-    // Period 1 — Study Guide only (no MODULES exist for period 1)
-    'ohms-law':       { type:'study-guide', id:'ohms-law',          label:"Ohm's Law & Basic Theory" },
-    'power':          { type:'study-guide', id:'ohms-law',          label:"Ohm's Law & Basic Theory" },
-    'series':         { type:'study-guide', id:'series-circuits',   label:'Series Circuits' },
-    'parallel':       { type:'study-guide', id:'parallel-circuits', label:'Parallel Circuits' },
-    'series-parallel':{ type:'study-guide', id:'series-circuits',   label:'Series Circuits' },
-    // Period 2 — real curriculum modules (hasContent:true)
-    'ac-basics':      { type:'lessons', id:'m1',  label:'Fundamentals of Alternating Current' },
-    'reactance':      { type:'lessons', id:'m2',  label:'Properties of Inductors and Capacitors' },
-    'impedance':      { type:'lessons', id:'m3',  label:'Inductors and Capacitors in Circuits' },
-    'three-phase':    { type:'lessons', id:'m4',  label:'Principles of AC Circuits' },
-    // Period 2 — Study Guide fallback (no written lesson module yet)
-    'power-factor':   { type:'study-guide', id:'power-factor', label:'Power Factor' },
-    'transformers':   { type:'study-guide', id:'transformers', label:'Transformers' },
-    'motors':         { type:'study-guide', id:'motors',       label:'Motors & Generators' },
+    'ac-basics':   { type:'lessons', id:'m1', label:'Module 1 — Fundamentals of Alternating Current' },
+    'reactance':   { type:'lessons', id:'m2', label:'Module 2 — Properties of Inductors and Capacitors' },
+    'impedance':   { type:'lessons', id:'m3', label:'Module 3 — Inductors and Capacitors in Circuits' },
+    'three-phase': { type:'lessons', id:'m4', label:'Module 4 — Principles of AC Circuits' },
   },
 
   openLesson(catId) {
