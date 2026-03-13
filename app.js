@@ -11638,24 +11638,29 @@ const AskAI = {
     setTimeout(() => { if (panel) panel.style.display = 'none'; }, 280);
   },
 
-  ask(question) {
+  ask(async function(question) {
     if (!question.trim() || this._typing) return;
     question = question.trim();
     this._history.push({ role: 'user', text: question });
     this._renderMessages();
     this._typing = true;
-
-    setTimeout(() => {
-      const searchResult = this._search(question);
-      const { text, sources, followUps } = this._formatResponse(question, searchResult);
-      this._history.push({ role: 'ai', text, sources, followUps });
-      this._typing = false;
-      this._renderMessages();
-      this._scrollBottom();
-    }, 380);
-
     this._scrollBottom();
-  },
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, history: this._history.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) })
+      });
+      const data = await res.json();
+      const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: '📖' }));
+      this._history.push({ role: 'ai', text: data.answer || data.error || 'No response.', sources, followUps: [] });
+    } catch(err) {
+      this._history.push({ role: 'ai', text: 'Connection error. Check your internet.', sources: [], followUps: [] });
+    }
+    this._typing = false;
+    this._renderMessages();
+    this._scrollBottom();
+  }),
 
   // ── UI ───────────────────────────────────────────────────────────
   _createPanel() {
