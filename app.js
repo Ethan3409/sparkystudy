@@ -2255,6 +2255,9 @@ const Notes = {
   _deletePage(userId, topicId, pageId) {
     const pages = this._getPages(userId, topicId);
     if (pages.length <= 1) return;
+    const page = pages.find(p => p.id === pageId);
+    const pageName = page ? page.name : 'this page';
+    if (!confirm(`Delete "${pageName}"? This cannot be undone.`)) return;
     const idx = pages.findIndex(p => p.id === pageId);
     if (idx === -1) return;
     localStorage.removeItem(this._pageContentKey(userId, topicId, pageId));
@@ -2410,6 +2413,7 @@ const Notes = {
                 <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON' : 'Autocorrect OFF'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">\ud83d\udcd6 Study Mode</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">\u26a1 Make Quiz</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._download('${userId}')" title="Download all pages as HTML file">\u2b07\ufe0f Download</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print">\ud83d\udda8\ufe0f Print</button>
               </div>
             </div>
@@ -2691,6 +2695,61 @@ const Notes = {
     if (header) header.style.display = 'block';
     window.print();
     if (header) header.style.display = 'none';
+  },
+
+  _download(userId) {
+    const state = Storage.get();
+    const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
+    const pages = this._getPages(userId, this.currentTopic);
+    const date = new Date().toLocaleDateString('en-CA');
+
+    // Build one HTML doc with all pages as sections
+    const pagesSections = pages.map(p => {
+      const html = this._loadPage(userId, this.currentTopic, p.id);
+      return `<section class="page-section">
+        <h2 class="page-label">${this._esc(p.name)}</h2>
+        <div class="page-body">${html || '<p style="color:#888;font-style:italic;">No notes on this page.</p>'}</div>
+      </section>`;
+    }).join('<hr class="page-divider">');
+
+    const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${topic.name} Notes — SparkyStudy</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 24px 16px; color: #1a1a1a; line-height: 1.6; }
+    .doc-header { border-bottom: 2px solid #f59e0b; padding-bottom: 12px; margin-bottom: 24px; }
+    .doc-header h1 { margin: 0; font-size: 1.6rem; }
+    .doc-header p { margin: 4px 0 0; color: #666; font-size: 0.85rem; }
+    .page-label { font-size: 1rem; font-weight: 700; color: #f59e0b; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .page-body { font-size: 0.95rem; }
+    .page-body ul { padding-left: 1.4em; }
+    .page-body h2 { font-size: 1.2rem; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    .page-body h3 { font-size: 1rem; color: #444; }
+    .page-divider { border: none; border-top: 1px dashed #ddd; margin: 28px 0; }
+    mark { background: rgba(245,158,11,0.25); border-radius: 3px; padding: 1px 3px; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="doc-header">
+    <h1>${topic.icon} ${topic.name} Notes</h1>
+    <p>Student: ${this._esc(state?.user?.name || '')} &nbsp;|&nbsp; Downloaded: ${date} &nbsp;|&nbsp; sparkystudy.com</p>
+  </div>
+  ${pagesSections}
+</body>
+</html>`;
+
+    const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `sparkystudy-${topic.id}-notes-${date}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Notes downloaded! Open the file in any browser.', 'success');
   },
 
   _studyMode(userId) {
