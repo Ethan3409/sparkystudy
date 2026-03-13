@@ -1271,3 +1271,26 @@ input[type="radio"]:checked::after {
   background: linear-gradient(135deg,rgba(99,102,241,0.5),rgba(139,92,246,0.35));
   transform: scale(1.05);
 }
+
+
+/* Follow-up suggestion chips */
+.askai-followups {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.askai-followup-tag {
+  font-size: 0.7rem;
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.25);
+  color: #a78bfa;
+  padding: 3px 9px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.askai-followup-tag:hover {
+  background: rgba(139,92,246,0.22);
+}

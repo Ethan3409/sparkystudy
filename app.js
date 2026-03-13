@@ -10925,10 +10925,326 @@ const Leaderboard = {
 // ═══════════════════════════════════════════════════════════════════
 const AskAI = {
   _open: false,
-  _history: [],   // [{role:'user'|'ai', text}]
+  _history: [],
   _typing: false,
 
-  // ── Public ──────────────────────────────────────────────────────
+  // ── Electrical domain synonym map ────────────────────────────────
+  // Keys are what a user might type; values = extra terms to search
+  _synonyms: {
+    'ac':          ['alternating current'],
+    'dc':          ['direct current'],
+    'rms':         ['root mean square','effective value'],
+    'emf':         ['electromotive force','voltage source'],
+    'hz':          ['hertz','frequency','cycles'],
+    'amp':         ['ampere','current'],
+    'amps':        ['ampere','current'],
+    'ohm':         ['resistance'],
+    'ohms':        ['resistance','ohm'],
+    'volt':        ['voltage'],
+    'volts':       ['voltage','volt'],
+    'watt':        ['power','watts'],
+    'watts':       ['power','watt'],
+    'kw':          ['kilowatt','power'],
+    'va':          ['volt ampere','apparent power'],
+    'var':         ['reactive power','vars'],
+    'pf':          ['power factor'],
+    'xl':          ['inductive reactance','reactance'],
+    'xc':          ['capacitive reactance','reactance'],
+    'impedance':   ['opposition','z'],
+    'reactance':   ['xl','xc','opposition'],
+    'inductance':  ['henry','inductor'],
+    'capacitance': ['farad','capacitor'],
+    'transformer': ['step up','step down','turns ratio'],
+    'coil':        ['inductor','winding','solenoid'],
+    'sine':        ['sinusoidal','sin wave','sine wave'],
+    'peak':        ['maximum','amplitude','vpeak'],
+    'period':      ['cycle time','wavelength','one cycle'],
+    'frequency':   ['hz','hertz','cycles per second'],
+    'phase':       ['phase angle','phase shift','leading','lagging'],
+    'three phase': ['3 phase','three-phase','3-phase','three wire','3φ'],
+    'single phase':['1 phase','one phase','1φ'],
+    'power factor':['pf','cos theta','phase angle'],
+    'motor':       ['induction motor','synchronous','rpm','rotor','stator'],
+    'relay':       ['coil','contacts','normally open','normally closed'],
+    'contactor':   ['relay','motor starter','coil'],
+    'starter':     ['motor starter','across the line','dol'],
+    'plc':         ['programmable logic controller','ladder logic'],
+    'timer':       ['timing relay','on delay','off delay','time delay'],
+    'no':          ['normally open','n.o.'],
+    'nc':          ['normally closed','n.c.'],
+    'seal':        ['holding contact','seal in circuit','latching'],
+    'overload':    ['thermal overload','overload relay','heater'],
+    'neutral':     ['grounded conductor','white wire'],
+    'ground':      ['earth','grounding conductor','green wire'],
+    'parallel':    ['branches','parallel circuit'],
+    'series':      ['series circuit','loop'],
+  },
+
+  // ── Simple electrical-aware stemmer ─────────────────────────────
+  _stem(word) {
+    if (word.length < 5) return word;
+    // Longest-match suffix stripping — order matters
+    const rules = [
+      ['izations','ize'], ['ization','ize'], ['ications','icate'],
+      ['ication','icate'], ['ances','ance'], ['ences','ence'],
+      ['ators','ate'],    ['ations','ate'], ['ance',''],
+      ['ence',''],        ['ator','ate'],   ['ation','ate'],
+      ['ings',''],        ['tors','tor'],   ['ors','or'],
+      ['ers','er'],       ['ing',''],       ['ies','y'],
+      ['ied','y'],        ['ves','f'],      ['ed',''],
+      ['es',''],          ['s',''],
+    ];
+    for (const [sfx, rep] of rules) {
+      if (word.endsWith(sfx) && word.length - sfx.length >= 3) {
+        return word.slice(0, word.length - sfx.length) + rep;
+      }
+    }
+    return word;
+  },
+
+  // ── Stop words ───────────────────────────────────────────────────
+  _stopWords: new Set(['the','a','an','is','are','was','were','be','been','being',
+    'have','has','had','do','does','did','will','would','could','should','may',
+    'might','shall','can','need','dare','ought','used','what','which','who','how',
+    'when','where','why','this','that','these','those','and','or','but','if',
+    'in','on','at','to','for','of','with','by','from','as','into','through',
+    'during','before','after','above','below','between','out','about','up','down',
+    'it','its','i','you','we','they','he','she','my','your','our','their',
+    'tell','explain','describe','show','give','help','me','about','please']),
+
+  // ── Keyword extraction with synonym + stem expansion ─────────────
+  _keywords(q) {
+    const raw = q.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 1 && !this._stopWords.has(w));
+
+    const expanded = new Set();
+    for (const w of raw) {
+      expanded.add(w);
+      expanded.add(this._stem(w));
+      // Direct synonym lookup
+      if (this._synonyms[w]) {
+        for (const syn of this._synonyms[w]) expanded.add(syn);
+        for (const syn of this._synonyms[w]) expanded.add(this._stem(syn));
+      }
+    }
+
+    // Multi-word phrase lookup (bigrams of original query)
+    const rawWords = raw;
+    for (let i = 0; i < rawWords.length - 1; i++) {
+      const phrase = rawWords[i] + ' ' + rawWords[i + 1];
+      if (this._synonyms[phrase]) {
+        for (const syn of this._synonyms[phrase]) expanded.add(syn);
+      }
+    }
+
+    return [...expanded].filter(w => w.length > 1);
+  },
+
+  // ── Question type detector ───────────────────────────────────────
+  _questionType(q) {
+    const l = q.toLowerCase();
+    if (/formula|equation|calculat|how\s+to\s+(find|calculate|compute)|what.s\s+the\s+(formula|equation)/.test(l)) return 'formula';
+    if (/^what\s+(is|are|does|do)\b/.test(l) || /\bdefine\b|\bdefinition\b|\bmean\b/.test(l)) return 'definition';
+    if (/\bwhy\b|\bcause\b|\breason\b/.test(l)) return 'explanation';
+    if (/\bhow\s+(does|do|to|can)\b/.test(l)) return 'howto';
+    if (/\bdifference\b|\bcompare\b|\bversus\b|\bvs\b/.test(l)) return 'comparison';
+    if (/\bexample\b|\breal.world\b|\bapplication\b|\bpractical\b/.test(l)) return 'example';
+    return 'general';
+  },
+
+  // ── Section type weights per question type ───────────────────────
+  _sectionWeight(sectionType, questionType) {
+    const table = {
+      formula:     { keypoint:1.8, concept:1.3, quiz:0.7, story:0.4, hook:0.3, 'real-world':1.0, analogy:0.7, protip:1.0 },
+      definition:  { concept:1.6, keypoint:1.5, analogy:1.1, story:0.6, hook:0.4, 'real-world':0.9, protip:0.8, quiz:0.8 },
+      explanation: { analogy:1.6, story:1.4, 'real-world':1.4, protip:1.3, concept:1.1, hook:1.0, keypoint:1.0, quiz:0.7 },
+      howto:       { protip:1.7, 'real-world':1.5, concept:1.2, analogy:1.1, keypoint:1.1, story:0.8, hook:0.6, quiz:0.7 },
+      example:     { 'real-world':2.0, analogy:1.6, protip:1.4, story:1.2, concept:0.8, keypoint:0.9, hook:0.7, quiz:1.0 },
+      comparison:  { concept:1.4, keypoint:1.3, analogy:1.2, story:1.0, 'real-world':1.1, protip:1.0, hook:0.6, quiz:0.8 },
+      general:     { concept:1.2, keypoint:1.3, 'real-world':1.1, analogy:1.0, protip:1.1, story:0.9, hook:0.7, quiz:0.9 },
+    };
+    return (table[questionType] || table.general)[sectionType] || 1.0;
+  },
+
+  // ── Section text extractor ───────────────────────────────────────
+  _sectionText(section) {
+    let text = (section.title || '') + ' ' + (section.body || '');
+    if (section.formula) text += ' ' + section.formula;
+    if (section.questions) text += ' ' + section.questions.map(q => q.q + ' ' + q.a).join(' ');
+    return text.toLowerCase();
+  },
+
+  // ── Bigram fuzzy matching (for typos) ───────────────────────────
+  _bigrams(word) {
+    const bg = new Set();
+    for (let i = 0; i < word.length - 1; i++) bg.add(word.slice(i, i + 2));
+    return bg;
+  },
+  _bigramSim(a, b) {
+    if (a.length < 2 || b.length < 2) return 0;
+    const bA = this._bigrams(a), bB = this._bigrams(b);
+    let shared = 0;
+    for (const bg of bA) if (bB.has(bg)) shared++;
+    return (2 * shared) / (bA.size + bB.size);
+  },
+  _fuzzyHit(textWords, kw) {
+    if (kw.length < 4) return false;
+    for (const tw of textWords) {
+      if (Math.abs(tw.length - kw.length) > 4) continue;
+      if (this._bigramSim(kw, tw) >= 0.55) return true;
+    }
+    return false;
+  },
+
+  // ── Phrase bonus: reward multi-word keyword matches ──────────────
+  _phraseBonus(text, keywords) {
+    let bonus = 0;
+    // Check every pair of adjacent keywords in query order
+    for (let i = 0; i < keywords.length - 1; i++) {
+      const phrase = keywords[i] + ' ' + keywords[i + 1];
+      if (text.includes(phrase)) bonus += 4;
+    }
+    return bonus;
+  },
+
+  // ── Main scorer ──────────────────────────────────────────────────
+  _score(text, keywords, questionType, sectionType) {
+    if (!keywords.length) return 0;
+    const textWords = text.match(/[a-z0-9]+/g) || [];
+    let score = 0;
+    for (const kw of keywords) {
+      // Escape regex special chars in keyword
+      const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const wordRe = new RegExp('\\b' + esc + '\\b', 'g');
+      const partRe = new RegExp(esc, 'g');
+      const wordMatches = (text.match(wordRe) || []).length;
+      const partMatches = (text.match(partRe) || []).length;
+      score += wordMatches * 3 + (partMatches - wordMatches);
+      if (wordMatches === 0 && partMatches === 0 && this._fuzzyHit(textWords, kw)) score += 1;
+    }
+    score += this._phraseBonus(text, keywords);
+    score *= this._sectionWeight(sectionType, questionType);
+    return score;
+  },
+
+  // ── Best-sentence extractor ──────────────────────────────────────
+  // Instead of a dumb window, find the sentence(s) most packed with keywords
+  _bestPassage(body, keywords, maxLen = 300) {
+    if (!body) return '';
+    // Split on sentence boundaries
+    const sentences = body.split(/(?<=[.!?\n])\s+/).filter(s => s.trim().length > 15);
+    if (!sentences.length) return body.slice(0, maxLen);
+
+    const kws = keywords.map(k => k.toLowerCase());
+
+    const scored = sentences.map((s, idx) => {
+      const sl = s.toLowerCase();
+      let sc = 0;
+      for (const kw of kws) {
+        if (sl.includes(kw)) sc += 2;
+      }
+      return { s, sc, idx };
+    });
+
+    scored.sort((a, b) => b.sc - a.sc);
+    const best = scored[0];
+    if (best.sc === 0) return body.slice(0, maxLen) + (body.length > maxLen ? '…' : '');
+
+    // Grab best sentence + the one after it for context
+    const pick = [best];
+    const nextIdx = best.idx + 1;
+    if (nextIdx < sentences.length) {
+      const next = sentences[nextIdx];
+      if (next.length + best.s.length < maxLen) pick.push({ s: next, idx: nextIdx });
+    }
+    pick.sort((a, b) => a.idx - b.idx);
+    let result = pick.map(p => p.s).join(' ');
+    if (result.length > maxLen) result = result.slice(0, maxLen) + '…';
+    return result;
+  },
+
+  // ── Search ───────────────────────────────────────────────────────
+  _search(question) {
+    const keywords = this._keywords(question);
+    const questionType = this._questionType(question);
+    if (!keywords.length) return { results: [], questionType, keywords };
+
+    const results = [];
+    for (const lesson of LESSONS_CONTENT) {
+      for (const section of lesson.sections) {
+        const text = this._sectionText(section);
+        const score = this._score(text, keywords, questionType, section.type);
+        if (score > 0) results.push({ lesson, section, score, questionType });
+      }
+    }
+    results.sort((a, b) => b.score - a.score);
+    return { results: results.slice(0, 4), questionType, keywords };
+  },
+
+  // ── Response formatter ───────────────────────────────────────────
+  _formatResponse(question, { results, questionType, keywords }) {
+    if (!results.length) {
+      return {
+        text: "I couldn't find that in the loaded modules. Try using terms like \"RMS\", \"impedance\", \"inductance\", \"three-phase\", \"motor control\", or \"power factor\".",
+        sources: [],
+        followUps: []
+      };
+    }
+
+    const top = results[0];
+    const body = top.section.body || '';
+    const formula = top.section.formula || '';
+    const sectionTitle = top.section.title || '';
+
+    let text = '';
+
+    if (questionType === 'formula' && formula) {
+      // Lead with the formula(s)
+      text = '📐 ' + formula.replace(/\n/g, '\n📐 ');
+      const passage = this._bestPassage(body, keywords, 200);
+      if (passage) text += '\n\n' + passage;
+    } else if (questionType === 'definition') {
+      // First sentence of best passage = the definition
+      text = this._bestPassage(body, keywords, 300);
+      if (formula) text += '\n\n📐 ' + formula.split('\n')[0];
+    } else {
+      text = this._bestPassage(body, keywords, 300);
+      if (formula && questionType !== 'example') {
+        const fLines = formula.split('\n').slice(0, 2).join('  |  ');
+        text += '\n\n📐 ' + fLines;
+      }
+    }
+
+    // Generate smart follow-up suggestions based on the winning lesson
+    const followUps = this._suggestFollowUps(top.lesson, top.section, questionType);
+
+    const sources = results.slice(0, 3).map(r => ({
+      lessonTitle: r.lesson.title,
+      sectionTitle: r.section.title,
+      icon: r.lesson.icon
+    }));
+
+    return { text, sources, followUps };
+  },
+
+  // ── Follow-up question suggester ─────────────────────────────────
+  _suggestFollowUps(lesson, section, questionType) {
+    const suggestions = {
+      'm1': ['What is RMS voltage?', 'How does a transformer work?', 'What is frequency?'],
+      'm2': ['What is inductive reactance?', 'How do capacitors store energy?', 'What is the formula for XL?'],
+      'm3': ['What is impedance?', 'How do I calculate Z?', 'What is power factor?'],
+      'm4': ['What is three-phase power?', 'How does a three-phase motor work?', 'What is line vs phase voltage?'],
+      'm21': ['What is a relay?', 'How does a contactor work?', 'What is a normally open contact?'],
+      'm22': ['What is a motor starter?', 'How does overload protection work?', 'What is a seal-in circuit?'],
+      'm23': ['How does an on-delay timer work?', 'What is a PLC?', 'What is ladder logic?'],
+      'm24': ['What are smart relays?', 'How does a VFD work?', 'What is a PID controller?'],
+    };
+    return (suggestions[lesson.id] || []).slice(0, 3);
+  },
+
+  // ── Public API ───────────────────────────────────────────────────
   toggle() { this._open ? this.close() : this.open(); },
 
   open() {
@@ -10951,154 +11267,21 @@ const AskAI = {
     setTimeout(() => { if (panel) panel.style.display = 'none'; }, 280);
   },
 
-  // ── Search engine ────────────────────────────────────────────────
-  _stopWords: new Set(['the','a','an','is','are','was','were','be','been','being',
-    'have','has','had','do','does','did','will','would','could','should','may',
-    'might','shall','can','need','dare','ought','used','what','which','who','how',
-    'when','where','why','this','that','these','those','and','or','but','if',
-    'in','on','at','to','for','of','with','by','from','as','into','through',
-    'during','before','after','above','below','between','out','about','up','down',
-    'it','its','i','you','we','they','he','she','my','your','our','their']),
-
-  _keywords(q) {
-    return q.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(w => w.length > 2 && !this._stopWords.has(w));
-  },
-
-  _sectionText(section) {
-    let text = (section.title || '') + ' ' + (section.body || '');
-    if (section.formula) text += ' ' + section.formula;
-    if (section.questions) {
-      text += ' ' + section.questions.map(q => q.q + ' ' + q.a).join(' ');
-    }
-    return text.toLowerCase();
-  },
-
-  // Bigram similarity — handles typos like "impeatence" → "impedance"
-  _bigrams(word) {
-    const bg = new Set();
-    for (let i = 0; i < word.length - 1; i++) bg.add(word.slice(i, i + 2));
-    return bg;
-  },
-
-  _bigramSim(a, b) {
-    if (a.length < 2 || b.length < 2) return 0;
-    const bA = this._bigrams(a), bB = this._bigrams(b);
-    let shared = 0;
-    for (const bg of bA) if (bB.has(bg)) shared++;
-    return (2 * shared) / (bA.size + bB.size);
-  },
-
-  // Returns true if keyword fuzzy-matches any word in text (Dice coeff > 0.55)
-  _fuzzyHit(textWords, kw) {
-    if (kw.length < 4) return false; // short words: skip fuzzy, too many false positives
-    for (const tw of textWords) {
-      if (Math.abs(tw.length - kw.length) > 4) continue; // length too different
-      if (this._bigramSim(kw, tw) >= 0.55) return true;
-    }
-    return false;
-  },
-
-  _score(text, keywords) {
-    if (!keywords.length) return 0;
-    // Pre-split text into word array for fuzzy matching (cached per call)
-    const textWords = text.match(/[a-z0-9]+/g) || [];
-    let score = 0;
-    for (const kw of keywords) {
-      // Exact word match = 3pts, substring = 1pt, fuzzy bigram match = 1pt
-      const wordRe = new RegExp('\\b' + kw + '\\b', 'g');
-      const partRe = new RegExp(kw, 'g');
-      const wordMatches = (text.match(wordRe) || []).length;
-      const partMatches = (text.match(partRe) || []).length;
-      score += wordMatches * 3 + (partMatches - wordMatches) * 1;
-      // Fuzzy fallback — catches misspellings when exact/partial both miss
-      if (wordMatches === 0 && partMatches === 0 && this._fuzzyHit(textWords, kw)) {
-        score += 1;
-      }
-    }
-    return score;
-  },
-
-  _search(question) {
-    const keywords = this._keywords(question);
-    if (!keywords.length) return [];
-
-    const results = [];
-    for (const lesson of LESSONS_CONTENT) {
-      for (const section of lesson.sections) {
-        const text = this._sectionText(section);
-        const score = this._score(text, keywords);
-        if (score > 0) {
-          results.push({ lesson, section, score });
-        }
-      }
-    }
-
-    // Sort by score desc, return top 3
-    results.sort((a, b) => b.score - a.score);
-    return results.slice(0, 3);
-  },
-
-  _excerpt(text, keywords, maxLen = 220) {
-    // Find the first keyword hit and return surrounding context
-    const lower = text.toLowerCase();
-    let bestIdx = -1;
-    for (const kw of keywords) {
-      const idx = lower.indexOf(kw);
-      if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) bestIdx = idx;
-    }
-    if (bestIdx === -1) return text.slice(0, maxLen) + (text.length > maxLen ? '…' : '');
-    const start = Math.max(0, bestIdx - 80);
-    const end = Math.min(text.length, start + maxLen);
-    const raw = text.slice(start, end);
-    return (start > 0 ? '…' : '') + raw + (end < text.length ? '…' : '');
-  },
-
-  _formatResponse(question, results) {
-    if (!results.length) {
-      return {
-        text: "I couldn't find anything in the loaded modules that matches your question. Try rephrasing, or check if that topic is covered in an unlocked module.",
-        sources: []
-      };
-    }
-
-    const keywords = this._keywords(question);
-    const top = results[0];
-    const body = top.section.body || '';
-    const formula = top.section.formula || '';
-
-    let text = this._excerpt(body, keywords);
-    if (formula) text += '\n\n📐 ' + formula.split('\n')[0];
-
-    const sources = results.map(r => ({
-      lessonTitle: r.lesson.title,
-      sectionTitle: r.section.title,
-      icon: r.lesson.icon
-    }));
-
-    return { text, sources };
-  },
-
-  // ── Ask & respond ────────────────────────────────────────────────
   ask(question) {
     if (!question.trim() || this._typing) return;
     question = question.trim();
-
     this._history.push({ role: 'user', text: question });
     this._renderMessages();
     this._typing = true;
 
-    // Simulate a brief "thinking" delay so it feels snappy but not instant
     setTimeout(() => {
-      const results = this._search(question);
-      const { text, sources } = this._formatResponse(question, results);
-      this._history.push({ role: 'ai', text, sources });
+      const searchResult = this._search(question);
+      const { text, sources, followUps } = this._formatResponse(question, searchResult);
+      this._history.push({ role: 'ai', text, sources, followUps });
       this._typing = false;
       this._renderMessages();
       this._scrollBottom();
-    }, 350);
+    }, 380);
 
     this._scrollBottom();
   },
@@ -11121,13 +11304,11 @@ const AskAI = {
         <button onclick="AskAI.close()" class="askai-close-btn">✕</button>
       </div>
       <div id="askaiMessages" class="askai-messages">
-        <div class="askai-bubble askai-ai">
-          <div class="askai-bubble-text">Hey! Ask me anything about the material in your loaded modules — AC theory, inductors, capacitors, three-phase circuits, motor controls, and more. I'll pull the relevant info and tell you exactly where it came from. 🔌</div>
-        </div>
+        ${this._welcomeBubble()}
       </div>
       <div class="askai-input-row">
         <input id="askaiInput" class="askai-input" type="text"
-          placeholder="e.g. What is RMS voltage?"
+          placeholder="e.g. What is impedance?"
           onkeydown="if(event.key==='Enter')AskAI._submitInput()"
           maxlength="300" />
         <button class="askai-send-btn" onclick="AskAI._submitInput()">➤</button>
@@ -11136,6 +11317,24 @@ const AskAI = {
     document.body.appendChild(panel);
     requestAnimationFrame(() => panel.classList.add('askai-visible'));
     this._focusInput();
+  },
+
+  _welcomeBubble() {
+    return `<div class="askai-bubble askai-ai">
+      <div class="askai-bubble-text">Hey! Ask me anything from your loaded IBEW modules — AC theory, inductors &amp; capacitors, impedance, three-phase power, motor controls, relays, timers, PLCs and more.<br><br>I understand abbreviations like <strong>RMS</strong>, <strong>XL</strong>, <strong>PF</strong>, typos, and related terms. ⚡</div>
+      <div class="askai-sources" style="margin-top:10px;">
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('What is RMS voltage?')">💡 What is RMS voltage?</span>
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How does impedance work?')">💡 Impedance</span>
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('Three phase power formula')">💡 3-phase formulas</span>
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How do relays work?')">💡 How relays work</span>
+      </div>
+    </div>`;
+  },
+
+  _quickAsk(q) {
+    const inp = document.getElementById('askaiInput');
+    if (inp) inp.value = q;
+    this._submitInput();
   },
 
   _submitInput() {
@@ -11151,60 +11350,48 @@ const AskAI = {
     const container = document.getElementById('askaiMessages');
     if (!container) return;
 
-    // Rebuild all messages
     const bubbles = this._history.map(msg => {
       if (msg.role === 'user') {
         return `<div class="askai-bubble askai-user"><div class="askai-bubble-text">${this._esc(msg.text)}</div></div>`;
-      } else {
-        const sourceHtml = msg.sources && msg.sources.length
-          ? `<div class="askai-sources">${msg.sources.map((s,i) =>
-              `<span class="askai-source-tag">${s.icon} ${s.lessonTitle} — ${this._esc(s.sectionTitle)}</span>`
-            ).join('')}</div>`
-          : '';
-        return `<div class="askai-bubble askai-ai">
-          <div class="askai-bubble-text">${this._esc(msg.text)}</div>
-          ${sourceHtml}
-        </div>`;
       }
+      const sourceHtml = msg.sources && msg.sources.length
+        ? `<div class="askai-sources">${msg.sources.map(s =>
+            `<span class="askai-source-tag">${s.icon} ${this._esc(s.lessonTitle)} — ${this._esc(s.sectionTitle)}</span>`
+          ).join('')}</div>`
+        : '';
+      const followHtml = msg.followUps && msg.followUps.length
+        ? `<div class="askai-followups">${msg.followUps.map(q =>
+            `<span class="askai-followup-tag" onclick="AskAI._quickAsk('${q.replace(/'/g,'&#39;')}')">→ ${this._esc(q)}</span>`
+          ).join('')}</div>`
+        : '';
+      return `<div class="askai-bubble askai-ai">
+        <div class="askai-bubble-text">${this._esc(msg.text)}</div>
+        ${sourceHtml}${followHtml}
+      </div>`;
     }).join('');
 
     const typingHtml = this._typing
       ? `<div class="askai-bubble askai-ai"><div class="askai-typing"><span></span><span></span><span></span></div></div>`
       : '';
 
-    container.innerHTML = `
-      <div class="askai-bubble askai-ai">
-        <div class="askai-bubble-text">Hey! Ask me anything about the material in your loaded modules — AC theory, inductors, capacitors, three-phase circuits, motor controls, and more. I'll pull the relevant info and tell you exactly where it came from. 🔌</div>
-      </div>
-      ${bubbles}
-      ${typingHtml}
-    `;
+    container.innerHTML = this._welcomeBubble() + bubbles + typingHtml;
     this._scrollBottom();
   },
 
   _scrollBottom() {
-    setTimeout(() => {
-      const c = document.getElementById('askaiMessages');
-      if (c) c.scrollTop = c.scrollHeight;
-    }, 30);
+    setTimeout(() => { const c = document.getElementById('askaiMessages'); if (c) c.scrollTop = c.scrollHeight; }, 30);
   },
 
   _focusInput() {
-    setTimeout(() => {
-      const inp = document.getElementById('askaiInput');
-      if (inp) inp.focus();
-    }, 300);
+    setTimeout(() => { const inp = document.getElementById('askaiInput'); if (inp) inp.focus(); }, 300);
   },
 
   _esc(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/\n/g,'<br>');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
   }
 };
+
 
 // Floating SparkyAI trigger button
 function createAskAIFAB() {
