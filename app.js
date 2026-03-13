@@ -2496,6 +2496,11 @@ const Notes = {
     }
   },
 
+  _esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  },
+
   _hideEmpty() {
     const el = document.getElementById('notesEmptyState');
     if (el) el.style.display = 'none';
