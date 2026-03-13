@@ -1436,17 +1436,162 @@ input[type="radio"]:checked::after {
 .notes-insert-grid::-webkit-scrollbar { width: 4px; }
 .notes-insert-grid::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 2px; }
 
-/* ── Notes: fullscreen mode ──────────────────────────────── */
+/* ── Notes: fullscreen mode — Google Docs / Word style ───── */
 .notes-fullscreen-wrap {
   position: fixed;
   inset: 0;
   z-index: 500;
-  background: var(--bg-primary, #0f0f1a);
-  overflow-y: auto;
-  padding: 16px 24px 40px;
+  background: #3c3c3c;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-.notes-fullscreen-wrap .notes-sticky-header {
-  border-radius: 12px 12px 0 0;
+
+/* Top toolbar strip */
+.notes-fs-topbar {
+  background: #252526;
+  border-bottom: 1px solid #484848;
+  padding: 10px 20px 8px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.notes-fs-topbar .notes-toolbar {
+  background: #2d2d2d;
+  border-color: #484848;
+  border-radius: 6px;
+  margin-top: 6px;
+}
+.notes-fs-topbar .ntb {
+  color: #c8c8c8;
+  border-color: transparent;
+}
+.notes-fs-topbar .ntb:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Body row: sidebar + canvas */
+.notes-fs-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Left sidebar in fullscreen */
+.notes-fs-sidebar {
+  background: #2d2d2d;
+  border-right: 1px solid #484848;
+  overflow-y: auto;
+  flex-shrink: 0;
+  width: 220px;
+  padding: 12px 8px;
+  transition: width 0.15s ease;
+}
+.notes-fs-sidebar.collapsed {
+  width: 48px;
+  padding: 8px 0;
+}
+.notes-fs-sidebar .notes-sidebar-collapsed-strip {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+.notes-fs-sidebar .notes-sidebar-item {
+  color: #c0c0c0;
+}
+.notes-fs-sidebar .notes-sidebar-item:hover {
+  background: rgba(255,255,255,0.07);
+  color: #e0e0e0;
+}
+.notes-fs-sidebar .notes-sidebar-item.active {
+  background: rgba(99,102,241,0.2);
+  color: #a5b4fc;
+}
+.notes-fs-sidebar .notes-sidebar-toggle {
+  color: #999;
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+}
+.notes-fs-sidebar .notes-sidebar-icon-btn {
+  color: #aaa;
+}
+.notes-fs-sidebar .notes-sidebar-icon-btn.active {
+  color: #a5b4fc;
+}
+
+/* Scrollable document canvas */
+.notes-fs-canvas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 40px 80px;
+  background: #3c3c3c;
+}
+
+/* The white paper "page" */
+.notes-doc-page {
+  background: #ffffff;
+  color: #1a1a1a;
+  max-width: 816px;
+  min-height: 1056px;
+  margin: 0 auto;
+  padding: 64px 80px 80px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.15);
+  border-radius: 2px;
+  position: relative;
+}
+
+/* Editor inside the paper page */
+.notes-doc-page .notes-editor {
+  background: transparent !important;
+  color: #1a1a1a !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  min-height: 700px;
+  font-size: 0.96rem;
+  line-height: 1.75;
+}
+.notes-doc-page .notes-editor:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Page tabs above doc page in fullscreen */
+.notes-fullscreen-wrap .notes-pages-bar {
+  max-width: 816px;
+  margin: 0 auto 0;
+  border-radius: 8px 8px 0 0;
+  background: #4a4a4a;
+  border: 1px solid #5a5a5a;
+  border-bottom: none;
+  padding: 4px 8px 0;
+}
+.notes-fullscreen-wrap .notes-page-tab {
+  background: transparent;
+  border-color: transparent;
+  color: #bbb;
+}
+.notes-fullscreen-wrap .notes-page-tab.active {
+  background: #fff;
+  color: #1a1a1a;
+  border-color: transparent;
+}
+.notes-fullscreen-wrap .notes-page-add {
+  color: #aaa;
+  background: transparent;
+  border-color: transparent;
+}
+.notes-fullscreen-wrap .notes-page-add:hover {
+  color: #fff;
+}
+
+/* Insert panel z-index boost in fullscreen */
+.notes-fullscreen-wrap .notes-insert-panel {
+  z-index: 600;
 }
 
 /* ── Notes: fullscreen button ────────────────────────────── */

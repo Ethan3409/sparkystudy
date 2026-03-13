@@ -2382,150 +2382,213 @@ const Notes = {
     const sc = this._sidebarCollapsed;
     const fs = this._fullscreen;
     const gridCols = sc ? '44px 1fr' : '220px 1fr';
-    const stickyTop = fs ? '8px' : '80px';
+    const stickyTop = '80px';
 
-    container.innerHTML = `
-      <div class="${fs ? 'notes-fullscreen-wrap' : ''}">
-      <div style="display:grid;grid-template-columns:${gridCols};gap:${sc?'12px':'20px'};align-items:start;">
-
-        <!-- Sidebar -->
-        <div class="notes-no-print notes-sidebar-outer ${sc ? 'collapsed' : ''}" style="position:sticky;top:${stickyTop};">
-          ${sc ? `
-            <!-- Collapsed: icon strip -->
-            <div class="notes-sidebar-collapsed-strip">
-              <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Expand sidebar">\u203a</button>
-              ${topics.map(t => `
-                <button class="notes-sidebar-icon-btn ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')" title="${t.name}">
-                  ${t.icon}
-                  ${t.has ? '<span class="nsi-dot"></span>' : ''}
-                </button>
-              `).join('')}
-            </div>
-          ` : `
-            <!-- Expanded: full sidebar -->
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:12px;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:700;padding:2px 0;">Topics</div>
-                <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Collapse sidebar">\u2039</button>
-              </div>
-              ${topics.map(t => `
-                <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
-                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.icon} ${t.name}</span>
-                    ${t.has ? '<span style="color:var(--accent);font-size:0.6rem;flex-shrink:0;">\u25cf</span>' : ''}
-                  </div>
-                  ${t.has ? `<div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;">
-                    <span>${t.wordCount} words</span><span>\u00b7</span><span>${this._relTime(t.timestamp)}</span>
-                  </div>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          `}
-        </div>
-
-        <!-- Editor pane -->
-        <div>
-
-          <!-- Sticky header -->
-          <div class="notes-sticky-header notes-no-print" style="top:${stickyTop};">
-            <!-- Title row -->
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:1.4rem;">${topic.icon}</span>
-                <div>
-                  <div style="font-weight:800;font-size:1rem;">${topic.name}</div>
-                  <div style="font-size:0.72rem;color:var(--text-muted);" id="notesStatus">Auto-saved</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON' : 'Autocorrect OFF'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">\ud83d\udcd6 Study Mode</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">\u26a1 Make Quiz</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._download('${userId}')" title="Download all pages as HTML file">\u2b07\ufe0f Download</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print">\ud83d\udda8\ufe0f Print</button>
-                <button class="btn btn-sm notes-fs-btn" onclick="Notes._toggleFullscreen('${userId}')" title="${fs ? 'Exit full screen' : 'Full screen'}">${fs ? '\u26f6 Exit' : '\u26f6 Full Screen'}</button>
-              </div>
-            </div>
-
-            <!-- Formatting toolbar -->
-            <div class="notes-toolbar">
-              <button class="ntb" onclick="Notes._fmt('bold')" title="Bold"><b>B</b></button>
-              <button class="ntb" onclick="Notes._fmt('italic')" title="Italic"><i>I</i></button>
-              <button class="ntb" onclick="Notes._fmt('underline')" title="Underline"><u>U</u></button>
-              <button class="ntb" onclick="Notes._fmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
-              <div class="ntb-sep"></div>
-              <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list (or press Tab)">\u2022 List</button>
-              <button class="ntb" onclick="Notes._fmt('insertOrderedList')" title="Numbered list">1. List</button>
-              <div class="ntb-sep"></div>
-              <button class="ntb" onclick="Notes._heading(1)" title="Heading 1" style="font-size:0.9rem;font-weight:900;">H1</button>
-              <button class="ntb" onclick="Notes._heading(2)" title="Heading 2" style="font-size:0.85rem;font-weight:800;">H2</button>
-              <button class="ntb" onclick="Notes._heading(3)" title="Heading 3" style="font-size:0.8rem;font-weight:700;">H3</button>
-              <div class="ntb-sep"></div>
-              <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">\u2715 Format</button>
-              <button class="ntb" onclick="Notes._highlight()" title="Mark as quiz term" style="background:rgba(245,158,11,0.15);color:var(--accent);">\u2605 Key Term</button>
-              <div class="ntb-sep"></div>
-              <button class="ntb notes-insert-btn" id="notesInsertBtn" onclick="Notes._toggleInsertPanel(event)" title="Insert symbol or formula">\u03a9 Insert \u25be</button>
-            </div>
-          </div>
-
-          <!-- Insert popover (symbols + formulas) -->
-          <div id="notesInsertPanel" class="notes-insert-panel" style="display:none;">
-            <div class="notes-insert-tabs">
-              <button class="notes-insert-tab active" id="niTabSymbols" onclick="Notes._switchInsertTab('symbols')">Symbols</button>
-              <button class="notes-insert-tab" id="niTabFormulas" onclick="Notes._switchInsertTab('formulas')">Formulas</button>
-            </div>
-            <div id="niSymbols" class="notes-insert-grid">
-              ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
-            </div>
-            <div id="niFormulas" class="notes-insert-grid" style="display:none;">
-              ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
-            </div>
-          </div>
-
-          <!-- Page tabs row -->
-          <div class="notes-pages-bar notes-no-print">
-            ${pageTabs}
-            <button class="notes-page-add" onclick="Notes._addPage('${userId}','${this.currentTopic}')" title="Add new page">+ Page</button>
-          </div>
-
-          <!-- Editor -->
-          <div id="notesEditorWrap" class="notes-print-area" style="background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;position:relative;">
-            ${isEmpty ? `
-            <div id="notesEmptyState" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;pointer-events:none;z-index:1;">
-              <div style="font-size:2.5rem;opacity:0.3;">${topic.icon}</div>
-              <div style="text-align:center;pointer-events:none;">
-                <div style="font-size:0.95rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;">No notes yet for ${topic.name}</div>
-                <div style="font-size:0.78rem;color:var(--text-muted);opacity:0.7;">Start typing — press <b>Tab</b> for bullets, <b>Tab</b> again to nest</div>
-              </div>
-              <button class="btn btn-secondary btn-sm" style="pointer-events:all;" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
-                \ud83d\udcc4 Use Starter Template
-              </button>
-            </div>` : ''}
-            <div id="notesEditor" class="notes-editor"
-              contenteditable="true"
-              spellcheck="true"
-              autocorrect="on"
-              data-placeholder="Start typing... Press Tab for bullets, Tab again to nest them."
-              oninput="Notes._onInput('${userId}');Notes._hideEmpty();Notes._scheduleAutocorrect('${userId}');"
-              onkeydown="Notes._handleEditorKey(event,'${userId}');"
-            >${savedHtml}</div>
-            <div id="notesPrintHeader" style="display:none;">
-              <h2>${topic.name} \u2014 sparkystudy Notes</h2>
-              <p style="font-size:0.8rem;color:#666;">Student: ${state.user.name} &nbsp;|&nbsp; Date: ${new Date().toLocaleDateString()}</p>
-              <hr>
-            </div>
-          </div>
-
-          <!-- Word count bar -->
-          <div class="notes-no-print" id="notesWordBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:0.72rem;color:var(--text-muted);">
-            <span id="notesWordCount">0 words</span>
-            <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card &nbsp;|&nbsp; <strong>Tab</strong> = bullet &nbsp;|&nbsp; double-click page tab to rename</span>
-          </div>
-
-        </div>
+    // ── Shared: sidebar inner HTML ────────────────────────────
+    const sidebarInner = sc ? `
+      <div class="notes-sidebar-collapsed-strip">
+        <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Expand sidebar">\u203a</button>
+        ${topics.map(t => `
+          <button class="notes-sidebar-icon-btn ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')" title="${t.name}">
+            ${t.icon}
+            ${t.has ? '<span class="nsi-dot"></span>' : ''}
+          </button>
+        `).join('')}
       </div>
+    ` : `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:${fs?'0':'16px'};padding:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:700;padding:2px 0;">Topics</div>
+          <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Collapse sidebar">\u2039</button>
+        </div>
+        ${topics.map(t => `
+          <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.icon} ${t.name}</span>
+              ${t.has ? '<span style="color:var(--accent);font-size:0.6rem;flex-shrink:0;">\u25cf</span>' : ''}
+            </div>
+            ${t.has ? `<div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;">
+              <span>${t.wordCount} words</span><span>\u00b7</span><span>${this._relTime(t.timestamp)}</span>
+            </div>` : ''}
+          </div>
+        `).join('')}
       </div>
     `;
+
+    // ── Shared: action buttons ────────────────────────────────
+    const actionButtons = `
+      <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON' : 'Autocorrect OFF'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
+      <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">\ud83d\udcd6 Study Mode</button>
+      <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">\u26a1 Make Quiz</button>
+      <button class="btn btn-secondary btn-sm" onclick="Notes._download('${userId}')" title="Download all pages as HTML file">\u2b07\ufe0f Download</button>
+      <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print">\ud83d\udda8\ufe0f Print</button>
+      <button class="btn btn-sm notes-fs-btn" onclick="Notes._toggleFullscreen('${userId}')" title="${fs ? 'Exit full screen' : 'Full screen'}">${fs ? '\u26f6 Exit Full Screen' : '\u26f6 Full Screen'}</button>
+    `;
+
+    // ── Shared: formatting toolbar ────────────────────────────
+    const formattingBar = `
+      <div class="notes-toolbar">
+        <button class="ntb" onclick="Notes._fmt('bold')" title="Bold"><b>B</b></button>
+        <button class="ntb" onclick="Notes._fmt('italic')" title="Italic"><i>I</i></button>
+        <button class="ntb" onclick="Notes._fmt('underline')" title="Underline"><u>U</u></button>
+        <button class="ntb" onclick="Notes._fmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
+        <div class="ntb-sep"></div>
+        <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list (or press Tab)">\u2022 List</button>
+        <button class="ntb" onclick="Notes._fmt('insertOrderedList')" title="Numbered list">1. List</button>
+        <div class="ntb-sep"></div>
+        <button class="ntb" onclick="Notes._heading(1)" title="Heading 1" style="font-size:0.9rem;font-weight:900;">H1</button>
+        <button class="ntb" onclick="Notes._heading(2)" title="Heading 2" style="font-size:0.85rem;font-weight:800;">H2</button>
+        <button class="ntb" onclick="Notes._heading(3)" title="Heading 3" style="font-size:0.8rem;font-weight:700;">H3</button>
+        <div class="ntb-sep"></div>
+        <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">\u2715 Format</button>
+        <button class="ntb" onclick="Notes._highlight()" title="Mark as quiz term" style="background:rgba(245,158,11,0.15);color:var(--accent);">\u2605 Key Term</button>
+        <div class="ntb-sep"></div>
+        <button class="ntb notes-insert-btn" id="notesInsertBtn" onclick="Notes._toggleInsertPanel(event)" title="Insert symbol or formula">\u03a9 Insert \u25be</button>
+      </div>
+    `;
+
+    // ── Shared: insert popover ────────────────────────────────
+    const insertPanel = `
+      <div id="notesInsertPanel" class="notes-insert-panel" style="display:none;">
+        <div class="notes-insert-tabs">
+          <button class="notes-insert-tab active" id="niTabSymbols" onclick="Notes._switchInsertTab('symbols')">Symbols</button>
+          <button class="notes-insert-tab" id="niTabFormulas" onclick="Notes._switchInsertTab('formulas')">Formulas</button>
+        </div>
+        <div id="niSymbols" class="notes-insert-grid">
+          ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
+        </div>
+        <div id="niFormulas" class="notes-insert-grid" style="display:none;">
+          ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
+        </div>
+      </div>
+    `;
+
+    // ── Shared: page tabs row ─────────────────────────────────
+    const pageTabsRow = `
+      <div class="notes-pages-bar notes-no-print">
+        ${pageTabs}
+        <button class="notes-page-add" onclick="Notes._addPage('${userId}','${this.currentTopic}')" title="Add new page">+ Page</button>
+      </div>
+    `;
+
+    // ── Shared: editor area ───────────────────────────────────
+    const editorArea = `
+      <div id="notesEditorWrap" class="${fs ? 'notes-doc-page notes-print-area' : 'notes-print-area'}" style="${fs ? '' : 'background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;'}position:relative;">
+        ${isEmpty ? `
+        <div id="notesEmptyState" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;pointer-events:none;z-index:1;">
+          <div style="font-size:2.5rem;opacity:0.3;">${topic.icon}</div>
+          <div style="text-align:center;pointer-events:none;">
+            <div style="font-size:0.95rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;">No notes yet for ${topic.name}</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);opacity:0.7;">Start typing \u2014 press <b>Tab</b> for bullets, <b>Tab</b> again to nest</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="pointer-events:all;" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
+            \ud83d\udcc4 Use Starter Template
+          </button>
+        </div>` : ''}
+        <div id="notesEditor" class="notes-editor"
+          contenteditable="true"
+          spellcheck="true"
+          autocorrect="on"
+          data-placeholder="Start typing... Press Tab for bullets, Tab again to nest them."
+          oninput="Notes._onInput('${userId}');Notes._hideEmpty();Notes._scheduleAutocorrect('${userId}');"
+          onkeydown="Notes._handleEditorKey(event,'${userId}');"
+        >${savedHtml}</div>
+        <div id="notesPrintHeader" style="display:none;">
+          <h2>${topic.name} \u2014 sparkystudy Notes</h2>
+          <p style="font-size:0.8rem;color:#666;">Student: ${state.user.name} &nbsp;|&nbsp; Date: ${new Date().toLocaleDateString()}</p>
+          <hr>
+        </div>
+      </div>
+    `;
+
+    // ── Shared: word count bar ────────────────────────────────
+    const wordCountBar = `
+      <div class="notes-no-print" id="notesWordBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:0.72rem;color:${fs ? '#888' : 'var(--text-muted)'};">
+        <span id="notesWordCount">0 words</span>
+        <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card &nbsp;|&nbsp; <strong>Tab</strong> = bullet &nbsp;|&nbsp; double-click page tab to rename</span>
+      </div>
+    `;
+
+    if (fs) {
+      // ═══ FULLSCREEN: Google Docs / Word layout ═══════════════
+      container.innerHTML = `
+        <div class="notes-fullscreen-wrap">
+
+          <!-- Top toolbar -->
+          <div class="notes-fs-topbar notes-no-print">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:1.2rem;">${topic.icon}</span>
+                <div>
+                  <div style="font-weight:800;font-size:0.95rem;color:#e0e0e0;">${topic.name}</div>
+                  <div style="font-size:0.7rem;color:#888;" id="notesStatus">Auto-saved</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                ${actionButtons}
+              </div>
+            </div>
+            ${formattingBar}
+          </div>
+
+          ${insertPanel}
+
+          <!-- Body: sidebar + scrollable document canvas -->
+          <div class="notes-fs-body">
+
+            <!-- Left sidebar -->
+            <div class="notes-fs-sidebar notes-no-print ${sc ? 'collapsed' : ''}">
+              ${sidebarInner}
+            </div>
+
+            <!-- Document canvas -->
+            <div class="notes-fs-canvas">
+              ${pageTabsRow}
+              ${editorArea}
+              ${wordCountBar}
+            </div>
+
+          </div>
+        </div>
+      `;
+    } else {
+      // ═══ NORMAL mode layout ═══════════════════════════════════
+      container.innerHTML = `
+        <div style="display:grid;grid-template-columns:${gridCols};gap:${sc?'12px':'20px'};align-items:start;">
+
+          <!-- Sidebar -->
+          <div class="notes-no-print notes-sidebar-outer ${sc ? 'collapsed' : ''}" style="position:sticky;top:${stickyTop};">
+            ${sidebarInner}
+          </div>
+
+          <!-- Editor pane -->
+          <div>
+            <!-- Sticky header -->
+            <div class="notes-sticky-header notes-no-print" style="top:${stickyTop};">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:1.4rem;">${topic.icon}</span>
+                  <div>
+                    <div style="font-weight:800;font-size:1rem;">${topic.name}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);" id="notesStatus">Auto-saved</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                  ${actionButtons}
+                </div>
+              </div>
+              ${formattingBar}
+            </div>
+
+            ${insertPanel}
+            ${pageTabsRow}
+            ${editorArea}
+            ${wordCountBar}
+          </div>
+
+        </div>
+      `;
+    }
 
     const editor = document.getElementById('notesEditor');
     if (editor) {
