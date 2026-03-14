@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Concepts — Period 2 Electrician | SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Dark Theme
+   ============================================ */
+:root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
+    --muted: #8b949e; --accent: #f59e0b; --accent2: #58a6ff; --green: #10b981;
+    --red: #ef4444; --radius: 12px; --radius-sm: 8px; --radius-lg: 16px;
+    --accent-bg: rgba(245,158,11,0.1);
+    --accent2-bg: rgba(88,166,255,0.1);
+    --green-bg: rgba(16,185,129,0.1);
+    --red-bg: rgba(239,68,68,0.1);
+    --purple: #a78bfa;
+    --purple-bg: rgba(167,139,250,0.1);
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text); background: var(--bg); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+a { text-decoration: none; color: inherit; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+.owner-badge {
+    padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(245,158,11,0.3);
+}
+.logout-btn {
+    padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.85rem;
+    font-weight: 600; color: var(--muted); background: transparent;
+    border: 1px solid var(--border); cursor: pointer; transition: var(--transition);
+}
+.logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+/* ============================================
+   Layout: Sidebar + Main
+   ============================================ */
+.page-layout {
+    display: grid; grid-template-columns: 270px 1fr; gap: 0;
+    max-width: 1400px; margin: 64px auto 0; min-height: calc(100vh - 64px);
+}
+
+.toc-sidebar {
+    position: sticky; top: 64px; height: calc(100vh - 64px);
+    overflow-y: auto; padding: 24px 16px;
+    border-right: 1px solid var(--border); background: var(--bg);
+}
+.toc-title {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 2px; }
+.toc-list a {
+    display: block; padding: 6px 12px; border-radius: var(--radius-sm);
+    font-size: 0.85rem; color: var(--muted); transition: var(--transition);
+    border-left: 2px solid transparent;
+}
+.toc-list a:hover { color: var(--text); background: var(--panel); }
+.toc-list a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-bg); }
+.toc-module-label {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--accent); margin-top: 14px; margin-bottom: 4px;
+    padding-left: 12px;
+}
+
+.main-content { padding: 32px 40px 120px; max-width: 920px; }
+
+/* Mobile sidebar toggle */
+.sidebar-toggle {
+    display: none; position: fixed; bottom: 20px; left: 20px; z-index: 1001;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--accent); color: #000; border: none; cursor: pointer;
+    font-size: 1.2rem; font-weight: 700; box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+.page-header {
+    margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
+}
+.page-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+.page-header h1 .accent { color: var(--accent); }
+.page-header p { font-size: 1.05rem; color: var(--muted); line-height: 1.7; }
+.module-count {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 12px; padding: 6px 14px; border-radius: 20px;
+    background: var(--accent-bg); color: var(--accent);
+    font-size: 0.82rem; font-weight: 600;
+}
+
+/* ============================================
+   Section Headers & Accordion
+   ============================================ */
+.section-block { margin-bottom: 48px; }
+.section-header {
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; padding: 16px 0; border-bottom: 2px solid var(--border);
+    user-select: none; margin-bottom: 20px;
+}
+.section-header:hover .section-toggle { color: var(--accent); }
+.section-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #000; font-weight: 800; font-size: 0.9rem; flex-shrink: 0;
+}
+.section-title { font-size: 1.4rem; font-weight: 700; flex: 1; }
+.section-toggle {
+    font-size: 1.2rem; color: var(--muted); transition: var(--transition); flex-shrink: 0;
+}
+.section-block.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { transition: none; }
+.section-block.collapsed .section-body { display: none; }
+
+/* ============================================
+   Sub-topic Accordion Cards
+   ============================================ */
+.topic-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 12px; overflow: hidden;
+    transition: var(--transition);
+}
+.topic-card:hover { border-color: #484f58; }
+.topic-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 20px; cursor: pointer; user-select: none;
+}
+.topic-header h3 { font-size: 1rem; font-weight: 600; flex: 1; }
+.topic-chevron {
+    color: var(--muted); transition: transform 0.2s ease; font-size: 0.9rem;
+}
+.topic-card.open .topic-chevron { transform: rotate(180deg); color: var(--accent); }
+.topic-body {
+    display: none; font-size: 0.92rem; color: var(--text); line-height: 1.75;
+}
+.topic-card.open .topic-body { display: block; }
+.topic-body p { margin-bottom: 12px; }
+.topic-body ul, .topic-body ol { margin: 8px 0 12px 20px; }
+.topic-body li { margin-bottom: 6px; }
+.topic-body strong { color: var(--accent); }
+
+/* ============================================
+   Tip / Memory / Warning / Formula Boxes
+   ============================================ */
+.tip-box {
+    border-radius: var(--radius-sm); padding: 14px 18px; margin: 14px 0;
+    display: flex; align-items: flex-start; gap: 10px;
+}
+.tip-box .tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.tip-box .tip-text { font-size: 0.88rem; line-height: 1.6; }
+.tip-box .tip-text strong { font-weight: 700; }
+
+.tip-box.blue {
+    background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25);
+    border-left: 4px solid var(--accent2);
+}
+.tip-box.blue .tip-text strong { color: var(--accent2); }
+
+.tip-box.purple {
+    background: var(--purple-bg); border: 1px solid rgba(167,139,250,0.25);
+    border-left: 4px solid var(--purple);
+}
+.tip-box.purple .tip-text strong { color: var(--purple); }
+
+.tip-box.amber {
+    background: var(--accent-bg); border: 1px solid rgba(245,158,11,0.25);
+    border-left: 4px solid var(--accent);
+}
+.tip-box.amber .tip-text strong { color: var(--accent); }
+
+.tip-box.green {
+    background: var(--green-bg); border: 1px solid rgba(16,185,129,0.25);
+    border-left: 4px solid var(--green);
+}
+.tip-box.green .tip-text strong { color: var(--green); }
+
+/* Formula boxes */
+.formula-box {
+    background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.2);
+    border-radius: var(--radius); padding: 18px 22px; margin: 14px 0;
+}
+.formula-box .formula {
+    font-size: 1.15rem; font-weight: 700; color: var(--accent2); margin-bottom: 6px;
+    font-family: 'Inter', monospace; letter-spacing: 0.02em;
+}
+.formula-box .formula-desc { font-size: 0.85rem; color: var(--muted); }
+
+/* Quick review */
+.quick-review {
+    background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2);
+    border-radius: var(--radius); padding: 20px 24px; margin-top: 20px;
+}
+.quick-review h4 {
+    font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--green); margin-bottom: 10px;
+}
+.quick-review ul { list-style: none; }
+.quick-review li {
+    font-size: 0.88rem; padding: 4px 0 4px 18px; position: relative; color: var(--text);
+}
+.quick-review li::before {
+    content: ''; position: absolute; left: 0; top: 12px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+}
+
+/* Comparison tables */
+.comparison-table-wrap { overflow-x: auto; margin: 14px 0; border-radius: var(--radius); }
+.comparison-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.comparison-table th, .comparison-table td {
+    padding: 11px 16px; text-align: left; font-size: 0.88rem; border-bottom: 1px solid var(--border);
+}
+.comparison-table th {
+    background: rgba(245,158,11,0.06); font-weight: 700; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+}
+.comparison-table tr:last-child td { border-bottom: none; }
+.comparison-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* Expand / Collapse All */
+.controls-bar {
+    display: flex; gap: 8px; margin-bottom: 24px;
+}
+.ctrl-btn {
+    padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.82rem;
+    font-weight: 600; border: 1px solid var(--border); background: var(--panel);
+    color: var(--muted); cursor: pointer; transition: var(--transition);
+}
+.ctrl-btn:hover { color: var(--text); border-color: #484f58; }
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 900px) {
+    .page-layout { grid-template-columns: 1fr; }
+    .toc-sidebar { display: none; }
+    .toc-sidebar.mobile-open {
+        display: block; position: fixed; top: 64px; left: 0; bottom: 0;
+        width: 280px; z-index: 999; box-shadow: var(--shadow-lg);
+    }
+    .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+    .main-content { padding: 24px 20px 140px; }
+}
+@media (max-width: 600px) { /* keep logout */
+    .page-header h1 { font-size: 1.5rem; }
+    .section-title { font-size: 1.15rem; }
+}
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<!-- ============================================
+     Navigation
+     ============================================ -->
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link sn-active">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<!-- ============================================
+     Page Layout
+     ============================================ -->
+<div class="page-layout">
+
+    <!-- Sidebar TOC -->
+    <aside class="toc-sidebar" id="tocSidebar">
+        <div class="toc-title">Key Concepts</div>
+        <ul class="toc-list">
+            <li class="toc-module-label">Module 1</li>
+            <li><a href="#mod1">Fundamentals of AC</a></li>
+
+            <li class="toc-module-label">Module 2</li>
+            <li><a href="#mod2">Inductors &amp; Capacitors</a></li>
+
+            <li class="toc-module-label">Module 3</li>
+            <li><a href="#mod3">L &amp; C in Circuits</a></li>
+
+            <li class="toc-module-label">Module 4</li>
+            <li><a href="#mod4">Relays &amp; Contactors</a></li>
+
+            <li class="toc-module-label">Module 5</li>
+            <li><a href="#mod5">Timers &amp; Smart Relays</a></li>
+
+            <li class="toc-module-label">Module 6</li>
+            <li><a href="#mod6">Pilot &amp; Overcurrent</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1><span class="accent">Key Concepts</span> Study Guide</h1>
+            <p>Everything you need to know for your SAIT Second Period Electrician apprenticeship, broken down into bite-sized, memorable chunks. Click any topic to expand it.</p>
+            <div class="module-count">&#128218; 6 Modules &middot; All Key Topics</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-bar">
+            <button class="ctrl-btn" onclick="expandAllSections()">Expand All Sections</button>
+            <button class="ctrl-btn" onclick="collapseAllSections()">Collapse All Sections</button>
+            <button class="ctrl-btn" onclick="expandAllTopics()">Expand All Topics</button>
+            <button class="ctrl-btn" onclick="collapseAllTopics()">Collapse All Topics</button>
+        </div>
+
+        <!-- ================================================
+             MODULE 1: Fundamentals of Alternating Current
+             ================================================ -->
+        <div class="section-block" id="mod1">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span class="section-number">1</span>
+                <span class="section-title">Fundamentals of Alternating Current</span>
+                <span class="section-toggle">&#9660;</span>
+            </div>
+            <div class="section-body">
+
+                <!-- How AC is Generated -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>How AC is Generated</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>AC electricity is produced by rotating a conductor (loop of wire) inside a magnetic field. As the conductor spins, it cuts through magnetic field lines at varying angles, which produces a voltage that continuously changes magnitude and direction.</p>
+                        <p>Think of it like a <strong>Ferris wheel</strong> &mdash; your height above the ground changes smoothly as you go around. At the top, you're at peak positive. At the bottom, peak negative. And at the sides, you pass through zero. That's exactly what a sine wave looks like!</p>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> The key principle is Faraday's Law &mdash; a changing magnetic environment around a conductor induces voltage. No change = no voltage. The faster the rotation, the higher the frequency.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- The Sine Wave -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>The Sine Wave</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>One complete cycle of AC = <strong>360 degrees</strong> of rotation. The wave traces this path:</p>
+                        <p style="text-align:center; font-size: 1.05rem; font-weight: 600; color: var(--accent2); margin: 12px 0;">
+                            Zero &rarr; Peak (+) &rarr; Zero &rarr; Peak (&minus;) &rarr; Zero
+                        </p>
+                        <p>The <strong>positive half-cycle</strong> covers 0&deg; to 180&deg;, and the <strong>negative half-cycle</strong> covers 180&deg; to 360&deg;. The waveform is perfectly symmetrical.</p>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> Think of the sine wave as a perfectly smooth roller coaster &mdash; it goes up, comes back to level, goes down, then back to level. Rinse and repeat, forever.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frequency Formula -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Frequency Formula</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <div class="formula-box">
+                            <div class="formula">f = (P &times; N) / 120</div>
+                            <div class="formula-desc">f = frequency (Hz) &nbsp;|&nbsp; P = number of poles &nbsp;|&nbsp; N = speed in RPM</div>
+                        </div>
+                        <p>The number of poles on the generator and the rotational speed together determine frequency. In North America, we standardize at <strong>60 Hz</strong>. A 2-pole generator needs to spin at 3600 RPM; a 4-pole at 1800 RPM.</p>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> "<strong>P</strong>oles &times; RPM, <strong>N</strong>ever forget to divide by <strong>120</strong>." The 120 comes from 60 seconds &times; 2 (since each pair of poles makes one cycle).</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Values -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Key AC Values: Peak, RMS, Average</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <div class="formula-box">
+                            <div class="formula">RMS (Effective) = 0.707 &times; Peak</div>
+                            <div class="formula-desc">This is what your multimeter reads! It represents the DC equivalent heating value.</div>
+                        </div>
+                        <div class="formula-box">
+                            <div class="formula">Average = 0.637 &times; Peak</div>
+                            <div class="formula-desc">The mathematical average of one half-cycle of the sine wave.</div>
+                        </div>
+                        <div class="formula-box">
+                            <div class="formula">Peak (Em) = Maximum Amplitude</div>
+                            <div class="formula-desc">The highest point the wave reaches &mdash; positive or negative.</div>
+                        </div>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> <strong>"7-0-7 like a Boeing jet = RMS multiplier."</strong> The 0.707 factor is actually 1/&radic;2. When someone says "120V" at your outlet, that's the RMS value. The peak is actually about 170V!</span>
+                        </div>
+                        <div class="tip-box amber">
+                            <span class="tip-icon">&#9888;&#65039;</span>
+                            <span class="tip-text"><strong>Common Mistake:</strong> Don't confuse Peak-to-Peak with Peak. Peak-to-Peak = 2 &times; Peak (the full swing from positive peak to negative peak).</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instantaneous Value & Period -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Instantaneous Value &amp; Period</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <div class="formula-box">
+                            <div class="formula">e = Em &times; sin(&theta;)</div>
+                            <div class="formula-desc">The voltage at any specific angle &theta; during the cycle. Em = peak voltage.</div>
+                        </div>
+                        <p>Want to know the voltage at 30&deg;? Just plug in: e = Em &times; sin(30&deg;) = Em &times; 0.5 = half the peak voltage. Easy!</p>
+                        <div class="formula-box">
+                            <div class="formula">T = 1 / f</div>
+                            <div class="formula-desc">Period (T) = time for one complete cycle. At 60 Hz: T = 1/60 = 16.67 ms.</div>
+                        </div>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> Period and frequency are reciprocals. If one goes up, the other goes down. Double the frequency = half the period.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Review -->
+                <div class="quick-review">
+                    <h4>Quick Review &mdash; Module 1</h4>
+                    <ul>
+                        <li>AC is generated by rotating a conductor in a magnetic field, producing a sine wave.</li>
+                        <li>One cycle = 360&deg;. Frequency formula: f = (P &times; N) / 120.</li>
+                        <li>RMS = 0.707 &times; Peak &mdash; this is what meters measure ("707 like a Boeing jet").</li>
+                        <li>Instantaneous value: e = Em &times; sin(&theta;). Period: T = 1/f.</li>
+                        <li>At 60 Hz, one cycle takes 16.67 ms.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================
+             MODULE 2: Properties of Inductors and Capacitors
+             ================================================ -->
+        <div class="section-block" id="mod2">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span class="section-number">2</span>
+                <span class="section-title">Properties of Inductors and Capacitors</span>
+                <span class="section-toggle">&#9660;</span>
+            </div>
+            <div class="section-body">
+
+                <!-- Inductors -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Inductors (Coils) &mdash; The Basics</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>An inductor is simply wire wound around a core (often iron). When current flows through it, it creates a <strong>magnetic field</strong> that stores energy. The key property is <strong>inductance (L)</strong>, measured in Henrys (H).</p>
+                        <p>Think of an inductor like a heavy flywheel &mdash; it resists changes in current, just like a flywheel resists changes in rotational speed. Once spinning (current flowing), it wants to keep going.</p>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> Inductors are everywhere &mdash; motor windings, transformer coils, chokes in power supplies. Anywhere you see coiled wire, there's inductance at work.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faraday's and Lenz's Laws -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Faraday's Law &amp; Lenz's Law</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p><strong>Faraday's Law:</strong> A changing magnetic field induces a voltage (EMF) in a conductor. More turns of wire = more induced voltage. Faster change = more voltage.</p>
+                        <p><strong>Lenz's Law:</strong> The induced EMF always <strong>OPPOSES</strong> the change that created it. This is nature's "pushback" &mdash; it resists change!</p>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> Think of <strong>Lenz</strong> like a stubborn bouncer &mdash; whatever change you try to make, Lenz pushes back. Increasing current? The induced voltage opposes it. Decreasing current? It tries to keep it going.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Self vs Mutual Induction -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Self-Induction vs. Mutual Induction</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p><strong>Self-Induction:</strong> One coil inducing EMF in <em>itself</em>. When current changes in a coil, the changing magnetic field induces a voltage right back in the same coil (counter-EMF).</p>
+                        <p><strong>Mutual Induction:</strong> One coil inducing EMF in <em>another</em> nearby coil. This is exactly how <strong>transformers</strong> work! The primary coil's changing field induces voltage in the secondary coil.</p>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> <strong>Counter-EMF (CEMF)</strong> is the result of self-induction. When current through an inductor changes, the inductor "fights back" with an opposing voltage. This is why motors draw huge current at startup (no CEMF yet) and less at full speed.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inductance Factors -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Factors Affecting Inductance</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>Four factors determine how much inductance a coil has:</p>
+                        <ul>
+                            <li><strong>More turns</strong> &#8593; = MORE inductance</li>
+                            <li><strong>Higher permeability</strong> (core material) &#8593; = MORE inductance</li>
+                            <li><strong>Larger cross-sectional area</strong> &#8593; = MORE inductance</li>
+                            <li><strong>Shorter length</strong> &#8595; = MORE inductance</li>
+                        </ul>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick: "TPAL"</strong> &mdash; <strong>T</strong>urns up, <strong>P</strong>ermeability up, <strong>A</strong>rea up, <strong>L</strong>ength down = more inductance. Think "The Pals Always Love inductance."</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capacitor Types -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Capacitor Types</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>Capacitors store energy in an <strong>electric field</strong> between two conductive plates separated by an insulator (dielectric). Different dielectric materials create different types:</p>
+                        <div class="comparison-table-wrap">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr><th>Type</th><th>Best For</th><th>Notes</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Oil-filled</td><td>Big power applications</td><td>Power factor correction, high voltage</td></tr>
+                                    <tr><td>Plastic film</td><td>General purpose</td><td>Reliable, wide range of values</td></tr>
+                                    <tr><td>Mica</td><td>Precision circuits</td><td>Very stable, low loss</td></tr>
+                                    <tr><td>Ceramic</td><td>Small, high frequency</td><td>Compact, cheap, found everywhere</td></tr>
+                                    <tr><td>Electrolytic</td><td>High capacitance</td><td>Polarized! Watch the +/- or BOOM</td></tr>
+                                    <tr><td>Tantalum</td><td>Compact, stable</td><td>Also polarized, more reliable than electrolytic</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tip-box amber">
+                            <span class="tip-icon">&#9888;&#65039;</span>
+                            <span class="tip-text"><strong>Warning:</strong> Electrolytic and tantalum capacitors are <strong>polarized</strong> &mdash; connect them backwards and they can vent, smoke, or even explode. Always check the markings!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capacitance Factors -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Factors Affecting Capacitance</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <ul>
+                            <li><strong>Higher dielectric constant</strong> (K) &#8593; = MORE capacitance</li>
+                            <li><strong>Larger plate area</strong> &#8593; = MORE capacitance</li>
+                            <li><strong>Smaller distance</strong> between plates &#8595; = MORE capacitance</li>
+                        </ul>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> Think of capacitance like catching rain. Better bucket material (dielectric), wider opening (plate area), and shallower bucket (distance) all catch more "charge rain."</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-review">
+                    <h4>Quick Review &mdash; Module 2</h4>
+                    <ul>
+                        <li>Inductors store energy in magnetic fields; capacitors store energy in electric fields.</li>
+                        <li>Faraday: changing magnetic field = induced voltage. Lenz: that voltage always opposes the change.</li>
+                        <li>Self-induction = same coil. Mutual induction = different coil (transformers!).</li>
+                        <li>Inductance factors: TPAL (Turns, Permeability, Area up; Length down).</li>
+                        <li>Electrolytic/tantalum caps are polarized &mdash; never reverse them!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================
+             MODULE 3: Inductors & Capacitors in Circuits
+             ================================================ -->
+        <div class="section-block" id="mod3">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span class="section-number">3</span>
+                <span class="section-title">Inductors &amp; Capacitors in Circuits</span>
+                <span class="section-toggle">&#9660;</span>
+            </div>
+            <div class="section-body">
+
+                <!-- Time Constants -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Time Constants &amp; the 63.2% Rule</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <div class="formula-box">
+                            <div class="formula">Inductive: &tau; = L / R</div>
+                            <div class="formula-desc">&tau; (tau) in seconds &nbsp;|&nbsp; L in Henrys &nbsp;|&nbsp; R in Ohms</div>
+                        </div>
+                        <div class="formula-box">
+                            <div class="formula">Capacitive: &tau; = R &times; C</div>
+                            <div class="formula-desc">&tau; in seconds &nbsp;|&nbsp; R in Ohms &nbsp;|&nbsp; C in Farads</div>
+                        </div>
+                        <p>Every time constant, the circuit gets <strong>63.2%</strong> closer to its final value. After <strong>5 time constants (5&tau;)</strong>, you're at 99.3% &mdash; essentially fully charged or discharged.</p>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick: "5 and alive"</strong> &mdash; after 5 time constants, the circuit has reached steady state and everything is "alive and stable." Think of it like filling a bathtub: each &tau; fills 63.2% of what's left.</span>
+                        </div>
+                        <div class="tip-box amber">
+                            <span class="tip-icon">&#9888;&#65039;</span>
+                            <span class="tip-text"><strong>Common Mistake:</strong> Don't confuse L/R (inductive) with RC (capacitive). An easy way: in the inductive formula, L is on top because inductors oppose change in current (they "push up" against it).</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discharge Resistors & Electric Charge -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Discharge Resistors &amp; Electric Charge</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p><strong>Discharge Resistors:</strong> When current through an inductor is suddenly interrupted, the collapsing magnetic field can generate dangerously high voltage spikes (remember, Lenz's Law fights the change). A discharge resistor provides a safe path for the energy to dissipate.</p>
+                        <div class="formula-box">
+                            <div class="formula">Q = I &times; t</div>
+                            <div class="formula-desc">Charge (Coulombs) = Current (Amps) &times; Time (seconds). One coulomb = 6.25 &times; 10&sup1;&sup8; electrons!</div>
+                        </div>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> In real circuits, you'll see diodes across relay coils serving the same purpose as discharge resistors &mdash; they're called "flyback diodes" and they clamp the voltage spike.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inductive & Capacitive Reactance -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Inductive &amp; Capacitive Reactance</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <div class="formula-box">
+                            <div class="formula">X<sub>L</sub> = 2&pi;fL</div>
+                            <div class="formula-desc">Inductive reactance increases with frequency. Inductors block high-frequency signals.</div>
+                        </div>
+                        <div class="formula-box">
+                            <div class="formula">X<sub>C</sub> = 1 / (2&pi;fC)</div>
+                            <div class="formula-desc">Capacitive reactance decreases with frequency. Capacitors pass high-frequency signals.</div>
+                        </div>
+                        <p>Reactance is like resistance, but for AC &mdash; measured in Ohms. The key insight: <strong>inductors and capacitors behave oppositely with frequency</strong>.</p>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> This is why inductors are used as "chokes" (block AC noise) and capacitors as "bypass" or "coupling" caps (pass AC signals). They're frequency-selective gatekeepers!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ELI the ICE man -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>ELI the ICE Man &amp; Phasor Diagrams</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p style="text-align:center; font-size: 1.8rem; font-weight: 800; letter-spacing: 0.1em; margin: 16px 0;">
+                            <span style="color: var(--accent);">ELI</span> the <span style="color: var(--accent2);">ICE</span> man
+                        </p>
+                        <p><strong>ELI:</strong> In an inductor (<strong>L</strong>), <strong>E</strong>MF (voltage) leads <strong>I</strong> (current) by 90&deg;.</p>
+                        <p><strong>ICE:</strong> In a capacitor (<strong>C</strong>), <strong>I</strong> (current) leads <strong>E</strong>MF (voltage) by 90&deg;.</p>
+                        <p><strong>Phasor diagrams</strong> show voltage and current as rotating vectors. In purely inductive circuits, the voltage phasor is 90&deg; ahead of current. In purely capacitive circuits, current is 90&deg; ahead of voltage.</p>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> <strong>"ELI the ICE man"</strong> is THE most important mnemonic in AC circuits. Tattoo it on your brain. E before I in inductors (ELI), I before E in capacitors (ICE). The letter in the middle (L or C) tells you the component.</span>
+                        </div>
+                        <div class="tip-box amber">
+                            <span class="tip-icon">&#9888;&#65039;</span>
+                            <span class="tip-text"><strong>Common Mistake:</strong> The 90&deg; phase difference only applies to PURE inductors and capacitors. In real circuits with resistance, the angle will be somewhere between 0&deg; and 90&deg;.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-review">
+                    <h4>Quick Review &mdash; Module 3</h4>
+                    <ul>
+                        <li>Inductive time constant: &tau; = L/R. Capacitive: &tau; = RC. Both use the 63.2% rule. 5&tau; = steady state.</li>
+                        <li>Discharge resistors prevent dangerous voltage spikes from inductors.</li>
+                        <li>X<sub>L</sub> = 2&pi;fL (up with frequency). X<sub>C</sub> = 1/(2&pi;fC) (down with frequency).</li>
+                        <li>ELI the ICE man: voltage leads current in inductors, current leads voltage in capacitors.</li>
+                        <li>Q = I &times; t for electric charge in Coulombs.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================
+             MODULE 4: Relays and Contactors
+             ================================================ -->
+        <div class="section-block" id="mod4">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span class="section-number">4</span>
+                <span class="section-title">Relays and Contactors</span>
+                <span class="section-toggle">&#9660;</span>
+            </div>
+            <div class="section-body">
+
+                <!-- What's the Difference -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Relays vs. Contactors</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>Both use an electromagnetic coil to move contacts, but they serve different weight classes:</p>
+                        <ul>
+                            <li><strong>Relays</strong> = smaller loads (control circuits, lighting, small equipment)</li>
+                            <li><strong>Contactors</strong> = bigger loads (motors, heaters, high-current equipment)</li>
+                        </ul>
+                        <p>The basic parts are the same: <strong>Coil</strong> (electromagnet), <strong>Core</strong> (iron), <strong>Armature</strong> (the moving piece), and <strong>Contacts</strong> (switching points).</p>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> Think of a relay as a light switch operated by a magnet. Energize the coil = magnet pulls armature = contacts change state. De-energize = spring pushes it back.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AC vs DC Coils -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>AC vs. DC Coils</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>AC coils have special needs that DC coils don't:</p>
+                        <ul>
+                            <li><strong>Laminated cores</strong> &mdash; thin iron layers to reduce eddy currents (circulating currents that waste energy and generate heat)</li>
+                            <li><strong>Shading coils</strong> &mdash; small copper rings on the pole face that prevent 120 Hz buzz/chatter (the magnetic field goes to zero 120 times per second on 60 Hz AC)</li>
+                        </ul>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick: "AC = Anti-Chatter measures needed."</strong> If you hear a relay buzzing like a bee, the shading coil is probably broken or it's an AC coil problem.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Forms -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Contact Types &amp; Forms</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p><strong>Contact Materials:</strong> Silver (most common, low resistance), Copper (heavy duty), Cadmium oxide (arc resistant).</p>
+                        <div class="comparison-table-wrap">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr><th>Form</th><th>Type</th><th>Memory Aid</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Form A</td><td>NO (Normally Open)</td><td>"A" for "Apart"</td></tr>
+                                    <tr><td>Form B</td><td>NC (Normally Closed)</td><td>"B" for "Bridged"</td></tr>
+                                    <tr><td>Form C</td><td>Changeover (SPDT)</td><td>"C" for "Changeover" (break-before-make)</td></tr>
+                                    <tr><td>Form X</td><td>NO, make-before-break</td><td>"X" for "eXtra overlap"</td></tr>
+                                    <tr><td>Form Y</td><td>NC, break-before-make</td><td>"Y" for "whY break first"</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> <strong>"A = Apart, B = Bridged"</strong> &mdash; in Form A contacts, the contacts are apart (open) normally. In Form B, they're bridged (closed) normally. This is the one you'll use most!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seal-in and Drop-out -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Seal-in &amp; Drop-out Voltage + Bridge Contacts</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <ul>
+                            <li><strong>Seal-in Voltage:</strong> ~85% of rated voltage is needed to hold the armature in once it's been pulled in. (It takes less to hold than to pull in!)</li>
+                            <li><strong>Drop-out Voltage:</strong> ~50% of rated voltage &mdash; below this threshold, the spring wins and the armature releases.</li>
+                        </ul>
+                        <p><strong>Bridge Contacts:</strong> Two contact points bridge across a gap to make the circuit. This double-contact design is more reliable and can handle higher currents than single-point contacts.</p>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> Voltage fluctuations between 50% and 85% can cause relays to "flutter" &mdash; repeatedly picking up and dropping out. This is called chattering and it destroys contacts fast.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-review">
+                    <h4>Quick Review &mdash; Module 4</h4>
+                    <ul>
+                        <li>Relays = small loads, Contactors = big loads. Same principle: electromagnetic coil moves contacts.</li>
+                        <li>AC coils need laminated cores (eddy currents) and shading coils (anti-chatter).</li>
+                        <li>Form A = NO (Apart), Form B = NC (Bridged), Form C = Changeover.</li>
+                        <li>Seal-in ~85% rated voltage; Drop-out ~50% rated voltage.</li>
+                        <li>Bridge contacts use two contact points for reliability.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================
+             MODULE 5: Timers and Smart Relays
+             ================================================ -->
+        <div class="section-block" id="mod5">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span class="section-number">5</span>
+                <span class="section-title">Timers and Smart Relays</span>
+                <span class="section-toggle">&#9660;</span>
+            </div>
+            <div class="section-body">
+
+                <!-- Timer Types -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Types of Timing Devices</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <ul>
+                            <li><strong>Spring-wound timers</strong> &mdash; Simple clock mechanism. Wind it up, it counts down. Think: kitchen egg timer.</li>
+                            <li><strong>Time switches</strong> &mdash; Scheduled on/off at specific times. Think: outdoor lighting timer.</li>
+                            <li><strong>Timing relays</strong> &mdash; Circuit-controlled. Activated by other circuit events.</li>
+                        </ul>
+                        <p><strong>Control methods:</strong> Pneumatic (uses air), Dashpot (uses fluid), Electronic (uses RC circuits or microcontrollers). Electronic is most common today because it's the most precise and adjustable.</p>
+                    </div>
+                </div>
+
+                <!-- TDOE -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>TDOE (On-Delay Timer)</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p><strong>Time Delay On Energization</strong> = On-Delay. When the coil is energized, a timer starts. Contacts change state <strong>AFTER</strong> the delay. When de-energized, contacts revert <strong>instantly</strong>.</p>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick: "TDOE = Turn on, Delay, then Operate contacts, Everything resets instantly."</strong> Think of it like a microwave &mdash; you press start, it waits, then DING. Open the door and everything stops instantly.</span>
+                        </div>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Real-world example:</strong> Motor soft-start sequences. Energize the circuit, wait 5 seconds for oil pressure to build, THEN close the motor contactor.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TDOD -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>TDOD (Off-Delay Timer)</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p><strong>Time Delay On De-Energization</strong> = Off-Delay. Contacts change <strong>instantly</strong> when coil is energized. When de-energized, the timer starts and contacts stay changed for the set time BEFORE reverting.</p>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick: "TDOD = De-energize starts the clock."</strong> Think of a bathroom exhaust fan &mdash; flip the switch off, but the fan keeps running for 5 more minutes to clear the air.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Timer Modes -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Interval, One-Shot &amp; Repeat Cycle</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <ul>
+                            <li><strong>Interval Timing:</strong> Contacts change for a set time, then revert. Like a stairway light timer &mdash; press the button, lights come on for 3 minutes, then automatically turn off.</li>
+                            <li><strong>One-Shot Timing:</strong> Like interval timing, but triggered by an external signal rather than the coil itself. A single pulse triggers a timed output.</li>
+                            <li><strong>Repeat Cycle:</strong> Contacts cycle on/off continuously.
+                                <ul>
+                                    <li><strong>Symmetrical</strong> = same on/off time (e.g., 5s on, 5s off)</li>
+                                    <li><strong>Non-symmetrical</strong> = different on/off time (e.g., 2s on, 8s off)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Real-world example:</strong> Repeat cycle timers are used in warning beacon lights (flash on/off) and traffic signals.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Relays -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Smart Relays (Mini PLCs)</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>Smart relays are essentially <strong>mini PLCs</strong> (Programmable Logic Controllers). They can be programmed using function block diagrams or ladder logic and can perform ALL timing functions plus scheduling.</p>
+                        <p><strong>Common applications:</strong></p>
+                        <ul>
+                            <li>Car washes (sequencing wash/rinse/dry cycles)</li>
+                            <li>Automatic door openers</li>
+                            <li>Lighting management systems</li>
+                            <li>Access control systems</li>
+                            <li>HVAC control (heating/cooling sequences)</li>
+                        </ul>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> Smart relays have replaced banks of mechanical timers in many applications. One smart relay can do the job of 10+ individual timing relays, and you can reprogram it without rewiring!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-review">
+                    <h4>Quick Review &mdash; Module 5</h4>
+                    <ul>
+                        <li>TDOE (On-Delay): energize &rarr; wait &rarr; contacts change. De-energize &rarr; instant reset.</li>
+                        <li>TDOD (Off-Delay): energize &rarr; instant change. De-energize &rarr; wait &rarr; contacts revert.</li>
+                        <li>Interval = timed output. One-Shot = triggered timed output. Repeat Cycle = continuous on/off.</li>
+                        <li>Smart relays = mini PLCs that replace multiple timing relays with one programmable unit.</li>
+                        <li>Three control methods: Pneumatic (air), Dashpot (fluid), Electronic (circuits).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================
+             MODULE 6: Pilot & Overcurrent Devices
+             ================================================ -->
+        <div class="section-block" id="mod6">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span class="section-number">6</span>
+                <span class="section-title">Pilot &amp; Overcurrent Devices</span>
+                <span class="section-toggle">&#9660;</span>
+            </div>
+            <div class="section-body">
+
+                <!-- Stop/Start Circuit -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Stop/Start Circuits &amp; Holding Contacts</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>The fundamental motor control circuit:</p>
+                        <ul>
+                            <li><strong>Stop button</strong> = NC (normally closed), wired in <strong>SERIES</strong></li>
+                            <li><strong>Start button</strong> = NO (normally open), wired in <strong>PARALLEL</strong> with holding contacts</li>
+                        </ul>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick: "Stop SERIES, Start PARALLEL."</strong> Stops must ALL agree to keep running (series = all must be closed). Any start works on its own (parallel = any one can energize). This is a safety design &mdash; any stop button can stop the motor.</span>
+                        </div>
+                        <p><strong>Holding contacts</strong> (also called seal-in or maintaining contacts) are wired in parallel with the start button. Once the start button is pressed and the coil energizes, the holding contacts close and keep the coil energized even after you release the start button.</p>
+                        <p><strong>Multiple stations:</strong> Additional stops &rarr; add in SERIES. Additional starts &rarr; add in PARALLEL.</p>
+                        <div class="tip-box amber">
+                            <span class="tip-icon">&#9888;&#65039;</span>
+                            <span class="tip-text"><strong>Common Mistake:</strong> Don't confuse <strong>maintained</strong> (toggle switch, stays put) with <strong>momentary</strong> (push button, springs back). Motor stop/start circuits use momentary buttons with holding contacts.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automatic Pilot Devices -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Automatic Pilot Devices</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <p>These devices detect changes in the environment and send signals to control circuits:</p>
+                        <p><strong>Temperature Sensors:</strong></p>
+                        <div class="comparison-table-wrap">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr><th>Sensor</th><th>Method</th><th>Key Feature</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Thermocouple</td><td>Voltage (Seebeck effect)</td><td>Wide range, rugged</td></tr>
+                                    <tr><td>RTD</td><td>Resistance (+temp coeff)</td><td>Most accurate, linear</td></tr>
+                                    <tr><td>Thermistor</td><td>Semiconductor (-temp coeff)</td><td>Very sensitive, narrow range</td></tr>
+                                    <tr><td>Infrared</td><td>Radiated energy</td><td>Non-contact measurement</td></tr>
+                                    <tr><td>Bimetallic</td><td>Mechanical deflection</td><td>Simple, used in thermostats</td></tr>
+                                    <tr><td>Silicon diode</td><td>Forward voltage change</td><td>Cryogenic temperatures</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tip-box blue">
+                            <span class="tip-icon">&#128161;</span>
+                            <span class="tip-text"><strong>Pro Tip:</strong> RTD = positive temperature coefficient (resistance goes UP with temperature). Thermistor = negative temperature coefficient (resistance goes DOWN with temperature). They're opposites!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proximity Switches -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Proximity Switches</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <div class="comparison-table-wrap">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr><th>Type</th><th>Detects</th><th>How It Works</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Magnetic</td><td>Magnets only</td><td>Reed switch or Hall effect sensor</td></tr>
+                                    <tr><td>Inductive</td><td>Metal objects</td><td>Eddy current change in oscillating field</td></tr>
+                                    <tr><td>Capacitive</td><td>Anything (even through walls!)</td><td>Change in capacitance field</td></tr>
+                                    <tr><td>Photoelectric</td><td>Light/shadow</td><td>Light beam interrupted or reflected</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick:</strong> From most specific to least specific: <strong>Magnetic</strong> (only magnets) &rarr; <strong>Inductive</strong> (only metal) &rarr; <strong>Capacitive</strong> (almost anything) &rarr; <strong>Photoelectric</strong> (anything that blocks light). Think "<strong>MICP</strong> = Most to least picky."</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overcurrent -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Overcurrent: Short Circuits vs. Overloads</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <ul>
+                            <li><strong>Short Circuits:</strong> Very high current, very fast. A low-impedance fault path lets current skyrocket. Think: two wires touching &mdash; BOOM.</li>
+                            <li><strong>Overloads:</strong> Moderate excess current, builds over time. Like running too many things on one circuit. The wires slowly heat up beyond their rating.</li>
+                        </ul>
+                        <div class="tip-box amber">
+                            <span class="tip-icon">&#9888;&#65039;</span>
+                            <span class="tip-text"><strong>Warning:</strong> Short circuits need to be cleared in milliseconds (before equipment melts). Overloads can be tolerated briefly (motors draw 6x current at startup). This is why we have different protection devices for each.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fuses -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Fuse Types</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <ul>
+                            <li><strong>Non-time-delay / Single-element:</strong> Blows fast on any overcurrent. No tolerance for temporary surges. Good for circuits that don't have inrush current (like lighting).</li>
+                            <li><strong>Time-delay / Dual-element:</strong> Has TWO protection mechanisms:
+                                <ul>
+                                    <li>Thermal cutout for sustained overloads (slow, gives motors time to start)</li>
+                                    <li>Fuse link for short circuits (fast, clears in milliseconds)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <div class="tip-box purple">
+                            <span class="tip-icon">&#129504;</span>
+                            <span class="tip-text"><strong>Memory Trick: "Dual element = Dual protection."</strong> One element handles overloads (slow), the other handles shorts (fast). Single element fuses only have one trick &mdash; blow fast for everything.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Circuit Breakers -->
+                <div class="topic-card">
+                    <div class="topic-header" onclick="toggleTopic(this)">
+                        <h3>Circuit Breaker Types &amp; Trip-Free</h3>
+                        <span class="topic-chevron">&#9660;</span>
+                    </div>
+                    <div class="topic-body">
+                        <ul>
+                            <li><strong>Instantaneous-trip (Magnetic only):</strong> Uses an electromagnet only. Trips instantly on short circuits. No overload protection &mdash; used with separate overload relays.</li>
+                            <li><strong>Inverse-time / Thermal-magnetic:</strong> The standard breaker in your panel. Has BOTH:
+                                <ul>
+                                    <li><strong>Bimetallic strip</strong> for overloads (heats up and bends slowly)</li>
+                                    <li><strong>Electromagnet</strong> for short circuits (trips instantly)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p><strong>Trip-Free:</strong> A breaker WILL trip even if someone holds the handle in the ON position. This is a critical safety requirement per <strong>CEC Rule 14-300</strong>. You can't defeat the protection by holding the handle!</p>
+                        <div class="tip-box green">
+                            <span class="tip-icon">&#9889;</span>
+                            <span class="tip-text"><strong>Key Formula Factors for Fault Current:</strong> kVA rating of transformer (higher = more fault current), secondary voltage (lower = more fault current), percent impedance %IZ (lower = more fault current). Remember: <strong>closer to the source = higher fault current.</strong></span>
+                        </div>
+                        <div class="tip-box amber">
+                            <span class="tip-icon">&#9888;&#65039;</span>
+                            <span class="tip-text"><strong>Common Mistake:</strong> Don't assume a breaker protects against overloads AND short circuits. Instantaneous-trip breakers only handle shorts! You need separate overload protection (like heaters in a motor starter).</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-review">
+                    <h4>Quick Review &mdash; Module 6</h4>
+                    <ul>
+                        <li>Stop = NC in series. Start = NO in parallel. Holding contacts seal in the coil.</li>
+                        <li>RTD = +temp coefficient. Thermistor = -temp coefficient. Infrared = non-contact.</li>
+                        <li>Proximity detection specificity: Magnetic &gt; Inductive &gt; Capacitive &gt; Photoelectric.</li>
+                        <li>Dual-element fuses = dual protection (thermal for overloads, fuse link for shorts).</li>
+                        <li>Trip-free breakers cannot be held on during a fault (CEC Rule 14-300).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Mobile Sidebar Toggle -->
+<button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">&#9776;</button>
+
+<!-- ============================================
+     JavaScript
+     ============================================ -->
+<script>
+// Toggle module sections (accordion)
+function toggleSection(header) {
+    const block = header.parentElement;
+    block.classList.toggle('collapsed');
+}
+
+// Toggle individual topic cards
+function toggleTopic(header) {
+    const card = header.parentElement;
+    card.classList.toggle('open');
+}
+
+// Expand / Collapse all sections
+function expandAllSections() {
+    document.querySelectorAll('.section-block').forEach(b => b.classList.remove('collapsed'));
+}
+function collapseAllSections() {
+    document.querySelectorAll('.section-block').forEach(b => b.classList.add('collapsed'));
+}
+
+// Expand / Collapse all topic cards
+function expandAllTopics() {
+    document.querySelectorAll('.topic-card').forEach(c => c.classList.add('open'));
+}
+function collapseAllTopics() {
+    document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('open'));
+}
+
+// Mobile sidebar
+function toggleSidebar() {
+    document.getElementById('tocSidebar').classList.toggle('mobile-open');
+}
+
+// Close mobile sidebar when a link is clicked
+document.querySelectorAll('.toc-list a').forEach(link => {
+    link.addEventListener('click', () => {
+        document.getElementById('tocSidebar').classList.remove('mobile-open');
+    });
+});
+
+// Sidebar active state on scroll
+const tocLinks = document.querySelectorAll('.toc-list a[href^="#"]');
+const sections = document.querySelectorAll('.section-block[id]');
+
+function updateActiveToc() {
+    let current = '';
+    sections.forEach(section => {
+        const top = section.getBoundingClientRect().top;
+        if (top <= 120) current = section.id;
+    });
+    tocLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+window.addEventListener('scroll', updateActiveToc);
+updateActiveToc();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

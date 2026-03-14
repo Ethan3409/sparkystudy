@@ -1,0 +1,99 @@
+=== PAGE 1 ===
+Electrician Apprenticeship 2" Year
+
+Alessandro Volta (1745 - 1827) Ba
+Volta was the developer of the voltaic pile, the first electric battery. By determining zinc and silver were the most
+
+for generation of a sustained electrical current. He also
+effective pair to produce electricity, he found the first method ;
+
+invented the ebtuoahond (a device that produced a static electric charge), an electric condenser and the voltaic cell,
+plus he discovered methane. Napoleon made him a count. The Volt was named after him, and his likeness was placed
+on the now-obsolete 10000 Italian Lire banknote.
+
+CONTENTS: August 2025 10351-40
+Module Title Module Title
+
+1 |030201a 02 Fundamentals of Alternating Current 32/030205a 02 _ Electric Vehicle Charging
+
+2 |030201b 02 Properties of inductors and Capacitors 33/030205b 02 __ Electric Space Heating and Cooling
+
+3 1030201c 02 Inductors and Capacitors in Circuits 34/030205¢ 02 Service Ampacity for Apartments and Similar Buildings
+
+Services and Service Equipment for Apartments and
+
+4 |030201d 02 Principles of AC Circuits 35]030205d 02 Similar Buildings
+
+5 |030201e 02 Power Relationships 36/030205e 02 Capacitor Bank Installations
+
+6 |030202a 02 Series AC Circuits 37/030205f 02 Pools, Mobile Homes and Temporary Wiring
+
+7 1030202b 02 Series RLC Circuits 38]030205g 02 Electrical Installations in Patient Care Areas
+
+8 |030202c 02 Parallel ac Circuits 39]/030205h 02 Class 1 and Class 2 Circuits
+
+9 ]030202d 02 Parallel RLC Circuits 40]030205i 02 Specifications
+
+10 030202e 02 Single Phase Motors 41/030205j 02 Drawings and Plans
+
+11 ]030202f —02_Single Phase Power Factor Correction
+
+13 }10351-40 8 Mod 1_AC Properties Workbook 1 43]10351.40 (\“f Mod 13_Code Workbook 2024
+14 |10351-40  “£ Mod2_AC Properties Workbook 2
+e 15 |10351-40 “8 Mod 3. Series RLC Workbook
+ug Mov Parallel RLC, and Single
+316 fioasi-40 oo Dea eairce ee
+17 |10351-40 /Y8 Mod 14_AC Fundamentals Lab
+18 |10351-40 “8 Mod 15, Series RLC Circuits Lab
+19 |10351-40 YE Mod 16 Parallel RLC Circuits Lab
+20 |10351-40 8 Mod 17_Single Phase Motors Lab
+
+Electrical Systems
+
+CONTROLS & SWITCHING (Csc)
+Module Title
+
+HEATING AND COOLING
+
+Title
+Heating and Cooling Systems.
+45/030203b 02 _Forced-Alr Heating Systems
+
+Module
+44]030203a 02
+
+21 030204a = 02_-—Relays and Contactors.
+
+22 1030204 02_Timers and Smart Relays
+23 |303204¢ 02. Pilot and Overcurrent Devices 46]030203¢ 02 Cooling Systems
+
+24 1030204d —-02_Drawing and Diagram Conversion 47}030203d 02 _ HVAC Rooftop Units
+
+25 1030204e 02 Motor Starters 48/030203e 02 Basic Hot Water Heating Systems
+26 |030204f 02. Single Motor Control 49]030203F 02 Heat Trace
+
+27 1030204g 02_Reversing Motor Starters
+28 Aug
+
+52/10351-40 90%, Mod 05_Forced Air Furnace LAB
+
+Au
+53]10351-40 Mod 06_High-Efficient Furnaces LAB
+
+Aug
+29 /10351-40 7, Mod 40 Timers and smart Relays
+
+Aug
+| 30 J20351-40 Mod 11_Magnetic Motor Starters
+
+‘Aug
+54]10351-40 Mod 07_Cooling systems LAB
+st hroasiso Ae es 12_Reversing Magnetic Motor < he
+arias 55]10351-40
+
+202s Mod 08 Air Handling Unit LAB
+56]10351-49 Aue
+a aso
+
+Mod 09_Hot Water Heating Systems LAB
+

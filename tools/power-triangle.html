@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Triangle Visualizer - SparkStudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --primary-dark: #d97706;
+            --secondary: #e6edf3;
+            --text: #e6edf3;
+            --text-light: #8b949e;
+            --bg: #161b22;
+            --bg-alt: #0d1117;
+            --border: #30363d;
+            --success: #10b981;
+            --info: #58a6ff;
+            --purple: #a78bfa;
+            --red: #ef4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.4);
+            --transition: all 0.2s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: var(--bg-alt);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* Thin scrollbars */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #30363d transparent;
+        }
+        *::-webkit-scrollbar { width: 6px; height: 6px; }
+        *::-webkit-scrollbar-track { background: transparent; }
+        *::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+        /* ---- NAVBAR ---- */
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between; height: 64px;
+        }
+        .nav-logo {
+            font-size: 1.4rem; font-weight: 800; color: var(--text);
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        /* ---- PAGE ---- */
+        .page {
+            padding-top: 64px;
+            background: var(--bg-alt);
+            min-height: 100vh;
+        }
+
+        /* ---- TOOL HEADER ---- */
+        .tool-header {
+            text-align: center;
+            padding: 48px 24px 32px;
+        }
+        .tool-header-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 16px;
+            background: rgba(245,158,11,0.1); color: var(--primary);
+            border-radius: 50px; font-size: 0.82rem; font-weight: 600;
+            margin-bottom: 16px; border: 1px solid rgba(245,158,11,0.25);
+        }
+        .tool-header h1 {
+            font-size: 2.2rem; font-weight: 800; color: var(--text);
+            margin-bottom: 10px; line-height: 1.2;
+        }
+        .tool-header p {
+            font-size: 1.05rem; color: var(--text-light);
+            max-width: 520px; margin: 0 auto;
+        }
+
+        /* ---- MAIN LAYOUT ---- */
+        .tool-main {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ---- CANVAS CARD ---- */
+        .canvas-card {
+            background: var(--bg); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .canvas-card canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* ---- READOUT ROW ---- */
+        .readout-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .readout-card {
+            flex: 1;
+            min-width: 120px;
+            background: var(--bg-alt);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            border-top: 3px solid var(--border);
+            transition: var(--transition);
+        }
+        .readout-card.green  { border-top-color: var(--success); }
+        .readout-card.blue   { border-top-color: var(--info); }
+        .readout-card.amber  { border-top-color: var(--primary); }
+        .readout-card.purple { border-top-color: var(--purple); }
+        .readout-card.gray   { border-top-color: #8b949e; }
+
+        .readout-label {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--text-light); margin-bottom: 6px;
+        }
+        .readout-card.green  .readout-label { color: var(--success); }
+        .readout-card.blue   .readout-label { color: var(--info); }
+        .readout-card.amber  .readout-label { color: var(--primary); }
+        .readout-card.purple .readout-label { color: var(--purple); }
+
+        .readout-value {
+            font-size: 1.65rem; font-weight: 800; line-height: 1;
+            color: var(--text); margin-bottom: 4px;
+        }
+        .readout-card.green  .readout-value { color: var(--success); }
+        .readout-card.blue   .readout-value { color: var(--info); }
+        .readout-card.amber  .readout-value { color: var(--primary); }
+        .readout-card.purple .readout-value { color: var(--purple); }
+        .readout-card.gray   .readout-value { color: #8b949e; }
+
+        .readout-unit {
+            font-size: 0.78rem; color: var(--text-light); font-weight: 500;
+        }
+
+        /* ---- CONTROLS CARD ---- */
+        .controls-card {
+            background: var(--bg); border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* ---- MODE TABS ---- */
+        .mode-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-alt);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .mode-tabs::-webkit-scrollbar { display: none; }
+        .mode-tab {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-light);
+            background: var(--bg-alt);
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .mode-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+        .mode-tab.active {
+            color: var(--text);
+            background: var(--bg);
+            border-bottom-color: var(--primary);
+            box-shadow: inset 0 -2px 0 var(--primary);
+        }
+
+        /* ---- SLIDER GROUP ---- */
+        .slider-section {
+            padding: 24px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .slider-group { display: flex; flex-direction: column; gap: 10px; }
+
+        .slider-header {
+            display: flex; justify-content: space-between; align-items: baseline;
+        }
+        .slider-name {
+            font-size: 0.88rem; font-weight: 700; color: var(--text);
+        }
+        .slider-reading {
+            font-size: 1.05rem; font-weight: 800;
+        }
+        .slider-reading.green  { color: var(--success); }
+        .slider-reading.blue   { color: var(--info); }
+        .slider-reading.amber  { color: var(--primary); }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"].green::-webkit-slider-runnable-track  { background: rgba(16,185,129,0.15); }
+        input[type="range"].blue::-webkit-slider-runnable-track   { background: rgba(88,166,255,0.15); }
+        input[type="range"].amber::-webkit-slider-runnable-track  { background: rgba(245,158,11,0.15); }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 2px solid #0d1117;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            transition: background 0.2s, transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--primary-dark);
+            transform: scale(1.15);
+        }
+        input[type="range"].green::-webkit-slider-thumb  { background: var(--success); }
+        input[type="range"].green::-webkit-slider-thumb:hover { background: #059669; }
+        input[type="range"].blue::-webkit-slider-thumb   { background: var(--info); }
+        input[type="range"].blue::-webkit-slider-thumb:hover { background: #3b8ee8; }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 2px solid #0d1117;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+        input[type="range"].green::-moz-range-thumb { background: var(--success); }
+        input[type="range"].blue::-moz-range-thumb  { background: var(--info); }
+
+        .slider-ticks {
+            display: flex; justify-content: space-between;
+            font-size: 0.7rem; color: var(--text-light); margin-top: -4px;
+        }
+
+        /* ---- FORMULA NOTE ---- */
+        .formula-note {
+            margin: 0 28px 20px;
+            padding: 12px 16px;
+            background: rgba(245,158,11,0.08);
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(245,158,11,0.15);
+            font-size: 0.82rem;
+            color: var(--primary);
+            display: flex; gap: 10px; align-items: flex-start;
+        }
+        .formula-note-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+        .formula-note code {
+            font-family: 'Courier New', monospace;
+            color: var(--primary);
+            font-size: 0.8rem;
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 640px) {
+            .tool-header h1 { font-size: 1.7rem; }
+            .readout-value { font-size: 1.3rem; }
+            .readout-row { gap: 8px; }
+            .readout-card { min-width: 90px; padding: 12px 12px; }
+            .slider-section { padding: 18px 18px; }
+            .formula-note { margin: 0 18px 16px; }
+        }
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link sn-active">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<!-- PAGE -->
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="tool-header">
+        <div class="tool-header-badge">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polygon points="6,1 7.5,4.5 11,5 8.5,7.5 9,11 6,9.5 3,11 3.5,7.5 1,5 4.5,4.5" fill="#f59e0b"/></svg>
+            Interactive Tool
+        </div>
+        <h1>Power Triangle Visualizer</h1>
+        <p>Explore the relationship between Real, Reactive, and Apparent Power with a live, interactive triangle.</p>
+    </div>
+
+    <!-- MAIN -->
+    <div class="tool-main">
+
+        <!-- CANVAS CARD -->
+        <div class="canvas-card">
+            <canvas id="triCanvas" width="800" height="420"></canvas>
+        </div>
+
+        <!-- READOUT ROW -->
+        <div class="readout-row">
+            <div class="readout-card green">
+                <div class="readout-label">P — Real Power</div>
+                <div class="readout-value" id="readP">0.0</div>
+                <div class="readout-unit">kilowatts (kW)</div>
+            </div>
+            <div class="readout-card blue">
+                <div class="readout-label">Q — Reactive Power</div>
+                <div class="readout-value" id="readQ">0.0</div>
+                <div class="readout-unit">kilovolt-amps reactive (kVAR)</div>
+            </div>
+            <div class="readout-card amber">
+                <div class="readout-label">S — Apparent Power</div>
+                <div class="readout-value" id="readS">0.0</div>
+                <div class="readout-unit">kilovolt-amps (kVA)</div>
+            </div>
+            <div class="readout-card purple">
+                <div class="readout-label">θ — Angle</div>
+                <div class="readout-value" id="readTheta">0.0</div>
+                <div class="readout-unit">degrees</div>
+            </div>
+            <div class="readout-card gray">
+                <div class="readout-label">PF — Power Factor</div>
+                <div class="readout-value" id="readPF">1.000</div>
+                <div class="readout-unit">dimensionless (0–1)</div>
+            </div>
+        </div>
+
+        <!-- CONTROLS CARD -->
+        <div class="controls-card">
+            <!-- MODE TABS -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="0" onclick="setMode(0)">Know P + Q</button>
+                <button class="mode-tab" data-mode="1" onclick="setMode(1)">Know P + PF</button>
+                <button class="mode-tab" data-mode="2" onclick="setMode(2)">Know S + PF</button>
+                <button class="mode-tab" data-mode="3" onclick="setMode(3)">Know P + S</button>
+            </div>
+
+            <!-- SLIDERS -->
+            <div class="slider-section">
+                <!-- Slider A -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-name" id="labelA">P — Real Power</span>
+                        <span class="slider-reading green" id="valA">50.0 kW</span>
+                    </div>
+                    <input type="range" id="sliderA" class="green"
+                           min="0" max="100" step="0.5" value="50"
+                           oninput="onSlide()">
+                    <div class="slider-ticks" id="ticksA">
+                        <span>0</span><span>25</span><span>50</span><span>75</span><span>100 kW</span>
+                    </div>
+                </div>
+
+                <!-- Slider B -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-name" id="labelB">Q — Reactive Power</span>
+                        <span class="slider-reading blue" id="valB">30.0 kVAR</span>
+                    </div>
+                    <input type="range" id="sliderB" class="blue"
+                           min="0" max="100" step="0.5" value="30"
+                           oninput="onSlide()">
+                    <div class="slider-ticks" id="ticksB">
+                        <span>0</span><span>25</span><span>50</span><span>75</span><span>100 kVAR</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORMULA NOTE -->
+            <div class="formula-note" id="formulaNote">
+                <span class="formula-note-icon">ƒ</span>
+                <span id="formulaText">
+                    Given P and Q &rarr;
+                    <code>S = √(P² + Q²)</code> &nbsp;|&nbsp;
+                    <code>PF = P / S</code> &nbsp;|&nbsp;
+                    <code>θ = acos(PF)</code>
+                </span>
+            </div>
+        </div>
+
+    </div><!-- /tool-main -->
+</div><!-- /page -->
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let mode = 0;         // 0..3
+let P = 50, Q = 30, S = 0, PF = 0, theta = 0;
+
+// Animated (lerp) display values
+let dP = 50, dQ = 30, dS = 0;
+
+// ─── MODES CONFIG ─────────────────────────────────────────────────────────────
+const MODES = [
+    {
+        labelA: 'P — Real Power',
+        unitA: 'kW', colorA: 'green',
+        minA: 0, maxA: 100, stepA: 0.5, defaultA: 50,
+        ticksA: ['0', '25', '50', '75', '100 kW'],
+
+        labelB: 'Q — Reactive Power',
+        unitB: 'kVAR', colorB: 'blue',
+        minB: 0, maxB: 100, stepB: 0.5, defaultB: 30,
+        ticksB: ['0', '25', '50', '75', '100 kVAR'],
+
+        formula: 'Given P and Q &rarr; <code>S = √(P² + Q²)</code> &nbsp;|&nbsp; <code>PF = P / S</code> &nbsp;|&nbsp; <code>θ = acos(PF)</code>',
+        compute: (a, b) => {
+            const p = a, q = b;
+            const s = Math.sqrt(p*p + q*q);
+            const pf = s > 0 ? p / s : 1;
+            const th = Math.acos(Math.min(1, Math.max(-1, pf))) * 180 / Math.PI;
+            return { P: p, Q: q, S: s, PF: pf, theta: th };
+        }
+    },
+    {
+        labelA: 'P — Real Power',
+        unitA: 'kW', colorA: 'green',
+        minA: 0, maxA: 100, stepA: 0.5, defaultA: 50,
+        ticksA: ['0', '25', '50', '75', '100 kW'],
+
+        labelB: 'PF — Power Factor',
+        unitB: '', colorB: 'amber',
+        minB: 0.1, maxB: 1.0, stepB: 0.01, defaultB: 0.85,
+        ticksB: ['0.10', '0.40', '0.70', '1.00'],
+
+        formula: 'Given P and PF &rarr; <code>θ = acos(PF)</code> &nbsp;|&nbsp; <code>Q = P·tan(θ)</code> &nbsp;|&nbsp; <code>S = P / PF</code>',
+        compute: (a, b) => {
+            const p = a, pf = Math.min(1, Math.max(0.001, b));
+            const th = Math.acos(pf);
+            const q = p * Math.tan(th);
+            const s = p / pf;
+            return { P: p, Q: q, S: s, PF: pf, theta: th * 180 / Math.PI };
+        }
+    },
+    {
+        labelA: 'S — Apparent Power',
+        unitA: 'kVA', colorA: 'amber',
+        minA: 0, maxA: 100, stepA: 0.5, defaultA: 60,
+        ticksA: ['0', '25', '50', '75', '100 kVA'],
+
+        labelB: 'PF — Power Factor',
+        unitB: '', colorB: 'amber',
+        minB: 0.1, maxB: 1.0, stepB: 0.01, defaultB: 0.85,
+        ticksB: ['0.10', '0.40', '0.70', '1.00'],
+
+        formula: 'Given S and PF &rarr; <code>P = S·PF</code> &nbsp;|&nbsp; <code>θ = acos(PF)</code> &nbsp;|&nbsp; <code>Q = S·sin(θ)</code>',
+        compute: (a, b) => {
+            const s = a, pf = Math.min(1, Math.max(0.001, b));
+            const th = Math.acos(pf);
+            const p = s * pf;
+            const q = s * Math.sin(th);
+            return { P: p, Q: q, S: s, PF: pf, theta: th * 180 / Math.PI };
+        }
+    },
+    {
+        labelA: 'P — Real Power',
+        unitA: 'kW', colorA: 'green',
+        minA: 0, maxA: 100, stepA: 0.5, defaultA: 50,
+        ticksA: ['0', '25', '50', '75', '100 kW'],
+
+        labelB: 'S — Apparent Power',
+        unitB: 'kVA', colorB: 'amber',
+        minB: 0, maxB: 100, stepB: 0.5, defaultB: 70,
+        ticksB: ['0', '25', '50', '75', '100 kVA'],
+
+        formula: 'Given P and S &rarr; <code>Q = √(S² − P²)</code> &nbsp;|&nbsp; <code>PF = P / S</code> &nbsp;|&nbsp; <code>θ = acos(PF)</code>',
+        compute: (a, b) => {
+            const p = a;
+            const s = Math.max(a, b);  // S must be >= P
+            const q2 = s*s - p*p;
+            const q = q2 > 0 ? Math.sqrt(q2) : 0;
+            const pf = s > 0 ? p / s : 1;
+            const th = Math.acos(Math.min(1, Math.max(-1, pf))) * 180 / Math.PI;
+            return { P: p, Q: q, S: s, PF: pf, theta: th };
+        }
+    }
+];
+
+// ─── CANVAS ANIMATION ─────────────────────────────────────────────────────────
+const canvas = document.getElementById('triCanvas');
+const ctx = canvas.getContext('2d');
+
+let animP = 50, animQ = 30, animS = 58.3;
+let targetP = 50, targetQ = 30, targetS = 58.3;
+let rafId = null;
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function animate() {
+    const SPEED = 0.14;
+    animP = lerp(animP, targetP, SPEED);
+    animQ = lerp(animQ, targetQ, SPEED);
+    animS = lerp(animS, targetS, SPEED);
+
+    drawTriangle(animP, animQ, animS);
+
+    const stillMoving =
+        Math.abs(animP - targetP) > 0.05 ||
+        Math.abs(animQ - targetQ) > 0.05 ||
+        Math.abs(animS - targetS) > 0.05;
+
+    if (stillMoving) {
+        rafId = requestAnimationFrame(animate);
+    } else {
+        animP = targetP; animQ = targetQ; animS = targetS;
+        drawTriangle(animP, animQ, animS);
+        rafId = null;
+    }
+}
+
+function triggerAnimation() {
+    targetP = P; targetQ = Q; targetS = S;
+    if (!rafId) rafId = requestAnimationFrame(animate);
+}
+
+// ─── DRAWING ─────────────────────────────────────────────────────────────────
+function drawTriangle(p, q, s) {
+    const W = canvas.width;
+    const H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, W, H);
+
+    // Dot grid
+    ctx.fillStyle = 'rgba(48,54,61,0.7)';
+    const gx = 28, gy = 28;
+    for (let x = gx; x < W; x += gx) {
+        for (let y = gy; y < H; y += gy) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Padding / origin
+    const ox = 88, oy = H - 54;
+    const maxPx = W - ox - 60;
+    const maxPy = oy - 60;
+
+    // Scale: fit both P and Q into the available space
+    const maxVal = Math.max(p, q, 1);
+    const scale = Math.min(maxPx / maxVal, maxPy / maxVal, 5.8);
+
+    const px = p * scale;  // horizontal extent
+    const qy = q * scale;  // vertical extent
+
+    const endPx = ox + px;    // top-right corner x
+    const endPy = oy;          // baseline y
+    const topX = ox + px;     // apex x
+    const topY = oy - qy;     // apex y
+
+    // If all zero, draw placeholder
+    if (p < 0.01 && q < 0.01) {
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '500 15px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Move the sliders to build the triangle', W/2, H/2);
+        return;
+    }
+
+    // ---- Shadow glow behind triangle ----
+    ctx.save();
+    ctx.shadowColor = 'rgba(245,158,11,0.15)';
+    ctx.shadowBlur = 32;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(endPx, endPy);
+    ctx.lineTo(topX, topY);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(245,158,11,0.04)';
+    ctx.fill();
+    ctx.restore();
+
+    // ---- Triangle fill ----
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(endPx, endPy);
+    ctx.lineTo(topX, topY);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(245,158,11,0.05)';
+    ctx.fill();
+
+    // ---- Right-angle marker ----
+    if (q > 0.5 && p > 0.5) {
+        const rm = 11;
+        ctx.beginPath();
+        ctx.moveTo(endPx - rm, oy);
+        ctx.lineTo(endPx - rm, oy - rm);
+        ctx.lineTo(endPx, oy - rm);
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+
+    // ---- P line (horizontal, green) ----
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(endPx, endPy);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    // ---- Q line (vertical, blue) ----
+    ctx.beginPath();
+    ctx.moveTo(endPx, oy);
+    ctx.lineTo(topX, topY);
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    // ---- S line (hypotenuse, amber, dashed) ----
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(topX, topY);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ---- θ arc (purple) ----
+    if (p > 0.5 && s > 0.5) {
+        const th_rad = Math.atan2(q, p);
+        const arcR = Math.min(40, px * 0.35);
+        ctx.beginPath();
+        ctx.arc(ox, oy, arcR, -th_rad, 0, false);
+        ctx.strokeStyle = '#a78bfa';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.stroke();
+
+        // θ label
+        const midAngle = -th_rad / 2;
+        const lx = ox + (arcR + 14) * Math.cos(midAngle);
+        const ly = oy + (arcR + 14) * Math.sin(midAngle);
+        ctx.fillStyle = '#a78bfa';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('θ', lx, ly);
+    }
+
+    // ---- Labels ----
+    const FONT_VAL = '700 13px Inter, sans-serif';
+    const FONT_SUB = '500 11px Inter, sans-serif';
+
+    // P label (below the horizontal line, centered)
+    if (px > 30) {
+        const mx = ox + px / 2;
+        ctx.fillStyle = '#10b981';
+        ctx.font = FONT_VAL;
+        ctx.textAlign = 'center';
+        ctx.fillText('P = ' + fmt(p, 1) + ' kW', mx, oy + 22);
+    }
+
+    // Q label (right of the vertical line, midpoint)
+    if (qy > 20) {
+        const my = oy - qy / 2;
+        ctx.fillStyle = '#58a6ff';
+        ctx.font = FONT_VAL;
+        ctx.textAlign = 'left';
+        ctx.fillText('Q = ' + fmt(q, 1) + ' kVAR', topX + 10, my + 4);
+    }
+
+    // S label (above/along hypotenuse)
+    if (s > 0.5) {
+        const mx = ox + px / 2 - 14;
+        const my = oy - qy / 2 - 14;
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = FONT_VAL;
+        ctx.textAlign = 'center';
+        ctx.save();
+        const angle = -Math.atan2(qy, px);
+        ctx.translate(ox + px / 2, oy - qy / 2);
+        ctx.rotate(angle);
+        ctx.fillText('S = ' + fmt(s, 1) + ' kVA', 0, -10);
+        ctx.restore();
+    }
+
+    // Vertex dots
+    const dots = [
+        { x: ox,    y: oy,    color: '#10b981' },
+        { x: endPx, y: endPy, color: '#58a6ff' },
+        { x: topX,  y: topY,  color: '#f59e0b' }
+    ];
+    dots.forEach(d => {
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = d.color;
+        ctx.fill();
+        ctx.strokeStyle = '#0d1117';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    });
+
+    // Origin label
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '500 11px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Origin', ox - 6, oy + 36);
+}
+
+// ─── FORMAT ───────────────────────────────────────────────────────────────────
+function fmt(v, dec) {
+    return isNaN(v) ? '—' : v.toFixed(dec);
+}
+
+// ─── READOUTS ────────────────────────────────────────────────────────────────
+function updateReadouts() {
+    document.getElementById('readP').textContent     = fmt(P, 1);
+    document.getElementById('readQ').textContent     = fmt(Q, 1);
+    document.getElementById('readS').textContent     = fmt(S, 1);
+    document.getElementById('readTheta').textContent = fmt(theta, 1);
+    document.getElementById('readPF').textContent    = fmt(PF, 3);
+}
+
+// ─── SLIDER CHANGE ────────────────────────────────────────────────────────────
+function onSlide() {
+    const m = MODES[mode];
+    const a = parseFloat(document.getElementById('sliderA').value);
+    const b = parseFloat(document.getElementById('sliderB').value);
+    const res = m.compute(a, b);
+    P = res.P; Q = res.Q; S = res.S; PF = res.PF; theta = res.theta;
+
+    // Update slider display labels
+    const unitA = m.unitA;
+    const unitB = m.unitB;
+    document.getElementById('valA').textContent = fmt(a, unitA === '' ? 3 : 1) + (unitA ? ' ' + unitA : '');
+    document.getElementById('valB').textContent = fmt(b, unitB === '' ? 3 : 1) + (unitB ? ' ' + unitB : '');
+
+    updateReadouts();
+    triggerAnimation();
+}
+
+// ─── SET MODE ─────────────────────────────────────────────────────────────────
+function setMode(m) {
+    mode = m;
+    const cfg = MODES[m];
+
+    // Update tabs
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.mode-tab[data-mode="${m}"]`).classList.add('active');
+
+    // Slider A
+    const sA = document.getElementById('sliderA');
+    sA.min   = cfg.minA;
+    sA.max   = cfg.maxA;
+    sA.step  = cfg.stepA;
+    sA.value = cfg.defaultA;
+    sA.className = cfg.colorA;
+    document.getElementById('labelA').textContent = cfg.labelA;
+    document.getElementById('valA').className = 'slider-reading ' + cfg.colorA;
+
+    const tA = document.getElementById('ticksA');
+    tA.innerHTML = cfg.ticksA.map(t => `<span>${t}</span>`).join('');
+
+    // Slider B
+    const sB = document.getElementById('sliderB');
+    sB.min   = cfg.minB;
+    sB.max   = cfg.maxB;
+    sB.step  = cfg.stepB;
+    sB.value = cfg.defaultB;
+    sB.className = cfg.colorB;
+    document.getElementById('labelB').textContent = cfg.labelB;
+    document.getElementById('valB').className = 'slider-reading ' + cfg.colorB;
+
+    const tB = document.getElementById('ticksB');
+    tB.innerHTML = cfg.ticksB.map(t => `<span>${t}</span>`).join('');
+
+    // Formula note
+    document.getElementById('formulaText').innerHTML = cfg.formula;
+
+    onSlide();
+}
+
+// ─── RESIZE CANVAS ────────────────────────────────────────────────────────────
+function resizeCanvas() {
+    const card = canvas.parentElement;
+    const w = card.clientWidth;
+    const ratio = 800 / 420;
+    canvas.style.width  = w + 'px';
+    canvas.style.height = (w / ratio) + 'px';
+    // Internal resolution unchanged (800x420) for crisp rendering
+    drawTriangle(animP, animQ, animS);
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+setMode(0);
+resizeCanvas();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

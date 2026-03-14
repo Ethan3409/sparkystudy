@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start chrome \"c:\\\\Users\\\\ethan\\\\SpartyStudy\\\\tools\\\\circuit-builder.html\")"
+    ]
+  }
+}

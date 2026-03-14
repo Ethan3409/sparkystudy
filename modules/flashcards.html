@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards & Quiz — Period 2 — SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Dark Theme Variables
+   ============================================ */
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #f59e0b;
+    --accent2: #58a6ff;
+    --green: #10b981;
+    --red: #ef4444;
+    --accent-bg: rgba(245,158,11,0.1);
+    --accent2-bg: rgba(88,166,255,0.1);
+    --green-bg: rgba(16,185,129,0.1);
+    --red-bg: rgba(239,68,68,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+a { text-decoration: none; color: inherit; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+.owner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--accent-bg);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.logout-btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+/* ============================================
+   Container
+   ============================================ */
+.container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 88px 24px 60px;
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+.page-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.page-header h1 span { color: var(--accent); }
+
+.page-header p {
+    color: var(--muted);
+    font-size: 1.05rem;
+}
+
+/* ============================================
+   Mode Tabs
+   ============================================ */
+.mode-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 32px;
+}
+
+.mode-tab {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mode-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+.mode-tab.active {
+    background: var(--accent);
+    color: #000;
+}
+
+.mode-tab .tab-icon { font-size: 1.2rem; }
+
+/* ============================================
+   Category Filters
+   ============================================ */
+.category-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.cat-pill {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.cat-pill:hover { color: var(--text); border-color: var(--accent); }
+
+.cat-pill.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+
+/* ============================================
+   Flashcard Stats Bar
+   ============================================ */
+.stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+}
+
+.stats-bar .counter {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.stats-bar .progress-info {
+    display: flex;
+    gap: 16px;
+}
+
+.stats-bar .progress-info span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.stats-bar .know-count { color: var(--green); }
+.stats-bar .study-count { color: var(--accent); }
+
+/* ============================================
+   Flashcard 3D
+   ============================================ */
+.flashcard-section { display: block; }
+.quiz-section { display: none; }
+
+.card-scene {
+    width: 100%;
+    max-width: 640px;
+    height: 380px;
+    margin: 0 auto 24px;
+    cursor: pointer;
+    perspective: 1000px;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.card-inner.flipped { transform: rotateY(180deg); }
+
+.card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    text-align: center;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.card-scene:hover .card-face {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(245,158,11,0.1), 0 0 40px rgba(245,158,11,0.05);
+}
+
+.card-front { background: var(--panel); }
+
+.card-back {
+    background: linear-gradient(135deg, #1a2332 0%, var(--panel) 100%);
+    transform: rotateY(180deg);
+}
+
+.card-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.card-front .card-label {
+    color: var(--accent2);
+    background: var(--accent2-bg);
+}
+
+.card-back .card-label {
+    color: var(--green);
+    background: var(--green-bg);
+}
+
+.card-category {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.card-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.5;
+    max-width: 480px;
+}
+
+.card-back .card-text { color: var(--green); }
+
+.card-hint {
+    position: absolute;
+    bottom: 16px;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* ============================================
+   Card Controls
+   ============================================ */
+.card-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.card-btn {
+    padding: 12px 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--panel);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.card-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.card-btn.shuffle-btn { color: var(--accent2); border-color: var(--accent2); }
+.card-btn.shuffle-btn:hover { background: var(--accent2-bg); }
+
+/* ============================================
+   Know / Study Buttons
+   ============================================ */
+.feedback-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.fb-btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fb-btn.know {
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid rgba(16,185,129,0.3);
+}
+.fb-btn.know:hover { background: rgba(16,185,129,0.2); }
+
+.fb-btn.study {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid rgba(245,158,11,0.3);
+}
+.fb-btn.study:hover { background: rgba(245,158,11,0.2); }
+
+/* ============================================
+   Quiz Mode
+   ============================================ */
+.quiz-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.quiz-progress .bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.quiz-progress .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+}
+
+.quiz-progress .qcount {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.quiz-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px 32px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.quiz-card .q-category {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent2);
+    background: var(--accent2-bg);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.quiz-card .q-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 28px;
+    line-height: 1.5;
+}
+
+.quiz-card .q-text .blank {
+    display: inline-block;
+    min-width: 80px;
+    border-bottom: 2px dashed var(--accent);
+    margin: 0 4px;
+}
+
+.quiz-input-row {
+    display: flex;
+    gap: 12px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.quiz-input {
+    flex: 1;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.quiz-input:focus { border-color: var(--accent); }
+.quiz-input.correct { border-color: var(--green); background: var(--green-bg); }
+.quiz-input.incorrect { border-color: var(--red); background: var(--red-bg); }
+
+.quiz-submit {
+    padding: 14px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #000;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quiz-submit:hover { filter: brightness(1.1); }
+.quiz-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.quiz-feedback {
+    margin-top: 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    min-height: 24px;
+}
+
+.quiz-feedback.correct { color: var(--green); }
+.quiz-feedback.incorrect { color: var(--red); }
+
+/* ============================================
+   Quiz Results
+   ============================================ */
+.quiz-results {
+    text-align: center;
+    padding: 48px 32px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.quiz-results .score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    border: 4px solid var(--accent);
+    background: var(--accent-bg);
+}
+
+.quiz-results .score-circle .score-num {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.quiz-results .score-circle .score-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.quiz-results h2 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.quiz-results p {
+    color: var(--muted);
+    margin-bottom: 24px;
+}
+
+.quiz-results .restart-btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #000;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quiz-results .restart-btn:hover { filter: brightness(1.1); }
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+    .container { padding: 80px 16px 40px; }
+    .page-header h1 { font-size: 1.5rem; }
+
+    .category-filters { gap: 6px; }
+    .cat-pill { padding: 6px 12px; font-size: 0.8rem; }
+
+    .card-scene { height: 320px; }
+    .card-face { padding: 28px 20px; }
+    .card-text { font-size: 1.05rem; }
+
+    .card-controls { flex-wrap: wrap; }
+    .card-btn { padding: 10px 16px; font-size: 0.85rem; }
+
+    .feedback-controls { flex-wrap: wrap; }
+    .fb-btn { padding: 10px 20px; font-size: 0.85rem; }
+
+    .stats-bar { flex-direction: column; gap: 8px; }
+
+    .quiz-card { padding: 28px 20px; }
+    .quiz-card .q-text { font-size: 1.1rem; }
+    .quiz-input-row { flex-direction: column; }
+}
+
+/* Mobile nav toggle */
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px;
+}
+
+@media (max-width: 768px) {
+    .nav-toggle { display: block; }
+}
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link sn-active">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1><span>Period 2</span> Flashcards & Quiz</h1>
+        <p>60 flashcards + 20 fill-in-the-blank questions across all 6 modules</p>
+    </div>
+
+    <!-- Mode Tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab active" onclick="switchMode('flashcards')">
+            <span class="tab-icon">&#128196;</span> Flashcards
+        </button>
+        <button class="mode-tab" onclick="switchMode('quiz')">
+            <span class="tab-icon">&#9999;&#65039;</span> Fill-in-the-Blank
+        </button>
+    </div>
+
+    <!-- ==================== FLASHCARD MODE ==================== -->
+    <div class="flashcard-section" id="flashcardSection">
+
+        <!-- Category Filters -->
+        <div class="category-filters" id="catFilters"></div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <span class="counter" id="cardCounter">Card 1 of 60</span>
+            <div class="progress-info">
+                <span class="know-count">&#10003; Know it: <b id="knowCount">0</b></span>
+                <span class="study-count">&#128214; Study more: <b id="studyCount">0</b></span>
+            </div>
+        </div>
+
+        <!-- 3D Flashcard -->
+        <div class="card-scene" id="cardScene" onclick="flipCard()">
+            <div class="card-inner" id="cardInner">
+                <div class="card-face card-front">
+                    <span class="card-category" id="cardCatFront"></span>
+                    <span class="card-label">Question</span>
+                    <p class="card-text" id="cardFrontText"></p>
+                    <span class="card-hint">Click to reveal answer</span>
+                </div>
+                <div class="card-face card-back">
+                    <span class="card-category" id="cardCatBack"></span>
+                    <span class="card-label">Answer</span>
+                    <p class="card-text" id="cardBackText"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="card-controls">
+            <button class="card-btn" id="prevBtn" onclick="prevCard()">&#8592; Previous</button>
+            <button class="card-btn shuffle-btn" onclick="shuffleCards()">&#128256; Shuffle</button>
+            <button class="card-btn" id="nextBtn" onclick="nextCard()">Next &#8594;</button>
+        </div>
+
+        <!-- Know / Study Buttons -->
+        <div class="feedback-controls">
+            <button class="fb-btn know" onclick="markCard('know')">&#10003; Know it</button>
+            <button class="fb-btn study" onclick="markCard('study')">&#128214; Study more</button>
+        </div>
+    </div>
+
+    <!-- ==================== QUIZ MODE ==================== -->
+    <div class="quiz-section" id="quizSection">
+
+        <!-- Progress Bar -->
+        <div class="quiz-progress">
+            <span class="qcount" id="quizCounter">Question 1 of 20</span>
+            <div class="bar-track">
+                <div class="bar-fill" id="quizBar"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Card -->
+        <div id="quizCardArea">
+            <div class="quiz-card" id="quizCard">
+                <span class="q-category" id="quizCat"></span>
+                <p class="q-text" id="quizText"></p>
+                <div class="quiz-input-row">
+                    <input type="text" class="quiz-input" id="quizInput" placeholder="Type your answer..." autocomplete="off">
+                    <button class="quiz-submit" id="quizSubmit" onclick="submitAnswer()">Check</button>
+                </div>
+                <div class="quiz-feedback" id="quizFeedback"></div>
+            </div>
+        </div>
+
+        <!-- Results (hidden until done) -->
+        <div class="quiz-results" id="quizResults" style="display:none;">
+            <div class="score-circle">
+                <span class="score-num" id="finalScore">0</span>
+                <span class="score-label">out of 20</span>
+            </div>
+            <h2 id="resultsHeading">Great work!</h2>
+            <p id="resultsMsg">Keep studying to master every module.</p>
+            <button class="restart-btn" onclick="restartQuiz()">Try Again</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/* ============================================
+   Auth Check
+   ============================================ */
+
+/* ============================================
+   Data — 60 Flashcards
+   ============================================ */
+const categories = [
+    'All',
+    'AC Fundamentals',
+    'Inductors & Capacitors Properties',
+    'Inductors & Capacitors in Circuits',
+    'Relays & Contactors',
+    'Timers & Smart Relays',
+    'Pilot & Overcurrent Devices'
+];
+
+const allFlashcards = [
+    // AC Fundamentals
+    { cat: 'AC Fundamentals', q: 'What type of waveform does AC current produce?', a: 'A sine wave (sinusoidal waveform)' },
+    { cat: 'AC Fundamentals', q: 'What is the formula for frequency using poles and RPM?', a: 'f = (p \u00d7 n) / 120' },
+    { cat: 'AC Fundamentals', q: 'What percentage of peak voltage is the RMS (effective) value?', a: '70.7% (multiply peak by 0.707)' },
+    { cat: 'AC Fundamentals', q: 'What does a multimeter measure \u2014 peak or RMS?', a: 'RMS (effective value)' },
+    { cat: 'AC Fundamentals', q: 'What is the formula for instantaneous voltage?', a: 'e = Em \u00d7 sin(\u03b8)' },
+    { cat: 'AC Fundamentals', q: 'What is the period of a 60 Hz AC signal?', a: 'T = 1/60 = 16.67 milliseconds' },
+    { cat: 'AC Fundamentals', q: 'How many degrees make up one complete AC cycle?', a: '360 degrees' },
+    { cat: 'AC Fundamentals', q: 'What is the average value of a sine wave as a percentage of peak?', a: '63.7% (multiply peak by 0.637)' },
+    { cat: 'AC Fundamentals', q: 'If a generator has 4 poles and spins at 1800 RPM, what is the frequency?', a: 'f = (4 \u00d7 1800)/120 = 60 Hz' },
+    { cat: 'AC Fundamentals', q: 'What happens to frequency if you increase the number of poles?', a: 'Frequency increases (if RPM stays the same)' },
+
+    // Properties of Inductors & Capacitors
+    { cat: 'Inductors & Capacitors Properties', q: 'What law states that a changing magnetic field induces a voltage?', a: "Faraday\u2019s Law of Electromagnetic Induction" },
+    { cat: 'Inductors & Capacitors Properties', q: 'What does Lenz\u2019s Law tell us about induced EMF?', a: 'It always opposes the change that caused it' },
+    { cat: 'Inductors & Capacitors Properties', q: 'What is counter-EMF (CEMF)?', a: 'The voltage induced in an inductor that opposes the change in current through it' },
+    { cat: 'Inductors & Capacitors Properties', q: 'Name 4 factors that affect inductance.', a: 'Number of turns, core permeability, cross-sectional area, length of coil' },
+    { cat: 'Inductors & Capacitors Properties', q: 'What type of capacitor is polarized and must be connected correctly?', a: 'Electrolytic capacitor' },
+    { cat: 'Inductors & Capacitors Properties', q: 'What 3 factors affect capacitance?', a: 'Dielectric constant, plate area, distance between plates' },
+    { cat: 'Inductors & Capacitors Properties', q: 'What is mutual induction?', a: 'When a changing current in one coil induces a voltage in a nearby coil' },
+    { cat: 'Inductors & Capacitors Properties', q: 'Increasing the number of turns on a coil does what to inductance?', a: 'Increases it' },
+    { cat: 'Inductors & Capacitors Properties', q: 'What happens if you connect an electrolytic capacitor backwards?', a: 'It can overheat, leak, or explode' },
+    { cat: 'Inductors & Capacitors Properties', q: 'What type of core gives the highest inductance \u2014 air, iron, or ferrite?', a: 'Iron (highest permeability)' },
+
+    // Inductors & Capacitors in Circuits
+    { cat: 'Inductors & Capacitors in Circuits', q: 'What is the inductive time constant formula?', a: '\u03c4 = L/R' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'What is the capacitive time constant formula?', a: '\u03c4 = R \u00d7 C' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'What percentage of change occurs in one time constant?', a: '63.2%' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'How many time constants to reach steady state?', a: '5 time constants (99.3%)' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'What is the formula for inductive reactance?', a: 'XL = 2\u03c0fL' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'What is the formula for capacitive reactance?', a: 'Xc = 1/(2\u03c0fC)' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'In an inductor, does current lead or lag voltage?', a: 'Current LAGS voltage by 90\u00b0' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'What mnemonic helps remember voltage/current relationships in AC?', a: 'ELI the ICE man (E leads I in L, I leads E in C)' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'What is the formula for electric charge?', a: 'Q = I \u00d7 t (Coulombs = Amps \u00d7 seconds)' },
+    { cat: 'Inductors & Capacitors in Circuits', q: 'Why do inductors need discharge resistors?', a: 'To safely dissipate stored energy and prevent damaging voltage spikes' },
+
+    // Relays & Contactors
+    { cat: 'Relays & Contactors', q: 'What is the main difference between a relay and a contactor?', a: 'Relays handle smaller loads; contactors handle larger loads (like motors)' },
+    { cat: 'Relays & Contactors', q: 'Why do AC relay coils need laminated cores?', a: 'To reduce eddy currents and prevent overheating' },
+    { cat: 'Relays & Contactors', q: 'What is the purpose of a shading coil on an AC relay?', a: 'To prevent armature chatter (buzzing) caused by the AC magnetic field passing through zero' },
+    { cat: 'Relays & Contactors', q: 'What is Form A contact configuration?', a: 'Normally Open (NO)' },
+    { cat: 'Relays & Contactors', q: 'What is Form C contact configuration?', a: 'Changeover \u2014 break-before-make (has both NO and NC contacts)' },
+    { cat: 'Relays & Contactors', q: 'What is the approximate seal-in voltage for a relay?', a: 'About 85% of rated coil voltage' },
+    { cat: 'Relays & Contactors', q: 'What is the approximate drop-out voltage for a relay?', a: 'About 50% of rated coil voltage' },
+    { cat: 'Relays & Contactors', q: 'What are the most common contact materials?', a: 'Silver (most common), copper (heavy duty), cadmium oxide (arc resistant)' },
+    { cat: 'Relays & Contactors', q: 'What are bridge contacts?', a: 'Contacts where two points bridge across to complete the circuit \u2014 more reliable than single-point contacts' },
+    { cat: 'Relays & Contactors', q: 'What are bifurcated contacts?', a: 'Split contacts that provide redundant contact points for increased reliability' },
+
+    // Timers & Smart Relays
+    { cat: 'Timers & Smart Relays', q: 'What does TDOE stand for?', a: 'Time Delay On Energization (on-delay)' },
+    { cat: 'Timers & Smart Relays', q: 'What does TDOD stand for?', a: 'Time Delay On De-energization (off-delay)' },
+    { cat: 'Timers & Smart Relays', q: 'Name the 3 basic types of timing devices.', a: 'Spring-wound interval timers, mechanical/electronic time switches, timing relays' },
+    { cat: 'Timers & Smart Relays', q: 'In a TDOE timer, when do contacts change state?', a: 'After a time delay once the coil is energized' },
+    { cat: 'Timers & Smart Relays', q: 'In a TDOD timer, when does the timing period start?', a: 'When the coil is de-energized' },
+    { cat: 'Timers & Smart Relays', q: 'What is interval timing?', a: 'Contacts change for a set time period, then automatically revert to normal' },
+    { cat: 'Timers & Smart Relays', q: 'What is one-shot timing?', a: 'Like interval timing, but initiated by a signal to a start terminal rather than the coil' },
+    { cat: 'Timers & Smart Relays', q: 'What programming languages do smart relays use?', a: 'Function block diagrams and ladder logic' },
+    { cat: 'Timers & Smart Relays', q: 'What is the difference between symmetrical and non-symmetrical repeat cycle timing?', a: 'Symmetrical has equal on/off times; non-symmetrical has different on/off times' },
+    { cat: 'Timers & Smart Relays', q: 'Name 3 applications of smart relays.', a: 'Car wash automation, lighting management, access control/surveillance, HVAC, door control' },
+
+    // Pilot & Overcurrent Devices
+    { cat: 'Pilot & Overcurrent Devices', q: 'What type of push button is used for a stop button \u2014 NO or NC?', a: 'NC (Normally Closed)' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'How are multiple stop buttons connected in a control circuit?', a: 'In SERIES with each other' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'How are multiple start buttons connected in a control circuit?', a: 'In PARALLEL with each other' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'What are holding contacts (seal-in contacts)?', a: 'Contacts that maintain the circuit to the coil after the start button is released' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'What is the difference between maintained and momentary contact devices?', a: 'Maintained stays in position until changed again; momentary returns to normal when released' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'What type of proximity switch detects metal objects?', a: 'Inductive proximity switch' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'What are the two types of overcurrent conditions?', a: 'Short circuits and overloads' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'What are the two current ratings required for overcurrent devices?', a: 'Continuous current rating and interrupting rating' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'What is a time-delay (dual-element) fuse?', a: 'A fuse with a thermal cutout for overloads and a fuse link for short circuits \u2014 allows brief overloads' },
+    { cat: 'Pilot & Overcurrent Devices', q: 'What does "trip-free" mean for a circuit breaker?', a: 'The breaker will trip on overcurrent even if the handle is held or locked in the ON position' }
+];
+
+/* ============================================
+   Data — 20 Quiz Questions
+   ============================================ */
+const quizQuestions = [
+    { cat: 'AC Fundamentals', text: 'The formula for AC frequency is f = (p \u00d7 n) / ___.', answers: ['120'] },
+    { cat: 'AC Fundamentals', text: 'The RMS value of a sine wave equals ___ \u00d7 the peak value.', answers: ['0.707', '.707'] },
+    { cat: 'Inductors & Capacitors in Circuits', text: 'The mnemonic "ELI the ICE man" reminds us that in an inductor, voltage ___ current.', answers: ['leads', 'lead'] },
+    { cat: 'Inductors & Capacitors in Circuits', text: 'The inductive time constant formula is \u03c4 = L / ___.', answers: ['r', 'resistance'] },
+    { cat: 'Inductors & Capacitors in Circuits', text: 'The capacitive time constant formula is \u03c4 = ___ \u00d7 C.', answers: ['r', 'resistance'] },
+    { cat: 'Inductors & Capacitors in Circuits', text: 'It takes ___ time constants for a circuit to reach steady state.', answers: ['5', 'five'] },
+    { cat: 'Inductors & Capacitors in Circuits', text: 'Inductive reactance is calculated using XL = 2\u03c0___L.', answers: ['f', 'fl'] },
+    { cat: 'Inductors & Capacitors Properties', text: '___ law states that induced EMF opposes the change causing it.', answers: ["lenz's", 'lenz', 'lenzs'] },
+    { cat: 'Relays & Contactors', text: 'AC relay coils need ___ cores to reduce eddy currents.', answers: ['laminated', 'lamination'] },
+    { cat: 'Relays & Contactors', text: 'The approximate seal-in voltage for a relay is ___% of rated voltage.', answers: ['85', '85%'] },
+    { cat: 'Relays & Contactors', text: 'Form A contact configuration means ___ open.', answers: ['normally', 'no'] },
+    { cat: 'Pilot & Overcurrent Devices', text: 'Stop buttons are connected in ___ in a multi-station control circuit.', answers: ['series'] },
+    { cat: 'Pilot & Overcurrent Devices', text: 'Start buttons are connected in ___ in a multi-station control circuit.', answers: ['parallel'] },
+    { cat: 'Timers & Smart Relays', text: 'TDOE stands for Time Delay On ___.', answers: ['energization', 'energisation'] },
+    { cat: 'Timers & Smart Relays', text: 'Smart relays can be programmed using function block diagrams and ___ logic.', answers: ['ladder'] },
+    { cat: 'Pilot & Overcurrent Devices', text: 'A ___ proximity switch detects objects by creating an electrostatic field.', answers: ['capacitive'] },
+    { cat: 'Pilot & Overcurrent Devices', text: 'The two types of overcurrent conditions are short circuits and ___.', answers: ['overloads', 'overload'] },
+    { cat: 'Pilot & Overcurrent Devices', text: 'A dual-element fuse is also called a ___-delay fuse.', answers: ['time', 'time-delay'] },
+    { cat: 'Pilot & Overcurrent Devices', text: 'An inverse-time circuit breaker uses a ___ strip to detect overloads.', answers: ['bimetallic', 'bimetal', 'bi-metallic'] },
+    { cat: 'Pilot & Overcurrent Devices', text: 'The three factors affecting maximum fault current are kVA rating, secondary voltage, and percent ___.', answers: ['impedance', 'impedance voltage'] }
+];
+
+/* ============================================
+   Flashcard State
+   ============================================ */
+let filteredCards = [...allFlashcards];
+let currentIndex = 0;
+let knownSet = new Set();
+let studySet = new Set();
+let activeCat = 'All';
+
+/* Build category filter pills */
+function buildFilters() {
+    const el = document.getElementById('catFilters');
+    el.innerHTML = categories.map(c =>
+        `<button class="cat-pill${c === activeCat ? ' active' : ''}" onclick="filterByCategory('${c}')">${c}</button>`
+    ).join('');
+}
+
+function filterByCategory(cat) {
+    activeCat = cat;
+    if (cat === 'All') {
+        filteredCards = [...allFlashcards];
+    } else {
+        filteredCards = allFlashcards.filter(c => c.cat === cat);
+    }
+    currentIndex = 0;
+    buildFilters();
+    renderCard();
+}
+
+function renderCard() {
+    if (filteredCards.length === 0) return;
+    const card = filteredCards[currentIndex];
+    document.getElementById('cardInner').classList.remove('flipped');
+    document.getElementById('cardFrontText').textContent = card.q;
+    document.getElementById('cardBackText').textContent = card.a;
+    document.getElementById('cardCatFront').textContent = card.cat;
+    document.getElementById('cardCatBack').textContent = card.cat;
+    document.getElementById('cardCounter').textContent = `Card ${currentIndex + 1} of ${filteredCards.length}`;
+    document.getElementById('prevBtn').disabled = currentIndex === 0;
+    document.getElementById('nextBtn').disabled = currentIndex === filteredCards.length - 1;
+    updateStats();
+}
+
+function flipCard() {
+    document.getElementById('cardInner').classList.toggle('flipped');
+}
+
+function prevCard() {
+    if (currentIndex > 0) { currentIndex--; renderCard(); }
+}
+
+function nextCard() {
+    if (currentIndex < filteredCards.length - 1) { currentIndex++; renderCard(); }
+}
+
+function shuffleCards() {
+    for (let i = filteredCards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [filteredCards[i], filteredCards[j]] = [filteredCards[j], filteredCards[i]];
+    }
+    currentIndex = 0;
+    renderCard();
+}
+
+function markCard(type) {
+    const card = filteredCards[currentIndex];
+    const key = card.q;
+    if (type === 'know') {
+        knownSet.add(key);
+        studySet.delete(key);
+    } else {
+        studySet.add(key);
+        knownSet.delete(key);
+    }
+    updateStats();
+    // Auto-advance
+    if (currentIndex < filteredCards.length - 1) {
+        currentIndex++;
+        renderCard();
+    }
+}
+
+function updateStats() {
+    document.getElementById('knowCount').textContent = knownSet.size;
+    document.getElementById('studyCount').textContent = studySet.size;
+}
+
+/* ============================================
+   Quiz State
+   ============================================ */
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+function renderQuizQuestion() {
+    if (quizIndex >= quizQuestions.length) {
+        showResults();
+        return;
+    }
+    const q = quizQuestions[quizIndex];
+    document.getElementById('quizCat').textContent = q.cat;
+    document.getElementById('quizText').innerHTML = q.text.replace('___', '<span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
+    document.getElementById('quizInput').value = '';
+    document.getElementById('quizInput').className = 'quiz-input';
+    document.getElementById('quizInput').disabled = false;
+    document.getElementById('quizFeedback').textContent = '';
+    document.getElementById('quizFeedback').className = 'quiz-feedback';
+    document.getElementById('quizSubmit').textContent = 'Check';
+    document.getElementById('quizSubmit').disabled = false;
+    document.getElementById('quizCounter').textContent = `Question ${quizIndex + 1} of ${quizQuestions.length}`;
+    document.getElementById('quizBar').style.width = ((quizIndex) / quizQuestions.length * 100) + '%';
+    quizAnswered = false;
+    document.getElementById('quizInput').focus();
+}
+
+function submitAnswer() {
+    if (quizAnswered) {
+        // Move to next
+        quizIndex++;
+        renderQuizQuestion();
+        return;
+    }
+
+    const input = document.getElementById('quizInput').value.trim();
+    if (!input) return;
+
+    const q = quizQuestions[quizIndex];
+    const userAnswer = input.toLowerCase();
+    const isCorrect = q.answers.some(a => userAnswer === a.toLowerCase());
+    const fb = document.getElementById('quizFeedback');
+    const inp = document.getElementById('quizInput');
+
+    if (isCorrect) {
+        quizScore++;
+        inp.classList.add('correct');
+        fb.textContent = 'Correct!';
+        fb.className = 'quiz-feedback correct';
+    } else {
+        inp.classList.add('incorrect');
+        fb.innerHTML = 'Incorrect. The answer is: <strong>' + q.answers[0] + '</strong>';
+        fb.className = 'quiz-feedback incorrect';
+    }
+
+    inp.disabled = true;
+    quizAnswered = true;
+    document.getElementById('quizSubmit').textContent = 'Next \u2192';
+}
+
+function showResults() {
+    document.getElementById('quizCardArea').style.display = 'none';
+    document.querySelector('.quiz-progress').style.display = 'none';
+    const res = document.getElementById('quizResults');
+    res.style.display = 'block';
+    document.getElementById('finalScore').textContent = quizScore;
+    document.getElementById('quizBar').style.width = '100%';
+
+    const pct = (quizScore / quizQuestions.length) * 100;
+    if (pct >= 90) {
+        document.getElementById('resultsHeading').textContent = 'Outstanding!';
+        document.getElementById('resultsMsg').textContent = 'You have a strong grasp of these concepts.';
+    } else if (pct >= 70) {
+        document.getElementById('resultsHeading').textContent = 'Great work!';
+        document.getElementById('resultsMsg').textContent = 'Review the ones you missed and try again.';
+    } else if (pct >= 50) {
+        document.getElementById('resultsHeading').textContent = 'Getting there!';
+        document.getElementById('resultsMsg').textContent = 'Use the flashcards to strengthen weak areas.';
+    } else {
+        document.getElementById('resultsHeading').textContent = 'Keep studying!';
+        document.getElementById('resultsMsg').textContent = 'Go through the flashcards first, then retake the quiz.';
+    }
+}
+
+function restartQuiz() {
+    quizIndex = 0;
+    quizScore = 0;
+    quizAnswered = false;
+    document.getElementById('quizCardArea').style.display = 'block';
+    document.querySelector('.quiz-progress').style.display = 'flex';
+    document.getElementById('quizResults').style.display = 'none';
+    renderQuizQuestion();
+}
+
+/* ============================================
+   Mode Switching
+   ============================================ */
+function switchMode(mode) {
+    document.querySelectorAll('.mode-tab').forEach((t, i) => {
+        t.classList.toggle('active', (mode === 'flashcards' && i === 0) || (mode === 'quiz' && i === 1));
+    });
+    document.getElementById('flashcardSection').style.display = mode === 'flashcards' ? 'block' : 'none';
+    document.getElementById('quizSection').style.display = mode === 'quiz' ? 'block' : 'none';
+
+    if (mode === 'quiz') {
+        renderQuizQuestion();
+    }
+}
+
+/* Enter key for quiz */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('quizSection').style.display === 'block') {
+        submitAnswer();
+    }
+});
+
+/* ============================================
+   Init
+   ============================================ */
+buildFilters();
+renderCard();
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

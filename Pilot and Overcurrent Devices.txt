@@ -1,0 +1,1014 @@
+=== PAGE 1 ===
+LEARNING RESoURC:
+° e @ FoR SkiLtED TRADERS -
+
+ELECTRICIAN
+Pilot and Overcurrent
+
+Devices
+
+iO) 2"4 Edition
+
+Second Period ne
+Magnetic Controls and Switching Circuits
+
+v
+
+
+
+=== PAGE 2 ===
+Table of Contents
+
+objective One...
+Basic Stop/Start Motor Control Devies
+re Stop/Start Stations th
+
+Multip!
+objective One Activity
+
+objective ™
+
+objecti
+
+Objective ree.
+‘Automatic Pilot Devices
+
+Objective Three Activity.
+Objectives Four and Five
+
+Basic Protection Requirements
+Objectives Four and Five Activity
+Objective Six.
+
+Fault Current Values
+Objective Six Activity.
+Self-Test,
+
+Objective One Activity Answers
+Objective Two Activity a,
+Objective Three Activity Answers.
+Objectives Four and Five Activity An:
+
+cove Six Activity Aaa ea
+Self-Test Answers
+
+
+
+=== PAGE 3 ===
+a ———
+pilot and Overcurrent Devices
+
+Rationale
+Why is it important for you to learn this skill?
+
+There are several aspects of motor branch circuits that differentiate them from
+
+general-use branch circuits, such as circuits used for lighting. Lighting circuits and motor
+circuits both need some means to turn the load on and off, and both need overcurrent
+protection, but the operational characteristics of motors tend to require special
+considerations that do not apply to lighting.
+
+It is important to be able to identify various control devices commonly used for motor
+control, and how they are connected to achieve the desired operation. It is also important
+to understand the factors that affect the overcurrent protection required for motors.
+
+Outcome
+When you have completed this module, you will be able to
+
+Describe the operation of motor protective devices.
+
+@ Objectives
+1. Identify the type of push buttons (NO or NC) used for stopping and starting and how
+
+they would be connected for multiple station operation.
+
+Identify and describe the types of maintained and momentary pilot devices.
+
+Describe the operation of automatic pilot devices.
+
+Describe overcurrent protection devices.
+
+Describe the protection characteristics of fuses and breakers.
+
+Identify the factors that determine short-circuit currents.
+
+Si he Ne
+
+Prerequisites
+
+For you to understand pilot devices and control circuits,
+
+following modules: 2
+* 030104e: Switching Circuits
+* 030104f: Relays and Controls
+
+
+
+=== PAGE 4 ===
+Introduction inom .
+i tion of a stop/start control circuit f
+is module explains the operatic a
+aeater ese simple schematics, and shows how stop/start buttons ane
+st Sntaets connect with respect to each other. Maintained and momen
+presented with descriptions of how automatic pilot devices are inco,
+control circuits.
+
+The basic ratings, construction, and ‘operation of overcurrent devices such ag
+circuit breakers are also introduced in the module. 4
+
+NOTE
+
+In this module, you will see the terms normally open (NO) and
+normally closed (NC). In industry, this may be expressed in the
+following ways:
+* Normally open: N.O., N/O, and NOC
+© Normally closed: N.C., N/C, and NCC
+
+Resources
+* Canadian Electrical Code, Part I (26th Edition)
+
+
+=== PAGE 5 ===
+Objective One
+¢ When you have completed this objective, you will be able to
+
+Basic Stop/Start Motor Control Devices
+
+Motors are often controlled using simple stop/start stations; they contain a stop button
+and a start button as shown in Figure 1A. Figure 1B displays the contacts that are
+connected to these buttons. Figure 1C illustrates how these buttons (contacts) appear on a
+standard schematic diagram.
+
+Normally Open Contact, " Pee Normally Closed Contact
+
+For the Start Button =A - For the Stop Button
+
+[e) °
+Normally Open Contact Normally Closed Contact
+For the Start Button c For the Stop Button
+
+Figure 1 - Stop/start station.
+
+
+
+=== PAGE 6 ===
+Push Button Operation
+Understanding how the stop and start buttons work or change state j
+designing circuits and troubleshooting circuit issues. mats ©Ssential tg
+Figure 2A shows start and stop buttons with nothing activating th >
+start button being activated (pressed) by a user. The momentary pa Fi
+position during this time. When the activation is removed—in thi. lake Contact ta 1
+pressing the button—the contact returns to its normal position as inte the user @ 8
+igure 24 Ps
+
+030204c02.docx
+
+
+=== PAGE 7 ===
+Figure 3A portray
+
+aes ane ae eae and stop button with nothing activating them. Figure 3B shows
+
+changed BoaitGh Me ane by a user. The normally closed momentary break contact
+ing this time. When the activation is removed—in this case, the user
+
+stops pressing the button—t it iti
+Teoh the contact returns to its normal position pictured in
+
+
+
+=== PAGE 8 ===
+Basic Stop/Start Control Circuit
+
+Figure 4 shows a schematic diagram illustrating how these Push butt ens
+achieve stop/start control. The Mi circle represents the contactor Coil in pe
+and the normally open contacts labelled M; are the holding contacts contra id ter
+contactor coil. You might also see holding contacts referred to 8S seal-in led by the
+contacts, or maintaining contacts. Contacts, P
+
+The normally closed OL (overload) contacts are part of the over
+housed in the motor starter. The operation of the overload devic
+discussed in detail in the Motor Starters module.
+
+load device :
+fi and ‘
+© and its Contacts Will be
+
+Ly
+
+Start
+Bile a
+M,
+
+Figure 4 - Basic stop/start control circuit with holding or hold-in circuit,
+
+Stop
+
+Figure 5 demonstrates a physical layout of the control circuit and the motor starter which —
+is comprised of the contactor and overload relay. The Li, L2, Ls, T:, To, and T;
+conductors show the power circuit supplying the motor.
+
+L, bs
+
+030204c02.doex
+
+
+
+=== PAGE 9 ===
+Pressing the start button creates a path for the current to flow. The shaded line in Figure 6
+indicates the path that current takes the instant the start button is pushed. Current flows
+through Coil Mi, which creates an electromagnet.
+
+L, Ly
+
+Figure 6 - Pushing the start button.
+
+The electromagnet created by energizing the M; coil causes the armature in the contactor
+to move and change the states of its associated contacts. As a result, the holding contacts
+close to provide a second path for current to flow to the coil, as shown in Figure 7. The
+power contacts that control the motor also close, and the motor starts.
+
+Ly
+
+Figure 7 - Holding contacts close.
+
+
+
+=== PAGE 10 ===
+NOTE
+
+-< released, aS d
+the start button is rec”
+maintained through the holding aay and
+holding contacts and the power con!
+
+To de-energize the coil and stop the motor,
+the stop button interrupts the current flow an
+electromagnet effect to cease and all contacts
+
+in Figure 9.
+L,
+
+ts remain cl
+
+af
+
+Figure 8 - Start button released.
+the stop button must be pressed. P ‘
+d de-energizes the coil. This causes
+
+onstrated in Figure 8, the current patt
+atte
+is
+
+the coil remains energized.
+Josed, and the motor iste
+
+Release
+
+M,
+
+to revert to their normal state, as
+
+
+
+=== PAGE 11 ===
+Multiple Stop/Start Stations head
+
+¢ When a motor is required to be controlled from more than one location, additional
+stop/start push-button stations must be incorporated into the control circuit. It is
+important to understand how the additional stop and start buttons are connected to
+achieve the correct sequence of operation.
+
+Connecting Multiple Stop/Start Stations
+
+To break (or open) a circuit from more than one location, the stop push buttons must be
+connected in series, as shown in Figure 10.
+
+To make (or close) a circuit from more than one location, the start push buttons must be
+connected in parallel with each other and the holding contacts, as illustrated in Figure 10.
+
+L, Ly
+
+€ M
+
+Figure 10 - Multiple stop and start push-button switch connections.
+
+Any number of stop/start stations can be connected into a motor control circuit, as long as
+the stop buttons are connected in series with each other and the start buttons are
+connected in parallel with each other.
+
+
+
+=== PAGE 12 ===
+Objective One Activity
+1. What type of momentary contact push-button switch is used for ‘ a ‘
+
+t
+
+4. How must start buttons be connected for multiple stations?
+
+How must stop buttons be connected for multiple stations?
+
+030204c02,doox
+
+
+
+=== PAGE 13 ===
+Objective Two
+
+When you have completed this objective, you will be able to
+
+Identify and describe the types of maintained and momentary pilot devices.
+
+Pilot Devices
+
+A pilot device signals a change in condition by opening or closing a set of contacts. These
+devices can be used to control a relay or the contactor of a magnetic motor starter. The
+behaviour of the contacts of pilot devices can be either maintained or momentary.
+
+Maintained Contact Pilot Devices
+
+A maintained contact pilot device stays in its changed position after the actuating force is
+removed. Standard toggle switches and selector switches, such as the ones shown in
+Figure 11, are maintained pilot devices. When these devices are manually switched one
+way or the other, they stay in that position until switched again.
+
+Some push-button switches are classified as the maintained contact type because they
+latch in one position when they are pushed once and become unlatched when they are
+pushed a second time. This is similar to a latching relay that needs to be energized on and
+then energized off.
+
+Selector Switch Maintained Contact
+Pushbutton
+
+Figure 11 - Manually operated maintained contact pilot devices.
+
+
+
+=== PAGE 14 ===
+ip
+
+Momentary Contact Pilot Devices
+A standard push-button switch is an example of a momentary contact pilot devi
+its contacts only remain in their changed position while the push button is
+the button is released, the contacts revert to their original or normal condi
+
+|
+
+Presseq. When ()
+
+ition,
+
+The push button and the joystick shown in Figure 12 are momentary contact devi
+These devices both have contacts that return to their original position when they Ices,
+pushed or pressed. Fe not
+
+Momentary Contact Joystick
+Pushbutton Controller
+
+Figure 12 - Manually operated momentary contact pilot devices.
+
+(030204c02.docx
+
+
+
+=== PAGE 15 ===
+Objective Two Activity NOTES
+
+1, What are the two (2) basic contact behaviour types used for pilot control devices? |
+a)
+b)
+
+2. A start push-button switch used in parallel with holding contacts for a stop/start
+
+station is a contact switch.
+
+3. A standard single-pole toggle switch is a contact switch.
+
+
+
+=== PAGE 16 ===
+NOT
+
+Objective Three
+When you have completed this objective, you will be able to
+
+Describe the operation of automatic pilot devices.
+
+Automatic Pilot Devices a
+Automatically operated pilot devices detect a change and convert this change to the
+opening or closing of a set of contacts. These devices react automatically to changes
+the conditions they are sensing and do not require a person to operate them,
+
+in
+Automatic pilot devices can be simple, such as pressure switches and float swit
+They can also be the more complex black box variety, such as proximity switches,
+
+photoelectric sensors, and ultrasonic transducers. These devices have internal ele
+circuitry for their sensors.
+
+Automatic pilot devices are designed to detect many forms of change, such as
+«© Temperature,
+
+Pressure,
+
+Liquid levels,
+
+Thickness of materials,
+
+Light,
+
+Rotation,
+
+Specific gravity,
+
+Vibration,
+
+Linear movement, and
+
+Flow of liquid.
+
+
+=== PAGE 17 ===
+Some examples of automatic pilot devices are shown in Figure 13
+
+@ Temperature Pressure Limit
+
+Photoelectric Inductive Capacitive Ultrasonic
+
+Proximity Switches
+
+Figure 13 - Automatic pilot devices.
+
+Temperature Switches
+
+A common example of switches that respond automatically to temperature are furnace
+controls. Temperature switches are also a common component of control systems, such as
+those for compressors, liquid baths, and fans. They can be used to detect the temperature
+of bearings, motor windings, and ambient or compressed air or liquid.
+
+There are a variety of temperature sensors, which include
+
+© Thermocouples,
+© Resistive temperature devices including resistance temperature detectors (RTDs)
+
+and thermistors,
+¢ Infrared sensors,
+¢ Bimetallic devices, and
+* Silicon diodes.
+
+These sensors measure temperature by sensing a change in a physical characteristic.
+
+030204c02.docx_
+
+
+
+=== PAGE 18 ===
+Thermocouples
+Thermocouples are voltage devices that indicate temperature by producing a change f, a
+voltage. As the temperature goes up, the output voltage of the thermocouple Tises, but Z
+necessarily linearly. An example is a thermocouple used to confirm the Presence of g
+pilot light in a boiler system before allowing the main gas valve to be energizeq,
+
+Resistive Temperature Devices
+
+Rather than using a voltage like the thermocouple, resistive temperature devices take
+advantage of another characteristic of matter that changes with temperature: Tesistance,
+The two types of resistive devices are
+© Resistance temperature detectors (RTDs) and
+e  Thermistors.
+
+In general, RTDs are more linear than thermocouples. They have a positive temperature
+coefficient, meaning that their resistance increases as the temperature rises. A thermistor _
+is a semiconductive device with a negative temperature coefficient. Thermistors
+experience a nonlinear decrease in resistance as temperature rises.
+
+Infrared Sensors
+
+Infrared sensors are non-contacting sensors, which means they do not need to touch the
+surface being measured. This type of sensor measures the temperature of a surface by
+virtue of its thermal radiation. Non-contact or thermal radiation temperature sensors
+function by measuring components of the electromagnetic radiation naturally radiated by
+all objects above absolute zero. eS
+
+Since infrared sensors are non-contacting, they can be used for situations in which there
+are contamination concerns, or in which the product being measured could be damaged
+by a contact sensor. Infrared sensors can also be used to measure the temperature of
+moving objects.
+
+Bimetallic Devices
+
+Bimetallic devices take advantage of the expansion of metals when they are heated.
+In these devices, two metals are bonded together and mechanically linked toasetof
+contacts. When heated, one side of the bimetallic strip expands more than the other,
+causing the strip to bend. This movement changes the state of the contacts. When the -
+strip cools, it returns to its initial shape and the contacts revert to their normal state.
+
+A common example of this type of switch is non-programmable therm:
+
+residential heating control. e
+
+The advantages of bimetallic devices are portability and ind
+supply and relatively low cost. However, they are not ust
+as RTDs and thermocouples.
+
+Silicon Diodes
+
+Silicon diode sensors can be used over a wide
+cryogenic temperature range, which is less than —
+harsh temperatures whereas other types of t
+
+'030204c02.docx
+
+
+=== PAGE 19 ===
+LS
+
+0 SS ———— ai siisnasin
+Pressure Switches
+
+A typical pressure switch is a switch with both normally open and normally closed
+contacts connected to an actuator. The actuator may be a bellows, a diaphragm, or a
+
+piston, depending on the system in which the pressure is measured and depending on the
+pressures involved. Some switches are dual-stage and operate contacts at two
+
+predetermined pressures. The two stages could be an alarm stage and a shutdown stage.
+
+Pressure switches used in pump and compressor applications often change the contact
+position at one pressure and do not return them to the normal condition until a second
+level is measured. For example, a pressure switch in an air compressor maintains air
+pressure between two pre-set values by
+
+e Closing at a low pressure to start the motor and
+¢ Opening at a high pressure to turn off the motor.
+
+Pressure switches can also be used to
+¢ Signal a broken fan belt or clogged air filter,
+e Prove exhaust flow by measuring the pressure differences across a barrier, or
+« Operate contacts at a predetermined pressure differential.
+
+Limit Switches and Proximity Switches
+
+Limit switches and proximity switches have several applications, which include
+e Measuring the travel of a piece of equipment for positioning,
+e Stopping or changing directions, and
+« Measuring the levels of solids in a container or pile.
+
+@ Limit switches require the actuator, lever, cam, or rod to contact the object or material
+being sensed. Proximity switches can detect the object or material without contacting it.
+There are several designs of proximity switches such as
+
+¢ Magnetic,
+
+¢ Inductive,
+
+¢ Capacitive, and
+© Photoelectric.
+
+Magnetic Proximity Switch
+
+Magnetic proximity switches operate by detecting the presence of an external magnetic
+field. They are often used in security systems to detect when doors or windows have been
+opened. These switches can also be used in a hall effect sensor to detect the position or
+speed of the rotor of a motor.
+
+Inductive Proximity Switch
+
+Inductive proximity switches operate by creating a magnetic field and then sensing
+when a ferrous (conductive) metal object enters that field. A common example i SEDSOrS)
+placed under the road construction materials at traffic lights to detect the presence
+
+of vehicles. P
+
+
+
+=== PAGE 20 ===
+a
+
+Capacitive Proximity Switch ; :
+Capacitive proximity switches operate by creating an electrostatic field and then sensing
+when an object enters that field. Since capacitive sensors can read through the walls of
+enclosures, a common example is the level of liquids in a vessel.
+
+Photoelectric Proximity Switch
+Photoelectric proximity switches typically operate by
+© Sensing light reflected off an object or
+© Sensing when an object interrupts a light beam.
+
+A common example is a photoelectric sensor and reflector installed on either side of g
+garage door opening to stop the door from closing when there is an object that breaks the
+path of the light beam.
+
+Float Switches
+Float switches, also called liquid-level switches, indicate the liquid level in a vessel or
+tank. They can be a lever actuated by a mechanical float and rod, or a tethered bulb.
+¢ The lever type operates the NO and NC contacts as changing liquid levels cause
+the float to move.
+¢ The tethered bulb type contains a switch within the float itself that is connected
+to circuit wiring through a cable. The bulb is suspended at the desired level. If the
+bulb changes position due to a liquid level change, the switch contact position
+changes, as shown in Figure 14.
+
+Siete ke High Level
+
+aay >> Low Level
+
+Figure 14 - Tethered bulb float switch in a ts
+
+You may also encounter liquid level switches of the photoelectric
+do not require a float or any direct contact with the liquid.
+
+030204c02.docx
+
+
+
+=== PAGE 21 ===
+we
+
+Basic Symbols for Automatic Controls
+
+Figure 15 illustrates some common symbols for pilot devi open
+@ symbols, the armature hangs below the terminal; 5 thea pc aemnally
+
+symbols, the armature sits on the terminals. The:
+
+Pressure Temperature]
+Switch i
+
+fe)
+
+Figure 15 - Automatic pilot device symbols.
+
+@ NOTE
+
+The electrical industry generally indicates the normal position of. pilot
+devices as its position in the absence of any operating medium.
+However, the heating industry or appliance diagrams sometimes show
+the position of temperature or pressure operated devices at the
+expected levels during normal operation.
+
+NOTES
+
+
+
+=== PAGE 22 ===
+a
+
+Objective Three Activity
+1. Automatically operated pilot devices detect a change and convert this change to th i
+opening or closing of a set of contacts. €
+a) True
+b) False
+2. List four (4) common types of pilot (switching) control devices.
+a)
+
+b)
+
+°)
+d)
+
+3. When drawing a pressure switch in a diagram, the symbol is drawn as though there is
+pressure in the system.
+a) No
+b) Full
+c) Half
+d) Rated
+
+4. How isa tethered bulb float switch different than a lever type switch?
+
+5. What is the difference between a limit switch and a proximity switch?
+
+030204c02.docx
+
+
+
+=== PAGE 23 ===
+wee el
+
+waa
+objectives Four and Five
+When you have completed these objectives, you will be able to
+
+NOTES
+
+Describe overcurrent protection devices,
+Describe the protection characteristics of fuses and breakers,
+
+Basic Protection Requirements
+
+When current flows through conductors, the effects produced are
+e Heat and
+« Magnetism
+
+Jf too much current, flows in a conductor, it can produce enough heat to damage the
+conductor’s insulation. If a very high amount of current flows, the heat can even damage
+the conductor itself. These scenarios are called overcurrent conditions.
+
+Rule 14-010 of the CE Code requires conductors and associated equipment to be
+protected against the damaging heat of overcurrent conditions.
+
+Overcurrent Conditions
+
+‘An overcurrent condition is an abnormal situation and can be caused by either
+© Short circuits or
+¢ Overloads.
+
+NOTE
+
+‘An overcurrent condition occurs when the current in the circuit
+exceeds the circuit’s designed continuous capacity.
+
+Short-Circuit Conditions
+
+A short circuit occurs in a circuit if a live ungrounded conductor contacts
+« Another ungrounded conductor,
+« A grounded conductor, or
+© Equipment that is bonded to ground.
+
+This situation can be caused by insulation failure, an incorrectly connected wire, or a tool
+dropped across the terminals of a device. A short circuit creates a fault path that bypasses
+the load impedance that normally limits current flow. The amount of short-circuit current
+or fault current that flows can be extremely high since the impedance of the short-circuit
+
+path is typically very low. Following Ohm’s law, the current ina circuit increases if the
+impedance of the circuit is reduced and the voltage remains the same.
+
+Fault currents can be in the thousands of amps. Damage results
+continues for even a few cycles of a 60 Hz supply. The high
+result in severe insulation damage, melting conductors, 1
+ionization, arcing, and fires if devices are not installed
+
+
+
+=== PAGE 24 ===
+Overload Conditions
+
+An overload is a circuit condition in which the level of overcurrent isa moderate
+percentage above the normal current for that circuit. Over time, an overload condition
+generates enough heat in the conductors of the circuit to damage their insulation, An
+overload condition could be created by adding too many loads to a circuit or bya single
+load drawing too much current.
+
+Increased current also occurs in motors with a mechanical overload. Overload currents
+are typically only moderately higher than the rated current but can still be damaging to
+insulation and conductors. If motors and other equipment do not have specific devices
+
+that protect them from overload conditions, they can be permanently damaged by
+prolonged overloading.
+
+Overcurrent Devices
+
+Section 0 of the CE Code defines an overcurrent device as any device capable of
+automatically opening an electric circuit under both predetermined overload and
+
+short-circuit conditions. They open the circuit by the fusing of metal or by
+electromechanical means.
+
+Overcurrent Device Ratings
+
+In addition to a voltage rating, Rule 14-012 requires all overcurrent devices, fuses, and
+circuit breakers to have two current ratings:
+
+* Acontinuous current rating (for example, 15 A, 50 A, or 200 A) and
+
+° An interrupting rating (for example, 10 000 A, 50 000 A, or 200 000 A).
+
+Figure 16 shows the continuous current rating and interrupting rating of a circuit breaker.
+
+Continuous
+Current Rating
+
+Interrupting
+Rating
+
+030204c02.docx
+
+
+
+=== PAGE 25 ===
+tinuous Current Rating
+jnuous current rating, or simply continuous rating. indi
+he continuous . “ ts ‘ating, indicates the amount of
+ue rrent the device will carry without exceeding a specified temperature rise. Generally
+he continuous current rating is sized from Table 13 in the CE Code based on the
+0 f the conductors that the overcurrent d
+
+ampacity ©} Os A device is protecting. The CE Code
+requirements for determining the continuous ratings for overcurrent devices protecting
+motor branch circuits will be discussed in detail in the Motor Starters module.
+
+interrupting Rating ,
+
+The interrupting rating indicates the maximum amount of current the device can safely
+jnterrupt when it opens during a short-circuit condition. All Protective devices intended to
+break short-circuit currents must have a short-circuit interrupting rating equal to or
+
+greater than the maximum available fault current at their terminals. Interrupting ratings
+typically do not exceed 200 000 A, although higher: ratings may be available.
+
+The factors that affect the maximum available fault current in a system are discussed in
+the next objective.
+
+Types of Overcurrent Devices
+
+The two basic types of overcurrent devices are
+e Fuses (fusing of metal) and
+e Circuit breakers (electromechanical).
+
+Fuses
+
+A fuse is a current-sensitive device that consists of a conductor of reduced cross-section,
+called the element, surrounded by an arc quenching, heat-conducting material called
+filler, as shown in Figure 17. These components are enclosed in a body fitted with end
+contacts that are used to attach the fuse to a fuse holder. The element is sometimes called
+the fuse link.
+
+End Contact
+
+Element
+
+Body. Filler
+
+NOTES
+
+
+
+=== PAGE 26 ===
+-
+
+‘A fuse must carry its normal load current continuously without dete;
+
+or overheating (passive functionality) and open the circuit under oy TOrating due to
+(active functionality). “recurrent congiy
+© During an overload condition, there is a gradual rise in cu Ons
+causes the element to melt. trent that eventual
+© During a short-circuit condition, the large fault current caus ly
+much faster. €s the element om
+It
+
+The basic fuse shapes are plug fuses and cartridge fuses, with cartrid;
+most common type used. Cartridge fuses come in various shapes mada fs being th,
+in Figure 18. Sizes, as shown
+
+N
+
+Figure 18 - Cartridge fuses.
+
+030204e02.docx
+
+
+
+=== PAGE 27 ===
+ictured in Figure 19, fit into a fuse holder r i
+plug ser Plug fuses were once used as branch Bitch rite gs rn ee
+taal panelboards; however, they have been replaced by the use of Gircuit breakers
+q rally seen only in very old panelboards. Presently, plug fuses are common in ‘
+eectical appliances such as electrical ranges. Plug fuses are covered in more detail in the
+ears of your technical training.
+
+el
+later Y
+
+Figure 19 - Plug fuses.
+
+The two basic types of cartridge and plug fuses are
++ Non-time-delay fuses and
+9 Time-delay fuses.
+
+Non-Time-Delay Fuses
+Non-time-delay fuses are pictured in Figure 20. Also called single-element fuses, this type
+
+has a single element that opens quickly when the circuit current exceeds the current rating
+of the fuse. Non-time-delay fuses do not allow for brief overloads and almost
+immediately interrupt the circuit if the current rises above the continuous rating of
+
+the fuse.
+
+End Blades
+
+Arc-quenching (Ferrules)
+
+Filler Material
+
+Figure 20 - Single-element fuse.
+
+
+
+=== PAGE 28 ===
+NOT
+
+Overload Characteristics
+
+If an overload current that exceeds the fuse’s rated current persists for m
+time, the fuse link melts, as illustrated in Figure 21. An are across the an a shor
+metal, widening the gap. The blown fuse cuts off all current flow in tite bums 6
+material helps to suppress or quench the are. Meuit. The fille 0)
+
+Figure 21 - An overload condition in a single-element fuse,
+
+Short-Circuit Characteristics
+
+During a short circuit, several sections of the element melt instantly, as shown in
+Figure 22. The high short-circuit current may cause arcing across the vaporized
+portions of the link but is extinguished by the filler material. The total operating time
+of non-time-delay fuses during short-circuit conditions can be less than half of one
+electrical cycle (less than %oo9 of a second). Very high short-circuit currents can be
+cleared in less than a quarter of a cycle. This fast-clearing time protects system
+components from damage.
+
+Figure 22 - A short-circuit condition in a single-element fuse.
+
+Time-Delay Fuses
+
+Time-delay fuses, also called dual-element fuses, have two parts:
+e A thermal cut-out and
+e A fuse element or link.
+
+The thermal cut-out responds with inverse-time characteristics to overload Co
+¢ The higher the value of the overload current, the less time it takes
+open the circuit. p J
+The lower the value of the overload current, the lo
+open the circuit. =
+
+These fuses provide a time-delayed response for
+continuous current of the fuse. The time-delayed re
+circuits such as motor branch circuits that have ah
+
+time they are started. The fuse link of the time:
+short-circuit currents or fault currents above thi
+
+(030204c02.docx
+
+
+=== PAGE 29 ===
+Short-circuit
+Element
+
+Thermal Cutout
+
+(Overload Element)
+
+Arc-quenching
+Filler Material
+
+Figure 23 - Dual-element fuse.
+
+NOTE
+
+Manufacturers may use methods different than those described for the
+construction and arrangement of the short-circuit and overload
+elements; however, the basic time-delay characteristics are the same.
+
+Overload Characteristics
+
+For a small overload current, the short-circuit fuse link remains inactive. The overload
+element (thermal cut-out) consists of a centre mass of copper on which a spring and a
+short connector are mounted. This connector is held in place by a low melting point
+solder, and it connects the centre mass of copper to the fuse link. When an overload
+current flows long enough to melt the solder, the connector is pulled out of place by the
+spring, opening the circuit as portrayed in Figure 24.
+
+Figure 24 - An overload condition in a dual-element fuse.
+
+The time that it takes to heat up and melt the solder provides a built-in time-delay for the
+thermal cut-out element. This permits momentary inrush currents and expected overload
+Conditions to occur without opening the fuse.
+
+
+
+=== PAGE 30 ===
+28
+
+Short-Circuit Characteristics ‘ ;
+During a short circuit, the fuse link portion of the time-delay fuse acts like g
+
+single-element fuse. One ot more portions ofthe link vaporize, and the suirouy
+
+arc-quenching filler extinguishes any arcing current, as shown in Figure 25, rae
+faster than the time it would take for the thermal cut-out to melt, “This happens
+
+Figure 25 - A short-circuit condition in a dual-element fuse,
+
+Circuit Breakers
+
+Circuit breakers are electromechanical devices that can be operated manually to
+de-energize a circuit and can also operate automatically in response to overcurrent
+conditions. A circuit breaker may be used as a protective device, a control device, and/or
+a disconnecting means. Like fuses, they come in a variety of sizes and shapes, as pictured
+in Figure 26.
+
+Figure 26 - Circuit breakers.
+
+The two basic types of circuit breakers are
+¢ Instantaneous-trip circuit breakers and
+©  Inverse-time circuit breakers.
+
+Instantaneous-Trip Circuit Breakers
+Instantaneous-trip circuit breakers only respond to short-circuit conditions. Like
+non-time-delay fuses, they respond very quickly when the circuit current exceeds
+the continuous current rating of the circuit breaker.
+
+(030204c02.docx
+

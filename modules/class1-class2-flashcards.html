@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class 1 & 2 Circuits — Flashcards & Practice Quiz — SpartyStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SpartyStudy — Global Styles (Dark Theme)
+   ============================================ */
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #f59e0b;
+    --accent2: #58a6ff;
+    --green: #10b981;
+    --red: #ef4444;
+    --accent-bg: rgba(245,158,11,0.1);
+    --accent2-bg: rgba(88,166,255,0.1);
+    --green-bg: rgba(16,185,129,0.1);
+    --red-bg: rgba(239,68,68,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+a { text-decoration: none; color: inherit; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+/* ============================================
+   Container
+   ============================================ */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    padding-top: 88px;
+    padding-bottom: 60px;
+}
+
+/* ============================================
+   Mode Tabs
+   ============================================ */
+.mode-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 32px;
+}
+
+.mode-tab {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mode-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+.mode-tab.active {
+    background: var(--accent);
+    color: #000;
+}
+
+.mode-tab .tab-icon { font-size: 1.2rem; }
+
+/* ============================================
+   Flashcard Mode
+   ============================================ */
+.flashcard-area { perspective: 1200px; }
+
+.card-scene {
+    width: 100%;
+    max-width: 600px;
+    height: 360px;
+    margin: 0 auto 24px;
+    cursor: pointer;
+    perspective: 1200px;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.card-inner.flipped { transform: rotateY(180deg); }
+
+.card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    text-align: center;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.card-scene:hover .card-face {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(245,158,11,0.1), 0 0 40px rgba(245,158,11,0.05);
+}
+
+.card-front {
+    background: var(--panel);
+}
+
+.card-front .card-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+
+.card-front .card-question {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.card-back {
+    background: linear-gradient(135deg, #1a2332, #161b22);
+    transform: rotateY(180deg);
+}
+
+.card-back .card-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    margin-bottom: 20px;
+}
+
+.card-back .card-answer {
+    font-size: 1.15rem;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.card-hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+/* ============================================
+   Flashcard Controls
+   ============================================ */
+.card-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.nav-btn {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-btn:hover { border-color: var(--accent); background: var(--accent-bg); }
+.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.nav-btn:disabled:hover { border-color: var(--border); background: var(--panel); }
+
+.card-counter {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 80px;
+    text-align: center;
+}
+
+.card-counter span { color: var(--muted); }
+
+.card-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.action-btn {
+    padding: 12px 24px;
+    border: 1px solid;
+    border-radius: var(--radius);
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-btn.know {
+    border-color: var(--green);
+    color: var(--green);
+}
+.action-btn.know:hover { background: var(--green-bg); }
+
+.action-btn.learning {
+    border-color: var(--red);
+    color: var(--red);
+}
+.action-btn.learning:hover { background: var(--red-bg); }
+
+.action-btn.shuffle {
+    border-color: var(--accent2);
+    color: var(--accent2);
+}
+.action-btn.shuffle:hover { background: var(--accent2-bg); }
+
+/* Progress Dots */
+.progress-dots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.progress-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: var(--transition);
+}
+
+.progress-dot.current { background: var(--accent); transform: scale(1.3); }
+.progress-dot.known { background: var(--green); }
+.progress-dot.learning-dot { background: var(--red); }
+
+/* Keyboard Hints */
+.keyboard-hints {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.kbd-hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ============================================
+   Flashcard Summary
+   ============================================ */
+.summary-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+}
+
+.summary-screen h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.summary-subtitle {
+    color: var(--muted);
+    margin-bottom: 32px;
+}
+
+.summary-stats {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    padding: 24px 32px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--panel);
+    min-width: 140px;
+}
+
+.stat-num {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-num.green { color: var(--green); }
+.stat-num.red { color: var(--red); }
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.summary-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.summary-btn {
+    padding: 14px 28px;
+    border-radius: var(--radius);
+    border: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.summary-btn.primary {
+    background: var(--accent);
+    color: #000;
+}
+.summary-btn.primary:hover { filter: brightness(1.1); }
+
+.summary-btn.secondary {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+.summary-btn.secondary:hover { border-color: var(--accent); }
+
+/* ============================================
+   Practice Quiz Mode
+   ============================================ */
+.quiz-mode { display: none; }
+
+.quiz-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.quiz-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.quiz-header p {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.quiz-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-bottom: 32px;
+    overflow: hidden;
+}
+
+.quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: 0%;
+}
+
+.quiz-question-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 20px;
+}
+
+.quiz-q-number {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+
+.quiz-q-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.quiz-q-text .blank {
+    display: inline-block;
+    min-width: 80px;
+    border-bottom: 2px dashed var(--accent);
+    margin: 0 4px;
+}
+
+.quiz-input-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.quiz-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+.quiz-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
+
+.quiz-input.correct {
+    border-color: var(--green);
+    background: var(--green-bg);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+}
+
+.quiz-input.incorrect {
+    border-color: var(--red);
+    background: var(--red-bg);
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+}
+
+.quiz-submit-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #000;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.quiz-submit-btn:hover { filter: brightness(1.1); }
+.quiz-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.quiz-feedback {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: none;
+}
+
+.quiz-feedback.correct {
+    display: block;
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid rgba(16,185,129,0.2);
+}
+
+.quiz-feedback.incorrect {
+    display: block;
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.2);
+}
+
+.multi-input-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: 1;
+}
+
+.multi-input-row .quiz-input { min-width: 80px; }
+.multi-input-row .input-sep { color: var(--muted); font-weight: 600; }
+
+/* Quiz Score */
+.quiz-score-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+}
+
+.quiz-score-screen h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.score-ring {
+    width: 160px;
+    height: 160px;
+    margin: 24px auto;
+    position: relative;
+}
+
+.score-ring svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.score-ring .ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 8;
+}
+
+.score-ring .ring-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+}
+
+.score-ring .score-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.quiz-score-msg {
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-size: 1rem;
+}
+
+/* ============================================
+   Utilities & Animations
+   ============================================ */
+@keyframes flash-green {
+    0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+    50% { box-shadow: 0 0 30px 10px rgba(16,185,129,0.15); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+
+@keyframes flash-red {
+    0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50% { box-shadow: 0 0 30px 10px rgba(239,68,68,0.15); }
+    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+
+.flash-green { animation: flash-green 0.5s ease; }
+.flash-red { animation: flash-red 0.5s ease; }
+
+.hidden { display: none !important; }
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 640px) {
+    .container { padding-left: 16px; padding-right: 16px; }
+    .card-scene { height: 300px; }
+    .card-face { padding: 28px 20px; }
+    .card-front .card-question { font-size: 1.05rem; }
+    .card-back .card-answer { font-size: 1rem; }
+    .mode-tab { font-size: 0.9rem; padding: 12px 14px; }
+    .summary-stats { flex-direction: column; align-items: center; }
+    .keyboard-hints { display: none; }
+    .card-actions { flex-wrap: wrap; }
+    .quiz-input-row { flex-direction: column; }
+}
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<!-- ============================================
+     Navigation
+     ============================================ -->
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link sn-active">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<!-- ============================================
+     Main Content
+     ============================================ -->
+<div class="container">
+
+    <!-- Mode Tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab active" onclick="switchMode('flashcards')" id="tab-flashcards">
+            <span class="tab-icon">&#128196;</span> Flashcards
+        </button>
+        <button class="mode-tab" onclick="switchMode('quiz')" id="tab-quiz">
+            <span class="tab-icon">&#9998;</span> Practice Quiz
+        </button>
+    </div>
+
+    <!-- ========================================
+         FLASHCARDS MODE
+         ======================================== -->
+    <div id="flashcards-mode">
+        <div class="flashcard-area">
+            <div class="card-scene" id="card-scene" onclick="flipCard()" role="button" tabindex="0" aria-label="Flip flashcard">
+                <div class="card-inner" id="card-inner">
+                    <div class="card-face card-front">
+                        <div class="card-label">Question</div>
+                        <div class="card-question" id="card-question"></div>
+                        <div class="card-hint">Click or press Space to reveal answer</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="card-label">Answer</div>
+                        <div class="card-answer" id="card-answer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-nav">
+            <button class="nav-btn" id="prev-btn" onclick="prevCard()" aria-label="Previous card">&#8592;</button>
+            <div class="card-counter"><span id="card-current">1</span> <span>/ </span><span id="card-total">30</span></div>
+            <button class="nav-btn" id="next-btn" onclick="nextCard()" aria-label="Next card">&#8594;</button>
+        </div>
+
+        <div class="card-actions">
+            <button class="action-btn know" onclick="markCard('known')" title="G key">&#10003; Know it</button>
+            <button class="action-btn learning" onclick="markCard('learning')" title="R key">&#10007; Still learning</button>
+            <button class="action-btn shuffle" onclick="shuffleDeck()">&#8634; Shuffle</button>
+        </div>
+
+        <div class="progress-dots" id="progress-dots"></div>
+
+        <div class="keyboard-hints">
+            <span class="kbd-hint"><span class="kbd">Space</span> Flip</span>
+            <span class="kbd-hint"><span class="kbd">&#8592;</span><span class="kbd">&#8594;</span> Navigate</span>
+            <span class="kbd-hint"><span class="kbd">G</span> Know it</span>
+            <span class="kbd-hint"><span class="kbd">R</span> Still learning</span>
+        </div>
+
+        <!-- Summary Screen -->
+        <div class="summary-screen" id="summary-screen">
+            <h2>Deck Complete!</h2>
+            <p class="summary-subtitle">Here's how you did with 30 cards</p>
+            <div class="summary-stats">
+                <div class="stat-card">
+                    <div class="stat-num green" id="known-count">0</div>
+                    <div class="stat-label">Know it</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num red" id="learning-count">0</div>
+                    <div class="stat-label">Still learning</div>
+                </div>
+            </div>
+            <div class="summary-actions">
+                <button class="summary-btn primary" onclick="reviewLearning()">Review cards you're still learning</button>
+                <button class="summary-btn secondary" onclick="resetDeck()">Start over (all cards)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         PRACTICE QUIZ MODE
+         ======================================== -->
+    <div id="quiz-mode" class="quiz-mode">
+        <div class="quiz-header">
+            <h2>Practice Quiz</h2>
+            <p>15 fill-in-the-blank questions — test yourself before tomorrow!</p>
+        </div>
+        <div class="quiz-progress-bar">
+            <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+        </div>
+        <div id="quiz-questions"></div>
+
+        <div style="text-align:center; margin-top:24px;" id="quiz-finish-area" class="hidden">
+            <button class="summary-btn primary" onclick="scoreQuiz()" id="finish-quiz-btn">Finish & Score</button>
+        </div>
+
+        <!-- Quiz Score -->
+        <div class="quiz-score-screen" id="quiz-score-screen">
+            <h2>Quiz Results</h2>
+            <div class="score-ring">
+                <svg viewBox="0 0 160 160">
+                    <circle class="ring-bg" cx="80" cy="80" r="68"/>
+                    <circle class="ring-fill" id="score-ring-fill" cx="80" cy="80" r="68"
+                        stroke-dasharray="427.26" stroke-dashoffset="427.26"/>
+                </svg>
+                <div class="score-text" id="score-text">0/15</div>
+            </div>
+            <p class="quiz-score-msg" id="quiz-score-msg"></p>
+            <div class="summary-actions">
+                <button class="summary-btn primary" onclick="resetQuiz()">Try Again (new questions)</button>
+                <button class="summary-btn secondary" onclick="switchMode('flashcards')">Review Flashcards</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Auth check
+(function(){try{const a=JSON.parse(localStorage.getItem('sparty_auth'));if(!a||a.role!=='owner'||(Date.now()-a.loginTime>86400000)){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}catch(e){window.location.href='../login.html';}})();
+/* ============================================
+   FLASHCARD DATA
+   ============================================ */
+const allFlashcards = [
+    { q: "What does Section 16 of the CE Code cover?", a: "Class 1 and Class 2 circuits \u2014 circuits that can use conductors smaller than No. 14 AWG" },
+    { q: "What is a remote control circuit?", a: "A circuit that controls another circuit through a relay or equivalent device" },
+    { q: "What is a signal circuit?", a: "A circuit that energizes signaling equipment like bells, buzzers, and alarms" },
+    { q: "Is a communication circuit the same as a signal circuit?", a: "NO! Communication circuits are NOT signal circuits (Section 0)" },
+    { q: "What is an extra-low voltage power circuit?", a: "A power circuit limited to 30V max and 1000 VA max \u2014 CLASS 1 ONLY" },
+    { q: "What is a low-energy power circuit?", a: "A power circuit limited to 150V max and 100 VA max \u2014 CLASS 2 ONLY" },
+    { q: "Which rules cover Class 1 circuits?", a: "The 16-100s (Rule 16-100 through 16-114)" },
+    { q: "Which rules cover Class 2 circuits?", a: "The 16-200s (Rule 16-200 through 16-226)" },
+    { q: "Max voltage for Class 1 extra-low voltage power circuit?", a: "30 V (Rule 16-100)" },
+    { q: "Max VA for Class 1 extra-low voltage power circuit?", a: "1000 VA" },
+    { q: "Max voltage for Class 1 remote control/signal circuit?", a: "600 V" },
+    { q: "Max overcurrent protection for No. 18 AWG in Class 1?", a: "5 A (Rule 16-104)" },
+    { q: "Max overcurrent protection for No. 16 AWG in Class 1?", a: "10 A (Rule 16-104)" },
+    { q: "Max voltage for a Class 2 circuit?", a: "150 V (Rule 16-200)" },
+    { q: "Max VA for a Class 2 circuit power supply?", a: "100 VA (Rule 16-200)" },
+    { q: "Formula: Max current for a 24V Class 2 circuit?", a: "I = 100 VA \u00f7 24 V = 4.16 A" },
+    { q: "Formula: Max current for a 54V Class 2 circuit?", a: "I = 100 VA \u00f7 54 V = 1.85 A" },
+    { q: "Quick trick: Class 1 VA vs Class 2 VA?", a: "Class 1 = 1000 VA, Class 2 = 100 VA \u2014 just drop a zero!" },
+    { q: "Smallest conductor that can be PULLED into a raceway for Class 1?", a: "No. 16 AWG (Rule 16-110)" },
+    { q: "Smallest conductor that can be LAID in a raceway for Class 2?", a: "No. 19 AWG (Rule 16-210 4b)" },
+    { q: "What is LVT cable?", a: "Low-Voltage Thermostat cable \u2014 has a non-metallic sheath, OK for heating control" },
+    { q: "What is ELC cable?", a: "Extra-Low voltage Cable aka 'bell wire' \u2014 NO sheath, must NOT be used for heating control or fire safety" },
+    { q: "Ampacity of No. 18 AWG, 2-conductor LVT? (Table 57)", a: "5 A" },
+    { q: "Ampacity of No. 16 AWG, 4-conductor LVT after derating?", a: "8 A (10 A \u00d7 0.8 derating for >3 conductors)" },
+    { q: "Derating factor for cables with more than 3 conductors?", a: "Multiply by 0.8" },
+    { q: "Min separation between Class 2 and power conductors?", a: "50 mm (Rule 16-212)" },
+    { q: "When must a Class 1/Class 2 circuit over 30V be grounded?", a: "Always \u2014 must be solidly grounded (Rule 10-206)" },
+    { q: "Can Class 1 and power conductors share a raceway?", a: "Only if connected to the same equipment AND all conductors have the same voltage rating (Rule 16-114)" },
+    { q: "Typical doorbell transformer rating?", a: "16V output, 40 VA, Class 2 \u2014 protected by 15A breaker on primary side" },
+    { q: "What 3 things can limit Class 2 circuit power?", a: "1) Overcurrent device, 2) Approved Class 2 transformer, 3) Devices with energy-limiting characteristics" }
+];
+
+/* ============================================
+   QUIZ DATA
+   ============================================ */
+const allQuizQuestions = [
+    { text: "The maximum VA rating for a Class 2 circuit is _____ VA.", answers: ["100"], type: "single" },
+    { text: "No. 18 AWG conductors in a Class 1 circuit need overcurrent protection no greater than _____ A.", answers: ["5"], type: "single" },
+    { text: "Class 2 wiring must be separated from power conductors by at least _____ mm.", answers: ["50"], type: "single" },
+    { text: "The derating factor for cables with more than 3 conductors is _____.", answers: ["0.8", ".8"], type: "single" },
+    { text: "A Class 1 extra-low voltage power circuit is limited to _____ V and _____ VA.", answers: ["30", "1000"], type: "multi" },
+    { text: "ELC cable must NOT be used for _____ control or _____ safety circuits.", answers: ["heating", "fire"], type: "multi" },
+    { text: "The smallest Class 1 conductor that can be pulled into a raceway is No. _____ AWG.", answers: ["16"], type: "single" },
+    { text: "The smallest Class 2 conductor that can be laid in a raceway is No. _____ AWG.", answers: ["19"], type: "single" },
+    { text: "Calculate: Max overcurrent for a 48V Class 2 circuit = 100 VA \u00f7 48 V = _____ A.", answers: ["2.08", "2.1"], type: "single" },
+    { text: "A No. 16 AWG, 4-conductor LVT cable has an ampacity of 10 A \u00d7 0.8 = _____ A.", answers: ["8"], type: "single" },
+    { text: "Class 1 circuits follow Section _____ wiring rules with some exceptions.", answers: ["12"], type: "single" },
+    { text: "LVT stands for _____ - _____ _____.", answers: ["low", "voltage", "thermostat"], type: "multi3" },
+    { text: "TEW conductors are available with either _____ V or _____ V insulation.", answers: ["300", "600"], type: "multi" },
+    { text: "A _____ control circuit is a circuit that controls another circuit through a relay.", answers: ["remote"], type: "single" },
+    { text: "Circuits under 30V must be grounded if run _____ outside.", answers: ["overhead"], type: "single" }
+];
+
+/* ============================================
+   FLASHCARD STATE & LOGIC
+   ============================================ */
+let deck = [...allFlashcards.map((c, i) => ({ ...c, id: i, status: null }))];
+let currentIndex = 0;
+let isFlipped = false;
+let reviewMode = false;
+
+function renderCard() {
+    const card = deck[currentIndex];
+    document.getElementById('card-question').textContent = card.q;
+    document.getElementById('card-answer').textContent = card.a;
+    document.getElementById('card-current').textContent = currentIndex + 1;
+    document.getElementById('card-total').textContent = deck.length;
+
+    // Reset flip
+    isFlipped = false;
+    document.getElementById('card-inner').classList.remove('flipped');
+
+    // Update nav buttons
+    document.getElementById('prev-btn').disabled = currentIndex === 0;
+
+    renderDots();
+}
+
+function renderDots() {
+    const container = document.getElementById('progress-dots');
+    container.innerHTML = '';
+    deck.forEach((card, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (i === currentIndex) dot.classList.add('current');
+        if (card.status === 'known') dot.classList.add('known');
+        if (card.status === 'learning') dot.classList.add('learning-dot');
+        dot.onclick = () => { currentIndex = i; renderCard(); };
+        container.appendChild(dot);
+    });
+}
+
+function flipCard() {
+    isFlipped = !isFlipped;
+    document.getElementById('card-inner').classList.toggle('flipped', isFlipped);
+}
+
+function nextCard() {
+    if (currentIndex < deck.length - 1) {
+        currentIndex++;
+        renderCard();
+    } else {
+        showSummary();
+    }
+}
+
+function prevCard() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        renderCard();
+    }
+}
+
+function markCard(status) {
+    deck[currentIndex].status = status;
+
+    // Visual flash on card
+    const scene = document.getElementById('card-scene');
+    scene.classList.remove('flash-green', 'flash-red');
+    void scene.offsetWidth;
+    scene.classList.add(status === 'known' ? 'flash-green' : 'flash-red');
+
+    renderDots();
+
+    // Auto-advance after brief delay
+    setTimeout(() => {
+        if (currentIndex < deck.length - 1) {
+            nextCard();
+        } else {
+            showSummary();
+        }
+    }, 300);
+}
+
+function shuffleDeck() {
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    currentIndex = 0;
+    renderCard();
+}
+
+function showSummary() {
+    const known = deck.filter(c => c.status === 'known').length;
+    const learning = deck.filter(c => c.status === 'learning').length;
+    const unmarked = deck.length - known - learning;
+
+    document.getElementById('known-count').textContent = known;
+    document.getElementById('learning-count').textContent = learning + unmarked;
+
+    document.querySelector('.flashcard-area').classList.add('hidden');
+    document.querySelector('.card-nav').classList.add('hidden');
+    document.querySelector('.card-actions').classList.add('hidden');
+    document.getElementById('progress-dots').classList.add('hidden');
+    document.querySelector('.keyboard-hints').classList.add('hidden');
+    document.getElementById('summary-screen').style.display = 'block';
+}
+
+function hideSummary() {
+    document.querySelector('.flashcard-area').classList.remove('hidden');
+    document.querySelector('.card-nav').classList.remove('hidden');
+    document.querySelector('.card-actions').classList.remove('hidden');
+    document.getElementById('progress-dots').classList.remove('hidden');
+    document.querySelector('.keyboard-hints').classList.remove('hidden');
+    document.getElementById('summary-screen').style.display = 'none';
+}
+
+function reviewLearning() {
+    const learningCards = deck.filter(c => c.status !== 'known');
+    if (learningCards.length === 0) {
+        resetDeck();
+        return;
+    }
+    deck = learningCards.map(c => ({ ...c, status: null }));
+    currentIndex = 0;
+    reviewMode = true;
+    hideSummary();
+    renderCard();
+}
+
+function resetDeck() {
+    deck = [...allFlashcards.map((c, i) => ({ ...c, id: i, status: null }))];
+    currentIndex = 0;
+    reviewMode = false;
+    hideSummary();
+    renderCard();
+}
+
+/* ============================================
+   QUIZ STATE & LOGIC
+   ============================================ */
+let quizQuestions = [];
+let quizAnswered = 0;
+let quizCorrect = 0;
+
+function initQuiz() {
+    // Pick 15 random questions (we have exactly 15, so shuffle them)
+    quizQuestions = [...allQuizQuestions].sort(() => Math.random() - 0.5);
+    quizAnswered = 0;
+    quizCorrect = 0;
+
+    document.getElementById('quiz-score-screen').style.display = 'none';
+    document.getElementById('quiz-questions').innerHTML = '';
+    document.getElementById('quiz-finish-area').classList.add('hidden');
+    document.getElementById('quiz-progress-fill').style.width = '0%';
+
+    const container = document.getElementById('quiz-questions');
+
+    quizQuestions.forEach((q, i) => {
+        const card = document.createElement('div');
+        card.className = 'quiz-question-card';
+        card.id = 'quiz-q-' + i;
+
+        let inputHTML = '';
+        if (q.type === 'single') {
+            inputHTML = `
+                <div class="quiz-input-row">
+                    <input class="quiz-input" type="text" id="quiz-input-${i}" placeholder="Your answer..." autocomplete="off">
+                    <button class="quiz-submit-btn" onclick="checkAnswer(${i})">Check</button>
+                </div>`;
+        } else if (q.type === 'multi') {
+            inputHTML = `
+                <div class="quiz-input-row">
+                    <div class="multi-input-row">
+                        <input class="quiz-input" type="text" id="quiz-input-${i}-0" placeholder="First blank..." autocomplete="off">
+                        <span class="input-sep">&</span>
+                        <input class="quiz-input" type="text" id="quiz-input-${i}-1" placeholder="Second blank..." autocomplete="off">
+                    </div>
+                    <button class="quiz-submit-btn" onclick="checkAnswer(${i})">Check</button>
+                </div>`;
+        } else if (q.type === 'multi3') {
+            inputHTML = `
+                <div class="quiz-input-row">
+                    <div class="multi-input-row">
+                        <input class="quiz-input" type="text" id="quiz-input-${i}-0" placeholder="1st..." autocomplete="off" style="min-width:60px">
+                        <span class="input-sep">-</span>
+                        <input class="quiz-input" type="text" id="quiz-input-${i}-1" placeholder="2nd..." autocomplete="off" style="min-width:60px">
+                        <input class="quiz-input" type="text" id="quiz-input-${i}-2" placeholder="3rd..." autocomplete="off" style="min-width:60px">
+                    </div>
+                    <button class="quiz-submit-btn" onclick="checkAnswer(${i})">Check</button>
+                </div>`;
+        }
+
+        card.innerHTML = `
+            <div class="quiz-q-number">Question ${i + 1} of 15</div>
+            <div class="quiz-q-text">${q.text}</div>
+            ${inputHTML}
+            <div class="quiz-feedback" id="quiz-fb-${i}"></div>
+        `;
+
+        container.appendChild(card);
+    });
+
+    // Enter key support for each input
+    container.querySelectorAll('.quiz-input').forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const idx = parseInt(input.id.replace('quiz-input-', '').split('-')[0]);
+                checkAnswer(idx);
+            }
+        });
+    });
+}
+
+function checkAnswer(idx) {
+    const q = quizQuestions[idx];
+    const fb = document.getElementById('quiz-fb-' + idx);
+    const card = document.getElementById('quiz-q-' + idx);
+    const btn = card.querySelector('.quiz-submit-btn');
+
+    if (btn.disabled) return;
+
+    let userAnswers = [];
+    let allCorrect = true;
+
+    if (q.type === 'single') {
+        const input = document.getElementById('quiz-input-' + idx);
+        const val = input.value.trim();
+        if (!val) { input.focus(); return; }
+        userAnswers = [val];
+
+        const correct = q.answers.some(a => a.toLowerCase() === val.toLowerCase());
+        input.classList.add(correct ? 'correct' : 'incorrect');
+        allCorrect = correct;
+    } else if (q.type === 'multi') {
+        for (let j = 0; j < 2; j++) {
+            const input = document.getElementById(`quiz-input-${idx}-${j}`);
+            const val = input.value.trim();
+            if (!val) { input.focus(); return; }
+            userAnswers.push(val);
+            const correct = q.answers[j].toLowerCase() === val.toLowerCase();
+            input.classList.add(correct ? 'correct' : 'incorrect');
+            if (!correct) allCorrect = false;
+        }
+    } else if (q.type === 'multi3') {
+        for (let j = 0; j < 3; j++) {
+            const input = document.getElementById(`quiz-input-${idx}-${j}`);
+            const val = input.value.trim();
+            if (!val) { input.focus(); return; }
+            userAnswers.push(val);
+            const correct = q.answers[j].toLowerCase() === val.toLowerCase();
+            input.classList.add(correct ? 'correct' : 'incorrect');
+            if (!correct) allCorrect = false;
+        }
+    }
+
+    btn.disabled = true;
+    card.querySelectorAll('.quiz-input').forEach(inp => inp.disabled = true);
+
+    if (allCorrect) {
+        fb.className = 'quiz-feedback correct';
+        fb.textContent = 'Correct!';
+        quizCorrect++;
+    } else {
+        fb.className = 'quiz-feedback incorrect';
+        fb.textContent = 'Incorrect. Answer: ' + q.answers.join(', ');
+    }
+
+    quizAnswered++;
+    document.getElementById('quiz-progress-fill').style.width = (quizAnswered / 15 * 100) + '%';
+
+    if (quizAnswered === 15) {
+        document.getElementById('quiz-finish-area').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('quiz-finish-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    }
+}
+
+function scoreQuiz() {
+    document.getElementById('quiz-questions').classList.add('hidden');
+    document.getElementById('quiz-finish-area').classList.add('hidden');
+    document.querySelector('.quiz-progress-bar').classList.add('hidden');
+
+    const screen = document.getElementById('quiz-score-screen');
+    screen.style.display = 'block';
+
+    document.getElementById('score-text').textContent = quizCorrect + '/15';
+
+    const pct = quizCorrect / 15;
+    const circumference = 2 * Math.PI * 68;
+    const fill = document.getElementById('score-ring-fill');
+    fill.style.stroke = pct >= 0.8 ? 'var(--green)' : pct >= 0.5 ? 'var(--accent)' : 'var(--red)';
+
+    requestAnimationFrame(() => {
+        fill.style.strokeDashoffset = circumference * (1 - pct);
+    });
+
+    const msg = document.getElementById('quiz-score-msg');
+    if (pct === 1) msg.textContent = "Perfect score! You're ready for tomorrow's quiz.";
+    else if (pct >= 0.8) msg.textContent = "Great job! Review the ones you missed and you'll ace it.";
+    else if (pct >= 0.6) msg.textContent = "Good effort! Go through the flashcards again to lock it in.";
+    else msg.textContent = "Keep studying! Use the flashcards to review before trying again.";
+
+    screen.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetQuiz() {
+    document.getElementById('quiz-questions').classList.remove('hidden');
+    document.querySelector('.quiz-progress-bar').classList.remove('hidden');
+    initQuiz();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================
+   MODE SWITCHING
+   ============================================ */
+function switchMode(mode) {
+    document.getElementById('tab-flashcards').classList.toggle('active', mode === 'flashcards');
+    document.getElementById('tab-quiz').classList.toggle('active', mode === 'quiz');
+
+    if (mode === 'flashcards') {
+        document.getElementById('flashcards-mode').style.display = 'block';
+        document.getElementById('quiz-mode').style.display = 'none';
+    } else {
+        document.getElementById('flashcards-mode').style.display = 'none';
+        document.getElementById('quiz-mode').style.display = 'block';
+        if (quizQuestions.length === 0) initQuiz();
+    }
+}
+
+/* ============================================
+   KEYBOARD SUPPORT
+   ============================================ */
+document.addEventListener('keydown', (e) => {
+    // Only handle flashcard keys when flashcard mode is active and no input focused
+    const inFlashcardMode = document.getElementById('flashcards-mode').style.display !== 'none';
+    const isSummary = document.getElementById('summary-screen').style.display === 'block';
+    const inputFocused = document.activeElement.tagName === 'INPUT';
+
+    if (!inFlashcardMode || isSummary || inputFocused) return;
+
+    switch (e.key) {
+        case ' ':
+            e.preventDefault();
+            flipCard();
+            break;
+        case 'ArrowLeft':
+            e.preventDefault();
+            prevCard();
+            break;
+        case 'ArrowRight':
+            e.preventDefault();
+            nextCard();
+            break;
+        case 'g':
+        case 'G':
+            markCard('known');
+            break;
+        case 'r':
+        case 'R':
+            markCard('learning');
+            break;
+    }
+});
+
+/* ============================================
+   TOUCH/SWIPE SUPPORT
+   ============================================ */
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.getElementById('card-scene').addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.getElementById('card-scene').addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+
+    // Only count horizontal swipes (not taps or vertical scrolls)
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        e.preventDefault();
+        if (dx > 0) prevCard();
+        else nextCard();
+    }
+});
+
+/* ============================================
+   INIT
+   ============================================ */
+renderCard();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class 1 & 2 Circuits — Diagnostic Assessment — SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ============================================
+   SparkStudy — Global Styles (Dark Theme)
+   ============================================ */
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #f59e0b;
+    --accent2: #58a6ff;
+    --green: #10b981;
+    --red: #ef4444;
+    --accent-bg: rgba(245,158,11,0.1);
+    --accent2-bg: rgba(88,166,255,0.1);
+    --green-bg: rgba(16,185,129,0.1);
+    --red-bg: rgba(239,68,68,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+a { text-decoration: none; color: inherit; }
+
+/* ============================================
+   Navigation
+   ============================================ */
+/* ============================================
+   Main Container
+   ============================================ */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    padding-top: 88px;
+    padding-bottom: 60px;
+}
+
+/* ============================================
+   Screens
+   ============================================ */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.4s ease; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.8); }
+    70% { transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes countUp {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ============================================
+   Welcome Screen
+   ============================================ */
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 14px 36px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-primary:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(245,158,11,0.3);
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--accent2);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    border: 1px solid var(--accent2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-secondary:hover {
+    background: var(--accent2-bg);
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+.progress-section {
+    margin-bottom: 28px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.progress-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.progress-count {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #fbbf24);
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+}
+
+/* ============================================
+   Question Card
+   ============================================ */
+.question-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px 32px;
+    box-shadow: var(--shadow-md);
+    animation: slideIn 0.35s ease;
+}
+
+.question-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.category-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cat-1 { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.cat-2 { background: rgba(88,166,255,0.15); color: #79c0ff; }
+.cat-3 { background: rgba(16,185,129,0.15); color: #34d399; }
+.cat-4 { background: rgba(168,85,247,0.15); color: #c084fc; }
+.cat-5 { background: rgba(236,72,153,0.15); color: #f472b6; }
+
+.question-number {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.question-timer {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.question-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 28px;
+}
+
+/* ============================================
+   Answer Options
+   ============================================ */
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.98rem;
+    user-select: none;
+}
+
+.option-card:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+}
+
+.option-letter {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    background: var(--border);
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.option-card:hover:not(.disabled) .option-letter {
+    background: var(--accent);
+    color: #000;
+}
+
+.option-card.correct {
+    border-color: var(--green);
+    background: var(--green-bg);
+}
+.option-card.correct .option-letter {
+    background: var(--green);
+    color: #fff;
+}
+
+.option-card.incorrect {
+    border-color: var(--red);
+    background: var(--red-bg);
+}
+.option-card.incorrect .option-letter {
+    background: var(--red);
+    color: #fff;
+}
+
+.option-card.show-correct {
+    border-color: var(--green);
+    background: var(--green-bg);
+    opacity: 0.7;
+}
+.option-card.show-correct .option-letter {
+    background: var(--green);
+    color: #fff;
+}
+
+.option-card.disabled { cursor: default; opacity: 0.6; }
+.option-card.correct.disabled,
+.option-card.incorrect.disabled,
+.option-card.show-correct.disabled { opacity: 1; }
+
+/* ============================================
+   Feedback
+   ============================================ */
+.feedback {
+    margin-top: 24px;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    animation: popIn 0.3s ease;
+    display: none;
+}
+
+.feedback.show { display: block; }
+
+.feedback.correct-feedback {
+    background: var(--green-bg);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: #6ee7b7;
+}
+
+.feedback.incorrect-feedback {
+    background: var(--red-bg);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+}
+
+.feedback-icon {
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+/* ============================================
+   Next Button
+   ============================================ */
+.next-section {
+    margin-top: 24px;
+    text-align: right;
+    display: none;
+}
+
+.next-section.show { display: block; animation: fadeIn 0.3s ease; }
+
+.btn-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.btn-next:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+}
+
+/* ============================================
+   Results Screen
+   ============================================ */
+.results-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.results-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.results-subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+}
+
+/* Circular Progress */
+.score-ring-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 36px;
+}
+
+.score-ring-wrapper {
+    position: relative;
+    width: 180px;
+    height: 180px;
+}
+
+.score-ring-svg {
+    transform: rotate(-90deg);
+    width: 180px;
+    height: 180px;
+}
+
+.score-ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 10;
+}
+
+.score-ring-fill {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    stroke-dashoffset: 440;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.score-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.score-percent {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.score-fraction {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+}
+
+.summary-stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+}
+
+.summary-stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.summary-stat-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Category Breakdown */
+.breakdown-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 28px;
+}
+
+.breakdown-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.breakdown-item {
+    margin-bottom: 18px;
+}
+
+.breakdown-item:last-child { margin-bottom: 0; }
+
+.breakdown-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.breakdown-cat-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.breakdown-cat-score {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.breakdown-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.breakdown-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+}
+
+/* Wrong Answers Review */
+.wrong-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 28px;
+}
+
+.wrong-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wrong-item {
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+}
+
+.wrong-item:last-child { margin-bottom: 0; }
+
+.wrong-q-num {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+
+.wrong-q-text {
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.wrong-answers {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+}
+
+.wrong-your-answer {
+    color: var(--red);
+}
+
+.wrong-correct-answer {
+    color: var(--green);
+}
+
+/* Motivational message */
+.motivation-card {
+    background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(88,166,255,0.1));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.motivation-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+
+.motivation-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.motivation-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* Action buttons */
+.results-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   Mobile
+   ============================================ */
+@media (max-width: 640px) {
+    .container { padding: 0 16px; padding-top: 80px; }
+    .question-card { padding: 24px 20px; }
+    .question-text { font-size: 1.05rem; }
+    .summary-stats { grid-template-columns: 1fr; }
+    .score-ring-wrapper { width: 150px; height: 150px; }
+    .score-ring-svg { width: 150px; height: 150px; }
+    .score-percent { font-size: 2rem; }
+    .results-actions { flex-direction: column; }
+}
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link sn-active">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<!-- ========== WELCOME SCREEN ========== -->
+<div class="container">
+    <div id="welcome-screen" class="screen active">
+        <div class="welcome-card">
+            <div class="welcome-badge">&#127919; DIAGNOSTIC ASSESSMENT</div>
+            <h1 class="welcome-title">Class 1 & Class 2 Circuits<br><span>CEC Section 16</span></h1>
+            <p class="welcome-desc">This diagnostic finds your weak spots so you can focus your study time. Answer honestly — guessing won't help you learn!</p>
+            <div class="welcome-stats">
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value">25</div>
+                    <div class="welcome-stat-label">Questions</div>
+                </div>
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value">5</div>
+                    <div class="welcome-stat-label">Categories</div>
+                </div>
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value">10-15</div>
+                    <div class="welcome-stat-label">Minutes</div>
+                </div>
+            </div>
+            <div class="welcome-categories">
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#fbbf24"></span> Circuit Types & Definitions</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#79c0ff"></span> Class 1 Circuit Limitations</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#34d399"></span> Class 2 Circuit Limitations</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#c084fc"></span> Conductors & Wiring Methods</div>
+                <div class="welcome-cat"><span class="welcome-cat-dot" style="background:#f472b6"></span> Separation, Grounding & Install</div>
+            </div>
+            <button class="btn-primary" onclick="startAssessment()">Start Diagnostic &#8594;</button>
+        </div>
+    </div>
+
+    <!-- ========== QUESTION SCREEN ========== -->
+    <div id="question-screen" class="screen">
+        <div class="progress-section">
+            <div class="progress-header">
+                <span class="progress-label" id="progress-label">Question 1 of 25</span>
+                <span class="progress-count" id="progress-percent">0%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        <div class="question-card" id="question-card">
+            <div class="question-meta">
+                <span class="category-badge" id="category-badge">CATEGORY</span>
+                <span class="question-number" id="question-number">Q1</span>
+                <span class="question-timer" id="question-timer">0:00</span>
+            </div>
+            <div class="question-text" id="question-text">Question goes here</div>
+            <div class="options-grid" id="options-grid"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="next-section" id="next-section">
+                <button class="btn-next" onclick="nextQuestion()">Next Question &#8594;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== RESULTS SCREEN ========== -->
+    <div id="results-screen" class="screen">
+        <div class="results-header">
+            <h1 class="results-title" id="results-title">Assessment Complete!</h1>
+            <p class="results-subtitle">Here's how you did across all 5 categories</p>
+        </div>
+
+        <div class="score-ring-container">
+            <div class="score-ring-wrapper">
+                <svg class="score-ring-svg" viewBox="0 0 160 160">
+                    <circle class="score-ring-bg" cx="80" cy="80" r="70"/>
+                    <circle class="score-ring-fill" id="score-ring" cx="80" cy="80" r="70"/>
+                </svg>
+                <div class="score-ring-text">
+                    <div class="score-percent" id="score-percent">0%</div>
+                    <div class="score-fraction" id="score-fraction">0/25</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-stats">
+            <div class="summary-stat">
+                <div class="summary-stat-value" id="stat-correct" style="color:var(--green)">0</div>
+                <div class="summary-stat-label">Correct</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-value" id="stat-wrong" style="color:var(--red)">0</div>
+                <div class="summary-stat-label">Incorrect</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-value" id="stat-time" style="color:var(--accent2)">0:00</div>
+                <div class="summary-stat-label">Total Time</div>
+            </div>
+        </div>
+
+        <div class="motivation-card" id="motivation-card">
+            <div class="motivation-emoji" id="motivation-emoji"></div>
+            <div class="motivation-text" id="motivation-text"></div>
+            <div class="motivation-sub" id="motivation-sub"></div>
+        </div>
+
+        <div class="breakdown-section">
+            <h3 class="breakdown-title">Category Breakdown</h3>
+            <div id="breakdown-list"></div>
+        </div>
+
+        <div class="wrong-section" id="wrong-section">
+            <h3 class="wrong-title">&#128270; Review Incorrect Answers</h3>
+            <div id="wrong-list"></div>
+        </div>
+
+        <div class="results-actions">
+            <button class="btn-primary" onclick="resetAssessment()">&#8635; Retake Assessment</button>
+            <button class="btn-secondary" onclick="window.location.href='../period2.html'">&#8592; Back to Period 2</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auth check
+(function(){try{const a=JSON.parse(localStorage.getItem('sparty_auth'));if(!a||a.role!=='owner'||(Date.now()-a.loginTime>86400000)){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}catch(e){window.location.href='../login.html';}})();
+/* ============================================
+   QUESTION DATA
+   ============================================ */
+const questions = [
+  // Category 1: Circuit Types & Definitions
+  {
+    id: 1, category: 1, catName: "Circuit Types & Definitions", catClass: "cat-1",
+    text: "Which type of circuit controls another circuit through a relay or equivalent device?",
+    options: ["Signal circuit", "Remote control circuit", "Extra-low voltage power circuit", "Low-energy power circuit"],
+    answer: 1,
+    explanation: "A remote control circuit controls another circuit through a relay or equivalent device. This is the key definition from CEC Section 16."
+  },
+  {
+    id: 2, category: 1, catName: "Circuit Types & Definitions", catClass: "cat-1",
+    text: "A communication circuit is classified as a signal circuit.",
+    options: ["True", "False"],
+    answer: 1,
+    explanation: "False \u2014 Communication circuits are NOT signal circuits per Section 0 definitions. They are a separate classification."
+  },
+  {
+    id: 3, category: 1, catName: "Circuit Types & Definitions", catClass: "cat-1",
+    text: "What is the maximum voltage of an extra-low voltage power circuit?",
+    options: ["150 V", "600 V", "30 V", "120 V"],
+    answer: 2,
+    explanation: "Extra-low voltage power circuits are limited to a maximum of 30 V."
+  },
+  {
+    id: 4, category: 1, catName: "Circuit Types & Definitions", catClass: "cat-1",
+    text: "A low-energy power circuit is not a remote control circuit or a signal circuit.",
+    options: ["True", "False"],
+    answer: 0,
+    explanation: "True \u2014 A low-energy power circuit is defined as a circuit that is NOT a remote control circuit and NOT a signal circuit. It is its own distinct type."
+  },
+  {
+    id: 5, category: 1, catName: "Circuit Types & Definitions", catClass: "cat-1",
+    text: "Which type of circuit would supply a code-calling system?",
+    options: ["Remote control circuit", "Extra-low voltage power circuit", "Signal circuit", "Low-energy power circuit"],
+    answer: 2,
+    explanation: "A signal circuit supplies energy to appliances that give recognizable signals, such as code-calling systems, doorbells, buzzers, and similar devices."
+  },
+
+  // Category 2: Class 1 Circuit Limitations
+  {
+    id: 6, category: 2, catName: "Class 1 Circuit Limitations", catClass: "cat-2",
+    text: "What is the maximum voltage for a Class 1 extra-low voltage power circuit?",
+    options: ["150 V", "30 V", "600 V", "120 V"],
+    answer: 1,
+    explanation: "Class 1 extra-low voltage power circuits are limited to 30 V maximum."
+  },
+  {
+    id: 7, category: 2, catName: "Class 1 Circuit Limitations", catClass: "cat-2",
+    text: "What is the maximum power level (VA) for a Class 1 extra-low voltage power circuit?",
+    options: ["100 VA", "500 VA", "1000 VA", "2000 VA"],
+    answer: 2,
+    explanation: "Class 1 extra-low voltage power circuits are limited to 1000 VA maximum."
+  },
+  {
+    id: 8, category: 2, catName: "Class 1 Circuit Limitations", catClass: "cat-2",
+    text: "What is the maximum voltage a Class 1 remote control or signal circuit can operate at?",
+    options: ["30 V", "150 V", "300 V", "600 V"],
+    answer: 3,
+    explanation: "Class 1 remote control or signal circuits can operate at up to 600 V maximum."
+  },
+  {
+    id: 9, category: 2, catName: "Class 1 Circuit Limitations", catClass: "cat-2",
+    text: "What is the maximum overcurrent protection rating for No. 18 AWG conductors in a Class 1 circuit?",
+    options: ["3 A", "5 A", "10 A", "15 A"],
+    answer: 1,
+    explanation: "No. 18 AWG conductors in Class 1 circuits require overcurrent protection rated at no more than 5 A."
+  },
+  {
+    id: 10, category: 2, catName: "Class 1 Circuit Limitations", catClass: "cat-2",
+    text: "What is the maximum overcurrent protection rating for No. 16 AWG conductors in a Class 1 circuit?",
+    options: ["5 A", "7 A", "10 A", "15 A"],
+    answer: 2,
+    explanation: "No. 16 AWG conductors in Class 1 circuits require overcurrent protection rated at no more than 10 A."
+  },
+
+  // Category 3: Class 2 Circuit Limitations
+  {
+    id: 11, category: 3, catName: "Class 2 Circuit Limitations", catClass: "cat-3",
+    text: "What is the maximum voltage for a Class 2 circuit?",
+    options: ["30 V", "120 V", "150 V", "600 V"],
+    answer: 2,
+    explanation: "Class 2 circuits are limited to a maximum of 150 V."
+  },
+  {
+    id: 12, category: 3, catName: "Class 2 Circuit Limitations", catClass: "cat-3",
+    text: "What is the maximum power output (VA) for a Class 2 circuit supply?",
+    options: ["50 VA", "100 VA", "150 VA", "1000 VA"],
+    answer: 1,
+    explanation: "Class 2 circuit supplies are limited to 100 VA maximum output."
+  },
+  {
+    id: 13, category: 3, catName: "Class 2 Circuit Limitations", catClass: "cat-3",
+    text: "What is the maximum overcurrent device rating for a 24 V Class 2 circuit? (Hint: S = E \u00d7 I)",
+    options: ["2.08 A", "4.16 A", "5 A", "10 A"],
+    answer: 1,
+    explanation: "Using S = E \u00d7 I: I = 100 VA \u00f7 24 V = 4.16 A. The overcurrent device must be rated at no more than 4.16 A."
+  },
+  {
+    id: 14, category: 3, catName: "Class 2 Circuit Limitations", catClass: "cat-3",
+    text: "What is the maximum overcurrent device rating for a 54 V Class 2 circuit?",
+    options: ["1.85 A", "2.5 A", "4.16 A", "5 A"],
+    answer: 0,
+    explanation: "Using S = E \u00d7 I: I = 100 VA \u00f7 54 V = 1.85 A. The overcurrent device must be rated at no more than 1.85 A."
+  },
+  {
+    id: 15, category: 3, catName: "Class 2 Circuit Limitations", catClass: "cat-3",
+    text: "Which of the following can limit Class 2 circuit power? Select the INCORRECT option.",
+    options: ["An overcurrent device", "An approved Class 2 transformer", "A standard 15A breaker alone", "Devices with energy-limiting characteristics"],
+    answer: 2,
+    explanation: "A standard 15A breaker alone does NOT limit a circuit to Class 2 levels. Class 2 power must be limited by an approved Class 2 transformer, overcurrent device sized to Class 2 limits, or devices with energy-limiting characteristics."
+  },
+
+  // Category 4: Conductors & Wiring Methods
+  {
+    id: 16, category: 4, catName: "Conductors & Wiring Methods", catClass: "cat-4",
+    text: "What is the smallest AWG size of Class 1 circuit conductor that can be PULLED into a raceway?",
+    options: ["No. 18 AWG", "No. 16 AWG", "No. 14 AWG", "No. 19 AWG"],
+    answer: 1,
+    explanation: "Per Rule 16-110, No. 16 AWG is the smallest conductor that can be pulled into a raceway for Class 1 circuits. No. 18 AWG must be laid in, not pulled."
+  },
+  {
+    id: 17, category: 4, catName: "Conductors & Wiring Methods", catClass: "cat-4",
+    text: "No. 18 AWG Class 1 conductors must be either laid in a raceway or installed as a cable with at least how many conductors?",
+    options: ["1", "2", "3", "4"],
+    answer: 1,
+    explanation: "No. 18 AWG Class 1 conductors must either be laid in a raceway or be part of a cable assembly with at least 2 conductors."
+  },
+  {
+    id: 18, category: 4, catName: "Conductors & Wiring Methods", catClass: "cat-4",
+    text: "What is the smallest AWG size of Class 2 conductor that can be LAID in a raceway?",
+    options: ["No. 22 AWG", "No. 20 AWG", "No. 19 AWG", "No. 16 AWG"],
+    answer: 2,
+    explanation: "Per Rule 16-210(4)(b), No. 19 AWG is the smallest Class 2 conductor that can be laid in a raceway."
+  },
+  {
+    id: 19, category: 4, catName: "Conductors & Wiring Methods", catClass: "cat-4",
+    text: "What is the allowable ampacity of a No. 18 AWG, 2-conductor LVT cable per Table 57?",
+    options: ["3 A", "5 A", "7 A", "10 A"],
+    answer: 1,
+    explanation: "Per Table 57, a No. 18 AWG, 2-conductor LVT cable has an allowable ampacity of 5 A."
+  },
+  {
+    id: 20, category: 4, catName: "Conductors & Wiring Methods", catClass: "cat-4",
+    text: "What is the allowable ampacity of a No. 16 AWG, 4-conductor LVT cable (after derating)?",
+    options: ["5 A", "8 A", "10 A", "12 A"],
+    answer: 1,
+    explanation: "No. 16 AWG has a base ampacity of 10 A from Table 57. With 4 conductors, apply the 0.8 derating factor: 10 A \u00d7 0.8 = 8 A."
+  },
+  {
+    id: 21, category: 4, catName: "Conductors & Wiring Methods", catClass: "cat-4",
+    text: "ELC (extra-low voltage cable) must NOT be used for which types of circuits? (Rule 16-210(3))",
+    options: ["Doorbell circuits", "Heating control or fire safety circuits", "Thermostat circuits", "Security system circuits"],
+    answer: 1,
+    explanation: "Per Rule 16-210(3), ELC must not be used for heating control circuits or fire safety circuits."
+  },
+
+  // Category 5: Separation, Grounding & Installation Rules
+  {
+    id: 22, category: 5, catName: "Separation, Grounding & Installation", catClass: "cat-5",
+    text: "Power circuit conductors and Class 1 circuit conductors can share the same raceway ONLY if:",
+    options: ["They are in separate conduits", "They are connected to the same equipment and have the same voltage rating", "The Class 1 circuit is under 30 V", "An inspector approves it"],
+    answer: 1,
+    explanation: "Power circuit and Class 1 circuit conductors may share a raceway only when they are connected to the same equipment AND have the same voltage rating."
+  },
+  {
+    id: 23, category: 5, catName: "Separation, Grounding & Installation", catClass: "cat-5",
+    text: "What is the minimum separation distance between Class 2 wiring and 120 V lighting conductors?",
+    options: ["25 mm", "50 mm", "75 mm", "100 mm"],
+    answer: 1,
+    explanation: "Per Rule 16-212, the minimum separation between Class 2 wiring and power conductors (like 120 V lighting) is 50 mm."
+  },
+  {
+    id: 24, category: 5, catName: "Separation, Grounding & Installation", catClass: "cat-5",
+    text: "A Class 1 or Class 2 circuit rated OVER 30 V must be:",
+    options: ["Installed in EMT only", "Solidly grounded", "Protected by a GFCI", "Limited to 100 VA"],
+    answer: 1,
+    explanation: "Per Rule 10-206, any Class 1 or Class 2 circuit rated over 30 V must be solidly grounded."
+  },
+  {
+    id: 25, category: 5, catName: "Separation, Grounding & Installation", catClass: "cat-5",
+    text: "A common rating for a doorbell Class 2 transformer is:",
+    options: ["10 VA", "40 VA", "100 VA", "200 VA"],
+    answer: 1,
+    explanation: "A typical doorbell transformer is rated at 40 VA, converting 120 V to 16 V for the doorbell circuit. This stays well within the 100 VA Class 2 limit."
+  }
+];
+
+const categoryNames = {
+    1: "Circuit Types & Definitions",
+    2: "Class 1 Circuit Limitations",
+    3: "Class 2 Circuit Limitations",
+    4: "Conductors & Wiring Methods",
+    5: "Separation, Grounding & Installation"
+};
+
+const categoryColors = {
+    1: "#fbbf24",
+    2: "#79c0ff",
+    3: "#34d399",
+    4: "#c084fc",
+    5: "#f472b6"
+};
+
+/* ============================================
+   STATE
+   ============================================ */
+let currentQ = 0;
+let answers = [];
+let questionStartTime = 0;
+let totalStartTime = 0;
+let questionTimerInterval = null;
+let answered = false;
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startAssessment() {
+    currentQ = 0;
+    answers = [];
+    totalStartTime = Date.now();
+    showScreen('question-screen');
+    renderQuestion();
+}
+
+function resetAssessment() {
+    currentQ = 0;
+    answers = [];
+    showScreen('welcome-screen');
+}
+
+/* ============================================
+   QUESTION RENDERING
+   ============================================ */
+function renderQuestion() {
+    answered = false;
+    const q = questions[currentQ];
+    const pct = Math.round((currentQ / questions.length) * 100);
+
+    // Progress
+    document.getElementById('progress-label').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+    document.getElementById('progress-percent').textContent = `${pct}%`;
+    document.getElementById('progress-fill').style.width = `${pct}%`;
+
+    // Meta
+    document.getElementById('category-badge').textContent = q.catName;
+    document.getElementById('category-badge').className = `category-badge ${q.catClass}`;
+    document.getElementById('question-number').textContent = `Q${q.id}`;
+
+    // Question text
+    document.getElementById('question-text').textContent = q.text;
+
+    // Options
+    const grid = document.getElementById('options-grid');
+    grid.innerHTML = '';
+    const letters = ['A', 'B', 'C', 'D'];
+    q.options.forEach((opt, i) => {
+        const card = document.createElement('div');
+        card.className = 'option-card';
+        card.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+        card.addEventListener('click', () => selectAnswer(i));
+        grid.appendChild(card);
+    });
+
+    // Hide feedback & next
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('next-section').className = 'next-section';
+
+    // Re-animate card
+    const card = document.getElementById('question-card');
+    card.style.animation = 'none';
+    card.offsetHeight; // trigger reflow
+    card.style.animation = 'slideIn 0.35s ease';
+
+    // Start timer
+    questionStartTime = Date.now();
+    clearInterval(questionTimerInterval);
+    updateTimer();
+    questionTimerInterval = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+    const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
+    const min = Math.floor(elapsed / 60);
+    const sec = elapsed % 60;
+    document.getElementById('question-timer').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+/* ============================================
+   ANSWER SELECTION
+   ============================================ */
+function selectAnswer(index) {
+    if (answered) return;
+    answered = true;
+    clearInterval(questionTimerInterval);
+
+    const q = questions[currentQ];
+    const isCorrect = index === q.answer;
+    const timeTaken = Date.now() - questionStartTime;
+
+    answers.push({
+        questionId: q.id,
+        category: q.category,
+        selected: index,
+        correct: q.answer,
+        isCorrect: isCorrect,
+        time: timeTaken
+    });
+
+    // Highlight options
+    const options = document.querySelectorAll('.option-card');
+    options.forEach((opt, i) => {
+        opt.classList.add('disabled');
+        if (i === q.answer && i === index) {
+            opt.classList.add('correct');
+        } else if (i === index && !isCorrect) {
+            opt.classList.add('incorrect');
+        } else if (i === q.answer && !isCorrect) {
+            opt.classList.add('show-correct');
+        }
+    });
+
+    // Feedback
+    const fb = document.getElementById('feedback');
+    if (isCorrect) {
+        fb.className = 'feedback correct-feedback show';
+        fb.innerHTML = `<span class="feedback-icon">&#10003;</span> Correct! ${q.explanation}`;
+    } else {
+        fb.className = 'feedback incorrect-feedback show';
+        fb.innerHTML = `<span class="feedback-icon">&#10007;</span> Not quite. ${q.explanation}`;
+    }
+
+    // Show next
+    const ns = document.getElementById('next-section');
+    ns.className = 'next-section show';
+
+    // Update button text
+    const btn = ns.querySelector('.btn-next');
+    if (currentQ === questions.length - 1) {
+        btn.innerHTML = 'See Results &#8594;';
+    } else {
+        btn.innerHTML = 'Next Question &#8594;';
+    }
+}
+
+function nextQuestion() {
+    currentQ++;
+    if (currentQ >= questions.length) {
+        showResults();
+    } else {
+        renderQuestion();
+    }
+}
+
+/* ============================================
+   RESULTS
+   ============================================ */
+function showResults() {
+    clearInterval(questionTimerInterval);
+    showScreen('results-screen');
+
+    const totalCorrect = answers.filter(a => a.isCorrect).length;
+    const totalWrong = questions.length - totalCorrect;
+    const pctScore = Math.round((totalCorrect / questions.length) * 100);
+    const totalTime = Date.now() - totalStartTime;
+    const totalMin = Math.floor(totalTime / 60000);
+    const totalSec = Math.floor((totalTime % 60000) / 1000);
+
+    // Score ring animation
+    const ring = document.getElementById('score-ring');
+    const circumference = 2 * Math.PI * 70; // r=70
+    ring.style.strokeDasharray = circumference;
+    ring.style.strokeDashoffset = circumference;
+
+    // Color based on score
+    let ringColor = pctScore >= 80 ? 'var(--green)' : pctScore >= 60 ? 'var(--accent)' : 'var(--red)';
+    ring.style.stroke = ringColor;
+
+    setTimeout(() => {
+        const offset = circumference - (pctScore / 100) * circumference;
+        ring.style.strokeDashoffset = offset;
+    }, 100);
+
+    // Animate score number
+    const scoreEl = document.getElementById('score-percent');
+    const fractionEl = document.getElementById('score-fraction');
+    animateNumber(scoreEl, 0, pctScore, 1200, '%');
+    fractionEl.textContent = `${totalCorrect}/${questions.length}`;
+
+    // Stats
+    document.getElementById('stat-correct').textContent = totalCorrect;
+    document.getElementById('stat-wrong').textContent = totalWrong;
+    document.getElementById('stat-time').textContent = `${totalMin}:${totalSec.toString().padStart(2, '0')}`;
+
+    // Motivation
+    const me = document.getElementById('motivation-emoji');
+    const mt = document.getElementById('motivation-text');
+    const ms = document.getElementById('motivation-sub');
+
+    if (pctScore >= 90) {
+        me.textContent = '\uD83D\uDD25'; mt.textContent = "You're on fire! Outstanding work!";
+        ms.textContent = "You're well-prepared for tomorrow's quiz. A quick review of any missed questions and you'll ace it.";
+    } else if (pctScore >= 80) {
+        me.textContent = '\uD83D\uDCAA'; mt.textContent = "Strong performance! Almost there!";
+        ms.textContent = "You've got a solid foundation. Focus on the weak categories below and you'll be ready.";
+    } else if (pctScore >= 60) {
+        me.textContent = '\uD83D\uDCA1'; mt.textContent = "Good effort! Room to grow.";
+        ms.textContent = "You know the basics. Hit the weak categories hard tonight and you'll see a big improvement.";
+    } else if (pctScore >= 40) {
+        me.textContent = '\uD83D\uDCDA'; mt.textContent = "Time to buckle down!";
+        ms.textContent = "Focus on the categories with the lowest scores. Re-read the key concepts and try again.";
+    } else {
+        me.textContent = '\uD83C\uDFAF'; mt.textContent = "Everyone starts somewhere!";
+        ms.textContent = "No worries — this diagnostic tells you exactly what to study. Focus on one category at a time.";
+    }
+
+    // Category breakdown
+    const breakdownList = document.getElementById('breakdown-list');
+    breakdownList.innerHTML = '';
+
+    const catCounts = {};
+    for (let c = 1; c <= 5; c++) {
+        catCounts[c] = { total: 0, correct: 0 };
+    }
+    answers.forEach(a => {
+        catCounts[a.category].total++;
+        if (a.isCorrect) catCounts[a.category].correct++;
+    });
+
+    for (let c = 1; c <= 5; c++) {
+        const data = catCounts[c];
+        const catPct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+        const barColor = catPct >= 80 ? 'var(--green)' : catPct >= 60 ? 'var(--accent)' : 'var(--red)';
+
+        const item = document.createElement('div');
+        item.className = 'breakdown-item';
+        item.innerHTML = `
+            <div class="breakdown-item-header">
+                <span class="breakdown-cat-name" style="color:${categoryColors[c]}">${categoryNames[c]}</span>
+                <span class="breakdown-cat-score" style="color:${barColor}">${data.correct}/${data.total} (${catPct}%)</span>
+            </div>
+            <div class="breakdown-bar-track">
+                <div class="breakdown-bar-fill" style="background:${barColor}" data-width="${catPct}"></div>
+            </div>
+        `;
+        breakdownList.appendChild(item);
+    }
+
+    // Animate bars
+    setTimeout(() => {
+        document.querySelectorAll('.breakdown-bar-fill').forEach(bar => {
+            bar.style.width = bar.dataset.width + '%';
+        });
+    }, 200);
+
+    // Save results to localStorage for dashboard
+    const categoryResults = {};
+    const weakAreas = [];
+    for (let c = 1; c <= 5; c++) {
+        const d = catCounts[c];
+        const p = d.total > 0 ? Math.round((d.correct / d.total) * 100) : 0;
+        categoryResults[categoryNames[c]] = { correct: d.correct, total: d.total, pct: p };
+        if (p < 80) weakAreas.push(categoryNames[c]);
+    }
+    const diagResults = {
+        lastTaken: Date.now(),
+        overall: pctScore,
+        categories: categoryResults,
+        weakAreas: weakAreas
+    };
+    localStorage.setItem('sparty_diagnostic_results', JSON.stringify(diagResults));
+    // Track how many diagnostics taken
+    const diagCount = parseInt(localStorage.getItem('sparty_diagnostic_count') || '0') + 1;
+    localStorage.setItem('sparty_diagnostic_count', String(diagCount));
+    localStorage.setItem('sparty_last_study', String(Date.now()));
+
+    // Wrong answers
+    const wrongSection = document.getElementById('wrong-section');
+    const wrongList = document.getElementById('wrong-list');
+    wrongList.innerHTML = '';
+
+    const wrongAnswers = answers.filter(a => !a.isCorrect);
+    if (wrongAnswers.length === 0) {
+        wrongSection.style.display = 'none';
+    } else {
+        wrongSection.style.display = 'block';
+        wrongAnswers.forEach(a => {
+            const q = questions.find(qq => qq.id === a.questionId);
+            const letters = ['A', 'B', 'C', 'D'];
+            const item = document.createElement('div');
+            item.className = 'wrong-item';
+            item.innerHTML = `
+                <div class="wrong-q-num">Question ${q.id} &mdash; ${q.catName}</div>
+                <div class="wrong-q-text">${q.text}</div>
+                <div class="wrong-answers">
+                    <span class="wrong-your-answer">Your answer: ${letters[a.selected]}. ${q.options[a.selected]}</span>
+                    <span class="wrong-correct-answer">Correct: ${letters[a.correct]}. ${q.options[a.correct]}</span>
+                </div>
+            `;
+            wrongList.appendChild(item);
+        });
+    }
+
+    // Update title based on score
+    const titleEl = document.getElementById('results-title');
+    if (pctScore >= 90) titleEl.textContent = "Outstanding!";
+    else if (pctScore >= 80) titleEl.textContent = "Great Job!";
+    else if (pctScore >= 60) titleEl.textContent = "Solid Effort!";
+    else if (pctScore >= 40) titleEl.textContent = "Keep Studying!";
+    else titleEl.textContent = "Let's Review!";
+}
+
+function animateNumber(el, start, end, duration, suffix) {
+    const startTime = Date.now();
+    function update() {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const current = Math.round(start + (end - start) * eased);
+        el.textContent = current + (suffix || '');
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+/* ============================================
+   KEYBOARD SHORTCUTS
+   ============================================ */
+document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('question-screen').classList.contains('active')) return;
+
+    // A/B/C/D or 1/2/3/4 to select answer
+    const keyMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, '1': 0, '2': 1, '3': 2, '4': 3 };
+    const key = e.key.toLowerCase();
+
+    if (key in keyMap && !answered) {
+        const q = questions[currentQ];
+        if (keyMap[key] < q.options.length) {
+            selectAnswer(keyMap[key]);
+        }
+    }
+
+    // Enter or Space for next
+    if ((e.key === 'Enter' || e.key === ' ') && answered) {
+        e.preventDefault();
+        nextQuestion();
+    }
+});
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

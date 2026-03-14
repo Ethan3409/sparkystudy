@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faraday's Law & Lenz's Law Simulator | SparkStudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deepest: #0d1117;
+            --bg-dark: #0d1117;
+            --bg-panel: #161b22;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2128;
+            --border-subtle: #30363d;
+            --border-dim: #30363d;
+            --border-bright: #484f58;
+            --text-white: #e6edf3;
+            --text-muted: #8b949e;
+            --text-dim: #8b949e;
+            --amber: #f59e0b;
+            --amber-bright: #fbbf24;
+            --amber-dim: #d97706;
+            --amber-glow: rgba(245,158,11,0.2);
+            --red: #ef4444;
+            --red-dim: #dc2626;
+            --blue: #58a6ff;
+            --blue-dim: #388bfd;
+            --green: #10b981;
+            --green-dim: #059669;
+            --purple: #8b5cf6;
+            --cyan: #58a6ff;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-white);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ── NAVBAR ─────────────────────────────────── */
+        .nav-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .nav-logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #e6edf3;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── MAIN LAYOUT ─────────────────────────────── */
+        .app-shell {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            height: calc(100vh - 64px);
+            margin-top: 64px;
+            overflow: hidden;
+        }
+
+        /* ── CANVAS SECTION ──────────────────────────── */
+        .canvas-section {
+            background: #0d1117;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 20px 16px 24px;
+            gap: 14px;
+            overflow: hidden;
+        }
+
+        .canvas-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .canvas-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        #simCanvas {
+            flex: 1;
+            min-height: 0;
+            border-radius: 14px;
+            border: 1px solid var(--border-dim);
+            background: #0d1117;
+            cursor: grab;
+            display: block;
+            width: 100%;
+        }
+        #simCanvas:active { cursor: grabbing; }
+
+        /* EMF gauge canvas */
+        #gaugeCanvas {
+            width: 100%;
+            height: 110px;
+            flex-shrink: 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-dim);
+            background: #0d1117;
+            display: block;
+        }
+
+        /* ── CONTROLS PANEL ──────────────────────────── */
+        .controls-panel {
+            background: #161b22;
+            border-left: 1px solid #30363d;
+            padding: 24px 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .controls-panel::-webkit-scrollbar { width: 4px; }
+        .controls-panel::-webkit-scrollbar-track { background: transparent; }
+        .controls-panel::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 4px; }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-white);
+            line-height: 1.2;
+        }
+        .panel-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        /* EMF readout */
+        .emf-readout {
+            background: linear-gradient(135deg, #0d1117 0%, #0d1117 100%);
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .emf-readout::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center top, rgba(245,158,11,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .emf-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+        .emf-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.4rem;
+            font-weight: 700;
+            line-height: 1;
+            transition: color 0.3s;
+            text-shadow: 0 0 20px currentColor;
+        }
+        .emf-unit {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .emf-direction {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 8px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        /* Play/Pause button */
+        .play-btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: #e6edf3;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+        }
+        .play-btn:hover {
+            background: linear-gradient(135deg, #b45309, #d97706);
+            box-shadow: 0 6px 20px rgba(245,158,11,0.4);
+            transform: translateY(-1px);
+        }
+        .play-btn:active { transform: translateY(0); }
+
+        /* Sliders */
+        .ctrl-group { display: flex; flex-direction: column; gap: 8px; }
+        .ctrl-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .ctrl-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--amber-bright);
+            font-weight: 700;
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 3px;
+            background: #30363d;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--amber);
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.2), 0 2px 6px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 5px rgba(245,158,11,0.25), 0 2px 8px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--amber);
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: #30363d;
+            flex-shrink: 0;
+        }
+
+        /* Formula cards */
+        .formula-cards { display: flex; flex-direction: column; gap: 8px; }
+        .formula-card {
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.15);
+            border-radius: 9px;
+            padding: 11px 14px;
+        }
+        .formula-card-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+        .formula-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--amber-bright);
+            letter-spacing: 0.02em;
+        }
+
+        /* Lenz explainer */
+        .lenz-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-left: 3px solid var(--green);
+            border-radius: 0 9px 9px 0;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            line-height: 1.65;
+            color: var(--text-muted);
+            transition: all 0.4s;
+        }
+        .lenz-box strong { color: var(--green); }
+        .lenz-box.approaching { border-left-color: var(--red); }
+        .lenz-box.approaching strong { color: #fca5a5; }
+        .lenz-box.leaving { border-left-color: #58a6ff; }
+        .lenz-box.leaving strong { color: #93c5fd; }
+
+        /* Live calc rows */
+        .calc-rows { display: flex; flex-direction: column; gap: 6px; }
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #161b22;
+            border-radius: 7px;
+            border: 1px solid #30363d;
+        }
+        .calc-row-label {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .calc-row-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #58a6ff;
+        }
+
+        /* Section heading inside panel */
+        .section-heading {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+        }
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link sn-active">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<!-- APP SHELL -->
+<div class="app-shell">
+
+    <!-- LEFT: Canvas Section -->
+    <div class="canvas-section">
+        <div class="canvas-header">
+            <span class="canvas-title">Faraday's Law &amp; Lenz's Law — Interactive Simulation</span>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span id="simStatusLabel">Live · 60fps</span>
+            </div>
+        </div>
+
+        <!-- Main simulation canvas -->
+        <canvas id="simCanvas"></canvas>
+
+        <!-- EMF gauge canvas -->
+        <canvas id="gaugeCanvas"></canvas>
+    </div>
+
+    <!-- RIGHT: Controls Panel -->
+    <div class="controls-panel">
+
+        <div>
+            <div class="panel-title">Electromagnetic Induction</div>
+            <div class="panel-subtitle">Drag the magnet or use Auto-Oscillate to change flux through the coil.</div>
+        </div>
+
+        <!-- EMF readout -->
+        <div class="emf-readout">
+            <div class="emf-label">Induced EMF</div>
+            <div class="emf-number" id="emfNumber">0.00</div>
+            <div class="emf-unit">Volts</div>
+            <div class="emf-direction" id="emfDirection" style="background:rgba(139,148,158,0.15);color:#8b949e;">STATIC — NO CHANGE</div>
+        </div>
+
+        <!-- Play/Pause -->
+        <button class="play-btn" id="playBtn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5l10 5.5-10 5.5z"/></svg>
+            <span id="playBtnLabel">Auto Oscillate</span>
+        </button>
+
+        <div class="divider"></div>
+
+        <!-- Speed -->
+        <div class="ctrl-group">
+            <div class="ctrl-label">
+                <span>Speed</span>
+                <span class="ctrl-val" id="speedVal">1.0×</span>
+            </div>
+            <input type="range" id="speedSlider" min="0.2" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <!-- Turns -->
+        <div class="ctrl-group">
+            <div class="ctrl-label">
+                <span>Number of Turns (N)</span>
+                <span class="ctrl-val" id="turnsVal">8</span>
+            </div>
+            <input type="range" id="turnsSlider" min="1" max="20" step="1" value="8">
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Formulas -->
+        <div class="section-heading">Key Formulas</div>
+        <div class="formula-cards">
+            <div class="formula-card">
+                <div class="formula-card-label">Magnetic Flux</div>
+                <div class="formula-text">Φ = B · A · cos(θ)</div>
+            </div>
+            <div class="formula-card">
+                <div class="formula-card-label">Faraday's Law</div>
+                <div class="formula-text">EMF = −N · (ΔΦ/Δt)</div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Live calculations -->
+        <div class="section-heading">Live Readout</div>
+        <div class="calc-rows">
+            <div class="calc-row">
+                <span class="calc-row-label">N (turns)</span>
+                <span class="calc-row-val" id="readN">8</span>
+            </div>
+            <div class="calc-row">
+                <span class="calc-row-label">ΔΦ (flux change)</span>
+                <span class="calc-row-val" id="readDPhi">0.0000 Wb</span>
+            </div>
+            <div class="calc-row">
+                <span class="calc-row-label">Δt (time step)</span>
+                <span class="calc-row-val" id="readDt">0.017 s</span>
+            </div>
+            <div class="calc-row">
+                <span class="calc-row-label">ε (induced EMF)</span>
+                <span class="calc-row-val" id="readEMF">0.00 V</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Lenz explainer -->
+        <div class="section-heading">Lenz's Law</div>
+        <div class="lenz-box" id="lenzBox">
+            Flux is <strong>not changing</strong>. No EMF is induced — Faraday's Law requires a <strong>rate of change</strong>.
+        </div>
+
+    </div><!-- /controls-panel -->
+</div><!-- /app-shell -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+//  FARADAY'S LAW SIMULATOR — full dark-theme rewrite
+// ─────────────────────────────────────────────────────────────────────────────
+
+const simCanvas  = document.getElementById('simCanvas');
+const gaugeCanvas = document.getElementById('gaugeCanvas');
+const simCtx     = simCanvas.getContext('2d');
+const gaugeCtx   = gaugeCanvas.getContext('2d');
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const state = {
+    // Magnet
+    magnetX: 0,      // set after first resize
+    magnetY: 0,
+    magnetVX: 0,
+
+    // Physics
+    prevFlux: 0,
+    currFlux: 0,
+    emf: 0,
+    smoothEMF: 0,     // for display smoothing
+    prevTime: 0,
+
+    // Interaction
+    dragging: false,
+    dragOffX: 0,
+    dragOffY: 0,
+
+    // Animation
+    oscillating: false,
+    time: 0,
+
+    // UI
+    turns: 8,
+    speed: 1.0,
+
+    // Gauge needle angle (smooth)
+    needleAngle: 0,
+};
+
+let initialized = false;
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const playBtn       = document.getElementById('playBtn');
+const playBtnLabel  = document.getElementById('playBtnLabel');
+const speedSlider   = document.getElementById('speedSlider');
+const turnsSlider   = document.getElementById('turnsSlider');
+const speedVal      = document.getElementById('speedVal');
+const turnsVal      = document.getElementById('turnsVal');
+const emfNumber     = document.getElementById('emfNumber');
+const emfDirection  = document.getElementById('emfDirection');
+const lenzBox       = document.getElementById('lenzBox');
+const readN         = document.getElementById('readN');
+const readDPhi      = document.getElementById('readDPhi');
+const readDt        = document.getElementById('readDt');
+const readEMF       = document.getElementById('readEMF');
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function easeInOut(t) { return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; }
+
+// ── Canvas sizing ─────────────────────────────────────────────────────────────
+function resizeCanvases() {
+    const simRect   = simCanvas.getBoundingClientRect();
+    const gaugeRect = gaugeCanvas.getBoundingClientRect();
+
+    simCanvas.width   = simRect.width   * devicePixelRatio;
+    simCanvas.height  = simRect.height  * devicePixelRatio;
+    simCtx.scale(devicePixelRatio, devicePixelRatio);
+
+    gaugeCanvas.width  = gaugeRect.width  * devicePixelRatio;
+    gaugeCanvas.height = gaugeRect.height * devicePixelRatio;
+    gaugeCtx.scale(devicePixelRatio, devicePixelRatio);
+
+    const W = simRect.width;
+    const H = simRect.height;
+
+    if (!initialized) {
+        state.magnetX = W * 0.22;
+        state.magnetY = H * 0.5;
+        state.prevTime = performance.now() / 1000;
+        initialized = true;
+    }
+
+    // keep magnet in bounds
+    state.magnetX = clamp(state.magnetX, 40, W - 40);
+    state.magnetY = clamp(state.magnetY, 40, H - 40);
+}
+
+window.addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+// ── Physics ───────────────────────────────────────────────────────────────────
+function getCoilCenter() {
+    const W = simCanvas.getBoundingClientRect().width;
+    const H = simCanvas.getBoundingClientRect().height;
+    return { x: W * 0.65, y: H * 0.5 };
+}
+
+function calcFlux() {
+    const { x: cx, y: cy } = getCoilCenter();
+    const dx = state.magnetX - cx;
+    const dy = state.magnetY - cy;
+    // Only horizontal component matters (flux through coil face)
+    const distSq = dx * dx + dy * dy + 1;
+    // Directional: positive when N pole approaches from left
+    const sign = dx < 0 ? 1 : -1;
+    return sign * (1 / distSq) * 8000;
+}
+
+function updatePhysics(now) {
+    const dt = clamp(now - state.prevTime, 0.001, 0.05);
+    state.prevTime = now;
+
+    if (state.oscillating) {
+        state.time += dt * state.speed;
+        const W = simCanvas.getBoundingClientRect().width;
+        const H = simCanvas.getBoundingClientRect().height;
+        const { x: cx } = getCoilCenter();
+        const amplitude = Math.min(cx * 0.85, W * 0.28);
+        const prevX = state.magnetX;
+        state.magnetX = cx - amplitude * Math.sin(state.time * 1.6);
+        state.magnetY = H * 0.5;
+        state.magnetVX = (state.magnetX - prevX) / dt;
+    }
+
+    state.prevFlux = state.currFlux;
+    state.currFlux = calcFlux();
+    const dPhi = state.currFlux - state.prevFlux;
+
+    // EMF = -N * dΦ/dt
+    state.emf = -state.turns * (dPhi / dt);
+
+    // Smooth for display
+    state.smoothEMF = lerp(state.smoothEMF, state.emf, 0.18);
+
+    // Update readouts
+    readN.textContent    = state.turns;
+    readDPhi.textContent = dPhi.toFixed(5) + ' Wb';
+    readDt.textContent   = dt.toFixed(3) + ' s';
+    readEMF.textContent  = state.emf.toFixed(2) + ' V';
+
+    updateEMFDisplay();
+}
+
+function updateEMFDisplay() {
+    const v = state.smoothEMF;
+    const absV = Math.abs(v);
+
+    emfNumber.textContent = absV.toFixed(2);
+
+    // Color the number
+    if (absV < 0.5) {
+        emfNumber.style.color = '#484f58';
+    } else if (v > 0) {
+        emfNumber.style.color = '#fbbf24';
+    } else {
+        emfNumber.style.color = '#58a6ff';
+    }
+
+    // Direction badge
+    if (absV < 0.5) {
+        emfDirection.textContent = 'STATIC — NO CHANGE';
+        emfDirection.style.background = 'rgba(139,148,158,0.15)';
+        emfDirection.style.color = '#8b949e';
+        lenzBox.className = 'lenz-box';
+        lenzBox.innerHTML = 'Flux is <strong>not changing</strong>. No EMF is induced — Faraday\'s Law requires a <strong>rate of change</strong>.';
+    } else if (v > 0) {
+        emfDirection.textContent = 'POSITIVE EMF';
+        emfDirection.style.background = 'rgba(245,158,11,0.15)';
+        emfDirection.style.color = '#fbbf24';
+        const { x: cx } = getCoilCenter();
+        if (state.magnetX < cx) {
+            lenzBox.className = 'lenz-box approaching';
+            lenzBox.innerHTML = 'Magnet <strong>approaching</strong> the coil. Induced current creates a field <strong>opposing the approach</strong> — coil repels the magnet. Energy is conserved.';
+        } else {
+            lenzBox.className = 'lenz-box leaving';
+            lenzBox.innerHTML = 'Magnet <strong>leaving</strong> the coil. Induced current tries to <strong>pull it back</strong> — coil attracts the magnet. This is Lenz\'s Law in action.';
+        }
+    } else {
+        emfDirection.textContent = 'NEGATIVE EMF';
+        emfDirection.style.background = 'rgba(88,166,255,0.15)';
+        emfDirection.style.color = '#93c5fd';
+        const { x: cx } = getCoilCenter();
+        if (state.magnetX < cx) {
+            lenzBox.className = 'lenz-box approaching';
+            lenzBox.innerHTML = 'Magnet <strong>approaching</strong> from the right. <strong>Opposing field induced</strong> — the coil pushes back against the entering flux.';
+        } else {
+            lenzBox.className = 'lenz-box leaving';
+            lenzBox.innerHTML = 'Magnet <strong>departing</strong>. Induced current tries to <strong>maintain flux</strong> — nature resists the loss of field.';
+        }
+    }
+}
+
+// ── DRAW: Main Simulation ─────────────────────────────────────────────────────
+function drawSim() {
+    const W = simCanvas.getBoundingClientRect().width;
+    const H = simCanvas.getBoundingClientRect().height;
+    const ctx = simCtx;
+
+    ctx.clearRect(0, 0, W, H);
+
+    const { x: cx, y: cy } = getCoilCenter();
+
+    // Background grid (subtle)
+    drawGrid(ctx, W, H);
+
+    // Field lines from magnet
+    drawFieldLines(ctx, W, H);
+
+    // Coil
+    drawCoil(ctx, cx, cy, H);
+
+    // Induced current arrows inside coil
+    drawInducedCurrentArrows(ctx, cx, cy, H);
+
+    // Magnet
+    drawMagnet(ctx, state.magnetX, state.magnetY);
+
+    // Labels overlay
+    drawLabels(ctx, W, H, cx, cy);
+}
+
+function drawGrid(ctx, W, H) {
+    ctx.strokeStyle = 'rgba(48,54,61,0.8)';
+    ctx.lineWidth = 1;
+    const step = 40;
+    for (let x = 0; x < W; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0); ctx.lineTo(x, H);
+        ctx.stroke();
+    }
+    for (let y = 0; y < H; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y); ctx.lineTo(W, y);
+        ctx.stroke();
+    }
+}
+
+function drawFieldLines(ctx, W, H) {
+    const mx = state.magnetX;
+    const my = state.magnetY;
+    const emfAbs = Math.abs(state.smoothEMF);
+    const intensity = clamp(emfAbs / 8, 0, 1);
+
+    // Animate phase for flowing lines
+    const phase = state.time * 1.4;
+
+    const numLines = 10;
+    for (let i = 0; i < numLines; i++) {
+        const angle = (Math.PI * 2 * i) / numLines;
+        // From N pole (top half) and S pole (bottom half), draw curved paths
+        const isNorth = i < numLines / 2;
+        const baseAlpha = 0.15 + intensity * 0.35;
+
+        ctx.strokeStyle = isNorth
+            ? `rgba(239,68,68,${baseAlpha})`
+            : `rgba(88,166,255,${baseAlpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 8]);
+        ctx.lineDashOffset = -phase * 20;
+
+        const magnetHalfH = 44;
+        const startX = mx + Math.cos(angle) * 18;
+        const startY = (my - magnetHalfH/2 + (isNorth ? -5 : 5)) + Math.sin(angle) * 18;
+
+        // Bezier curves fanning out
+        const r = 90 + i * 8;
+        const endX = mx + Math.cos(angle) * r;
+        const endY = my + Math.sin(angle) * r;
+        const cp1x = mx + Math.cos(angle - 0.5) * r * 0.5;
+        const cp1y = my + Math.sin(angle - 0.5) * r * 0.5;
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.quadraticCurveTo(cp1x, cp1y, endX, endY);
+        ctx.stroke();
+
+        // Arrow at end
+        if (baseAlpha > 0.18) {
+            drawArrowHead(ctx, cp1x, cp1y, endX, endY,
+                isNorth ? `rgba(239,68,68,${baseAlpha + 0.15})` : `rgba(88,166,255,${baseAlpha + 0.15})`,
+                6);
+        }
+    }
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
+}
+
+function drawArrowHead(ctx, fromX, fromY, toX, toY, color, size) {
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - size * Math.cos(angle - Math.PI / 6), toY - size * Math.sin(angle - Math.PI / 6));
+    ctx.lineTo(toX - size * Math.cos(angle + Math.PI / 6), toY - size * Math.sin(angle + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawCoil(ctx, cx, cy, H) {
+    const turns = state.turns;
+    const coilH = Math.min(H * 0.52, 240);
+    const loopW  = 52;
+    const loopH  = coilH / turns;
+    const loopR  = loopH / 2;
+
+    // Coil wire color
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth   = 2.5;
+    ctx.shadowColor = '#10b981';
+    ctx.shadowBlur  = 4;
+
+    for (let i = 0; i < turns; i++) {
+        const ly = cy - coilH / 2 + i * loopH + loopR;
+
+        // Front arc (visible half)
+        ctx.beginPath();
+        ctx.ellipse(cx, ly, loopW / 2, loopR * 0.7, 0, 0, Math.PI, false);
+        ctx.stroke();
+
+        // Back arc (slightly dimmer)
+        ctx.strokeStyle = 'rgba(16,185,129,0.45)';
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.ellipse(cx, ly, loopW / 2, loopR * 0.7, 0, Math.PI, Math.PI * 2, false);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#10b981';
+    }
+
+    // Terminal leads
+    ctx.lineWidth = 2.5;
+    const topY = cy - coilH / 2;
+    const botY = cy + coilH / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - loopW / 2, topY);
+    ctx.lineTo(cx - loopW / 2, topY - 18);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - loopW / 2, botY);
+    ctx.lineTo(cx - loopW / 2, botY + 18);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+}
+
+function drawInducedCurrentArrows(ctx, cx, cy, H) {
+    const emfAbs = Math.abs(state.smoothEMF);
+    if (emfAbs < 0.4) return;
+
+    const alpha = clamp(emfAbs / 12, 0, 0.95);
+    const turns = state.turns;
+    const coilH = Math.min(H * 0.52, 240);
+    const loopH = coilH / turns;
+    const loopR  = loopH / 2;
+    const loopW  = 52;
+
+    // Current direction: positive EMF = counterclockwise (from front view), negative = clockwise
+    const ccw = state.smoothEMF > 0;
+
+    // Phase for animated current flow
+    const phase = state.time * 3.5;
+
+    ctx.strokeStyle = `rgba(251,191,36,${alpha * 0.9})`;
+    ctx.lineWidth   = 2;
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur  = 6;
+
+    // Draw only every 2nd loop to avoid clutter
+    const step = Math.max(1, Math.floor(turns / 6));
+    for (let i = 0; i < turns; i += step) {
+        const ly = cy - coilH / 2 + i * loopH + loopR;
+
+        ctx.beginPath();
+        ctx.ellipse(cx, ly, loopW / 2 * 0.72, loopR * 0.5, 0,
+            ccw ? 0.2 : Math.PI + 0.2,
+            ccw ? Math.PI * 1.8 : Math.PI * 2.8,
+            !ccw);
+        ctx.stroke();
+
+        // Arrow head
+        const arrowAngle = ccw ? Math.PI * 1.8 : Math.PI * 2.8;
+        const ax = cx + Math.cos(arrowAngle) * loopW / 2 * 0.72;
+        const ay = ly + Math.sin(arrowAngle) * loopR * 0.5;
+        const tangentAngle = arrowAngle + (ccw ? Math.PI / 2 : -Math.PI / 2);
+
+        ctx.fillStyle = `rgba(251,191,36,${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax - 7 * Math.cos(tangentAngle - 0.45), ay - 7 * Math.sin(tangentAngle - 0.45));
+        ctx.lineTo(ax - 7 * Math.cos(tangentAngle + 0.45), ay - 7 * Math.sin(tangentAngle + 0.45));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    ctx.shadowBlur = 0;
+}
+
+function drawMagnet(ctx, mx, my) {
+    const mw = 38;
+    const mh = 88;
+    const halfH = mh / 2;
+    const r = 7; // corner radius
+
+    // Glow
+    const gAlpha = 0.08 + Math.abs(state.smoothEMF) / 60;
+    ctx.shadowColor = '#ef4444';
+    ctx.shadowBlur  = 18;
+
+    // North pole — red
+    ctx.fillStyle = '#ef4444';
+    roundRect(ctx, mx - mw/2, my - halfH, mw, halfH, [r, r, 0, 0]);
+    ctx.fill();
+
+    // South pole — blue (accent2)
+    ctx.shadowColor = '#58a6ff';
+    ctx.fillStyle = '#58a6ff';
+    roundRect(ctx, mx - mw/2, my, mw, halfH, [0, 0, r, r]);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    // Border
+    ctx.strokeStyle = 'rgba(230,237,243,0.15)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, mx - mw/2, my - halfH, mw, mh, r);
+    ctx.stroke();
+
+    // Center dividing line
+    ctx.strokeStyle = 'rgba(230,237,243,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mx - mw/2, my); ctx.lineTo(mx + mw/2, my);
+    ctx.stroke();
+
+    // Labels
+    ctx.font = 'bold 15px Inter';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(230,237,243,0.95)';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText('N', mx, my - halfH / 2);
+    ctx.fillText('S', mx, my + halfH / 2);
+    ctx.shadowBlur = 0;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    const rArr = Array.isArray(r) ? r : [r, r, r, r];
+    ctx.beginPath();
+    ctx.moveTo(x + rArr[0], y);
+    ctx.lineTo(x + w - rArr[1], y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rArr[1]);
+    ctx.lineTo(x + w, y + h - rArr[2]);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rArr[2], y + h);
+    ctx.lineTo(x + rArr[3], y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rArr[3]);
+    ctx.lineTo(x, y + rArr[0]);
+    ctx.quadraticCurveTo(x, y, x + rArr[0], y);
+    ctx.closePath();
+}
+
+function drawLabels(ctx, W, H, cx, cy) {
+    ctx.font = '600 11px Inter';
+    ctx.textAlign  = 'left';
+    ctx.textBaseline = 'top';
+
+    // Coil label
+    ctx.fillStyle = 'rgba(16,185,129,0.7)';
+    ctx.fillText('COIL', cx + 34, cy - 12);
+
+    // Magnet label
+    ctx.fillStyle = 'rgba(239,68,68,0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText('BAR MAGNET', state.magnetX, state.magnetY + 52);
+
+    // EMF hint when oscillating
+    if (!state.oscillating) {
+        ctx.fillStyle = 'rgba(139,148,158,0.55)';
+        ctx.font = '500 11px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('← Drag the magnet →', W * 0.3, H - 22);
+    }
+}
+
+// ── DRAW: EMF Gauge ───────────────────────────────────────────────────────────
+function drawGauge() {
+    const GW = gaugeCanvas.getBoundingClientRect().width;
+    const GH = gaugeCanvas.getBoundingClientRect().height;
+    const ctx = gaugeCtx;
+
+    ctx.clearRect(0, 0, GW, GH);
+
+    const cx = GW / 2;
+    const cy = GH - 14;
+    const R  = Math.min(GH - 18, GW * 0.42);
+    const startAngle = Math.PI;
+    const endAngle   = 0;
+    const maxEMF     = 15; // clamp for gauge range
+
+    // Background arc
+    ctx.lineWidth   = 10;
+    ctx.strokeStyle = 'rgba(48,54,61,0.9)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, startAngle, endAngle, false);
+    ctx.stroke();
+
+    // Colored arc sections: blue (negative) → grey (zero) → amber (positive)
+    // Left half = negative, right half = positive
+    const gradArc = ctx.createLinearGradient(cx - R, cy, cx + R, cy);
+    gradArc.addColorStop(0,    'rgba(88,166,255,0.7)');
+    gradArc.addColorStop(0.46, 'rgba(88,166,255,0.25)');
+    gradArc.addColorStop(0.5,  'rgba(139,148,158,0.35)');
+    gradArc.addColorStop(0.54, 'rgba(245,158,11,0.25)');
+    gradArc.addColorStop(1,    'rgba(245,158,11,0.7)');
+
+    ctx.lineWidth   = 10;
+    ctx.strokeStyle = gradArc;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, startAngle, endAngle, false);
+    ctx.stroke();
+
+    // Tick marks
+    const ticks = 9;
+    for (let i = 0; i <= ticks; i++) {
+        const frac  = i / ticks;
+        const angle = Math.PI + frac * Math.PI; // π to 2π (left to right)
+        const isMajor = (i % 2 === 0);
+        const tickLen = isMajor ? 10 : 5;
+        const x1 = cx + (R - 18) * Math.cos(angle);
+        const y1 = cy + (R - 18) * Math.sin(angle);
+        const x2 = cx + (R - 18 - tickLen) * Math.cos(angle);
+        const y2 = cy + (R - 18 - tickLen) * Math.sin(angle);
+
+        ctx.strokeStyle = isMajor ? 'rgba(139,148,158,0.6)' : 'rgba(72,79,88,0.5)';
+        ctx.lineWidth   = isMajor ? 1.5 : 1;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.stroke();
+
+        // Value labels on major ticks
+        if (isMajor) {
+            const val = Math.round((frac - 0.5) * 2 * maxEMF);
+            const lx = cx + (R - 36) * Math.cos(angle);
+            const ly = cy + (R - 36) * Math.sin(angle);
+            ctx.fillStyle = 'rgba(139,148,158,0.8)';
+            ctx.font = '500 9px JetBrains Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(val === 0 ? '0' : (val > 0 ? '+' + val : val), lx, ly);
+        }
+    }
+
+    // Needle
+    const emfNorm = clamp(state.smoothEMF / maxEMF, -1, 1);
+    // Map -1..+1 → π..0 (left = negative, right = positive)
+    const targetAngle = Math.PI + ((emfNorm + 1) / 2) * Math.PI;
+    state.needleAngle = lerp(state.needleAngle, targetAngle, 0.12);
+
+    const needleColor = emfNorm > 0.05 ? '#fbbf24' : emfNorm < -0.05 ? '#58a6ff' : '#484f58';
+    const nx = cx + (R - 22) * Math.cos(state.needleAngle);
+    const ny = cy + (R - 22) * Math.sin(state.needleAngle);
+
+    // Needle shadow glow
+    ctx.shadowColor = needleColor;
+    ctx.shadowBlur  = 10;
+
+    ctx.strokeStyle = needleColor;
+    ctx.lineWidth   = 2.5;
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(nx, ny);
+    ctx.stroke();
+
+    // Arrow tip
+    const tipAngle = state.needleAngle;
+    ctx.fillStyle = needleColor;
+    ctx.beginPath();
+    ctx.moveTo(nx, ny);
+    ctx.lineTo(nx - 6 * Math.cos(tipAngle - 0.38), ny - 6 * Math.sin(tipAngle - 0.38));
+    ctx.lineTo(nx - 6 * Math.cos(tipAngle + 0.38), ny - 6 * Math.sin(tipAngle + 0.38));
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    // Center pivot
+    ctx.fillStyle = '#161b22';
+    ctx.strokeStyle = '#484f58';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Label
+    ctx.fillStyle = 'rgba(139,148,158,0.7)';
+    ctx.font = '600 9.5px Inter';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('EMF METER  (V)', cx, GH - 2);
+}
+
+// ── ANIMATION LOOP ────────────────────────────────────────────────────────────
+function loop(now) {
+    now /= 1000; // convert to seconds
+
+    // Make sure canvas is properly sized each frame
+    const simRect = simCanvas.getBoundingClientRect();
+    if (simCanvas.width !== Math.round(simRect.width * devicePixelRatio)) {
+        resizeCanvases();
+    }
+
+    updatePhysics(now);
+    drawSim();
+    drawGauge();
+
+    requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+// ── CONTROLS ──────────────────────────────────────────────────────────────────
+playBtn.addEventListener('click', () => {
+    state.oscillating = !state.oscillating;
+    if (state.oscillating) {
+        playBtnLabel.textContent = 'Pause Oscillation';
+        playBtn.querySelector('svg path').setAttribute('d', 'M4 2h3v12H4zM9 2h3v12H9z');
+    } else {
+        playBtnLabel.textContent = 'Auto Oscillate';
+        playBtn.querySelector('svg path').setAttribute('d', 'M3 2.5l10 5.5-10 5.5z');
+    }
+});
+
+speedSlider.addEventListener('input', () => {
+    state.speed = parseFloat(speedSlider.value);
+    speedVal.textContent = state.speed.toFixed(1) + '×';
+});
+
+turnsSlider.addEventListener('input', () => {
+    state.turns = parseInt(turnsSlider.value);
+    turnsVal.textContent = state.turns;
+    readN.textContent = state.turns;
+});
+
+// ── DRAG ──────────────────────────────────────────────────────────────────────
+simCanvas.addEventListener('mousedown', e => {
+    const rect = simCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const dx = x - state.magnetX;
+    const dy = y - state.magnetY;
+    if (Math.sqrt(dx*dx + dy*dy) < 50) {
+        state.dragging = true;
+        state.dragOffX = dx;
+        state.dragOffY = dy;
+        state.oscillating = false;
+        playBtnLabel.textContent = 'Auto Oscillate';
+        playBtn.querySelector('svg path').setAttribute('d', 'M3 2.5l10 5.5-10 5.5z');
+    }
+});
+
+simCanvas.addEventListener('mousemove', e => {
+    if (!state.dragging) return;
+    const rect = simCanvas.getBoundingClientRect();
+    state.magnetX = clamp(e.clientX - rect.left - state.dragOffX, 30, rect.width - 30);
+    state.magnetY = clamp(e.clientY - rect.top  - state.dragOffY, 30, rect.height - 30);
+});
+
+simCanvas.addEventListener('mouseleave', () => { state.dragging = false; });
+document.addEventListener('mouseup', () => { state.dragging = false; });
+
+// Touch support
+simCanvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const rect = simCanvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const x = t.clientX - rect.left;
+    const y = t.clientY - rect.top;
+    const dx = x - state.magnetX;
+    const dy = y - state.magnetY;
+    if (Math.sqrt(dx*dx + dy*dy) < 60) {
+        state.dragging = true;
+        state.dragOffX = dx;
+        state.dragOffY = dy;
+        state.oscillating = false;
+    }
+}, { passive: false });
+
+simCanvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!state.dragging) return;
+    const rect = simCanvas.getBoundingClientRect();
+    const t = e.touches[0];
+    state.magnetX = clamp(t.clientX - rect.left - state.dragOffX, 30, rect.width - 30);
+    state.magnetY = clamp(t.clientY - rect.top  - state.dragOffY, 30, rect.height - 30);
+}, { passive: false });
+
+simCanvas.addEventListener('touchend', () => { state.dragging = false; });
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

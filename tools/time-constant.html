@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Constant Calculator - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #f59e0b; --accent2: #58a6ff; --green: #10b981; --red: #ef4444; --radius: 12px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+        .page-title { font-size: 2rem; margin-bottom: 2rem; color: var(--text); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .card { background-color: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+        .card-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--accent2); }
+        .mode-toggle { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .mode-btn { flex: 1; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; }
+        .mode-btn.active { background-color: var(--accent2); border-color: var(--accent2); color: var(--bg); }
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem; font-weight: 500; }
+        input[type="number"] { width: 100%; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.95rem; }
+        input[type="number"]:focus { outline: none; border-color: var(--accent2); }
+        select { width: 100%; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.95rem; cursor: pointer; }
+        select:focus { outline: none; border-color: var(--accent2); }
+        .result-box { background-color: var(--bg); padding: 1.5rem; border-radius: 6px; border-left: 4px solid var(--accent2); margin: 1.5rem 0; }
+        .result-label { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .result-value { font-size: 2rem; font-weight: 700; color: var(--green); }
+        .result-subtext { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; }
+        canvas { border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg); display: block; width: 100%; margin: 1.5rem 0; }
+        .timeline { margin-top: 1rem; background-color: var(--bg); padding: 1rem; border-radius: 6px; }
+        .timeline-item { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-time { color: var(--accent2); font-weight: 600; }
+        .timeline-charge { color: var(--green); font-weight: 500; }
+        .practice-problem { background-color: var(--bg); padding: 1.5rem; border-radius: 6px; border-left: 4px solid var(--accent); margin: 1.5rem 0; }
+        .problem-number { font-size: 0.85rem; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .problem-text { font-size: 1rem; margin-bottom: 1rem; color: var(--text); }
+        .problem-btns { display: flex; gap: 1rem; margin-top: 1rem; }
+        .problem-btn { flex: 1; padding: 0.75rem; background-color: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
+        .problem-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+        .problem-answer { margin-top: 1rem; padding: 1rem; background-color: var(--bg); border-radius: 6px; border-left: 4px solid var(--accent2); display: none; }
+        .problem-answer.show { display: block; }
+        .answer-title { font-size: 0.9rem; color: var(--accent2); font-weight: 600; margin-bottom: 0.5rem; }
+        .answer-text { font-size: 0.95rem; color: var(--text); line-height: 1.8; }
+        .info-text { font-size: 0.85rem; color: var(--muted); margin-top: 1rem; line-height: 1.8; }
+        .circuit-svg { width: 100%; max-width: 400px; margin: 1rem auto; }
+        .electron { fill: #58a6ff; }
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+    <nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link sn-active">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<div class="container">
+        <h1 class="page-title">Time Constant Calculator</h1>
+
+        <div class="grid">
+            <div class="card">
+                <h3 class="card-title">Calculator</h3>
+
+                <div class="mode-toggle">
+                    <button class="mode-btn active" onclick="setMode('rc')">RC Circuit</button>
+                    <button class="mode-btn" onclick="setMode('rl')">RL Circuit</button>
+                </div>
+
+                <div id="rcMode">
+                    <div class="input-group">
+                        <label for="resistance">Resistance (Ω)</label>
+                        <input type="number" id="resistance" value="10000" min="0" oninput="calculate()">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="capacitance">Capacitance</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" id="capacitance" value="100" min="0" style="flex: 1;" oninput="calculate()">
+                            <select id="capUnit" style="width: auto; min-width: 100px;" onchange="calculate()">
+                                <option value="F">Farads (F)</option>
+                                <option value="uF" selected>Microfarads (μF)</option>
+                                <option value="nF">Nanofarads (nF)</option>
+                                <option value="pF">Picofarads (pF)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rlMode" style="display: none;">
+                    <div class="input-group">
+                        <label for="resistanceRL">Resistance (Ω)</label>
+                        <input type="number" id="resistanceRL" value="10000" min="0" oninput="calculate()">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="inductance">Inductance</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" id="inductance" value="1" min="0" style="flex: 1;" oninput="calculate()">
+                            <select id="indUnit" style="width: auto; min-width: 100px;" onchange="calculate()">
+                                <option value="H">Henries (H)</option>
+                                <option value="mH" selected>Millihenries (mH)</option>
+                                <option value="uH">Microhenries (μH)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-label">Time Constant (τ)</div>
+                    <div class="result-value" id="tauValue">0.000 ms</div>
+                    <div class="result-subtext" id="tauFormula">τ = R × C</div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-label">Time to Steady State (5τ)</div>
+                    <div class="result-value" id="steadyStateValue">0.000 ms</div>
+                    <div class="result-subtext">Complete charge/discharge at ~99.3%</div>
+                </div>
+
+                <div class="timeline">
+                    <div style="font-size: 0.9rem; font-weight: 600; color: var(--accent2); margin-bottom: 1rem;">Charge Distribution:</div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">1τ</span>
+                        <span class="timeline-charge">63.2%</span>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">2τ</span>
+                        <span class="timeline-charge">86.5%</span>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">3τ</span>
+                        <span class="timeline-charge">95.0%</span>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">4τ</span>
+                        <span class="timeline-charge">98.2%</span>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">5τ</span>
+                        <span class="timeline-charge">99.3%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title" id="graphTitle">Charging Curve (RC)</h3>
+                <canvas id="graphCanvas" height="300"></canvas>
+                <div class="info-text" id="circuitInfo">
+                    <strong>Formula:</strong> τ = R × C<br>
+                    Represents the time for a capacitor to charge to ~63.2% of supply voltage.
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h3 class="card-title">Circuit Diagram</h3>
+            <svg class="circuit-svg" viewBox="0 0 400 300" id="circuitDiagram">
+                <!-- RC Circuit -->
+                <g id="rcCircuit">
+                    <!-- Voltage source -->
+                    <circle cx="50" cy="50" r="20" fill="none" stroke="#58a6ff" stroke-width="2"/>
+                    <text x="35" y="60" fill="#8b949e" font-size="14">V</text>
+                    <!-- Resistor -->
+                    <rect x="120" y="40" width="40" height="20" fill="none" stroke="#58a6ff" stroke-width="2"/>
+                    <text x="130" y="65" fill="#8b949e" font-size="12">R</text>
+                    <!-- Capacitor -->
+                    <line x1="200" y1="30" x2="200" y2="70" stroke="#58a6ff" stroke-width="2"/>
+                    <line x1="210" y1="30" x2="210" y2="70" stroke="#58a6ff" stroke-width="2"/>
+                    <text x="220" y="55" fill="#8b949e" font-size="12">C</text>
+                    <!-- Wires -->
+                    <path d="M 70 50 L 120 50" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 160 50 L 200 50" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 210 50 L 280 50" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 280 50 L 280 220" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 50 70 L 50 220 L 280 220" stroke="#58a6ff" stroke-width="2"/>
+                </g>
+                <!-- RL Circuit -->
+                <g id="rlCircuit" style="display: none;">
+                    <!-- Voltage source -->
+                    <circle cx="50" cy="50" r="20" fill="none" stroke="#58a6ff" stroke-width="2"/>
+                    <text x="35" y="60" fill="#8b949e" font-size="14">V</text>
+                    <!-- Resistor -->
+                    <rect x="120" y="40" width="40" height="20" fill="none" stroke="#58a6ff" stroke-width="2"/>
+                    <text x="130" y="65" fill="#8b949e" font-size="12">R</text>
+                    <!-- Inductor (coil) -->
+                    <circle cx="190" cy="50" r="6" fill="none" stroke="#58a6ff" stroke-width="2"/>
+                    <circle cx="200" cy="50" r="6" fill="none" stroke="#58a6ff" stroke-width="2"/>
+                    <circle cx="210" cy="50" r="6" fill="none" stroke="#58a6ff" stroke-width="2"/>
+                    <text x="200" y="75" fill="#8b949e" font-size="12" text-anchor="middle">L</text>
+                    <!-- Wires -->
+                    <path d="M 70 50 L 120 50" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 160 50 L 180 50" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 220 50 L 280 50" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 280 50 L 280 220" stroke="#58a6ff" stroke-width="2"/>
+                    <path d="M 50 70 L 50 220 L 280 220" stroke="#58a6ff" stroke-width="2"/>
+                </g>
+                <!-- Electrons for animation -->
+                <g id="electrons">
+                    <circle class="electron" cx="100" cy="50" r="3"/>
+                    <circle class="electron" cx="150" cy="50" r="3"/>
+                    <circle class="electron" cx="200" cy="50" r="3"/>
+                </g>
+            </svg>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h3 class="card-title">Practice Problems</h3>
+
+            <div class="practice-problem">
+                <div class="problem-number">Problem 1</div>
+                <div class="problem-text">Given R = 10 kΩ and C = 100 μF, find the time constant (τ) and the time required for full charge (5τ).</div>
+                <div class="problem-btns">
+                    <button class="problem-btn" onclick="showAnswer(1)">Show Answer</button>
+                </div>
+                <div class="problem-answer" id="answer1">
+                    <div class="answer-title">Solution:</div>
+                    <div class="answer-text">
+                        τ = R × C = 10,000 Ω × 100×10⁻⁶ F = 1 second<br>
+                        Time to steady state = 5τ = 5 seconds<br>
+                        After 1 second: 63.2% charged<br>
+                        After 5 seconds: 99.3% charged (practical completion)
+                    </div>
+                </div>
+            </div>
+
+            <div class="practice-problem">
+                <div class="problem-number">Problem 2</div>
+                <div class="problem-text">An RL circuit has R = 50 Ω and L = 500 mH. Calculate τ and identify what percentage of current flows at t = τ and t = 3τ.</div>
+                <div class="problem-btns">
+                    <button class="problem-btn" onclick="showAnswer(2)">Show Answer</button>
+                </div>
+                <div class="problem-answer" id="answer2">
+                    <div class="answer-title">Solution:</div>
+                    <div class="answer-text">
+                        τ = L / R = 0.5 H / 50 Ω = 0.01 seconds (10 ms)<br>
+                        At t = τ: Current = 63.2% of final value<br>
+                        At t = 3τ: Current = 95.0% of final value<br>
+                        The inductor initially opposes current flow, then gradually allows full current.
+                    </div>
+                </div>
+            </div>
+
+            <div class="practice-problem">
+                <div class="problem-number">Problem 3</div>
+                <div class="problem-text">A capacitor must charge to 86.5% in 2 seconds. If R = 5 kΩ, what must C be (in microfarads)?</div>
+                <div class="problem-btns">
+                    <button class="problem-btn" onclick="showAnswer(3)">Show Answer</button>
+                </div>
+                <div class="problem-answer" id="answer3">
+                    <div class="answer-title">Solution:</div>
+                    <div class="answer-text">
+                        86.5% charge occurs at t = 2τ<br>
+                        So: 2τ = 2 seconds, therefore τ = 1 second<br>
+                        τ = R × C<br>
+                        1 = 5,000 × C<br>
+                        C = 1/5,000 = 0.0002 F = 200 μF
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'rc';
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('rcMode').style.display = mode === 'rc' ? 'block' : 'none';
+            document.getElementById('rlMode').style.display = mode === 'rl' ? 'block' : 'none';
+
+            document.getElementById('rcCircuit').style.display = mode === 'rc' ? 'block' : 'none';
+            document.getElementById('rlCircuit').style.display = mode === 'rl' ? 'block' : 'none';
+
+            const title = mode === 'rc' ? 'Charging Curve (RC)' : 'Current Growth Curve (RL)';
+            const info = mode === 'rc'
+                ? 'τ = R × C<br>Represents the time for a capacitor to charge to ~63.2% of supply voltage.'
+                : 'τ = L / R<br>Represents the time for current to reach ~63.2% of final steady-state value.';
+
+            document.getElementById('graphTitle').textContent = title;
+            document.getElementById('circuitInfo').innerHTML = info;
+
+            calculate();
+        }
+
+        function getCapacitanceInFarads() {
+            const value = parseFloat(document.getElementById('capacitance').value) || 0;
+            const unit = document.getElementById('capUnit').value;
+            const multipliers = { F: 1, uF: 1e-6, nF: 1e-9, pF: 1e-12 };
+            return value * multipliers[unit];
+        }
+
+        function getInductanceInHenries() {
+            const value = parseFloat(document.getElementById('inductance').value) || 0;
+            const unit = document.getElementById('indUnit').value;
+            const multipliers = { H: 1, mH: 1e-3, uH: 1e-6 };
+            return value * multipliers[unit];
+        }
+
+        function calculate() {
+            let tau, steadyState, formula;
+
+            if (currentMode === 'rc') {
+                const r = parseFloat(document.getElementById('resistance').value) || 0;
+                const c = getCapacitanceInFarads();
+                tau = r * c;
+                formula = 'τ = R × C';
+            } else {
+                const r = parseFloat(document.getElementById('resistanceRL').value) || 0;
+                const l = getInductanceInHenries();
+                tau = l / r || 0;
+                formula = 'τ = L / R';
+            }
+
+            steadyState = 5 * tau;
+
+            const tauMs = tau * 1000;
+            const steadyMs = steadyState * 1000;
+
+            document.getElementById('tauValue').textContent = tauMs.toFixed(3) + ' ms';
+            document.getElementById('tauFormula').textContent = formula;
+            document.getElementById('steadyStateValue').textContent = steadyMs.toFixed(3) + ' ms';
+
+            drawGraph();
+            animateElectrons();
+        }
+
+        function drawGraph() {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+
+            ctx.fillStyle = '#0d1117';
+            ctx.fillRect(0, 0, width, height);
+
+            // Axes
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, height - padding);
+            ctx.lineTo(width - 20, height - padding);
+            ctx.moveTo(padding, height - padding);
+            ctx.lineTo(padding, padding);
+            ctx.stroke();
+
+            // Grid
+            ctx.strokeStyle = '#1c2128';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = height - padding - (i * (height - 2 * padding) / 5);
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - 20, y);
+                ctx.stroke();
+
+                const x = padding + (i * (width - padding - 20) / 5);
+                ctx.beginPath();
+                ctx.moveTo(x, height - padding);
+                ctx.lineTo(x, height - padding + 5);
+                ctx.stroke();
+            }
+
+            // Labels
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'right';
+            ctx.fillText('100%', padding - 10, padding + 5);
+            ctx.fillText('0%', padding - 10, height - padding + 5);
+            ctx.textAlign = 'center';
+            ctx.fillText('5τ', width - 20, height - padding + 20);
+
+            // Curve
+            ctx.strokeStyle = '#58a6ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i <= 100; i++) {
+                const t = i / 100 * 5;
+                const y = 100 * (1 - Math.exp(-t));
+                const x = padding + (i / 100) * (width - padding - 20);
+                const canvasY = height - padding - (y / 100) * (height - 2 * padding);
+                if (i === 0) ctx.moveTo(x, canvasY);
+                else ctx.lineTo(x, canvasY);
+            }
+            ctx.stroke();
+
+            // Mark τ points
+            const points = [1, 2, 3, 4, 5];
+            const charges = [63.2, 86.5, 95, 98.2, 99.3];
+            points.forEach((tau, idx) => {
+                const x = padding + (tau / 5) * (width - padding - 20);
+                const y = height - padding - (charges[idx] / 100) * (height - 2 * padding);
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function animateElectrons() {
+            const electrons = document.querySelectorAll('.electron');
+            let pos = 0;
+            const animate = () => {
+                pos = (pos + 1) % 180;
+                const speed = pos > 90 ? (180 - pos) : pos;
+                electrons.forEach((e, i) => {
+                    e.setAttribute('cx', 100 + i * 50 + (speed / 180) * 60);
+                });
+                requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        function showAnswer(num) {
+            const answer = document.getElementById('answer' + num);
+            answer.classList.toggle('show');
+            event.target.textContent = answer.classList.contains('show') ? 'Hide Answer' : 'Show Answer';
+        }
+
+        // Initialize
+        calculate();
+    </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

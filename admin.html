@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkStudy - Owner Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navigation Bar */
+
+        /* Main Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Admin Layout - Sidebar + Main */
+        .admin-layout {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: var(--panel);
+            border-right: 1px solid var(--border);
+            padding: 0;
+            flex-shrink: 0;
+            position: sticky;
+            top: 60px;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            margin-bottom: 0;
+        }
+
+        .sidebar-header .sidebar-brand {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-nav {
+            padding: 0.5rem 0;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            user-select: none;
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+        }
+
+        .sidebar-item.active {
+            background-color: rgba(245, 158, 11, 0.08);
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .sidebar-item .sidebar-icon {
+            font-size: 1.1rem;
+            width: 1.5rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .admin-main {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                padding: 0;
+            }
+            .sidebar-header { display: none; }
+            .sidebar-nav {
+                display: flex;
+                flex-wrap: wrap;
+                padding: 0.5rem;
+                gap: 0.25rem;
+            }
+            .sidebar-item {
+                padding: 0.5rem 0.75rem;
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                font-size: 0.85rem;
+            }
+            .sidebar-item.active {
+                border-left-color: transparent;
+                border-bottom-color: var(--accent);
+            }
+            .messaging-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Section Titles */
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1.5rem;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.25s;
+            border-top: 3px solid var(--accent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .stat-card:nth-child(2) { border-top-color: var(--accent2); }
+        .stat-card:nth-child(2)::after { background: radial-gradient(circle at top right, rgba(88, 166, 255, 0.06) 0%, transparent 70%); }
+        .stat-card:nth-child(3) { border-top-color: var(--green); }
+        .stat-card:nth-child(3)::after { background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.06) 0%, transparent 70%); }
+        .stat-card:nth-child(4) { border-top-color: #a78bfa; }
+        .stat-card:nth-child(4)::after { background: radial-gradient(circle at top right, rgba(167, 139, 250, 0.06) 0%, transparent 70%); }
+
+        .stat-card:hover {
+            border-color: var(--border);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-card:nth-child(2) .stat-value { color: var(--accent2); }
+        .stat-card:nth-child(3) .stat-value { color: var(--green); }
+        .stat-card:nth-child(4) .stat-value { color: #a78bfa; }
+
+        /* Section Card */
+        .section-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-card h2 {
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Messaging Grid */
+        .messaging-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .messaging-card {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .messaging-card h2 {
+            font-size: 1.1rem;
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 1rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Buttons */
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--bg);
+        }
+
+        .btn-primary:hover {
+            background-color: #f59e0b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .btn-danger {
+            background-color: var(--red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-success {
+            background-color: var(--green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: var(--panel);
+            border-bottom: 2px solid var(--border);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: var(--text);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        tbody tr.clickable:hover {
+            background-color: rgba(245, 158, 11, 0.05);
+            cursor: pointer;
+        }
+
+        /* Search Bar */
+        .search-box {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            max-width: 400px;
+            padding-left: 1rem;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
+
+        /* Charts */
+        .chart-container {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
+        }
+
+        .chart-container:hover {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-active {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--green);
+        }
+
+        .badge-inactive {
+            background-color: rgba(107, 114, 128, 0.2);
+            color: var(--muted);
+        }
+
+        .badge-paid {
+            background-color: rgba(88, 166, 255, 0.2);
+            color: var(--accent2);
+        }
+
+        .badge-free {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--accent);
+        }
+
+        /* Grid Layouts */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-full {
+            grid-column: 1 / -1;
+        }
+
+        /* User Detail View */
+        .detail-section {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent);
+            color: var(--bg);
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification.error {
+            background-color: var(--red);
+        }
+
+        .notification.success {
+            background-color: var(--green);
+        }
+
+        /* Custom Scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--muted);
+        }
+        .empty-state .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .empty-state p {
+            font-size: 0.95rem;
+        }
+
+
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
+})();
+</script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="sparky-nav">
+    <a href="index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="dashboard.html" class="sn-link">Dashboard</a><a href="modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="tools.html" class="sn-link">Tools</a><a href="worksheets.html" class="sn-link">Worksheets</a><a href="achievements.html" class="sn-link">Achievements</a><a href="formula-sheet.html" class="sn-link">Formulas</a><a href="admin.html" class="sn-link sn-admin sn-active">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<!-- Admin Layout: Sidebar + Main -->
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>Navigation</h3>
+                <div class="sidebar-brand">Admin Panel</div>
+            </div>
+            <div class="sidebar-nav">
+                <div class="sidebar-item active" onclick="switchTab('dashboard', this)">
+                    <span class="sidebar-icon">📊</span> Dashboard
+                </div>
+                <div class="sidebar-item" onclick="switchTab('promo', this)">
+                    <span class="sidebar-icon">🎟️</span> Promo Codes
+                </div>
+                <div class="sidebar-item" onclick="switchTab('users', this)">
+                    <span class="sidebar-icon">👥</span> User Management
+                </div>
+                <div class="sidebar-item" onclick="switchTab('messaging', this)">
+                    <span class="sidebar-icon">💬</span> Messaging & Gifts
+                </div>
+                <div class="sidebar-item" onclick="switchTab('analytics', this)">
+                    <span class="sidebar-icon">📈</span> Analytics
+                </div>
+                <div class="sidebar-item" onclick="switchTab('refunds', this)">
+                    <span class="sidebar-icon">💰</span> Refund Requests
+                </div>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <div class="container">
+
+            <!-- DASHBOARD TAB -->
+            <div id="dashboard" class="tab-content active">
+                <h1>Dashboard Overview</h1>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👤</div>
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value" id="stat-total-users">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-label">Paid Users</div>
+                        <div class="stat-value" id="stat-paid-users">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-label">Estimated Revenue</div>
+                        <div class="stat-value" id="stat-revenue">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏷️</div>
+                        <div class="stat-label">Active Promos</div>
+                        <div class="stat-value" id="stat-active-promos">0</div>
+                    </div>
+                </div>
+
+                <h2>New Signups (Last 30 Days)</h2>
+                <div class="chart-container">
+                    <canvas id="signupsChart"></canvas>
+                </div>
+
+                <h2>Promo Code Usage</h2>
+                <div class="chart-container">
+                    <canvas id="promoChart"></canvas>
+                </div>
+            </div>
+
+            <!-- PROMO CODES TAB -->
+            <div id="promo" class="tab-content">
+                <h1>Promo Code Management</h1>
+
+                <div class="action-bar">
+                    <button class="btn-primary" onclick="openCreatePromoModal()">+ Create New Promo Code</button>
+                </div>
+
+                <h2>Active Promo Codes</h2>
+                <div class="table-wrapper">
+                    <table id="promoTable">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Discount</th>
+                                <th>Type</th>
+                                <th>Uses</th>
+                                <th>Max Uses</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promoTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- USER MANAGEMENT TAB -->
+            <div id="users" class="tab-content">
+                <h1>User Management</h1>
+
+                <div class="search-box">
+                    <input type="text" id="userSearch" placeholder="Search users by name or email..." onkeyup="filterUsers()">
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Signup Date</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Promo Used</th>
+                                <th>Last Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MESSAGING & GIFTS TAB -->
+            <div id="messaging" class="tab-content">
+                <h1>Messaging & Gifts</h1>
+
+                <div class="messaging-grid">
+                    <!-- Send Individual Message -->
+                    <div class="messaging-card">
+                        <h2>Send Message to User</h2>
+                        <div class="form-group">
+                            <label>Select User</label>
+                            <select id="messageUserSelect">
+                                <option value="">-- Choose User --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="messageText" placeholder="Enter message..."></textarea>
+                        </div>
+                        <button class="btn-primary" onclick="sendUserMessage()">Send Message</button>
+                    </div>
+
+                    <!-- Send Broadcast Message -->
+                    <div class="messaging-card">
+                        <h2>Broadcast to All Users</h2>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea id="broadcastText" placeholder="Enter broadcast message..."></textarea>
+                        </div>
+                        <button class="btn-primary" onclick="sendBroadcastMessage()">Send to All</button>
+                    </div>
+                </div>
+
+                <!-- Gift System -->
+                <div class="section-card" style="margin-top: 1.5rem;">
+                    <h2>Send Gift / Reward</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Select User</label>
+                            <select id="giftUserSelect">
+                                <option value="">-- Choose User --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gift Type</label>
+                            <select id="giftType">
+                                <option value="free_month">Free Month Access</option>
+                                <option value="achievement_badge">Achievement Badge</option>
+                                <option value="discount_code">Discount Code</option>
+                                <option value="custom">Custom Reward</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Personal Message</label>
+                            <textarea id="giftMessage" placeholder="Add a personal message..." style="min-height: 60px;"></textarea>
+                        </div>
+                        <div class="form-group form-full">
+                            <button class="btn-primary" onclick="sendGift()">Send Gift</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message History -->
+                <div class="section-card" style="margin-top: 1.5rem;">
+                    <h2>Message History</h2>
+                    <div class="table-wrapper">
+                        <table id="messageHistoryTable">
+                            <thead>
+                                <tr>
+                                    <th>Recipient</th>
+                                    <th>Type</th>
+                                    <th>Content</th>
+                                    <th>Sent Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messageHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS TAB -->
+            <div id="analytics" class="tab-content">
+                <h1>Analytics</h1>
+
+                <h2>Diagnostic Score Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="scoreDistributionChart"></canvas>
+                </div>
+
+                <h2>Most Failed Questions</h2>
+                <div class="chart-container">
+                    <canvas id="failedQuestionsChart"></canvas>
+                </div>
+
+                <h2>Tool Usage Statistics</h2>
+                <div class="chart-container">
+                    <canvas id="toolUsageChart"></canvas>
+                </div>
+
+                <h2>Worksheet Completion Rate</h2>
+                <div class="chart-container">
+                    <canvas id="worksheetChart"></canvas>
+                </div>
+            </div>
+
+            <!-- REFUND REQUESTS TAB -->
+            <div id="refunds" class="tab-content">
+                <h1>Refund Requests</h1>
+
+                <div class="table-wrapper">
+                    <table id="refundsTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Date</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="refundsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Create Promo Modal -->
+    <div id="createPromoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Promo Code</h2>
+                <button class="modal-close" onclick="closeModal('createPromoModal')">×</button>
+            </div>
+            <form onsubmit="createPromoCode(event)">
+                <div class="form-group">
+                    <label>Promo Code</label>
+                    <input type="text" id="promoCode" placeholder="e.g., SAVE20" required>
+                </div>
+                <div class="form-group">
+                    <label>Discount Percentage (0-100)</label>
+                    <input type="number" id="promoDiscount" min="0" max="100" placeholder="50" required>
+                </div>
+                <div class="form-group">
+                    <label>Max Uses (0 = unlimited)</label>
+                    <input type="number" id="promoMaxUses" min="0" placeholder="100">
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date (Optional)</label>
+                    <input type="date" id="promoExpiry">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Create Promo Code</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="userDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>User Details</h2>
+                <button class="modal-close" onclick="closeModal('userDetailsModal')">×</button>
+            </div>
+            <div id="userDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Refund Decision Modal -->
+    <div id="refundDecisionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Refund Request Decision</h2>
+                <button class="modal-close" onclick="closeModal('refundDecisionModal')">×</button>
+            </div>
+            <div id="refundDecisionContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONSTANTS & CONFIG ====================
+        const PRICE_PER_MONTH = 9.99;
+        const DEFAULT_PROMO_CODES = [
+            { code: 'FREE_ACCESS', discount: 100, type: 'percentage', maxUses: 0, usedBy: [], createdDate: new Date().toISOString() },
+            { code: 'HALF_OFF', discount: 50, type: 'percentage', maxUses: 0, usedBy: [], createdDate: new Date().toISOString() },
+            { code: 'STUDENT2026', discount: 25, type: 'percentage', maxUses: 0, usedBy: [], createdDate: new Date().toISOString() }
+        ];
+
+        // ==================== INITIALIZATION ====================
+        function initializeApp() {
+            // Check auth
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            try {
+                const authData = JSON.parse(auth);
+                if (authData.role !== 'owner' && authData.email !== 'owner@sparkystudy.com' && authData.email !== 'ethan') {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+            } catch (e) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // Initialize storage if needed
+            initializeStorage();
+
+            // Load all data
+            loadDashboard();
+            loadPromoCodeTab();
+            loadUserManagementTab();
+            loadMessagingTab();
+            loadAnalyticsTab();
+            loadRefundsTab();
+        }
+
+        function initializeStorage() {
+            if (!localStorage.getItem('sparty_users')) {
+                localStorage.setItem('sparty_users', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('sparty_signups_log')) {
+                localStorage.setItem('sparty_signups_log', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('sparty_promo_codes')) {
+                localStorage.setItem('sparty_promo_codes', JSON.stringify(DEFAULT_PROMO_CODES));
+            }
+            if (!localStorage.getItem('sparty_user_notifications')) {
+                localStorage.setItem('sparty_user_notifications', JSON.stringify({}));
+            }
+            if (!localStorage.getItem('sparty_tool_usage')) {
+                localStorage.setItem('sparty_tool_usage', JSON.stringify({}));
+            }
+            if (!localStorage.getItem('sparty_refund_requests')) {
+                localStorage.setItem('sparty_refund_requests', JSON.stringify([]));
+            }
+            if (!localStorage.getItem('sparty_message_history')) {
+                localStorage.setItem('sparty_message_history', JSON.stringify([]));
+            }
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        function switchTab(tabName, clickedItem) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+
+            // Show selected tab and mark sidebar item as active
+            const target = document.getElementById(tabName);
+            if (target) target.classList.add('active');
+            if (clickedItem) clickedItem.classList.add('active');
+
+            // Scroll to top of main content on mobile
+            if (window.innerWidth <= 768) {
+                const main = document.querySelector('.admin-main');
+                if (main) main.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // Reload tab data
+            if (tabName === 'dashboard') loadDashboard();
+            else if (tabName === 'promo') loadPromoCodeTab();
+            else if (tabName === 'users') loadUserManagementTab();
+            else if (tabName === 'messaging') loadMessagingTab();
+            else if (tabName === 'analytics') loadAnalyticsTab();
+            else if (tabName === 'refunds') loadRefundsTab();
+        }
+
+        // ==================== DASHBOARD ====================
+        function loadDashboard() {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+            const signupsLog = JSON.parse(localStorage.getItem('sparty_signups_log')) || [];
+
+            // Calculate stats
+            const totalUsers = users.length;
+            const paidUsers = users.filter(u => u.paid === true).length;
+            const estimatedRevenue = paidUsers * PRICE_PER_MONTH;
+            const activePromos = promoCodes.filter(p => p.active !== false).length;
+
+            // Update stat cards
+            document.getElementById('stat-total-users').textContent = totalUsers;
+            document.getElementById('stat-paid-users').textContent = paidUsers;
+            document.getElementById('stat-revenue').textContent = '$' + estimatedRevenue.toFixed(2);
+            document.getElementById('stat-active-promos').textContent = activePromos;
+
+            // Draw signups chart
+            drawSignupsChart(signupsLog);
+
+            // Draw promo usage chart
+            drawPromoChart(promoCodes);
+        }
+
+        function drawSignupsChart(signupsLog) {
+            const canvas = document.getElementById('signupsChart');
+            const ctx = canvas.getContext('2d');
+
+            // Calculate last 30 days
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            const dailySignups = {};
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                const dateStr = date.toISOString().split('T')[0];
+                dailySignups[dateStr] = 0;
+            }
+
+            signupsLog.forEach(signup => {
+                const dateStr = new Date(signup.date).toISOString().split('T')[0];
+                if (dailySignups[dateStr] !== undefined) {
+                    dailySignups[dateStr]++;
+                }
+            });
+
+            const labels = Object.keys(dailySignups);
+            const data = Object.values(dailySignups);
+
+            drawBarChart(ctx, labels, [data], 'New Signups Last 30 Days', '#f59e0b');
+        }
+
+        function drawPromoChart(promoCodes) {
+            const canvas = document.getElementById('promoChart');
+            const ctx = canvas.getContext('2d');
+
+            const labels = promoCodes.map(p => p.code);
+            const data = promoCodes.map(p => (p.usedBy || []).length);
+
+            drawBarChart(ctx, labels, [data], 'Promo Code Usage Count', '#58a6ff');
+        }
+
+        function drawBarChart(ctx, labels, datasets, title, color) {
+            const canvas = ctx.canvas;
+            const dpr = window.devicePixelRatio || 1;
+            const displayWidth = canvas.offsetWidth;
+            const displayHeight = 300;
+            canvas.width = displayWidth * dpr;
+            canvas.height = displayHeight * dpr;
+            canvas.style.height = displayHeight + 'px';
+            ctx.scale(dpr, dpr);
+
+            const width = displayWidth;
+            const height = displayHeight;
+            const padding = 50;
+            const bottomPadding = 70;
+            const chartWidth = width - 2 * padding;
+            const chartHeight = height - padding - bottomPadding;
+
+            const data = datasets[0];
+            const maxValue = Math.max(...data, 1);
+
+            // Draw horizontal grid lines
+            ctx.strokeStyle = 'rgba(48, 54, 61, 0.5)';
+            ctx.lineWidth = 1;
+            const gridLines = 4;
+            for (let i = 0; i <= gridLines; i++) {
+                const y = padding + (chartHeight / gridLines) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+
+                // Y-axis labels
+                const val = Math.round(maxValue - (maxValue / gridLines) * i);
+                ctx.fillStyle = '#8b949e';
+                ctx.font = '11px Inter';
+                ctx.textAlign = 'right';
+                ctx.fillText(val, padding - 8, y + 4);
+            }
+
+            // Draw bars with rounded tops
+            const barWidth = chartWidth / labels.length;
+            const barPadding = Math.max(barWidth * 0.15, 2);
+
+            data.forEach((value, index) => {
+                const barH = (value / maxValue) * chartHeight;
+                const x = padding + index * barWidth + barPadding;
+                const y = height - bottomPadding - barH;
+                const bw = barWidth - barPadding * 2;
+                const radius = Math.min(bw / 2, 4);
+
+                // Bar gradient
+                const grad = ctx.createLinearGradient(x, y, x, height - bottomPadding);
+                grad.addColorStop(0, color);
+                grad.addColorStop(1, color + '66');
+                ctx.fillStyle = grad;
+
+                // Rounded top bar
+                if (barH > radius) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, height - bottomPadding);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.lineTo(x + bw - radius, y);
+                    ctx.quadraticCurveTo(x + bw, y, x + bw, y + radius);
+                    ctx.lineTo(x + bw, height - bottomPadding);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (barH > 0) {
+                    ctx.fillRect(x, y, bw, barH);
+                }
+            });
+
+            // Draw labels (rotated for readability)
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '11px Inter';
+            ctx.textAlign = 'right';
+            const showEvery = labels.length > 15 ? Math.ceil(labels.length / 10) : 1;
+            labels.forEach((label, index) => {
+                if (index % showEvery !== 0 && index !== labels.length - 1) return;
+                const x = padding + index * barWidth + barWidth / 2;
+                const y = height - bottomPadding + 12;
+                // Abbreviate date labels (2026-03-09 -> Mar 9)
+                let displayLabel = label;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(label)) {
+                    const parts = label.split('-');
+                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    displayLabel = months[parseInt(parts[1])-1] + ' ' + parseInt(parts[2]);
+                }
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(-Math.PI / 4);
+                ctx.fillText(displayLabel, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        // ==================== PROMO CODE MANAGEMENT ====================
+        function loadPromoCodeTab() {
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+            const tbody = document.getElementById('promoTableBody');
+            tbody.innerHTML = '';
+
+            promoCodes.forEach((promo, index) => {
+                const row = document.createElement('tr');
+                const usageCount = (promo.usedBy || []).length;
+                const maxUses = promo.maxUses === 0 ? 'Unlimited' : promo.maxUses;
+                const status = promo.active === false ? 'Disabled' : 'Active';
+
+                row.innerHTML = `
+                    <td><strong>${promo.code}</strong></td>
+                    <td>${promo.discount}%</td>
+                    <td>${promo.type === 'percentage' ? 'Percentage' : 'Free'}</td>
+                    <td>${usageCount}</td>
+                    <td>${maxUses}</td>
+                    <td><span class="badge ${status === 'Active' ? 'badge-active' : 'badge-inactive'}">${status}</span></td>
+                    <td>${new Date(promo.createdDate).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn-small btn-secondary" onclick="togglePromoStatus(${index})">
+                            ${status === 'Active' ? 'Disable' : 'Enable'}
+                        </button>
+                        <button class="btn-small btn-danger" onclick="deletePromo(${index})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function openCreatePromoModal() {
+            document.getElementById('createPromoModal').classList.add('active');
+        }
+
+        function createPromoCode(event) {
+            event.preventDefault();
+
+            const code = document.getElementById('promoCode').value.toUpperCase();
+            const discount = parseInt(document.getElementById('promoDiscount').value);
+            const maxUses = parseInt(document.getElementById('promoMaxUses').value) || 0;
+            const expiry = document.getElementById('promoExpiry').value || null;
+
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+
+            // Check if code already exists
+            if (promoCodes.some(p => p.code === code)) {
+                showNotification('Promo code already exists!', 'error');
+                return;
+            }
+
+            const newPromo = {
+                code,
+                discount,
+                type: 'percentage',
+                maxUses,
+                expiry,
+                usedBy: [],
+                active: true,
+                createdDate: new Date().toISOString()
+            };
+
+            promoCodes.push(newPromo);
+            localStorage.setItem('sparty_promo_codes', JSON.stringify(promoCodes));
+
+            showNotification('Promo code created successfully!', 'success');
+            closeModal('createPromoModal');
+            document.querySelector('form').reset();
+            loadPromoCodeTab();
+        }
+
+        function togglePromoStatus(index) {
+            const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+            promoCodes[index].active = !promoCodes[index].active;
+            localStorage.setItem('sparty_promo_codes', JSON.stringify(promoCodes));
+            loadPromoCodeTab();
+            showNotification('Promo status updated!', 'success');
+        }
+
+        function deletePromo(index) {
+            if (confirm('Are you sure you want to delete this promo code?')) {
+                const promoCodes = JSON.parse(localStorage.getItem('sparty_promo_codes')) || [];
+                promoCodes.splice(index, 1);
+                localStorage.setItem('sparty_promo_codes', JSON.stringify(promoCodes));
+                loadPromoCodeTab();
+                showNotification('Promo code deleted!', 'success');
+            }
+        }
+
+        // ==================== USER MANAGEMENT ====================
+        function loadUserManagementTab() {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+
+            // Populate search
+            const userSearch = document.getElementById('userSearch');
+            if (userSearch) userSearch.value = '';
+
+            // Populate message/gift selects
+            const messageSelect = document.getElementById('messageUserSelect');
+            const giftSelect = document.getElementById('giftUserSelect');
+
+            messageSelect.innerHTML = '<option value="">-- Choose User --</option>';
+            giftSelect.innerHTML = '<option value="">-- Choose User --</option>';
+
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.email;
+                option.textContent = `${user.name} (${user.email})`;
+                messageSelect.appendChild(option.cloneNode(true));
+                giftSelect.appendChild(option.cloneNode(true));
+            });
+
+            loadUsersTable(users);
+        }
+
+        function loadUsersTable(users = null) {
+            if (users === null) {
+                users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            }
+
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.className = 'clickable';
+                row.onclick = () => showUserDetails(index);
+
+                const role = user.role || 'student';
+                const status = user.paid ? 'Paid' : 'Free';
+                const lastActive = user.lastActive ? new Date(user.lastActive).toLocaleDateString() : 'Never';
+
+                row.innerHTML = `
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.email}</td>
+                    <td>${user.signupDate ? new Date(user.signupDate).toLocaleDateString() : 'N/A'}</td>
+                    <td>${role}</td>
+                    <td><span class="badge ${status === 'Paid' ? 'badge-paid' : 'badge-free'}">${status}</span></td>
+                    <td>${user.promoCodeUsed || '-'}</td>
+                    <td>${lastActive}</td>
+                    <td>
+                        <button class="btn-small btn-secondary" onclick="editUser(event, ${index})">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const filtered = users.filter(user =>
+                (user.name || '').toLowerCase().includes(searchTerm) ||
+                (user.email || '').toLowerCase().includes(searchTerm)
+            );
+            loadUsersTable(filtered);
+        }
+
+        function showUserDetails(userIndex) {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const user = users[userIndex];
+
+            const content = document.getElementById('userDetailsContent');
+            content.innerHTML = `
+                <div class="detail-section">
+                    <h3>Personal Information</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Name</span>
+                        <span class="detail-value">${user.name || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">${user.email}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Signup Date</span>
+                        <span class="detail-value">${user.signupDate ? new Date(user.signupDate).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Account Status</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Role</span>
+                        <select id="userRole" value="${user.role || 'student'}" onchange="updateUserRole(${userIndex}, this.value)">
+                            <option value="student">Student</option>
+                            <option value="school-admin">School Admin</option>
+                        </select>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Paid Status</span>
+                        <span class="detail-value">
+                            <input type="checkbox" ${user.paid ? 'checked' : ''} onchange="toggleUserPaidStatus(${userIndex}, this.checked)">
+                            ${user.paid ? 'Paid' : 'Free'}
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Promo Used</span>
+                        <span class="detail-value">${user.promoCodeUsed || 'None'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Activity</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Last Active</span>
+                        <span class="detail-value">${user.lastActive ? new Date(user.lastActive).toLocaleString() : 'Never'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Diagnostic Score</span>
+                        <span class="detail-value">${user.diagnosticScore || 'Not completed'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Actions</h3>
+                    <button class="btn-secondary" onclick="closeModal('userDetailsModal')">Close</button>
+                </div>
+            `;
+
+            document.getElementById('userDetailsModal').classList.add('active');
+        }
+
+        function editUser(event, userIndex) {
+            event.stopPropagation();
+            showUserDetails(userIndex);
+        }
+
+        function updateUserRole(userIndex, newRole) {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            users[userIndex].role = newRole;
+            localStorage.setItem('sparty_users', JSON.stringify(users));
+            showNotification('User role updated!', 'success');
+        }
+
+        function toggleUserPaidStatus(userIndex, isPaid) {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            users[userIndex].paid = isPaid;
+            localStorage.setItem('sparty_users', JSON.stringify(users));
+            showNotification('User status updated!', 'success');
+        }
+
+        // ==================== MESSAGING & GIFTS ====================
+        function loadMessagingTab() {
+            loadMessageHistory();
+        }
+
+        function sendUserMessage() {
+            const email = document.getElementById('messageUserSelect').value;
+            const message = document.getElementById('messageText').value;
+
+            if (!email || !message) {
+                showNotification('Please select a user and enter a message', 'error');
+                return;
+            }
+
+            const notifications = JSON.parse(localStorage.getItem('sparty_user_notifications')) || {};
+            if (!notifications[email]) {
+                notifications[email] = [];
+            }
+
+            notifications[email].push({
+                type: 'message',
+                message,
+                date: new Date().toISOString()
+            });
+
+            localStorage.setItem('sparty_user_notifications', JSON.stringify(notifications));
+
+            // Log to message history
+            logMessage(email, 'personal', message);
+
+            showNotification('Message sent successfully!', 'success');
+            document.getElementById('messageText').value = '';
+            loadMessageHistory();
+        }
+
+        function sendBroadcastMessage() {
+            const message = document.getElementById('broadcastText').value;
+
+            if (!message) {
+                showNotification('Please enter a message', 'error');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const notifications = JSON.parse(localStorage.getItem('sparty_user_notifications')) || {};
+
+            users.forEach(user => {
+                if (!notifications[user.email]) {
+                    notifications[user.email] = [];
+                }
+                notifications[user.email].push({
+                    type: 'broadcast',
+                    message,
+                    date: new Date().toISOString()
+                });
+
+                logMessage(user.email, 'broadcast', message);
+            });
+
+            localStorage.setItem('sparty_user_notifications', JSON.stringify(notifications));
+            showNotification('Broadcast sent to all users!', 'success');
+            document.getElementById('broadcastText').value = '';
+            loadMessageHistory();
+        }
+
+        function sendGift() {
+            const email = document.getElementById('giftUserSelect').value;
+            const giftType = document.getElementById('giftType').value;
+            const message = document.getElementById('giftMessage').value;
+
+            if (!email) {
+                showNotification('Please select a user', 'error');
+                return;
+            }
+
+            const notifications = JSON.parse(localStorage.getItem('sparty_user_notifications')) || {};
+            if (!notifications[email]) {
+                notifications[email] = [];
+            }
+
+            notifications[email].push({
+                type: 'gift',
+                giftType,
+                message,
+                date: new Date().toISOString()
+            });
+
+            localStorage.setItem('sparty_user_notifications', JSON.stringify(notifications));
+
+            logMessage(email, 'gift', `Gift: ${giftType} - ${message}`);
+
+            showNotification('Gift sent successfully!', 'success');
+            document.getElementById('giftMessage').value = '';
+            document.getElementById('giftUserSelect').value = '';
+            loadMessageHistory();
+        }
+
+        function logMessage(recipient, type, content) {
+            const history = JSON.parse(localStorage.getItem('sparty_message_history')) || [];
+            history.push({
+                recipient,
+                type,
+                content: content.substring(0, 100),
+                date: new Date().toISOString()
+            });
+            localStorage.setItem('sparty_message_history', JSON.stringify(history));
+        }
+
+        function loadMessageHistory() {
+            const history = JSON.parse(localStorage.getItem('sparty_message_history')) || [];
+            const tbody = document.getElementById('messageHistoryBody');
+            tbody.innerHTML = '';
+
+            // Show last 10 messages
+            history.slice(-10).reverse().forEach(msg => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${msg.recipient}</td>
+                    <td><span class="badge badge-active">${msg.type}</span></td>
+                    <td>${msg.content}</td>
+                    <td>${new Date(msg.date).toLocaleString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ==================== ANALYTICS ====================
+        function loadAnalyticsTab() {
+            const users = JSON.parse(localStorage.getItem('sparty_users')) || [];
+            const toolUsage = JSON.parse(localStorage.getItem('sparty_tool_usage')) || {};
+
+            // Mock data for charts
+            drawScoreDistributionChart(users);
+            drawFailedQuestionsChart();
+            drawToolUsageChart(toolUsage);
+            drawWorksheetChart();
+        }
+
+        function drawScoreDistributionChart(users) {
+            const canvas = document.getElementById('scoreDistributionChart');
+            const ctx = canvas.getContext('2d');
+
+            const scores = users.map(u => u.diagnosticScore || 0).filter(s => s > 0);
+            const ranges = {
+                '0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0
+            };
+
+            scores.forEach(score => {
+                if (score <= 20) ranges['0-20']++;
+                else if (score <= 40) ranges['21-40']++;
+                else if (score <= 60) ranges['41-60']++;
+                else if (score <= 80) ranges['61-80']++;
+                else ranges['81-100']++;
+            });
+
+            const labels = Object.keys(ranges);
+            const data = Object.values(ranges);
+            drawBarChart(ctx, labels, [data], 'Score Distribution', '#10b981');
+        }
+
+        function drawFailedQuestionsChart() {
+            const canvas = document.getElementById('failedQuestionsChart');
+            const ctx = canvas.getContext('2d');
+
+            const mockData = [12, 8, 15, 5, 9, 11, 6];
+            const mockLabels = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7'];
+
+            drawBarChart(ctx, mockLabels, [mockData], 'Most Failed Questions', '#ef4444');
+        }
+
+        function drawToolUsageChart(toolUsage) {
+            const canvas = document.getElementById('toolUsageChart');
+            const ctx = canvas.getContext('2d');
+
+            const tools = Object.keys(toolUsage);
+            const usage = Object.values(toolUsage);
+
+            if (tools.length === 0) {
+                const mockTools = ['Grammar Checker', 'Math Solver', 'Essay Writer', 'Flashcards', 'Quiz Maker'];
+                const mockUsage = [45, 32, 28, 52, 18];
+                drawBarChart(ctx, mockTools, [mockUsage], 'Tool Usage Statistics', '#58a6ff');
+            } else {
+                drawBarChart(ctx, tools, [usage], 'Tool Usage Statistics', '#58a6ff');
+            }
+        }
+
+        function drawWorksheetChart() {
+            const canvas = document.getElementById('worksheetChart');
+            const ctx = canvas.getContext('2d');
+
+            const mockLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const mockData = [65, 72, 68, 81];
+
+            drawBarChart(ctx, mockLabels, [mockData], 'Worksheet Completion Rate (%)', '#f59e0b');
+        }
+
+        // ==================== REFUND REQUESTS ====================
+        function loadRefundsTab() {
+            const refunds = JSON.parse(localStorage.getItem('sparty_refund_requests')) || [];
+            const tbody = document.getElementById('refundsTableBody');
+            tbody.innerHTML = '';
+
+            refunds.forEach((refund, index) => {
+                const row = document.createElement('tr');
+                const statusClass = refund.status === 'pending' ? 'badge-active' : 'badge-inactive';
+
+                row.innerHTML = `
+                    <td>${refund.userName || 'N/A'}</td>
+                    <td>${refund.email}</td>
+                    <td>${new Date(refund.date).toLocaleDateString()}</td>
+                    <td>${refund.reason}</td>
+                    <td><span class="badge ${statusClass}">${refund.status}</span></td>
+                    <td>
+                        <button class="btn-small btn-success" onclick="handleRefund(${index}, 'approved')">Approve</button>
+                        <button class="btn-small btn-danger" onclick="handleRefund(${index}, 'denied')">Deny</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function handleRefund(index, decision) {
+            const refunds = JSON.parse(localStorage.getItem('sparty_refund_requests')) || [];
+            refunds[index].status = decision;
+            localStorage.setItem('sparty_refund_requests', JSON.stringify(refunds));
+
+            showNotification(`Refund request ${decision}!`, 'success');
+            loadRefundsTab();
+        }
+
+        // ==================== MODAL & UTILITY ====================
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('sparty_auth');
+            window.location.href = 'dashboard.html';
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ==================== PAGE LOAD ====================
+        window.addEventListener('load', initializeApp);
+
+        // Close modals on outside click
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        });
+    </script>
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

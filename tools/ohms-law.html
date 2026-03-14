@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ohm's Law Simulator | SparkStudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+            --purple: #a78bfa;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+            --transition: all 0.2s ease;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbars */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #30363d transparent;
+        }
+        *::-webkit-scrollbar { width: 4px; height: 4px; }
+        *::-webkit-scrollbar-track { background: transparent; }
+        *::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+
+        /* ── Navbar ── */
+
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; }
+
+        /* ── Main Layout ── */
+        .main {
+            display: flex;
+            height: calc(100vh - 64px);
+            overflow: hidden;
+        }
+
+        /* ── Left Panel ── */
+        .left-panel {
+            width: 380px;
+            flex-shrink: 0;
+            background: #0d1117;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #8b949e;
+            margin-bottom: 0.25rem;
+        }
+
+        /* ── Readout Cards ── */
+        .readouts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .readout-card {
+            background: #0d1117;
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            border: 1px solid #30363d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .readout-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+
+        .readout-card.voltage::before { background: #f59e0b; }
+        .readout-card.current::before { background: #58a6ff; }
+        .readout-card.resistance::before { background: #10b981; }
+        .readout-card.power::before { background: #a78bfa; }
+
+        .readout-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .readout-card.voltage .readout-label { color: #f59e0b; }
+        .readout-card.current .readout-label { color: #58a6ff; }
+        .readout-card.resistance .readout-label { color: #10b981; }
+        .readout-card.power .readout-label { color: #a78bfa; }
+
+        .readout-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .readout-card.voltage .readout-value {
+            color: #f59e0b;
+            text-shadow: 0 0 20px rgba(245,158,11,0.5);
+        }
+        .readout-card.current .readout-value {
+            color: #58a6ff;
+            text-shadow: 0 0 20px rgba(88,166,255,0.5);
+        }
+        .readout-card.resistance .readout-value {
+            color: #10b981;
+            text-shadow: 0 0 20px rgba(16,185,129,0.5);
+        }
+        .readout-card.power .readout-value {
+            color: #a78bfa;
+            text-shadow: 0 0 20px rgba(167,139,250,0.5);
+        }
+
+        .readout-unit {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #8b949e;
+            margin-top: 0.2rem;
+        }
+
+        /* ── Sliders ── */
+        .sliders-section { display: flex; flex-direction: column; gap: 1rem; }
+
+        .slider-group {
+            background: #0d1117;
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            border: 1px solid #30363d;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.75rem;
+        }
+
+        .slider-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #8b949e;
+        }
+
+        .slider-val {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .slider-group.v-slider .slider-val { color: #f59e0b; }
+        .slider-group.r-slider .slider-val { color: #10b981; }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"].voltage-range {
+            background: linear-gradient(to right, #f59e0b var(--pct, 0%), #30363d var(--pct, 0%));
+        }
+
+        input[type="range"].resistance-range {
+            background: linear-gradient(to right, #10b981 var(--pct, 0%), #30363d var(--pct, 0%));
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #f59e0b;
+            border: 2px solid #f59e0b;
+            box-shadow: 0 0 6px rgba(0,0,0,0.6);
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        input[type="range"].voltage-range::-webkit-slider-thumb { background: #f59e0b; border-color: #f59e0b; }
+        input[type="range"].resistance-range::-webkit-slider-thumb { background: #10b981; border-color: #10b981; }
+
+        .slider-range-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.4rem;
+        }
+
+        .slider-range-labels span {
+            font-size: 0.6rem;
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        /* ── Formula Chips ── */
+        .formula-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .formula-chip {
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 999px;
+            padding: 0.3rem 0.75rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            font-family: 'Inter', monospace;
+            color: #f59e0b;
+            letter-spacing: 0.02em;
+        }
+
+        .formula-chip span { color: #f59e0b; }
+
+        /* ── Right Panel / Canvas ── */
+        .right-panel {
+            flex: 1;
+            background: #0d1117;
+            position: relative;
+            display: flex;
+            align-items: stretch;
+        }
+
+        #circuitCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Scrollbar styling for left panel */
+        .left-panel::-webkit-scrollbar { width: 4px; }
+        .left-panel::-webkit-scrollbar-track { background: transparent; }
+        .left-panel::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link sn-active">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<div class="main">
+
+    <!-- ── Left Panel ── -->
+    <div class="left-panel">
+
+        <div>
+            <p class="panel-title">Ohm's Law Simulator</p>
+        </div>
+
+        <!-- Readout Cards -->
+        <div class="readouts-grid">
+            <div class="readout-card voltage">
+                <div class="readout-label">Voltage</div>
+                <div class="readout-value" id="vReadout">12.0</div>
+                <div class="readout-unit">Volts (V)</div>
+            </div>
+            <div class="readout-card current">
+                <div class="readout-label">Current</div>
+                <div class="readout-value" id="iReadout">0.12</div>
+                <div class="readout-unit">Amperes (A)</div>
+            </div>
+            <div class="readout-card resistance">
+                <div class="readout-label">Resistance</div>
+                <div class="readout-value" id="rReadout">100</div>
+                <div class="readout-unit">Ohms (Ω)</div>
+            </div>
+            <div class="readout-card power">
+                <div class="readout-label">Power</div>
+                <div class="readout-value" id="pReadout">1.44</div>
+                <div class="readout-unit">Watts (W)</div>
+            </div>
+        </div>
+
+        <!-- Sliders -->
+        <div class="sliders-section">
+            <div class="slider-group v-slider">
+                <div class="slider-header">
+                    <span class="slider-name">Voltage</span>
+                    <span class="slider-val"><span id="vLabel">12</span> V</span>
+                </div>
+                <input type="range" id="vSlider" class="voltage-range" min="1" max="240" value="12" step="1">
+                <div class="slider-range-labels"><span>1 V</span><span>240 V</span></div>
+            </div>
+
+            <div class="slider-group r-slider">
+                <div class="slider-header">
+                    <span class="slider-name">Resistance</span>
+                    <span class="slider-val"><span id="rLabel">100</span> Ω</span>
+                </div>
+                <input type="range" id="rSlider" class="resistance-range" min="1" max="1000" value="100" step="1">
+                <div class="slider-range-labels"><span>1 Ω</span><span>1000 Ω</span></div>
+            </div>
+        </div>
+
+        <!-- Formula Chips -->
+        <div>
+            <p class="panel-title" style="margin-bottom:0.6rem;">Key Formulas</p>
+            <div class="formula-chips">
+                <div class="formula-chip"><span>V</span> = IR</div>
+                <div class="formula-chip"><span>I</span> = V/R</div>
+                <div class="formula-chip"><span>R</span> = V/I</div>
+                <div class="formula-chip"><span>P</span> = V²/R</div>
+                <div class="formula-chip"><span>P</span> = VI</div>
+                <div class="formula-chip"><span>P</span> = I²R</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Right Panel ── -->
+    <div class="right-panel">
+        <canvas id="circuitCanvas"></canvas>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // ── State ──
+    let V = 12, R = 100;
+    let I = V / R, P = V * V / R;
+
+    // ── DOM refs ──
+    const vSlider   = document.getElementById('vSlider');
+    const rSlider   = document.getElementById('rSlider');
+    const vLabel    = document.getElementById('vLabel');
+    const rLabel    = document.getElementById('rLabel');
+    const vReadout  = document.getElementById('vReadout');
+    const iReadout  = document.getElementById('iReadout');
+    const rReadout  = document.getElementById('rReadout');
+    const pReadout  = document.getElementById('pReadout');
+    const canvas    = document.getElementById('circuitCanvas');
+    const ctx       = canvas.getContext('2d');
+
+    // ── Slider gradient helpers ──
+    function updateSliderGradient(slider, cls) {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const val = parseFloat(slider.value);
+        const pct = ((val - min) / (max - min)) * 100;
+        slider.style.setProperty('--pct', pct.toFixed(1) + '%');
+    }
+
+    // ── Format helpers ──
+    function fmtV(v)  { return v >= 100 ? v.toFixed(1) : v.toFixed(2); }
+    function fmtI(i)  { return i >= 10 ? i.toFixed(2) : i >= 1 ? i.toFixed(3) : i.toFixed(4); }
+    function fmtR(r)  { return r >= 100 ? r.toFixed(0) : r.toFixed(1); }
+    function fmtP(p)  { return p >= 100 ? p.toFixed(1) : p >= 1 ? p.toFixed(2) : p.toFixed(3); }
+
+    function recalc() {
+        I = V / R;
+        P = V * V / R;
+        vReadout.textContent = fmtV(V);
+        iReadout.textContent = fmtI(I);
+        rReadout.textContent = fmtR(R);
+        pReadout.textContent = fmtP(P);
+    }
+
+    vSlider.addEventListener('input', () => {
+        V = parseFloat(vSlider.value);
+        vLabel.textContent = V;
+        updateSliderGradient(vSlider, 'voltage-range');
+        recalc();
+    });
+
+    rSlider.addEventListener('input', () => {
+        R = parseFloat(rSlider.value);
+        rLabel.textContent = R;
+        updateSliderGradient(rSlider, 'resistance-range');
+        recalc();
+    });
+
+    // init gradients
+    updateSliderGradient(vSlider);
+    updateSliderGradient(rSlider);
+    recalc();
+
+    // ── Canvas resize ──
+    function resize() {
+        canvas.width  = canvas.clientWidth  * devicePixelRatio;
+        canvas.height = canvas.clientHeight * devicePixelRatio;
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ── Circuit geometry (computed each frame based on canvas size) ──
+    function getGeom() {
+        const W = canvas.width;
+        const H = canvas.height;
+        const cx = W / 2, cy = H / 2;
+        const rw = Math.min(W * 0.55, H * 0.55); // half-width of rect
+        const rh = Math.min(W * 0.28, H * 0.32); // half-height
+
+        const left   = cx - rw;
+        const right  = cx + rw;
+        const top    = cy - rh;
+        const bottom = cy + rh;
+
+        return { W, H, cx, cy, left, right, top, bottom, rw, rh };
+    }
+
+    // ── Wire color interpolation ──
+    // #30363d (no current) → #f59e0b (max current, ~2.4A at 240V/100Ω)
+    function wireColor(t) {
+        // t = 0..1
+        const r0=0x30, g0=0x36, b0=0x3d;
+        const r1=0xf5, g1=0x9e, b1=0x0b;
+        const r = Math.round(r0 + (r1-r0)*t);
+        const g = Math.round(g0 + (g1-g0)*t);
+        const b = Math.round(b0 + (b1-b0)*t);
+        return `rgb(${r},${g},${b})`;
+    }
+
+    // ── Particles ──
+    const NUM_PARTICLES = 18;
+    const particles = [];
+
+    // Each particle has a position `t` in [0, totalLength)
+    // Circuit is a rectangle path traversed clockwise:
+    // top-left → top-right → bottom-right → bottom-left → top-left
+    // Battery is on the LEFT side, Resistor on the RIGHT side
+
+    function initParticles() {
+        particles.length = 0;
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            particles.push({ t: i / NUM_PARTICLES }); // spread evenly, 0..1 normalized
+        }
+    }
+
+    initParticles();
+
+    // Convert normalized t (0..1) to {x, y} on the rectangle
+    // Clockwise: top-left → top-right → bottom-right → bottom-left → top-left
+    function tToXY(t, geom) {
+        const { left, right, top, bottom } = geom;
+        const W = (right - left);
+        const H = (bottom - top);
+        const perimeter = 2 * W + 2 * H;
+
+        // Segment lengths normalized
+        const s1 = W / perimeter;           // top: left→right
+        const s2 = s1 + H / perimeter;      // right: top→bottom
+        const s3 = s2 + W / perimeter;      // bottom: right→left
+        // s4 covers left: bottom→top (back to start)
+
+        const tt = ((t % 1) + 1) % 1;
+
+        if (tt < s1) {
+            const f = tt / s1;
+            return { x: left + f * W, y: top };
+        } else if (tt < s2) {
+            const f = (tt - s1) / (s2 - s1);
+            return { x: right, y: top + f * H };
+        } else if (tt < s3) {
+            const f = (tt - s2) / (s3 - s2);
+            return { x: right - f * W, y: bottom };
+        } else {
+            const f = (tt - s3) / (1 - s3);
+            return { x: left, y: bottom - f * H };
+        }
+    }
+
+    // ── Draw battery symbol on left side (vertical) ──
+    function drawBattery(ctx, geom, colorT) {
+        const { left, top, bottom, cy } = geom;
+        const bh = (bottom - top) * 0.18;  // battery height region
+        const midX = left;
+
+        const color = wireColor(colorT);
+        const glow  = `rgba(245,158,11,${colorT * 0.6})`;
+
+        // Battery body — two vertical plates
+        const plateSep = 18 * devicePixelRatio;
+        const longH    = 28 * devicePixelRatio;
+        const shortH   = 18 * devicePixelRatio;
+
+        // Glow effect
+        if (colorT > 0.05) {
+            ctx.save();
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur  = 16 * devicePixelRatio * colorT;
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth   = 3 * devicePixelRatio;
+        ctx.lineCap = 'round';
+
+        // Long plate (positive, top)
+        ctx.beginPath();
+        ctx.moveTo(midX - longH / 2, cy - plateSep / 2);
+        ctx.lineTo(midX + longH / 2, cy - plateSep / 2);
+        ctx.stroke();
+
+        // Short plate (negative, bottom)
+        ctx.beginPath();
+        ctx.moveTo(midX - shortH / 2, cy + plateSep / 2);
+        ctx.lineTo(midX + shortH / 2, cy + plateSep / 2);
+        ctx.stroke();
+
+        if (colorT > 0.05) ctx.restore();
+
+        // + and – labels
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = `bold ${13 * devicePixelRatio}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('+', midX, cy - plateSep / 2 - 10 * devicePixelRatio);
+        ctx.fillStyle = '#8b949e';
+        ctx.fillText('−', midX, cy + plateSep / 2 + 16 * devicePixelRatio);
+
+        // Component label
+        ctx.fillStyle = '#8b949e';
+        ctx.font = `600 ${11 * devicePixelRatio}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('Battery', midX, cy + plateSep / 2 + 38 * devicePixelRatio);
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = `500 ${10 * devicePixelRatio}px Inter, sans-serif`;
+        ctx.fillText(`${fmtV(V)} V`, midX, cy + plateSep / 2 + 54 * devicePixelRatio);
+    }
+
+    // ── Draw resistor symbol on right side (vertical zig-zag) ──
+    function drawResistor(ctx, geom, colorT) {
+        const { right, cy } = geom;
+        const midX = right;
+
+        const color = wireColor(colorT);
+        const rColor = '#10b981';
+
+        // Zigzag resistor
+        const zigW = 10 * devicePixelRatio;
+        const zigH = 46 * devicePixelRatio;
+        const segs = 6;
+        const segH = zigH / segs;
+
+        const startY = cy - zigH / 2;
+
+        if (colorT > 0.05) {
+            ctx.save();
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur  = 14 * devicePixelRatio * colorT;
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth   = 2.5 * devicePixelRatio;
+        ctx.lineJoin    = 'miter';
+        ctx.lineCap     = 'square';
+
+        ctx.beginPath();
+        ctx.moveTo(midX, startY);
+        for (let i = 0; i < segs; i++) {
+            const y = startY + segH * (i + 0.5);
+            const xOffset = (i % 2 === 0 ? 1 : -1) * zigW;
+            ctx.lineTo(midX + xOffset, y);
+        }
+        ctx.lineTo(midX, startY + zigH);
+        ctx.stroke();
+
+        if (colorT > 0.05) ctx.restore();
+
+        // Component label
+        ctx.fillStyle = '#8b949e';
+        ctx.font = `600 ${11 * devicePixelRatio}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('Resistor', midX, cy + zigH / 2 + 22 * devicePixelRatio);
+        ctx.fillStyle = '#10b981';
+        ctx.font = `500 ${10 * devicePixelRatio}px Inter, sans-serif`;
+        ctx.fillText(`${fmtR(R)} Ω`, midX, cy + zigH / 2 + 38 * devicePixelRatio);
+    }
+
+    // ── Draw wire rectangle ──
+    function drawWires(ctx, geom, colorT) {
+        const { left, right, top, bottom } = geom;
+        const color = wireColor(colorT);
+
+        // Outer glow
+        if (colorT > 0.05) {
+            ctx.save();
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur  = 12 * devicePixelRatio * colorT;
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth   = 2.5 * devicePixelRatio;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(left, top);
+        ctx.lineTo(right, top);
+        ctx.lineTo(right, bottom);
+        ctx.lineTo(left, bottom);
+        ctx.lineTo(left, top);
+        ctx.stroke();
+
+        if (colorT > 0.05) ctx.restore();
+
+        // Directional arrow on top wire (showing current direction)
+        const arrowX = (left + right) / 2;
+        const arrowY = top;
+        const aw = 7 * devicePixelRatio;
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.6 + 0.4 * colorT;
+        ctx.beginPath();
+        ctx.moveTo(arrowX + aw, arrowY);
+        ctx.lineTo(arrowX - aw, arrowY - aw * 0.7);
+        ctx.lineTo(arrowX - aw, arrowY + aw * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Arrow on bottom wire (left direction)
+        const arrowX2 = (left + right) / 2;
+        const arrowY2 = bottom;
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.6 + 0.4 * colorT;
+        ctx.beginPath();
+        ctx.moveTo(arrowX2 - aw, arrowY2);
+        ctx.lineTo(arrowX2 + aw, arrowY2 - aw * 0.7);
+        ctx.lineTo(arrowX2 + aw, arrowY2 + aw * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // ── Draw particles ──
+    function drawParticles(ctx, geom, colorT) {
+        const maxI = 240;  // max possible current for normalization
+        const clampedI = Math.min(I, maxI);
+        const speedBase = clampedI * 20;  // px/frame equivalent
+        const speed = Math.min(speedBase, 8);  // cap at 8
+        const particleRadius = (3 + 2 * colorT) * devicePixelRatio;
+
+        const { left, right, top, bottom } = geom;
+        const W = right - left;
+        const H = bottom - top;
+        const perimeter = 2 * W + 2 * H;
+
+        // Advance each particle
+        const dt = speed / perimeter;  // delta in normalized t per frame
+
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].t = (particles[i].t + dt + 1) % 1;
+            const pos = tToXY(particles[i].t, geom);
+
+            // Particle glow
+            const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, particleRadius * 3);
+            grad.addColorStop(0, `rgba(245,158,11,${0.9 * colorT + 0.1})`);
+            grad.addColorStop(1, 'rgba(245,158,11,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, particleRadius * 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Particle core
+            ctx.fillStyle = `rgba(255,220,100,${0.85 * colorT + 0.15})`;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, particleRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // ── Draw info overlay ──
+    function drawInfo(ctx, geom) {
+        const { W, H } = geom;
+        const dpr = devicePixelRatio;
+        const pad = 20 * dpr;
+        const lineH = 18 * dpr;
+
+        ctx.save();
+        ctx.font = `600 ${11 * dpr}px Inter, sans-serif`;
+        ctx.fillStyle = '#8b949e';
+        ctx.textAlign = 'left';
+        ctx.fillText('CURRENT FLOW →', pad, H - pad - lineH * 0.5);
+        ctx.restore();
+    }
+
+    // ── Main draw ──
+    function draw() {
+        const W = canvas.width, H = canvas.height;
+
+        // Clear
+        ctx.clearRect(0, 0, W, H);
+
+        // Dark bg with subtle dot grid
+        ctx.fillStyle = '#0d1117';
+        ctx.fillRect(0, 0, W, H);
+
+        // Faint dot grid
+        ctx.fillStyle = 'rgba(255,255,255,0.035)';
+        const gridSize = 28 * devicePixelRatio;
+        for (let gx = gridSize; gx < W; gx += gridSize) {
+            for (let gy = gridSize; gy < H; gy += gridSize) {
+                ctx.beginPath();
+                ctx.arc(gx, gy, 1.2 * devicePixelRatio, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const geom = getGeom();
+
+        // Compute current intensity for visuals (0..1)
+        const maxCurrent = 2.4;  // 240V / 100Ω
+        const colorT = Math.min(I / maxCurrent, 1);
+
+        // Draw circuit components
+        drawWires(ctx, geom, colorT);
+        drawBattery(ctx, geom, colorT);
+        drawResistor(ctx, geom, colorT);
+        drawParticles(ctx, geom, colorT);
+        drawInfo(ctx, geom);
+
+        requestAnimationFrame(draw);
+    }
+
+    // Kick off
+    requestAnimationFrame(draw);
+
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

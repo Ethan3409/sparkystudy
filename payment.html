@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - SparkStudy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+
+        /* Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* Main Form */
+        .checkout-form {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* Plan Selector Tabs */
+        .plan-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .plan-tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .plan-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .plan-tab:hover {
+            color: var(--text);
+        }
+
+        /* Form Group */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent2);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--muted);
+        }
+
+        /* Two Column Layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        /* Card Details */
+        .card-input-group {
+            position: relative;
+        }
+
+        .card-icon {
+            position: absolute;
+            right: 1rem;
+            top: 2.5rem;
+            font-size: 1.5rem;
+            pointer-events: none;
+            color: var(--muted);
+        }
+
+        input[type="password"] {
+            letter-spacing: 0.2em;
+        }
+
+        /* Promo Code Section */
+        .promo-section {
+            background-color: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .promo-input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .promo-input-group input {
+            flex: 1;
+        }
+
+        .promo-input-group button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--accent2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .promo-input-group button:hover {
+            background-color: #79c0ff;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .status-message.show {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-message.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--green);
+            color: var(--green);
+        }
+
+        .status-message.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--accent), #f59e0b);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 2rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Sidebar */
+        .order-summary {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+
+        .order-summary h3 {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            color: var(--muted);
+        }
+
+        .summary-item.label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .summary-divider {
+            border-top: 2px solid var(--border);
+            margin: 1.5rem 0;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background-color: var(--green);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        /* Security Badges */
+        .security-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--muted);
+        }
+
+        .badge-icon {
+            font-size: 1rem;
+        }
+
+        /* Success Animation */
+        .success-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--panel);
+            border: 2px solid var(--green);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            z-index: 1000;
+            min-width: 300px;
+            display: none;
+            animation: popIn 0.5s ease-out;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-animation h2 {
+            color: var(--green);
+            margin-bottom: 1rem;
+        }
+
+        .success-animation p {
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .success-checkmark {
+            font-size: 3rem;
+            color: var(--green);
+            margin-bottom: 1rem;
+            animation: scaleCheckmark 0.6s ease-out;
+        }
+
+        @keyframes scaleCheckmark {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .order-summary {
+                position: static;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .plan-tabs {
+                flex-direction: column;
+            }
+        }
+    
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
+})();
+</script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="sparky-nav">
+    <a href="index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="dashboard.html" class="sn-link">Dashboard</a><a href="modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="tools.html" class="sn-link">Tools</a><a href="worksheets.html" class="sn-link">Worksheets</a><a href="achievements.html" class="sn-link">Achievements</a><a href="formula-sheet.html" class="sn-link">Formulas</a><a href="admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<!-- Main Container -->
+    <div class="container">
+        <!-- Checkout Form -->
+        <form class="checkout-form" id="paymentForm">
+            <!-- Plan Selector -->
+            <div class="form-section">
+                <h2>Select Your Plan</h2>
+                <div class="plan-tabs">
+                    <button type="button" class="plan-tab active" data-plan="elite" onclick="selectPlan(event)">
+                        Elite - $99/year
+                    </button>
+                    <button type="button" class="plan-tab" data-plan="groupelite" onclick="selectPlan(event)">
+                        GroupElite - Sliding Scale
+                    </button>
+                </div>
+                <input type="hidden" id="selectedPlan" name="plan" value="elite">
+            </div>
+
+            <!-- Promo Code Section -->
+            <div class="form-section">
+                <h2>Promo Code (Optional)</h2>
+                <div class="promo-section">
+                    <div class="promo-input-group">
+                        <input type="text" id="promoCode" placeholder="Enter promo code..." maxlength="20">
+                        <button type="button" onclick="applyPromoCode()">Apply</button>
+                    </div>
+                    <div id="promoStatus" class="status-message"></div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="form-section">
+                <h2>Contact Information</h2>
+                <div class="form-group">
+                    <label for="fullname">Full Name</label>
+                    <input type="text" id="fullname" name="fullname" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="john@example.com">
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="form-section">
+                <h2>Payment Information</h2>
+
+                <div class="form-group card-input-group">
+                    <label for="cardnumber">Card Number</label>
+                    <input type="text" id="cardnumber" name="cardnumber" placeholder="1234 5678 9012 3456" maxlength="19" required onkeyup="formatCardNumber(this)">
+                    <div class="card-icon" id="cardIcon">💳</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expiry">Expiry Date</label>
+                        <input type="text" id="expiry" name="expiry" placeholder="MM/YY" maxlength="5" required onkeyup="formatExpiry(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="cvv">CVV</label>
+                        <input type="password" id="cvv" name="cvv" placeholder="•••" maxlength="4" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <select id="country" name="country" required>
+                        <option value="">Select your country</option>
+                        <option value="US">United States</option>
+                        <option value="CA">Canada</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="AU">Australia</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="IT">Italy</option>
+                        <option value="ES">Spain</option>
+                        <option value="NL">Netherlands</option>
+                        <option value="SE">Sweden</option>
+                        <option value="JP">Japan</option>
+                        <option value="CN">China</option>
+                        <option value="IN">India</option>
+                        <option value="MX">Mexico</option>
+                        <option value="BR">Brazil</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn">Complete Purchase</button>
+        </form>
+
+        <!-- Order Summary Sidebar -->
+        <div class="order-summary">
+            <h3>Order Summary</h3>
+
+            <div class="summary-item label">
+                <span id="planName">Elite Plan</span>
+                <span id="planPrice">$99.00</span>
+            </div>
+
+            <div id="discountInfo" style="display: none;">
+                <div class="summary-item">
+                    <span>Discount (<span id="discountPercent">0</span>%)</span>
+                    <span style="color: var(--green);">-$<span id="discountAmount">0.00</span></span>
+                </div>
+                <div class="discount-badge">✓ Applied</div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-total">
+                <span>Total</span>
+                <span id="totalPrice">$99.00</span>
+            </div>
+
+            <!-- Security Badges -->
+            <div class="security-badges">
+                <div class="badge">
+                    <span class="badge-icon">🔒</span>
+                    <span>Secure Checkout</span>
+                </div>
+                <div class="badge">
+                    <span class="badge-icon">🔐</span>
+                    <span>256-bit SSL Encryption</span>
+                </div>
+                <div class="badge">
+                    <span class="badge-icon">✓</span>
+                    <span>PCI DSS Compliant</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Animation -->
+    <div class="overlay" id="overlay"></div>
+    <div class="success-animation" id="successAnimation">
+        <div class="success-checkmark">✓</div>
+        <h2>Payment Successful!</h2>
+        <p>Your subscription is now active. Welcome to SparkStudy!</p>
+        <button class="submit-btn" onclick="redirectToDashboard()" style="margin-top: 1rem;">Go to Dashboard</button>
+    </div>
+
+    <script>
+        // Promo Codes - hardcoded defaults + admin-created from localStorage
+        const defaultCodes = {
+            'FREE_ACCESS': { discount: 100, label: '100% off forever', type: 'permanent' },
+            'HALF_OFF': { discount: 50, label: '50% off first year', type: 'firstyear' },
+            'STUDENT2026': { discount: 25, label: '25% off', type: 'permanent' }
+        };
+
+        // Merge admin-created promo codes
+        function getPromoCodes() {
+            const codes = Object.assign({}, defaultCodes);
+            try {
+                const adminCodes = JSON.parse(localStorage.getItem('sparty_promo_codes') || '[]');
+                adminCodes.forEach(c => {
+                    if (c.active !== false && (!c.maxUses || c.uses < c.maxUses)) {
+                        codes[c.code] = { discount: c.discount, label: c.discount + '% off', type: 'permanent' };
+                    }
+                });
+            } catch(e) {}
+            return codes;
+        }
+        const promoCodes = getPromoCodes();
+
+        // Plan Pricing
+        const planPrices = {
+            'elite': 99.00,
+            'groupelite': 89.00
+        };
+
+        let currentPlan = 'elite';
+        let appliedPromo = null;
+        let attemptsData = JSON.parse(localStorage.getItem('paymentAttempts')) || { count: 0, timestamp: 0 };
+
+        // Auth Guard
+        function checkAuth() {
+            const auth = localStorage.getItem('sparty_auth');
+            if (!auth) {
+                window.location.href = '/login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Get plan from URL
+        function getUrlParam(param) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(param) || 'elite';
+        }
+
+        // Select Plan
+        function selectPlan(e) {
+            e.preventDefault();
+            const plan = e.target.getAttribute('data-plan');
+            currentPlan = plan;
+
+            document.querySelectorAll('.plan-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            e.target.classList.add('active');
+
+            document.getElementById('selectedPlan').value = plan;
+            updatePricing();
+        }
+
+        // Format Card Number
+        function formatCardNumber(input) {
+            let value = input.value.replace(/\s/g, '');
+            if (!/^\d*$/.test(value)) {
+                input.value = input.value.slice(0, -1);
+                return;
+            }
+
+            let formatted = value.replace(/(\d{4})/g, '$1 ').trim();
+            input.value = formatted;
+
+            // Detect card type
+            const firstDigit = value[0];
+            const icon = document.getElementById('cardIcon');
+            if (firstDigit === '4') {
+                icon.textContent = '💳 Visa';
+            } else if (firstDigit === '5') {
+                icon.textContent = '💳 Mastercard';
+            } else if (firstDigit === '3') {
+                icon.textContent = '💳 Amex';
+            } else {
+                icon.textContent = '💳';
+            }
+        }
+
+        // Format Expiry
+        function formatExpiry(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            input.value = value;
+        }
+
+        // Validate Luhn Algorithm
+        function validateCardNumber(cardNumber) {
+            const digits = cardNumber.replace(/\s/g, '');
+            if (!/^\d{13,19}$/.test(digits)) return false;
+
+            let sum = 0;
+            let isEven = false;
+
+            for (let i = digits.length - 1; i >= 0; i--) {
+                let digit = parseInt(digits[i], 10);
+
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) {
+                        digit -= 9;
+                    }
+                }
+
+                sum += digit;
+                isEven = !isEven;
+            }
+
+            return (sum % 10) === 0;
+        }
+
+        // Validate Expiry Date
+        function validateExpiry(expiry) {
+            const [month, year] = expiry.split('/').map(x => parseInt(x, 10));
+            if (!month || !year || month < 1 || month > 12) return false;
+
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear() % 100;
+            const currentMonth = currentDate.getMonth() + 1;
+
+            if (year < currentYear) return false;
+            if (year === currentYear && month < currentMonth) return false;
+
+            return true;
+        }
+
+        // Apply Promo Code
+        function applyPromoCode() {
+            const code = document.getElementById('promoCode').value.toUpperCase().trim();
+            const statusDiv = document.getElementById('promoStatus');
+
+            if (!code) {
+                showStatus(statusDiv, 'Please enter a promo code', 'error');
+                return;
+            }
+
+            if (!(code in promoCodes)) {
+                showStatus(statusDiv, 'Invalid promo code', 'error');
+                return;
+            }
+
+            appliedPromo = code;
+            const promoData = promoCodes[code];
+            updatePricing();
+            showStatus(statusDiv, `${code}: ${promoData.label}`, 'success');
+        }
+
+        // Update Pricing
+        function updatePricing() {
+            const basePrice = planPrices[currentPlan];
+            let finalPrice = basePrice;
+            let discount = 0;
+            let discountPercent = 0;
+
+            if (appliedPromo) {
+                const promoData = promoCodes[appliedPromo];
+                discountPercent = promoData.discount;
+                discount = (basePrice * promoData.discount) / 100;
+                finalPrice = basePrice - discount;
+            }
+
+            document.getElementById('planName').textContent = currentPlan === 'elite' ? 'Elite Plan' : 'GroupElite Plan';
+            document.getElementById('planPrice').textContent = '$' + basePrice.toFixed(2);
+            document.getElementById('totalPrice').textContent = '$' + finalPrice.toFixed(2);
+
+            const discountInfo = document.getElementById('discountInfo');
+            if (appliedPromo) {
+                discountInfo.style.display = 'block';
+                document.getElementById('discountPercent').textContent = discountPercent;
+                document.getElementById('discountAmount').textContent = discount.toFixed(2);
+            } else {
+                discountInfo.style.display = 'none';
+            }
+        }
+
+        // Show Status Message
+        function showStatus(element, message, type) {
+            element.textContent = message;
+            element.className = 'status-message show ' + type;
+            setTimeout(() => {
+                element.classList.remove('show');
+            }, 5000);
+        }
+
+        // Rate Limiting
+        function checkRateLimit() {
+            const now = Date.now();
+            const fiveMinutes = 5 * 60 * 1000;
+
+            if (now - attemptsData.timestamp > fiveMinutes) {
+                attemptsData.count = 0;
+            }
+
+            if (attemptsData.count >= 3) {
+                return false;
+            }
+
+            attemptsData.count++;
+            attemptsData.timestamp = now;
+            localStorage.setItem('paymentAttempts', JSON.stringify(attemptsData));
+            return true;
+        }
+
+        // Form Submission
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!checkRateLimit()) {
+                alert('Too many payment attempts. Please try again in 5 minutes.');
+                return;
+            }
+
+            const cardNumber = document.getElementById('cardnumber').value;
+            const expiry = document.getElementById('expiry').value;
+            const cvv = document.getElementById('cvv').value;
+            const fullname = document.getElementById('fullname').value;
+            const email = document.getElementById('email').value;
+            const country = document.getElementById('country').value;
+
+            // Validation
+            if (!fullname || !email || !country) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            if (!validateCardNumber(cardNumber)) {
+                alert('Invalid card number. Please check and try again.');
+                return;
+            }
+
+            if (!validateExpiry(expiry)) {
+                alert('Invalid expiry date. Please use MM/YY format with a future date.');
+                return;
+            }
+
+            if (!cvv || !/^\d{3,4}$/.test(cvv)) {
+                alert('Invalid CVV. Please enter 3-4 digits.');
+                return;
+            }
+
+            // Mock Payment Processing
+            document.querySelector('.submit-btn').disabled = true;
+            document.querySelector('.submit-btn').textContent = 'Processing...';
+
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Show success animation
+            showSuccessAnimation();
+        });
+
+        function showSuccessAnimation() {
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('successAnimation').style.display = 'block';
+
+            // Mark user as paid
+            try {
+                var auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+                auth.paid = true;
+                auth.paidAt = new Date().toISOString();
+                auth.plan = currentPlan;
+                auth.promoUsed = appliedPromo || null;
+                localStorage.setItem('sparty_auth', JSON.stringify(auth));
+
+                // Update user record
+                var users = JSON.parse(localStorage.getItem('sparty_users') || '[]');
+                var idx = users.findIndex(u => u.email === auth.email);
+                if (idx >= 0) {
+                    users[idx].paid = true;
+                    users[idx].paidAt = new Date().toISOString();
+                    users[idx].plan = currentPlan;
+                    users[idx].promoUsed = appliedPromo || null;
+                    localStorage.setItem('sparty_users', JSON.stringify(users));
+                }
+
+                // Track promo code usage
+                if (appliedPromo) {
+                    var adminCodes = JSON.parse(localStorage.getItem('sparty_promo_codes') || '[]');
+                    var codeIdx = adminCodes.findIndex(c => c.code === appliedPromo);
+                    if (codeIdx >= 0) {
+                        adminCodes[codeIdx].uses = (adminCodes[codeIdx].uses || 0) + 1;
+                        if (!adminCodes[codeIdx].usedBy) adminCodes[codeIdx].usedBy = [];
+                        adminCodes[codeIdx].usedBy.push({ email: auth.email, date: new Date().toISOString() });
+                        localStorage.setItem('sparty_promo_codes', JSON.stringify(adminCodes));
+                    }
+                }
+            } catch(e) { console.warn('Error updating payment records:', e); }
+        }
+
+        function redirectToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Initialize
+        function init() {
+            if (!checkAuth()) return;
+
+            const plan = getUrlParam('plan');
+            currentPlan = plan;
+
+            document.querySelectorAll('.plan-tab').forEach(tab => {
+                if (tab.getAttribute('data-plan') === plan) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            document.getElementById('selectedPlan').value = plan;
+            updatePricing();
+
+            // Update nav links
+            document.getElementById('auth-link').textContent = 'Dashboard';
+            document.getElementById('auth-link').href = '/dashboard.html';
+        }
+
+        init();
+    </script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

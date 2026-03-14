@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motor Control Ladder Logic - SparkStudy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #f59e0b;
+      --accent2: #58a6ff;
+      --green: #10b981;
+      --red: #ef4444;
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .ladder-canvas {
+      width: 100%;
+      height: 500px;
+      background-color: var(--bg);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .motor-status {
+      background-color: var(--bg);
+      padding: 1.5rem;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      text-align: center;
+    }
+
+    .status-indicator {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.3s;
+    }
+
+    .status-indicator.running {
+      background-color: rgba(16, 185, 129, 0.3);
+      border: 3px solid var(--green);
+      color: var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .status-indicator.stopped {
+      background-color: rgba(239, 68, 68, 0.3);
+      border: 3px solid var(--red);
+      color: var(--red);
+    }
+
+    .status-indicator.tripped {
+      background-color: rgba(245, 158, 11, 0.3);
+      border: 3px solid var(--accent);
+      color: var(--accent);
+      animation: blink 0.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+    }
+
+    .btn-start {
+      background-color: var(--green);
+      color: var(--bg);
+    }
+
+    .btn-start:hover:not(:disabled) {
+      background-color: #0a9970;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-start:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-stop {
+      background-color: var(--red);
+      color: var(--bg);
+    }
+
+    .btn-stop:hover:not(:disabled) {
+      background-color: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-stop:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .slider-group {
+      background-color: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .slider-group label {
+      display: block;
+      margin-bottom: 0.75rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .slider-group input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent2);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .slider-group input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
+    }
+
+    .slider-value {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .section {
+      background-color: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .explanation {
+      background-color: var(--bg);
+      padding: 1.5rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent2);
+      margin-bottom: 1rem;
+    }
+
+    .explanation h4 {
+      color: var(--accent2);
+      margin-bottom: 0.5rem;
+    }
+
+    .explanation p {
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .fault-scenarios {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .fault-card {
+      background-color: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .fault-card h4 {
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .fault-card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn-test {
+      background-color: var(--accent2);
+      color: var(--bg);
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      width: 100%;
+      transition: all 0.3s;
+    }
+
+    .btn-test:hover {
+      background-color: #4da3f7;
+      transform: translateY(-2px);
+    }
+
+    .test-result {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .test-result.active {
+      background-color: rgba(88, 166, 255, 0.2);
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.75rem;
+      }
+
+      .button-group {
+        grid-template-columns: 1fr;
+      }
+
+      .ladder-canvas {
+        height: 300px;
+      }
+    }
+  
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+  <nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link sn-active">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<div class="container">
+    <h1>Motor Control Ladder Logic</h1>
+    <p class="subtitle">Interactive AC induction motor start/stop control circuit</p>
+
+    <div class="main-content">
+      <div class="card">
+        <h2 style="margin-bottom: 1.5rem; color: var(--accent2);">Ladder Diagram</h2>
+        <canvas id="ladderCanvas" class="ladder-canvas"></canvas>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-top: 1rem;">
+          Click START/STOP buttons to control the circuit. Watch the current flow and seal-in contact behavior.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-bottom: 1.5rem; color: var(--accent);">Control Panel</h2>
+        <div class="control-panel">
+          <div class="motor-status">
+            <div class="status-indicator stopped" id="statusIndicator">STOPPED</div>
+            <div class="status-text" id="statusText">Motor: Stopped</div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-start" id="startBtn">START</button>
+            <button class="btn btn-stop" id="stopBtn" disabled>STOP</button>
+          </div>
+
+          <div class="slider-group">
+            <label for="currentSlider">Motor Current (simulate load)</label>
+            <input type="range" id="currentSlider" min="0" max="50" value="10" step="1">
+            <div class="slider-value">Current: <span id="currentValue">10</span> A (Overload threshold: 40A)</div>
+          </div>
+
+          <div class="slider-group">
+            <label for="speedSlider">Motor Speed</label>
+            <input type="range" id="speedSlider" min="0" max="100" value="0" step="5" disabled>
+            <div class="slider-value">Speed: <span id="speedValue">0</span> % RPM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Circuit Explanation</h2>
+      <div class="explanation">
+        <h4>How it Works:</h4>
+        <p>
+          <strong>Rung 1 (Control):</strong> STOP button (NC) in series with START button (NO) control the motor contactor coil (M).
+          When START is pressed and STOP is released, the coil energizes.
+        </p>
+        <p>
+          <strong>Rung 2 (Seal-in):</strong> M contact parallel to START button. Once the coil energizes, the M contact closes and
+          "seals-in," maintaining coil energization even after START is released.
+        </p>
+        <p>
+          <strong>Overload Protection:</strong> OL relay monitors motor current. If current exceeds the threshold (40A),
+          the OL contact opens and de-energizes the coil, stopping the motor.
+        </p>
+        <p>
+          <strong>Motor:</strong> When contactor closes, power flows to the motor. The motor creates mechanical rotation proportional to applied load.
+        </p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Fault Scenarios</h2>
+      <div class="fault-scenarios">
+        <div class="fault-card">
+          <h4>Scenario 1: Normal Operation</h4>
+          <p>Start the motor, monitor current at 10A. What happens when you press STOP?</p>
+          <button class="btn-test" onclick="testFault(1)">Test This Scenario</button>
+          <div id="fault1Result"></div>
+        </div>
+        <div class="fault-card">
+          <h4>Scenario 2: Overload Trip</h4>
+          <p>Increase current beyond 40A. Observe OL relay tripping the circuit automatically.</p>
+          <button class="btn-test" onclick="testFault(2)">Test This Scenario</button>
+          <div id="fault2Result"></div>
+        </div>
+        <div class="fault-card">
+          <h4>Scenario 3: Stuck START Button</h4>
+          <p>Press START. The seal-in contact maintains operation. Manually increase current to trip OL.</p>
+          <button class="btn-test" onclick="testFault(3)">Test This Scenario</button>
+          <div id="fault3Result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let motorRunning = false;
+    let overloadTripped = false;
+    const OVERLOAD_THRESHOLD = 40;
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    const currentSlider = document.getElementById('currentSlider');
+    const speedSlider = document.getElementById('speedSlider');
+    const currentValue = document.getElementById('currentValue');
+    const speedValue = document.getElementById('speedValue');
+    const ladderCanvas = document.getElementById('ladderCanvas');
+    const ctx = ladderCanvas.getContext('2d');
+
+    // DPI scaling
+    const dpr = window.devicePixelRatio || 1;
+    ladderCanvas.width = ladderCanvas.offsetWidth * dpr;
+    ladderCanvas.height = ladderCanvas.offsetHeight * dpr;
+    ctx.scale(dpr, dpr);
+
+    startBtn.addEventListener('click', () => {
+      motorRunning = true;
+      overloadTripped = false;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      speedSlider.disabled = false;
+      updateStatus();
+    });
+
+    stopBtn.addEventListener('click', () => {
+      motorRunning = false;
+      overloadTripped = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      speedSlider.value = 0;
+      speedSlider.disabled = true;
+      updateStatus();
+    });
+
+    currentSlider.addEventListener('input', (e) => {
+      currentValue.textContent = e.target.value;
+      const current = parseFloat(e.target.value);
+
+      if (motorRunning && current >= OVERLOAD_THRESHOLD) {
+        overloadTripped = true;
+        motorRunning = false;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        speedSlider.value = 0;
+        speedSlider.disabled = true;
+        updateStatus();
+      }
+
+      draw();
+    });
+
+    speedSlider.addEventListener('input', (e) => {
+      speedValue.textContent = e.target.value;
+      draw();
+    });
+
+    function updateStatus() {
+      if (overloadTripped) {
+        statusIndicator.className = 'status-indicator tripped';
+        statusIndicator.textContent = 'TRIPPED';
+        statusText.textContent = 'Overload Relay Tripped!';
+      } else if (motorRunning) {
+        statusIndicator.className = 'status-indicator running';
+        statusIndicator.textContent = 'RUNNING';
+        statusText.textContent = 'Motor: Running';
+        speedSlider.value = Math.min(100, parseInt(speedSlider.value) + 2);
+        speedValue.textContent = speedSlider.value;
+      } else {
+        statusIndicator.className = 'status-indicator stopped';
+        statusIndicator.textContent = 'STOPPED';
+        statusText.textContent = 'Motor: Stopped';
+      }
+      draw();
+    }
+
+    function draw() {
+      const width = ladderCanvas.offsetWidth;
+      const height = ladderCanvas.offsetHeight;
+
+      ctx.fillStyle = 'rgba(13, 17, 23, 1)';
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw ladder
+      const leftRail = width * 0.1;
+      const rightRail = width * 0.9;
+      const topRung = height * 0.1;
+      const spacing = height * 0.4;
+
+      ctx.strokeStyle = '#e6edf3';
+      ctx.lineWidth = 3;
+
+      // Left and right rails
+      ctx.beginPath();
+      ctx.moveTo(leftRail, 0);
+      ctx.lineTo(leftRail, height);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(rightRail, 0);
+      ctx.lineTo(rightRail, height);
+      ctx.stroke();
+
+      // Labels on left rail
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '12px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText('L1', leftRail, 25);
+      ctx.fillText('L2', rightRail, 25);
+
+      // RUNG 1: STOP - START - M (Control)
+      const rung1Y = topRung + spacing * 0.5;
+      drawRung1(leftRail, rightRail, rung1Y);
+
+      // RUNG 2: M (Seal-in) in parallel with START
+      const rung2Y = topRung + spacing * 1.5;
+      drawRung2(leftRail, rightRail, rung2Y);
+
+      // RUNG 3: OL - M - Motor power
+      const rung3Y = topRung + spacing * 2.5;
+      drawRung3(leftRail, rightRail, rung3Y);
+
+      // Draw current flow highlights
+      if (motorRunning) {
+        drawCurrentFlow(leftRail, rightRail, rung1Y, rung2Y, rung3Y);
+      }
+    }
+
+    function drawRung1(x1, x2, y) {
+      const midX = x1 + (x2 - x1) * 0.5;
+
+      // Rung line
+      ctx.strokeStyle = motorRunning ? '#f59e0b' : '#30363d';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      // STOP button (NC)
+      const stopX = x1 + (midX - x1) * 0.3;
+      drawNCButton(stopX, y, 'STOP');
+
+      // START button (NO)
+      const startX = stopX + 80;
+      drawNOButton(startX, y, 'START');
+
+      // M coil
+      const coilX = midX + 60;
+      drawCoil(coilX, y, motorRunning);
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '11px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText('Rung 1: Control', (x1 + x2) / 2, y - 30);
+    }
+
+    function drawRung2(x1, x2, y) {
+      const midX = x1 + (x2 - x1) * 0.5;
+
+      // Rung line
+      ctx.strokeStyle = motorRunning ? '#f59e0b' : '#30363d';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      // M contact (seal-in)
+      const mContactX = x1 + (midX - x1) * 0.5;
+      drawNOButton(mContactX, y, 'M');
+
+      // Coil (parallel)
+      const coilX = midX + 60;
+      drawCoil(coilX, y, motorRunning);
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '11px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText('Rung 2: Seal-in', (x1 + x2) / 2, y - 30);
+    }
+
+    function drawRung3(x1, x2, y) {
+      const midX = x1 + (x2 - x1) * 0.5;
+
+      // Rung line
+      ctx.strokeStyle = motorRunning && !overloadTripped ? '#f59e0b' : '#30363d';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      // OL contact
+      const olX = x1 + (midX - x1) * 0.3;
+      drawNCButton(olX, y, 'OL');
+
+      // M contact (power)
+      const mX = olX + 80;
+      drawNOButton(mX, y, 'M');
+
+      // Motor
+      const motorX = midX + 100;
+      drawMotor(motorX, y, motorRunning);
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '11px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText('Rung 3: Power', (x1 + x2) / 2, y - 30);
+    }
+
+    function drawNCButton(x, y, label) {
+      const size = 30;
+      const isOpen = (label === 'STOP' && !motorRunning) || (label === 'OL' && overloadTripped);
+
+      ctx.strokeStyle = isOpen ? '#ef4444' : '#10b981';
+      ctx.fillStyle = isOpen ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(x - size / 2, y - size / 2, size, size);
+      ctx.strokeRect(x - size / 2, y - size / 2, size, size);
+
+      if (isOpen) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - size / 3, y - size / 3);
+        ctx.lineTo(x + size / 3, y + size / 3);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = 'bold 10px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y + 50);
+    }
+
+    function drawNOButton(x, y, label) {
+      const size = 30;
+      const isClosed = (label === 'START' && motorRunning) || (label === 'M' && motorRunning);
+
+      ctx.strokeStyle = isClosed ? '#10b981' : '#ef4444';
+      ctx.fillStyle = isClosed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(x - size / 2, y - size / 2, size, size);
+      ctx.strokeRect(x - size / 2, y - size / 2, size, size);
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = 'bold 10px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y + 50);
+    }
+
+    function drawCoil(x, y, energized) {
+      ctx.strokeStyle = energized ? var(--green) : '#30363d';
+      ctx.fillStyle = energized ? 'rgba(16, 185, 129, 0.2)' : 'rgba(48, 54, 61, 0.2)';
+      ctx.lineWidth = 2;
+
+      // Draw coil symbol (circle with coils)
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(x - 15 + i * 15, y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = energized ? '#10b981' : '#8b949e';
+      ctx.font = 'bold 10px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('M', x, y + 45);
+    }
+
+    function drawMotor(x, y, running) {
+      const size = 40;
+      ctx.strokeStyle = running ? '#10b981' : '#30363d';
+      ctx.fillStyle = running ? 'rgba(16, 185, 129, 0.2)' : 'rgba(48, 54, 61, 0.2)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      if (running) {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        const angle = (Date.now() / 50) % (Math.PI * 2);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(angle) * 15, y + Math.sin(angle) * 15);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#8b949e';
+      ctx.font = 'bold 10px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('M', x, y - 5);
+      ctx.font = '8px Inter';
+      ctx.fillText(running ? 'ON' : 'OFF', x, y + 8);
+    }
+
+    function drawCurrentFlow(x1, x2, y1, y2, y3) {
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 3;
+
+      // Path down from L1
+      ctx.beginPath();
+      ctx.moveTo(x1, 0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+
+      // Through rung 1
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y1);
+      ctx.stroke();
+
+      // Down right rail and back through seal-in
+      ctx.beginPath();
+      ctx.moveTo(x2, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      // Through rung 2 (seal-in path)
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x1, y2);
+      ctx.stroke();
+
+      // Down for power rung
+      ctx.beginPath();
+      ctx.moveTo(x1, y2);
+      ctx.lineTo(x1, y3);
+      ctx.stroke();
+
+      // Through rung 3
+      ctx.beginPath();
+      ctx.moveTo(x1, y3);
+      ctx.lineTo(x2, y3);
+      ctx.stroke();
+
+      // Return to L2
+      ctx.beginPath();
+      ctx.moveTo(x2, y3);
+      ctx.lineTo(x2, ladderCanvas.offsetHeight);
+      ctx.stroke();
+    }
+
+    function testFault(scenario) {
+      const resultDiv = document.getElementById(`fault${scenario}Result`);
+
+      if (scenario === 1) {
+        motorRunning = true;
+        overloadTripped = false;
+        currentSlider.value = 10;
+        currentValue.textContent = '10';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        speedSlider.value = 50;
+        speedSlider.disabled = false;
+        updateStatus();
+        resultDiv.innerHTML = '<div class="test-result active">✓ Motor started. Press STOP to de-energize the circuit.</div>';
+      } else if (scenario === 2) {
+        motorRunning = true;
+        overloadTripped = false;
+        currentSlider.value = 45;
+        currentValue.textContent = '45';
+        setTimeout(() => {
+          overloadTripped = true;
+          motorRunning = false;
+          updateStatus();
+          resultDiv.innerHTML = '<div class="test-result active">✓ Current exceeded 40A! OL relay tripped and de-energized the circuit.</div>';
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+        }, 500);
+      } else if (scenario === 3) {
+        motorRunning = true;
+        overloadTripped = false;
+        currentSlider.value = 10;
+        currentValue.textContent = '10';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        speedSlider.value = 70;
+        speedSlider.disabled = false;
+        updateStatus();
+        resultDiv.innerHTML = '<div class="test-result active">✓ Motor running with seal-in active. Increase current slider to trigger overload.</div>';
+      }
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Animation loop
+    function animate() {
+      if (motorRunning) {
+        updateStatus();
+      }
+      draw();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

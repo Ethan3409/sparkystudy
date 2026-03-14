@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkStudy - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #f59e0b;
+            --accent2: #58a6ff;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-detail {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+        }
+
+        .knowledge-map {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .category-bar {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--accent2);
+        }
+
+        .category-score {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .category-progress {
+            width: 100%;
+            height: 12px;
+            background-color: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .category-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--accent2));
+            border-radius: 6px;
+            transition: width 0.3s;
+        }
+
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .recommendation-card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .recommendation-card:hover {
+            border-left-color: var(--accent2);
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.1);
+        }
+
+        .recommendation-title {
+            color: var(--accent2);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-text {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .recommendation-link {
+            display: inline-block;
+            background-color: var(--accent);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: opacity 0.3s;
+        }
+
+        .recommendation-link:hover {
+            opacity: 0.9;
+        }
+
+        .activity-feed {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 600px;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .activity-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-button {
+            background-color: var(--panel);
+            border: 2px solid var(--border);
+            color: var(--text);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .action-button:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+        }
+
+        .action-icon {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-text {
+            font-size: 0.9rem;
+        }
+
+        .achievement-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .mini-badge {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .mini-badge.locked {
+            opacity: 0.5;
+        }
+
+        .mini-badge:hover:not(.locked) {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
+
+        .mini-badge-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .mini-badge-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent2);
+        }
+
+        .exam-countdown {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(88, 166, 255, 0.1));
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 400px;
+        }
+
+        .countdown-title {
+            color: var(--accent2);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .countdown-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .countdown-form input {
+            flex: 1;
+            padding: 0.5rem;
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .countdown-form button {
+            padding: 0.5rem 1rem;
+            background-color: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .countdown-form button:hover {
+            opacity: 0.9;
+        }
+
+        .countdown-display {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+
+        .countdown-days {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .countdown-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+
+            .container {
+                padding: 1rem;
+            }
+
+            .stat-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 1.25rem;
+            }
+        }
+
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
+})();
+</script>
+</head>
+<body>
+    <nav class="sparky-nav">
+    <a href="index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="dashboard.html" class="sn-link sn-active">Dashboard</a><a href="modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="tools.html" class="sn-link">Tools</a><a href="worksheets.html" class="sn-link">Worksheets</a><a href="achievements.html" class="sn-link">Achievements</a><a href="formula-sheet.html" class="sn-link">Formulas</a><a href="admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<div class="container" style="max-width:1400px;margin:0 auto;padding:2rem;">
+        <!-- Welcome Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+            <h2 style="font-size:1.15rem;font-weight:600;color:var(--muted);margin:0;">Welcome back, <span id="userName" style="color:var(--text);">Apprentice</span></h2>
+            <span id="streakBadge" style="background:rgba(245,158,11,0.1);color:#f59e0b;padding:0.25rem 0.7rem;border-radius:20px;font-size:0.78rem;font-weight:600;">🔥 0-day streak</span>
+        </div>
+        <!-- Stats Overview -->
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-label">Tests Taken</div>
+                <div class="stat-value" id="testsTaken">0</div>
+                <div class="stat-detail">In this session</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Score</div>
+                <div class="stat-value" id="avgScore">--</div>
+                <div class="stat-detail">All assessments</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Study Streak</div>
+                <div class="stat-value" id="studyStreak">0</div>
+                <div class="stat-detail">Consecutive days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Tools Used</div>
+                <div class="stat-value" id="toolsUsed">0</div>
+                <div class="stat-detail">of 16 simulators</div>
+            </div>
+        </div>
+
+        <!-- Knowledge Map -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">📊</span>
+                Knowledge Map - Your Strengths & Weaknesses
+            </div>
+            <div class="knowledge-map">
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">AC Fundamentals</span>
+                        <span class="category-score" id="score-ac">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-ac" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Ohm's Law & Power</span>
+                        <span class="category-score" id="score-ohm">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-ohm" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Inductors & Capacitors</span>
+                        <span class="category-score" id="score-lc">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-lc" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Impedance & Phase</span>
+                        <span class="category-score" id="score-impedance">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-impedance" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Power Systems</span>
+                        <span class="category-score" id="score-power">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-power" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="category-bar">
+                    <div class="category-header">
+                        <span class="category-name">Motor Control & CEC</span>
+                        <span class="category-score" id="score-motor">0%</span>
+                    </div>
+                    <div class="category-progress">
+                        <div class="category-fill" id="fill-motor" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Next Steps -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">🎯</span>
+                Recommended Next Steps
+            </div>
+            <div class="recommendations" id="recommendationsContainer">
+                <div class="recommendation-card">
+                    <div class="recommendation-title">Complete Your First Quiz</div>
+                    <div class="recommendation-text">Jump into a diagnostic assessment to gauge your current knowledge level.</div>
+                    <a href="#" class="recommendation-link">Take Diagnostic →</a>
+                </div>
+                <div class="recommendation-card">
+                    <div class="recommendation-title">Explore the AC Waveform Generator</div>
+                    <div class="recommendation-text">Visualize how AC sine waves work with our interactive simulator.</div>
+                    <a href="#" class="recommendation-link">Open Tool →</a>
+                </div>
+                <div class="recommendation-card">
+                    <div class="recommendation-title">Practice Ohm's Law</div>
+                    <div class="recommendation-text">Master the fundamentals with targeted practice worksheets.</div>
+                    <a href="#" class="recommendation-link">Start Worksheet →</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column">
+            <!-- Activity Feed -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-icon">📋</span>
+                    Recent Activity
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="activity-item">
+                        <div class="activity-icon">📚</div>
+                        <div class="activity-content">
+                            <div class="activity-text">No activity yet</div>
+                            <div class="activity-time">Start studying to see your progress here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exam Countdown -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-icon">📅</span>
+                    Exam Countdown
+                </div>
+                <div class="exam-countdown">
+                    <div class="countdown-title">Set Your Exam Date</div>
+                    <div class="countdown-form">
+                        <input type="date" id="examDate" placeholder="Select exam date">
+                        <button onclick="setExamDate()">Set</button>
+                    </div>
+                    <div class="countdown-display">
+                        <div class="countdown-days" id="daysRemaining">--</div>
+                        <div class="countdown-label">days until your exam</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">⚡</span>
+                Quick Actions
+            </div>
+            <div class="quick-actions">
+                <button class="action-button" onclick="takeTest()">
+                    <span class="action-icon">📝</span>
+                    <span class="action-text">Take a Quiz</span>
+                </button>
+                <button class="action-button" onclick="openTools()">
+                    <span class="action-icon">🔧</span>
+                    <span class="action-text">Open Tools</span>
+                </button>
+                <button class="action-button" onclick="practiceWorksheets()">
+                    <span class="action-icon">📋</span>
+                    <span class="action-text">Practice Worksheets</span>
+                </button>
+                <button class="action-button" onclick="startDiagnostic()">
+                    <span class="action-icon">🩺</span>
+                    <span class="action-text">Start Diagnostic</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Achievement Preview -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">🏆</span>
+                Achievement Preview - Next Badges to Unlock
+            </div>
+            <div class="achievement-preview" id="achievementPreview">
+                <div class="mini-badge">
+                    <div class="mini-badge-icon">⚡</div>
+                    <div class="mini-badge-name">First Spark</div>
+                </div>
+                <div class="mini-badge">
+                    <div class="mini-badge-icon">📚</div>
+                    <div class="mini-badge-name">Study Starter</div>
+                </div>
+                <div class="mini-badge">
+                    <div class="mini-badge-icon">🔥</div>
+                    <div class="mini-badge-name">On Fire</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize with sample data
+        function initDashboard() {
+            // Set user name
+            const userName = localStorage.getItem('sparty_user_name') || 'Apprentice';
+            document.getElementById('userName').textContent = userName;
+
+            // Load scores from localStorage or generate sample data
+            const diagnostic = JSON.parse(localStorage.getItem('sparty_diagnostic_results')) || {
+                ac: 65,
+                ohm: 72,
+                lc: 55,
+                impedance: 48,
+                power: 70,
+                motor: 80
+            };
+
+            // Update knowledge map
+            updateKnowledgeMap(diagnostic);
+
+            // Update stats
+            const quizResults = JSON.parse(localStorage.getItem('sparty_quiz_results')) || [];
+            const streak = JSON.parse(localStorage.getItem('sparty_streak')) || { current: 0 };
+            const toolsUsed = JSON.parse(localStorage.getItem('sparty_tools_used')) || [];
+
+            document.getElementById('testsTaken').textContent = quizResults.length;
+
+            if (quizResults.length > 0) {
+                const avgScore = Math.round(
+                    quizResults.reduce((sum, q) => sum + q.score, 0) / quizResults.length
+                );
+                document.getElementById('avgScore').textContent = avgScore + '%';
+            }
+
+            document.getElementById('studyStreak').textContent = streak.current;
+            document.getElementById('toolsUsed').textContent = toolsUsed.length;
+            document.getElementById('streakBadge').textContent = `🔥 ${streak.current}-day streak`;
+
+            // Update recommendations based on weak areas
+            updateRecommendations(diagnostic);
+
+            // Update exam countdown
+            updateExamCountdown();
+
+            // Populate activity feed
+            populateActivityFeed(quizResults);
+        }
+
+        function updateKnowledgeMap(scores) {
+            const categories = [
+                { id: 'ac', label: 'AC Fundamentals' },
+                { id: 'ohm', label: 'Ohm\'s Law & Power' },
+                { id: 'lc', label: 'Inductors & Capacitors' },
+                { id: 'impedance', label: 'Impedance & Phase' },
+                { id: 'power', label: 'Power Systems' },
+                { id: 'motor', label: 'Motor Control & CEC' }
+            ];
+
+            categories.forEach(cat => {
+                const score = scores[cat.id] || 0;
+                document.getElementById(`score-${cat.id}`).textContent = score + '%';
+                document.getElementById(`fill-${cat.id}`).style.width = score + '%';
+            });
+        }
+
+        function updateRecommendations(scores) {
+            const recommendations = [];
+
+            if (scores.ac < 70) {
+                recommendations.push({
+                    title: 'Master AC Fundamentals',
+                    text: 'Your AC score needs improvement. Practice with the AC Waveform Generator.',
+                    link: 'Open AC Tool →'
+                });
+            }
+
+            if (scores.lc < 70) {
+                recommendations.push({
+                    title: 'Strengthen L & C Concepts',
+                    text: 'Try the Time Constant Calculator to visualize reactive components.',
+                    link: 'Open Calculator →'
+                });
+            }
+
+            if (scores.motor < 75) {
+                recommendations.push({
+                    title: 'Improve Motor Control',
+                    text: 'Use the Motor Control Simulator to master control circuits.',
+                    link: 'Open Motor Tool →'
+                });
+            }
+
+            if (recommendations.length === 0) {
+                recommendations.push({
+                    title: 'You\'re Doing Great!',
+                    text: 'Keep practicing to maintain your strong knowledge base.',
+                    link: 'Take Another Quiz →'
+                });
+            }
+
+            // Limit to 3 recommendations
+            recommendations.slice(0, 3).forEach((rec, idx) => {
+                const cards = document.querySelectorAll('.recommendation-card');
+                if (cards[idx]) {
+                    cards[idx].querySelector('.recommendation-title').textContent = rec.title;
+                    cards[idx].querySelector('.recommendation-text').textContent = rec.text;
+                    cards[idx].querySelector('.recommendation-link').textContent = rec.link;
+                }
+            });
+        }
+
+        function populateActivityFeed(quizResults) {
+            const feed = document.getElementById('activityFeed');
+
+            if (quizResults.length === 0) return;
+
+            feed.innerHTML = quizResults.slice(-5).reverse().map(q => `
+                <div class="activity-item">
+                    <div class="activity-icon">📊</div>
+                    <div class="activity-content">
+                        <div class="activity-text">Quiz completed - Score: ${q.score}%</div>
+                        <div class="activity-time">${new Date(q.date).toLocaleDateString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setExamDate() {
+            const dateInput = document.getElementById('examDate').value;
+            if (dateInput) {
+                localStorage.setItem('sparty_exam_date', dateInput);
+                updateExamCountdown();
+            }
+        }
+
+        function updateExamCountdown() {
+            const examDate = localStorage.getItem('sparty_exam_date');
+            const daysElement = document.getElementById('daysRemaining');
+
+            if (examDate) {
+                const exam = new Date(examDate);
+                const today = new Date();
+                const diff = exam - today;
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+                if (days >= 0) {
+                    daysElement.textContent = days;
+                    document.getElementById('examDate').value = examDate;
+                } else {
+                    daysElement.textContent = '0';
+                    daysElement.style.color = 'var(--red)';
+                }
+            }
+        }
+
+        function takeTest() {
+            window.location.href = 'period1.html';
+        }
+
+        function openTools() {
+            window.location.href = 'tools.html';
+        }
+
+        function practiceWorksheets() {
+            window.location.href = 'worksheets.html';
+        }
+
+        function startDiagnostic() {
+            window.location.href = 'modules/diagnostic-assessment.html';
+        }
+
+        // Populate sample data if first time
+        function initSampleData() {
+            if (!localStorage.getItem('sparty_user_name')) {
+                localStorage.setItem('sparty_user_name', 'Alex');
+                localStorage.setItem('sparty_quiz_results', JSON.stringify([
+                    { score: 78, date: new Date().toISOString() },
+                    { score: 85, date: new Date(Date.now() - 86400000).toISOString() }
+                ]));
+                localStorage.setItem('sparty_streak', JSON.stringify({ current: 3 }));
+                localStorage.setItem('sparty_tools_used', JSON.stringify(['acWaveform', 'timeConstant', 'circuitDesigner']));
+                localStorage.setItem('sparty_diagnostic_results', JSON.stringify({
+                    ac: 65,
+                    ohm: 72,
+                    lc: 55,
+                    impedance: 48,
+                    power: 70,
+                    motor: 80
+                }));
+            }
+        }
+
+        initSampleData();
+        initDashboard();
+    </script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>

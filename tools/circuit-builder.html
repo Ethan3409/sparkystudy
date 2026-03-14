@@ -1,0 +1,2290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuit Builder | SparkStudy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--panel:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--accent:#f59e0b;
+  --accent2:#58a6ff;--wire:#4d6380;--comp-fill:#1c2333;
+  --comp-stroke:#58a6ff;--red:#ef4444;--green:#10b981;--blue:#3b82f6;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px}
+
+/* NAVBAR */
+.nav-brand{
+  display:flex;align-items:center;gap:10px;
+  font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none;white-space:nowrap;
+}
+.nav-brand span{color:var(--accent)}
+.mode-badge{
+  padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;
+  letter-spacing:0.12em;font-family:'JetBrains Mono',monospace;
+  background:rgba(245,158,11,0.15);color:var(--accent);border:1px solid rgba(245,158,11,0.3);
+  transition:all 0.2s;
+}
+.mode-badge.wire{background:rgba(88,166,255,0.15);color:var(--accent2);border-color:rgba(88,166,255,0.3)}
+.mode-badge.place{background:rgba(16,185,129,0.15);color:var(--green);border-color:rgba(16,185,129,0.3)}
+.mode-badge.delete{background:rgba(239,68,68,0.15);color:var(--red);border-color:rgba(239,68,68,0.3)}
+
+/* BODY LAYOUT */
+#app{
+  position:fixed;top:56px;left:0;right:0;bottom:0;
+  display:flex;overflow:hidden;
+}
+
+/* LEFT PANEL */
+#leftPanel{
+  width:256px;min-width:256px;background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+#leftPanel::-webkit-scrollbar{width:4px}
+#leftPanel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* RIGHT PANEL */
+#rightPanel{
+  width:272px;min-width:272px;background:var(--panel);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+#rightPanel::-webkit-scrollbar{width:4px}
+#rightPanel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* CANVAS WRAP */
+#canvasWrap{
+  flex:1;position:relative;background:var(--bg);overflow:hidden;
+  display:flex;flex-direction:column;
+}
+#toolbar{
+  position:absolute;top:0;left:0;right:0;z-index:10;height:44px;
+  display:flex;align-items:center;gap:6px;padding:0 12px;
+  background:rgba(22,27,34,0.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+#mainCanvas{
+  position:absolute;top:44px;left:0;right:0;bottom:28px;
+  cursor:crosshair;display:block;
+}
+#statusBar{
+  position:absolute;bottom:0;left:0;right:0;height:28px;
+  display:flex;align-items:center;gap:16px;padding:0 12px;
+  background:rgba(22,27,34,0.82);border-top:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);
+}
+
+/* PANEL SECTIONS */
+.panel-section{padding:14px;border-bottom:1px solid var(--border)}
+.panel-section:last-child{border-bottom:none}
+.section-title{
+  font-size:0.68rem;font-weight:700;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:10px;
+}
+
+/* TOOL BUTTONS */
+.tool-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.mode-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:10px 6px;border-radius:8px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;
+  font-size:0.68rem;font-weight:600;letter-spacing:0.04em;
+  transition:all 0.15s;user-select:none;
+}
+.mode-btn svg{width:18px;height:18px;stroke-width:1.8}
+.mode-btn:hover{background:#1c2333;border-color:var(--accent2);color:var(--text)}
+.mode-btn.active{background:rgba(245,158,11,0.12);border-color:var(--accent);color:var(--accent)}
+
+/* COMPONENT CARDS */
+.comp-card{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  border-radius:8px;border:1px solid var(--border);cursor:pointer;
+  transition:all 0.15s;user-select:none;margin-bottom:5px;
+}
+.comp-card:last-child{margin-bottom:0}
+.comp-card:hover{background:#1c2333;border-color:var(--accent2)}
+.comp-card.active{background:rgba(88,166,255,0.08);border-color:var(--accent2)}
+.comp-card-icon{
+  width:40px;height:24px;flex-shrink:0;
+}
+.comp-card-info{flex:1}
+.comp-card-name{font-size:0.8rem;font-weight:600;color:var(--text);line-height:1}
+.comp-card-key{
+  font-size:0.65rem;color:var(--muted);margin-top:2px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* PRESET BUTTONS */
+.preset-btn{
+  width:100%;padding:9px 12px;border-radius:7px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--text);cursor:pointer;font-family:'Inter',sans-serif;
+  font-size:0.8rem;font-weight:500;text-align:left;
+  transition:all 0.15s;margin-bottom:5px;display:flex;align-items:center;gap:8px;
+}
+.preset-btn:last-child{margin-bottom:0}
+.preset-btn:hover{background:#1c2333;border-color:var(--accent);color:var(--accent)}
+.preset-btn-icon{color:var(--accent);font-size:0.9rem}
+
+/* CANVAS CONTROL BUTTONS */
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ctrl-btn{
+  padding:8px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:500;
+  transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.ctrl-btn:hover{background:#1c2333;border-color:var(--accent2);color:var(--text)}
+.ctrl-btn.danger:hover{border-color:var(--red);color:var(--red);background:rgba(239,68,68,0.08)}
+.ctrl-btn.full{grid-column:1/-1}
+
+/* READOUT CARDS */
+.readout-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.readout-card{
+  background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:12px;
+}
+.readout-card .val{
+  font-size:1.5rem;font-weight:800;line-height:1;
+  font-family:'JetBrains Mono',monospace;color:var(--accent);
+}
+.readout-card .val.blue{color:var(--accent2)}
+.readout-card .val.green{color:var(--green)}
+.readout-card .val.red{color:var(--red)}
+.readout-card .lbl{
+  font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;
+  color:var(--muted);margin-top:5px;
+}
+
+/* SELECTED COMPONENT PANEL */
+#selPanel{display:none}
+#selPanel.visible{display:block}
+.sel-type{
+  font-size:0.8rem;font-weight:600;color:var(--accent2);margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.sel-type::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent2);flex-shrink:0}
+.prop-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.prop-label{font-size:0.75rem;color:var(--muted)}
+.prop-val{
+  font-family:'JetBrains Mono',monospace;font-size:0.8rem;
+  color:var(--text);background:#0d1117;border:1px solid var(--border);
+  border-radius:5px;padding:4px 8px;width:100px;text-align:right;
+}
+.prop-val:focus{outline:none;border-color:var(--accent2)}
+.prop-static{
+  font-family:'JetBrains Mono',monospace;font-size:0.8rem;
+  color:var(--accent);text-align:right;
+}
+.del-btn{
+  width:100%;padding:8px;border-radius:6px;
+  border:1px solid var(--red);background:rgba(239,68,68,0.08);
+  color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;
+  font-size:0.8rem;font-weight:600;margin-top:10px;transition:all 0.15s;
+}
+.del-btn:hover{background:rgba(239,68,68,0.18)}
+
+/* FORMULA CHIPS */
+.formula-grid{display:flex;flex-wrap:wrap;gap:6px}
+.formula-chip{
+  padding:5px 10px;border-radius:20px;background:#0d1117;
+  border:1px solid var(--border);font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;color:var(--accent2);
+}
+
+/* TOOLBAR BUTTONS */
+.tb-btn{
+  padding:5px 12px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:500;
+  transition:all 0.15s;display:flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.tb-btn:hover{background:#1c2333;border-color:var(--accent2);color:var(--text)}
+.tb-btn.active{background:rgba(245,158,11,0.1);border-color:var(--accent);color:var(--accent)}
+.tb-sep{width:1px;height:24px;background:var(--border);margin:0 4px;flex-shrink:0}
+
+/* SCROLLBAR */
+#leftPanel::-webkit-scrollbar-track,
+#rightPanel::-webkit-scrollbar-track{background:transparent}
+
+/* SWITCH TOGGLE */
+.switch-toggle{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+}
+.switch-toggle input{display:none}
+.sw-track{
+  width:32px;height:18px;border-radius:9px;background:#30363d;
+  position:relative;transition:background 0.2s;
+}
+.sw-thumb{
+  position:absolute;top:2px;left:2px;width:14px;height:14px;
+  border-radius:50%;background:#8b949e;transition:all 0.2s;
+}
+.switch-toggle input:checked ~ .sw-track{background:rgba(245,158,11,0.3)}
+.switch-toggle input:checked ~ .sw-track .sw-thumb{left:16px;background:var(--accent)}
+
+/* ZOOM DISPLAY */
+#zoomDisplay{
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+  color:var(--muted);padding:4px 8px;border:1px solid var(--border);
+  border-radius:5px;background:#0d1117;min-width:54px;text-align:center;
+}
+
+/* WIRE PREVIEW HINT */
+#wireHint{
+  position:absolute;top:50px;left:50%;transform:translateX(-50%);
+  padding:6px 16px;border-radius:20px;background:rgba(88,166,255,0.15);
+  border:1px solid rgba(88,166,255,0.3);color:var(--accent2);font-size:0.75rem;
+  pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;z-index:20;
+}
+#wireHint.visible{opacity:1}
+
+/* ===== UNIVERSAL NAVBAR ===== */
+.sparky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    box-sizing: border-box;
+}
+.sparky-nav .sn-logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f59e0b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.sparky-nav .sn-logo-box {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #f59e0b 0%, #58a6ff 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0d1117;
+}
+.sparky-nav .sn-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sparky-nav .sn-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+.sparky-nav .sn-link:hover {
+    color: #e6edf3;
+    background: rgba(255,255,255,0.04);
+}
+.sparky-nav .sn-link.sn-active {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-admin {
+    color: #f59e0b;
+    font-weight: 600;
+}
+.sparky-nav .sn-link.sn-admin:hover {
+    color: #fbbf24;
+    background: rgba(245,158,11,0.08);
+}
+.sparky-nav .sn-link.sn-logout {
+    color: #f85149;
+}
+.sparky-nav .sn-link.sn-logout:hover {
+    color: #ff7b72;
+    background: rgba(248,81,73,0.08);
+}
+.sparky-nav .sn-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+.sparky-nav .sn-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #8b949e;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+@media (max-width: 768px) {
+    .sparky-nav .sn-burger { display: flex; }
+    .sparky-nav .sn-links {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-direction: column;
+        padding: 0.75rem;
+        gap: 0;
+    }
+    .sparky-nav .sn-links.sn-open { display: flex; }
+    .sparky-nav .sn-link { padding: 0.6rem 1rem; width: 100%; border-radius: 6px; }
+}
+/* ===== END UNIVERSAL NAVBAR ===== */
+</style>
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+<!-- AUTH_GUARD -->
+<script>
+(function(){
+    var a=localStorage.getItem('sparty_auth');
+    if(!a){window.location.href='../login.html';return;}
+    try{var p=JSON.parse(a);if(p.expiresAt&&new Date(p.expiresAt)<new Date()){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}}
+    catch(e){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+})();
+</script>
+</head>
+<body>
+
+<nav class="sparky-nav">
+    <a href="../index.html" class="sn-logo"><div class="sn-logo-box">S</div>SparkStudy</a>
+    <button class="sn-burger" onclick="this.nextElementSibling.classList.toggle('sn-open')" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="sn-links">
+        <a href="../dashboard.html" class="sn-link">Dashboard</a><a href="../modules/diagnostic-assessment.html" class="sn-link">Study</a><a href="../tools.html" class="sn-link sn-active">Tools</a><a href="../worksheets.html" class="sn-link">Worksheets</a><a href="../achievements.html" class="sn-link">Achievements</a><a href="../formula-sheet.html" class="sn-link">Formulas</a><a href="../admin.html" class="sn-link sn-admin">Admin</a>
+        <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
+    </div>
+</nav>
+<div id="app">
+  <!-- LEFT PANEL -->
+  <div id="leftPanel">
+    <!-- TOOLS -->
+    <div class="panel-section">
+      <div class="section-title">Tools</div>
+      <div class="tool-grid">
+        <button class="mode-btn active" id="btnSelect" onclick="setMode('select')" title="Select (S)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3l14 9-7 1-4 7z"/></svg>
+          SELECT
+        </button>
+        <button class="mode-btn" id="btnWire" onclick="setMode('wire')" title="Wire (W)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h7l3-6 3 6h5"/></svg>
+          WIRE
+        </button>
+        <button class="mode-btn" id="btnDelete" onclick="setMode('delete')" title="Delete (X)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          DELETE
+        </button>
+      </div>
+    </div>
+
+    <!-- COMPONENTS -->
+    <div class="panel-section">
+      <div class="section-title">Components</div>
+      <div id="compList">
+        <!-- Cards injected by JS -->
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="panel-section">
+      <div class="section-title">Presets</div>
+      <button class="preset-btn" onclick="loadPreset('series')"><span class="preset-btn-icon">⚡</span>Series Circuit</button>
+      <button class="preset-btn" onclick="loadPreset('parallel')"><span class="preset-btn-icon">⚡</span>Parallel Circuit</button>
+      <button class="preset-btn" onclick="loadPreset('rc')"><span class="preset-btn-icon">⚡</span>RC Circuit</button>
+      <button class="preset-btn" onclick="loadPreset('divider')"><span class="preset-btn-icon">⚡</span>Voltage Divider</button>
+    </div>
+
+    <!-- CANVAS CONTROLS -->
+    <div class="panel-section">
+      <div class="section-title">Canvas</div>
+      <div class="ctrl-grid">
+        <button class="ctrl-btn" onclick="zoom(1.25)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          Zoom In
+        </button>
+        <button class="ctrl-btn" onclick="zoom(0.8)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          Zoom Out
+        </button>
+        <button class="ctrl-btn full" onclick="resetView()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Reset View
+        </button>
+        <button class="ctrl-btn danger full" onclick="clearAll()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Clear All
+        </button>
+        <button class="ctrl-btn full" onclick="exportPNG()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export PNG
+        </button>
+      </div>
+    </div>
+
+    <!-- SHORTCUTS -->
+    <div class="panel-section">
+      <div class="section-title">Shortcuts</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--muted)">Select</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text);background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 7px">S</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--muted)">Wire</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text);background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 7px">W</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--muted)">Delete mode</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text);background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 7px">X</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--muted)">Undo</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text);background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 7px">Ctrl+Z</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--muted)">Escape</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text);background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 7px">Esc</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--muted)">Pan</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text);background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 7px">Space+drag</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--muted)">Del selected</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text);background:#0d1117;border:1px solid var(--border);border-radius:4px;padding:2px 7px">Del</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS WRAP -->
+  <div id="canvasWrap">
+    <div id="toolbar">
+      <span style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-right:4px">View</span>
+      <button class="tb-btn" onclick="zoom(1.25)">+</button>
+      <div id="zoomDisplay">100%</div>
+      <button class="tb-btn" onclick="zoom(0.8)">−</button>
+      <button class="tb-btn" onclick="resetView()">↺ Reset</button>
+      <div class="tb-sep"></div>
+      <span style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-right:4px">Edit</span>
+      <button class="tb-btn" onclick="undo()" title="Ctrl+Z">↩ Undo</button>
+      <button class="tb-btn" onclick="clearAll()" style="color:var(--red)">🗑 Clear</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="exportPNG()">⬇ Export PNG</button>
+      <div class="tb-sep"></div>
+      <span id="tbModeLabel" style="font-size:0.72rem;color:var(--muted)">Mode: <strong style="color:var(--accent)">SELECT</strong></span>
+    </div>
+    <canvas id="mainCanvas"></canvas>
+    <div id="wireHint">Click a component terminal to start a wire</div>
+    <div id="statusBar">
+      <span id="statusCoords">x: 0, y: 0</span>
+      <span>|</span>
+      <span id="statusComponents">0 components</span>
+      <span>|</span>
+      <span id="statusWires">0 wires</span>
+      <span>|</span>
+      <span id="statusZoom">Zoom: 100%</span>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="rightPanel">
+    <!-- CIRCUIT ANALYSIS -->
+    <div class="panel-section">
+      <div class="section-title">Circuit Analysis</div>
+      <div class="readout-grid">
+        <div class="readout-card">
+          <div class="val blue" id="rdVoltage">—</div>
+          <div class="lbl">Total Voltage (V)</div>
+        </div>
+        <div class="readout-card">
+          <div class="val" id="rdResistance">—</div>
+          <div class="lbl">Total Resistance (Ω)</div>
+        </div>
+        <div class="readout-card">
+          <div class="val green" id="rdCurrent">—</div>
+          <div class="lbl">Total Current (A)</div>
+        </div>
+        <div class="readout-card">
+          <div class="val red" id="rdPower">—</div>
+          <div class="lbl">Total Power (W)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELECTED COMPONENT -->
+    <div class="panel-section" id="selPanel">
+      <div class="section-title">Selected Component</div>
+      <div class="sel-type" id="selType">Battery</div>
+      <div class="prop-row">
+        <span class="prop-label" id="selValueLabel">Voltage (V)</span>
+        <input class="prop-val" id="selValue" type="number" step="any" oninput="updateSelValue()">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Voltage across</span>
+        <span class="prop-static" id="selVoltage">—</span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Current through</span>
+        <span class="prop-static" id="selCurrent">—</span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Power dissipated</span>
+        <span class="prop-static" id="selPower">—</span>
+      </div>
+      <div class="prop-row" id="switchRow" style="display:none">
+        <span class="prop-label">Switch state</span>
+        <label class="switch-toggle">
+          <input type="checkbox" id="switchToggle" onchange="toggleSwitch()">
+          <div class="sw-track"><div class="sw-thumb"></div></div>
+          <span id="switchLabel" style="font-size:0.75rem;color:var(--muted)">OPEN</span>
+        </label>
+      </div>
+      <button class="del-btn" onclick="deleteSelected()">Delete Component</button>
+    </div>
+
+    <!-- FORMULA REFERENCE -->
+    <div class="panel-section">
+      <div class="section-title">Formula Reference</div>
+      <div class="formula-grid">
+        <span class="formula-chip">V = IR</span>
+        <span class="formula-chip">I = V/R</span>
+        <span class="formula-chip">P = VI</span>
+        <span class="formula-chip">P = I²R</span>
+        <span class="formula-chip">P = V²/R</span>
+        <span class="formula-chip">R_s = R₁+R₂</span>
+        <span class="formula-chip">1/R_p = 1/R₁+1/R₂</span>
+        <span class="formula-chip">Q = CV</span>
+        <span class="formula-chip">τ = RC</span>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="panel-section">
+      <div class="section-title">Tips</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.5">
+          <strong style="color:var(--accent2)">Wire mode:</strong> Click one terminal, then another to connect them.
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.5">
+          <strong style="color:var(--accent2)">Move:</strong> In select mode, drag any component to reposition.
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.5">
+          <strong style="color:var(--accent2)">Particles:</strong> Flowing particles show current direction &amp; magnitude. Color = current level.
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.5">
+          <strong style="color:var(--accent2)">Presets:</strong> Load a template, then modify values and add wires to experiment.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+const GRID = 24;
+const COMP_HALF_W = 40;  // half-width of component body
+const TERM_OFFSET = 40;  // terminal distance from center
+
+let mode = 'select';       // 'select'|'wire'|'place'|'delete'
+let placeType = null;      // type being placed
+let components = [];
+let wires = [];
+let selectedComp = null;
+let selectedWire = null;
+let undoStack = [];
+
+// Pan/zoom
+let panX = 0, panY = 0;
+let scale = 1;
+
+// Interaction state
+let dragging = null;
+let dragOffX = 0, dragOffY = 0;
+let wireStart = null;    // {comp, termIdx, x, y}
+let mouseCanvasX = 0, mouseCanvasY = 0;
+let mouseWorldX = 0, mouseWorldY = 0;
+let spaceDown = false;
+let isPanning = false;
+let panStartX = 0, panStartY = 0;
+let panStartPX = 0, panStartPY = 0;
+let middlePanning = false;
+let dashOffset = 0;
+
+// Analysis results
+let analysisResult = {voltage:0,resistance:0,current:0,power:0};
+
+// Canvas
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let dpr = window.devicePixelRatio || 1;
+let canvasW = 0, canvasH = 0;
+
+// Particle system per wire
+let particleMap = {}; // wires[i].id -> [{t,speed}]
+
+let lastTime = 0;
+let frameId = null;
+
+// Component definitions
+const COMP_DEFS = [
+  { type:'battery',    name:'Battery',    key:'B', unit:'V',  defaultVal:9,    label:'Voltage (V)'    },
+  { type:'resistor',   name:'Resistor',   key:'R', unit:'Ω',  defaultVal:100,  label:'Resistance (Ω)' },
+  { type:'capacitor',  name:'Capacitor',  key:'C', unit:'μF', defaultVal:100,  label:'Capacitance (μF)'},
+  { type:'inductor',   name:'Inductor',   key:'L', unit:'H',  defaultVal:0.01, label:'Inductance (H)'  },
+  { type:'switch',     name:'Switch',     key:'K', unit:'',   defaultVal:0,    label:'State'           },
+  { type:'bulb',       name:'Bulb',       key:'U', unit:'Ω',  defaultVal:60,   label:'Resistance (Ω)' },
+  { type:'ground',     name:'Ground',     key:'G', unit:'',   defaultVal:0,    label:'—'               },
+  { type:'ammeter',    name:'Ammeter',    key:'A', unit:'',   defaultVal:0,    label:'—'               },
+  { type:'voltmeter',  name:'Voltmeter',  key:'V', unit:'',   defaultVal:0,    label:'—'               },
+  { type:'junction',   name:'Junction',   key:'J', unit:'',   defaultVal:0,    label:'—'               },
+];
+
+let idCounter = 1;
+function newId() { return idCounter++; }
+
+// ============================================================
+//  INIT
+// ============================================================
+function init() {
+  buildCompPalette();
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('wheel', onWheel, {passive:false});
+  canvas.addEventListener('dblclick', onDblClick);
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', e => { if(e.code==='Space') spaceDown=false; });
+  setMode('select');
+  resetView();
+  loop(0);
+}
+
+// ============================================================
+//  CANVAS RESIZE
+// ============================================================
+function resizeCanvas() {
+  const wrap = document.getElementById('canvasWrap');
+  const rect = wrap.getBoundingClientRect();
+  dpr = window.devicePixelRatio || 1;
+  // Canvas covers area below toolbar (44px) and above statusbar (28px)
+  canvasW = rect.width;
+  canvasH = rect.height - 44 - 28;
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// ============================================================
+//  COORDINATE HELPERS
+// ============================================================
+function snap(v) { return Math.round(v / GRID) * GRID; }
+
+function canvasToWorld(cx, cy) {
+  return { x: (cx - panX) / scale, y: (cy - panY) / scale };
+}
+function worldToCanvas(wx, wy) {
+  return { x: wx * scale + panX, y: wy * scale + panY };
+}
+function getCanvasMouse(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+// ============================================================
+//  COMPONENT PALETTE BUILDER
+// ============================================================
+function buildCompPalette() {
+  const list = document.getElementById('compList');
+  list.innerHTML = '';
+  COMP_DEFS.forEach(def => {
+    const card = document.createElement('div');
+    card.className = 'comp-card';
+    card.id = 'card_' + def.type;
+    card.innerHTML = `
+      <canvas class="comp-card-icon" width="40" height="24" id="icon_${def.type}"></canvas>
+      <div class="comp-card-info">
+        <div class="comp-card-name">${def.name}</div>
+        <div class="comp-card-key">Key: ${def.key}</div>
+      </div>
+    `;
+    card.onclick = () => startPlace(def.type);
+    list.appendChild(card);
+    // Draw mini icon
+    setTimeout(() => drawCompIcon(def.type, document.getElementById('icon_' + def.type)), 0);
+  });
+}
+
+function drawCompIcon(type, cnv) {
+  if (!cnv) return;
+  const c = cnv.getContext('2d');
+  c.clearRect(0, 0, 40, 24);
+  c.save();
+  c.translate(20, 12);
+  c.scale(0.45, 0.45);
+  drawComponent(c, {type, value:0, closed:false}, 0, 0, 0, false, false);
+  c.restore();
+}
+
+// ============================================================
+//  MODE MANAGEMENT
+// ============================================================
+function setMode(m) {
+  mode = m;
+  placeType = null;
+  wireStart = null;
+  document.getElementById('wireHint').classList.remove('visible');
+
+  // Update mode buttons
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  if(m === 'select') document.getElementById('btnSelect').classList.add('active');
+  if(m === 'wire')   document.getElementById('btnWire').classList.add('active');
+  if(m === 'delete') document.getElementById('btnDelete').classList.add('active');
+
+  // Update component cards
+  document.querySelectorAll('.comp-card').forEach(c => c.classList.remove('active'));
+
+  // Update badge
+  const badge = document.getElementById('modeBadge');
+  badge.className = 'mode-badge';
+  badge.textContent = m.toUpperCase();
+  if(m==='wire')  badge.classList.add('wire');
+  if(m==='place') badge.classList.add('place');
+  if(m==='delete') badge.classList.add('delete');
+
+  // Cursor
+  canvas.style.cursor = m==='delete' ? 'not-allowed' : m==='wire' ? 'crosshair' : 'default';
+
+  // Toolbar label
+  document.getElementById('tbModeLabel').innerHTML =
+    `Mode: <strong style="color:${m==='select'?'var(--accent)':m==='wire'?'var(--accent2)':m==='delete'?'var(--red)':'var(--green)'}">${m.toUpperCase()}</strong>`;
+}
+
+function startPlace(type) {
+  setMode('place');
+  placeType = type;
+  document.querySelectorAll('.comp-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById('card_' + type);
+  if(card) card.classList.add('active');
+  const badge = document.getElementById('modeBadge');
+  badge.textContent = 'PLACE';
+  badge.className = 'mode-badge place';
+  document.getElementById('tbModeLabel').innerHTML =
+    `Mode: <strong style="color:var(--green)">PLACE ${type.toUpperCase()}</strong>`;
+  canvas.style.cursor = 'copy';
+}
+
+// ============================================================
+//  COMPONENT CREATION
+// ============================================================
+function createComp(type, x, y) {
+  const def = COMP_DEFS.find(d => d.type === type) || COMP_DEFS[0];
+  return {
+    id: newId(),
+    type,
+    x: snap(x),
+    y: snap(y),
+    value: def.defaultVal,
+    closed: false,   // for switch
+    // Analysis results
+    compV: 0,
+    compI: 0,
+    compP: 0,
+  };
+}
+
+function getTerminals(comp) {
+  // Returns world positions of terminals
+  const cx = comp.x, cy = comp.y;
+  if(comp.type === 'ground') {
+    return [{ x: cx, y: cy }];
+  }
+  if(comp.type === 'junction') {
+    return [{ x: cx, y: cy }];
+  }
+  return [
+    { x: cx - TERM_OFFSET, y: cy },
+    { x: cx + TERM_OFFSET, y: cy },
+  ];
+}
+
+function hitTestComp(comp, wx, wy) {
+  const dx = Math.abs(wx - comp.x), dy = Math.abs(wy - comp.y);
+  return dx <= TERM_OFFSET + 6 && dy <= 24;
+}
+
+function hitTestTerminal(comp, wx, wy) {
+  const terms = getTerminals(comp);
+  for(let i=0; i<terms.length; i++) {
+    const t = terms[i];
+    const d = Math.hypot(wx - t.x, wy - t.y);
+    if(d < 14 / scale) return i;
+  }
+  return -1;
+}
+
+// ============================================================
+//  WIRE CREATION
+// ============================================================
+function createWire(c1Id, t1, c2Id, t2, x1, y1, x2, y2) {
+  const w = {
+    id: newId(),
+    c1: c1Id, t1,
+    c2: c2Id, t2,
+    x1, y1, x2, y2,
+    current: 0,
+  };
+  particleMap[w.id] = initParticles(w);
+  return w;
+}
+
+function initParticles(w) {
+  const len = Math.abs(w.x2 - w.x1) + Math.abs(w.y2 - w.y1);
+  const count = Math.max(2, Math.floor(len / 28));
+  const arr = [];
+  for(let i=0; i<count; i++) {
+    arr.push({ t: Math.random(), speed: 0 });
+  }
+  return arr;
+}
+
+// ============================================================
+//  UNDO
+// ============================================================
+function pushUndo() {
+  undoStack.push(JSON.stringify({ components, wires }));
+  if(undoStack.length > 20) undoStack.shift();
+}
+
+function undo() {
+  if(undoStack.length === 0) return;
+  const state = JSON.parse(undoStack.pop());
+  components = state.components;
+  wires = state.wires;
+  selectedComp = null;
+  selectedWire = null;
+  // Rebuild particles
+  particleMap = {};
+  wires.forEach(w => { particleMap[w.id] = initParticles(w); });
+  updateSelPanel();
+}
+
+// ============================================================
+//  INTERACTION
+// ============================================================
+function onMouseDown(e) {
+  const {x: cx, y: cy} = getCanvasMouse(e);
+  const {x: wx, y: wy} = canvasToWorld(cx, cy);
+
+  // Middle mouse pan
+  if(e.button === 1) {
+    middlePanning = true;
+    panStartX = cx; panStartY = cy;
+    panStartPX = panX; panStartPY = panY;
+    e.preventDefault();
+    return;
+  }
+
+  // Space+drag pan
+  if(spaceDown || e.altKey) {
+    isPanning = true;
+    panStartX = cx; panStartY = cy;
+    panStartPX = panX; panStartPY = panY;
+    return;
+  }
+
+  if(e.button !== 0) return;
+
+  if(mode === 'place' && placeType) {
+    pushUndo();
+    const c = createComp(placeType, wx, wy);
+    components.push(c);
+    selectedComp = c;
+    updateSelPanel();
+    return;
+  }
+
+  if(mode === 'delete') {
+    // Hit test components
+    for(let i=components.length-1; i>=0; i--) {
+      if(hitTestComp(components[i], wx, wy)) {
+        pushUndo();
+        const id = components[i].id;
+        components.splice(i, 1);
+        wires = wires.filter(w => w.c1 !== id && w.c2 !== id);
+        selectedComp = null;
+        updateSelPanel();
+        return;
+      }
+    }
+    // Hit test wires
+    for(let i=wires.length-1; i>=0; i--) {
+      if(hitTestWire(wires[i], wx, wy)) {
+        pushUndo();
+        delete particleMap[wires[i].id];
+        wires.splice(i, 1);
+        return;
+      }
+    }
+    return;
+  }
+
+  if(mode === 'wire') {
+    // Check if clicking near a terminal
+    for(let i=0; i<components.length; i++) {
+      const comp = components[i];
+      const ti = hitTestTerminal(comp, wx, wy);
+      if(ti >= 0) {
+        const terms = getTerminals(comp);
+        if(wireStart === null) {
+          wireStart = {comp, termIdx: ti, x: terms[ti].x, y: terms[ti].y};
+          document.getElementById('wireHint').classList.remove('visible');
+        } else {
+          // Complete wire
+          if(wireStart.comp.id === comp.id) { wireStart = null; return; }
+          pushUndo();
+          const w = createWire(
+            wireStart.comp.id, wireStart.termIdx,
+            comp.id, ti,
+            wireStart.x, wireStart.y,
+            terms[ti].x, terms[ti].y
+          );
+          wires.push(w);
+          wireStart = null;
+        }
+        return;
+      }
+    }
+    // Clicked empty — show hint
+    if(wireStart === null) {
+      document.getElementById('wireHint').classList.add('visible');
+      setTimeout(() => document.getElementById('wireHint').classList.remove('visible'), 2000);
+    } else {
+      wireStart = null;
+    }
+    return;
+  }
+
+  if(mode === 'select') {
+    // Hit test components
+    for(let i=components.length-1; i>=0; i--) {
+      const comp = components[i];
+      if(hitTestComp(comp, wx, wy)) {
+        selectedComp = comp;
+        selectedWire = null;
+        updateSelPanel();
+        dragging = comp;
+        dragOffX = wx - comp.x;
+        dragOffY = wy - comp.y;
+        return;
+      }
+    }
+    // Hit test wires
+    for(let i=wires.length-1; i>=0; i--) {
+      if(hitTestWire(wires[i], wx, wy)) {
+        selectedWire = wires[i];
+        selectedComp = null;
+        updateSelPanel();
+        return;
+      }
+    }
+    // Deselect
+    selectedComp = null;
+    selectedWire = null;
+    updateSelPanel();
+  }
+}
+
+function onMouseMove(e) {
+  const {x: cx, y: cy} = getCanvasMouse(e);
+  const {x: wx, y: wy} = canvasToWorld(cx, cy);
+  mouseCanvasX = cx; mouseCanvasY = cy;
+  mouseWorldX = wx; mouseWorldY = wy;
+
+  // Status bar
+  document.getElementById('statusCoords').textContent =
+    `x: ${Math.round(snap(wx))}, y: ${Math.round(snap(wy))}`;
+
+  if(middlePanning) {
+    panX = panStartPX + (cx - panStartX);
+    panY = panStartPY + (cy - panStartY);
+    return;
+  }
+  if(isPanning) {
+    panX = panStartPX + (cx - panStartX);
+    panY = panStartPY + (cy - panStartY);
+    return;
+  }
+  if(dragging && mode === 'select') {
+    const nx = snap(wx - dragOffX);
+    const ny = snap(wy - dragOffY);
+    const dx = nx - dragging.x;
+    const dy = ny - dragging.y;
+    dragging.x = nx;
+    dragging.y = ny;
+    // Move connected wires
+    wires.forEach(w => {
+      if(w.c1 === dragging.id) {
+        const terms = getTerminals(dragging);
+        if(terms[w.t1]) { w.x1 = terms[w.t1].x; w.y1 = terms[w.t1].y; }
+      }
+      if(w.c2 === dragging.id) {
+        const terms = getTerminals(dragging);
+        if(terms[w.t2]) { w.x2 = terms[w.t2].x; w.y2 = terms[w.t2].y; }
+      }
+    });
+  }
+
+  // Cursor style in select mode
+  if(mode === 'select') {
+    let overComp = false;
+    for(let i=components.length-1; i>=0; i--) {
+      if(hitTestComp(components[i], wx, wy)) { overComp=true; break; }
+    }
+    canvas.style.cursor = overComp ? 'move' : 'default';
+  }
+}
+
+function onMouseUp(e) {
+  if(e.button === 1) { middlePanning = false; return; }
+  if(dragging) {
+    // Push undo after drag
+    if(dragging) pushUndo();
+  }
+  dragging = null;
+  isPanning = false;
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  const {x: cx, y: cy} = getCanvasMouse(e);
+  const factor = e.deltaY < 0 ? 1.1 : 0.909;
+  const newScale = Math.max(0.25, Math.min(4, scale * factor));
+  const ratio = newScale / scale;
+  panX = cx - (cx - panX) * ratio;
+  panY = cy - (cy - panY) * ratio;
+  scale = newScale;
+  updateZoomUI();
+}
+
+function onDblClick(e) {
+  const {x: cx, y: cy} = getCanvasMouse(e);
+  const {x: wx, y: wy} = canvasToWorld(cx, cy);
+  for(let i=components.length-1; i>=0; i--) {
+    const comp = components[i];
+    if(hitTestComp(comp, wx, wy)) {
+      selectedComp = comp;
+      updateSelPanel();
+      const inp = document.getElementById('selValue');
+      if(inp) { inp.focus(); inp.select(); }
+      return;
+    }
+  }
+  // Double-click switch to toggle
+  if(selectedComp && selectedComp.type === 'switch') {
+    selectedComp.closed = !selectedComp.closed;
+    document.getElementById('switchToggle').checked = selectedComp.closed;
+    document.getElementById('switchLabel').textContent = selectedComp.closed ? 'CLOSED' : 'OPEN';
+  }
+}
+
+function onKeyDown(e) {
+  if(e.code === 'Space') { spaceDown = true; e.preventDefault(); return; }
+
+  // Don't capture keys when input is focused
+  if(document.activeElement.tagName === 'INPUT') return;
+
+  const key = e.key.toLowerCase();
+
+  if(e.ctrlKey && key === 'z') { undo(); return; }
+
+  const modeMap = { s:'select', w:'wire', x:'delete' };
+  if(modeMap[key] && !e.ctrlKey) { setMode(modeMap[key]); return; }
+
+  const placeMap = { b:'battery', r:'resistor', c:'capacitor', l:'inductor',
+                     k:'switch', u:'bulb', g:'ground', a:'ammeter', v:'voltmeter', j:'junction' };
+  if(placeMap[key] && !e.ctrlKey) { startPlace(placeMap[key]); return; }
+
+  if(e.key === 'Escape') {
+    if(mode === 'wire' || mode === 'place') { setMode('select'); }
+    else { selectedComp = null; selectedWire = null; updateSelPanel(); }
+    wireStart = null;
+    return;
+  }
+
+  if((e.key === 'Delete' || e.key === 'Backspace') && selectedComp) {
+    deleteSelected();
+    return;
+  }
+}
+
+// ============================================================
+//  HIT TEST WIRE
+// ============================================================
+function hitTestWire(w, wx, wy) {
+  // L-shaped wire: horizontal segment then vertical
+  const mx = w.x2, my = w.y1;
+  // Segment 1: (x1,y1) -> (mx,my)
+  const d1 = distToSegment(wx, wy, w.x1, w.y1, mx, my);
+  const d2 = distToSegment(wx, wy, mx, my, w.x2, w.y2);
+  const thresh = 8 / scale;
+  return d1 < thresh || d2 < thresh;
+}
+
+function distToSegment(px, py, ax, ay, bx, by) {
+  const dx = bx-ax, dy = by-ay;
+  const len2 = dx*dx+dy*dy;
+  if(len2 === 0) return Math.hypot(px-ax,py-ay);
+  let t = ((px-ax)*dx+(py-ay)*dy)/len2;
+  t = Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
+}
+
+// ============================================================
+//  CIRCUIT ANALYSIS (simple solver)
+// ============================================================
+function analyzeCircuit() {
+  // Find battery
+  const battery = components.find(c => c.type === 'battery');
+  if(!battery) {
+    analysisResult = {voltage:0,resistance:0,current:0,power:0};
+    components.forEach(c => { c.compV=0; c.compI=0; c.compP=0; });
+    wires.forEach(w => w.current=0);
+    return;
+  }
+
+  const Vs = battery.value || 9;
+  battery.compV = Vs;
+
+  // Collect all resistive elements
+  const resistors = components.filter(c =>
+    (c.type==='resistor'||c.type==='bulb'||c.type==='ammeter')
+  );
+  const openSwitch = components.find(c => c.type==='switch' && !c.closed);
+
+  // If open switch in circuit, no current
+  if(openSwitch && isConnectedToCircuit(openSwitch)) {
+    components.forEach(c => { c.compI=0; c.compP=0; if(c.type!=='battery') c.compV=0; });
+    wires.forEach(w => w.current=0);
+    analysisResult = {voltage:Vs,resistance:Infinity,current:0,power:0};
+    updateReadouts();
+    return;
+  }
+
+  if(resistors.length === 0) {
+    // Short circuit with just battery and wires
+    components.forEach(c => { c.compV=0; c.compI=0; c.compP=0; });
+    battery.compV = Vs;
+    wires.forEach(w => w.current=0);
+    analysisResult = {voltage:Vs,resistance:0,current:0,power:0};
+    updateReadouts();
+    return;
+  }
+
+  // Check circuit topology using adjacency
+  // Build adjacency: node = terminal position strings
+  // Simple approach: determine if resistors are in series or parallel
+
+  // Build a graph
+  const nodeMap = {}; // "x,y" -> [comp index or wire index]
+  function nodeKey(x, y) { return `${Math.round(x)},${Math.round(y)}`; }
+
+  // Collect all unique nodes
+  const termNodes = {}; // comp.id + termIdx -> nodeKey
+  const adj = {}; // nodeKey -> [{comp, termIdx}]
+
+  components.forEach(comp => {
+    const terms = getTerminals(comp);
+    terms.forEach((t, ti) => {
+      const k = nodeKey(t.x, t.y);
+      termNodes[comp.id + '_' + ti] = k;
+      if(!adj[k]) adj[k] = [];
+      adj[k].push({comp, termIdx: ti});
+    });
+  });
+
+  // Merge nodes connected by wires
+  const nodeGroups = {}; // nodeKey -> groupId
+  let nextGroup = 1;
+  const groupSet = {}; // groupId -> Set of nodeKeys
+
+  function getGroup(k) {
+    return nodeGroups[k] || null;
+  }
+  function mergeGroups(k1, k2) {
+    const g1 = getGroup(k1), g2 = getGroup(k2);
+    if(!g1 && !g2) {
+      const id = nextGroup++;
+      nodeGroups[k1] = id;
+      nodeGroups[k2] = id;
+      groupSet[id] = new Set([k1,k2]);
+    } else if(g1 && !g2) {
+      nodeGroups[k2] = g1;
+      groupSet[g1].add(k2);
+    } else if(!g1 && g2) {
+      nodeGroups[k1] = g2;
+      groupSet[g2].add(k1);
+    } else if(g1 !== g2) {
+      // Merge g2 into g1
+      groupSet[g2].forEach(k => { nodeGroups[k] = g1; groupSet[g1].add(k); });
+      delete groupSet[g2];
+    }
+  }
+
+  // Assign isolated nodes their own group
+  Object.keys(adj).forEach(k => {
+    if(!getGroup(k)) {
+      const id = nextGroup++;
+      nodeGroups[k] = id;
+      groupSet[id] = new Set([k]);
+    }
+  });
+
+  wires.forEach(w => {
+    const k1 = nodeKey(w.x1, w.y1);
+    const k2 = nodeKey(w.x2, w.y2);
+    if(!nodeGroups[k1]) {
+      const id = nextGroup++;
+      nodeGroups[k1] = id;
+      groupSet[id] = new Set([k1]);
+    }
+    if(!nodeGroups[k2]) {
+      const id = nextGroup++;
+      nodeGroups[k2] = id;
+      groupSet[id] = new Set([k2]);
+    }
+    mergeGroups(k1, k2);
+  });
+
+  // Find battery terminal node groups
+  const batTerms = getTerminals(battery);
+  const batNodePos = nodeKey(batTerms[1].x, batTerms[1].y); // + terminal (right)
+  const batNodeNeg = nodeKey(batTerms[0].x, batTerms[0].y); // - terminal (left)
+  const batGrpPos = nodeGroups[batNodePos];
+  const batGrpNeg = nodeGroups[batNodeNeg];
+
+  if(!batGrpPos || !batGrpNeg || batGrpPos === batGrpNeg) {
+    // Not properly connected
+    analysisResult = {voltage:Vs,resistance:0,current:0,power:0};
+    updateReadouts();
+    return;
+  }
+
+  // Find resistors connected between + and - nodes (series/parallel)
+  const connectedRes = resistors.filter(r => {
+    const rTerms = getTerminals(r);
+    const k0 = nodeKey(rTerms[0].x, rTerms[0].y);
+    const k1 = nodeKey(rTerms[1].x, rTerms[1].y);
+    const g0 = nodeGroups[k0], g1 = nodeGroups[k1];
+    return (g0===batGrpPos && g1===batGrpNeg) ||
+           (g0===batGrpNeg && g1===batGrpPos) ||
+           (g0===batGrpPos || g0===batGrpNeg || g1===batGrpPos || g1===batGrpNeg);
+  });
+
+  if(connectedRes.length === 0) {
+    analysisResult = {voltage:Vs,resistance:0,current:0,power:0};
+    updateReadouts();
+    return;
+  }
+
+  // Check if resistors share the same two nodes (parallel)
+  let Rtotal = 0;
+  let isParallel = false;
+
+  if(connectedRes.length >= 2) {
+    // Check if any pair shares both terminal groups
+    const grpPairs = connectedRes.map(r => {
+      const rt = getTerminals(r);
+      const k0 = nodeKey(rt[0].x, rt[0].y);
+      const k1 = nodeKey(rt[1].x, rt[1].y);
+      return [nodeGroups[k0], nodeGroups[k1]].sort().join(',');
+    });
+    const uniquePairs = new Set(grpPairs);
+    if(uniquePairs.size < connectedRes.length) isParallel = true;
+  }
+
+  if(isParallel) {
+    // Parallel combination
+    let invR = 0;
+    connectedRes.forEach(r => { invR += 1 / (r.value || 1); });
+    Rtotal = 1 / invR;
+    const I_total = Vs / Rtotal;
+    connectedRes.forEach(r => {
+      r.compV = Vs;
+      r.compI = Vs / (r.value || 1);
+      r.compP = r.compV * r.compI;
+    });
+    analysisResult = {voltage:Vs, resistance:Rtotal, current:I_total, power:Vs*I_total};
+    battery.compI = I_total;
+    battery.compP = Vs * I_total;
+    // Wire currents: use component current
+    wires.forEach(w => {
+      const comp = components.find(c => c.id===w.c1 || c.id===w.c2);
+      w.current = comp ? (comp.compI || I_total) : I_total;
+    });
+  } else {
+    // Series combination
+    Rtotal = connectedRes.reduce((s,r) => s + (r.value||1), 0);
+    const I = Vs / Rtotal;
+    connectedRes.forEach(r => {
+      r.compI = I;
+      r.compV = I * (r.value||1);
+      r.compP = r.compV * I;
+    });
+    analysisResult = {voltage:Vs, resistance:Rtotal, current:I, power:Vs*I};
+    battery.compI = I;
+    battery.compP = Vs * I;
+    wires.forEach(w => w.current = I);
+  }
+
+  // Voltmeter — reads Vs (simplified)
+  components.filter(c=>c.type==='voltmeter').forEach(c => {
+    c.compV = Vs;
+    c.compI = 0;
+    c.compP = 0;
+  });
+
+  // Ammeter — reads series current
+  components.filter(c=>c.type==='ammeter').forEach(c => {
+    c.compI = analysisResult.current;
+    c.compV = 0;
+    c.compP = 0;
+  });
+
+  updateReadouts();
+}
+
+function isConnectedToCircuit(comp) {
+  const id = comp.id;
+  return wires.some(w => w.c1 === id || w.c2 === id);
+}
+
+function updateReadouts() {
+  const {voltage,resistance,current,power} = analysisResult;
+  const fmt = (v,d=2) => isFinite(v) ? v.toFixed(d) : '∞';
+  document.getElementById('rdVoltage').textContent = fmt(voltage) + 'V';
+  document.getElementById('rdResistance').textContent = fmt(resistance) + 'Ω';
+  document.getElementById('rdCurrent').textContent = fmt(current,3) + 'A';
+  document.getElementById('rdPower').textContent = fmt(power,2) + 'W';
+}
+
+// ============================================================
+//  SELECTED COMPONENT PANEL
+// ============================================================
+function updateSelPanel() {
+  const panel = document.getElementById('selPanel');
+  if(!selectedComp) {
+    panel.classList.remove('visible');
+    return;
+  }
+  panel.classList.add('visible');
+  const c = selectedComp;
+  const def = COMP_DEFS.find(d => d.type === c.type);
+
+  document.getElementById('selType').textContent = def ? def.name : c.type;
+  document.getElementById('selValueLabel').textContent = def ? def.label : 'Value';
+  document.getElementById('selValue').value = c.value;
+
+  const fmt = (v,d=3) => isFinite(v) ? v.toFixed(d) : '∞';
+  document.getElementById('selVoltage').textContent = fmt(c.compV||0,2) + ' V';
+  document.getElementById('selCurrent').textContent = fmt(c.compI||0,3) + ' A';
+  document.getElementById('selPower').textContent = fmt(c.compP||0,3) + ' W';
+
+  const swRow = document.getElementById('switchRow');
+  if(c.type === 'switch') {
+    swRow.style.display = 'flex';
+    document.getElementById('switchToggle').checked = c.closed;
+    document.getElementById('switchLabel').textContent = c.closed ? 'CLOSED' : 'OPEN';
+  } else {
+    swRow.style.display = 'none';
+  }
+}
+
+function updateSelValue() {
+  if(!selectedComp) return;
+  const v = parseFloat(document.getElementById('selValue').value);
+  if(!isNaN(v)) selectedComp.value = v;
+}
+
+function toggleSwitch() {
+  if(!selectedComp || selectedComp.type !== 'switch') return;
+  selectedComp.closed = document.getElementById('switchToggle').checked;
+  document.getElementById('switchLabel').textContent = selectedComp.closed ? 'CLOSED' : 'OPEN';
+}
+
+function deleteSelected() {
+  if(!selectedComp) return;
+  pushUndo();
+  const id = selectedComp.id;
+  components = components.filter(c => c.id !== id);
+  wires = wires.filter(w => {
+    if(w.c1 === id || w.c2 === id) { delete particleMap[w.id]; return false; }
+    return true;
+  });
+  selectedComp = null;
+  updateSelPanel();
+}
+
+// ============================================================
+//  CURRENT COLOR
+// ============================================================
+function currentColor(I, alpha=1) {
+  const a = Math.abs(I);
+  if(a < 0.01) return `rgba(77,99,128,${alpha*0.5})`;
+  let r,g,b;
+  if(a < 0.1) {
+    // dark blue -> blue
+    const t = a/0.1;
+    r=Math.round(77+(59-77)*t); g=Math.round(99+(130-99)*t); b=Math.round(128+(246-128)*t);
+  } else if(a < 0.5) {
+    const t=(a-0.1)/0.4;
+    r=Math.round(59+(16-59)*t); g=Math.round(130+(185-130)*t); b=Math.round(246+(129-246)*t);
+  } else if(a < 1) {
+    const t=(a-0.5)/0.5;
+    r=Math.round(16+(245-16)*t); g=Math.round(185+(158-185)*t); b=Math.round(129+(11-129)*t);
+  } else if(a < 2) {
+    const t=(a-1)/1;
+    r=Math.round(245+(249-245)*t); g=Math.round(158+(115-158)*t); b=Math.round(11+(22-11)*t);
+  } else {
+    const t=Math.min(1,(a-2)/3);
+    r=Math.round(249+(239-249)*t); g=Math.round(115+(68-115)*t); b=Math.round(22+(68-22)*t);
+  }
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ============================================================
+//  DRAW COMPONENT (world space, centered at 0,0)
+// ============================================================
+function drawComponent(ctx, comp, wx, wy, I, isSelected, isHovered) {
+  const type = comp.type;
+  ctx.save();
+
+  // Glow for high current
+  if(I > 0.1) {
+    ctx.shadowBlur = Math.min(I * 20, 40);
+    ctx.shadowColor = currentColor(I);
+  }
+
+  if(type === 'battery') {
+    ctx.strokeStyle = '#e6edf3';
+    ctx.lineWidth = 2;
+    // Lead lines
+    drawLine(ctx, -40,0, -16,0);
+    drawLine(ctx, 16,0, 40,0);
+    // Cell 1: thin
+    ctx.lineWidth = 2; ctx.strokeStyle = '#e6edf3';
+    drawLine(ctx, -12,-12, -12,12);
+    // Cell 1: thick
+    ctx.lineWidth = 5; ctx.strokeStyle = '#e6edf3';
+    drawLine(ctx, -6,-18, -6,18);
+    // Cell 2: thin
+    ctx.lineWidth = 2; ctx.strokeStyle = '#e6edf3';
+    drawLine(ctx, 6,-12, 6,12);
+    // Cell 2: thick
+    ctx.lineWidth = 5; ctx.strokeStyle = '#e6edf3';
+    drawLine(ctx, 12,-18, 12,18);
+    // + / -
+    ctx.fillStyle = '#8b949e'; ctx.font = 'bold 11px Inter'; ctx.textAlign='center';
+    ctx.fillText('+', 20, -20);
+    ctx.fillText('−', -20, -20);
+    // Label
+    ctx.fillStyle = '#8b949e'; ctx.font = '10px Inter'; ctx.textAlign='center';
+    ctx.fillText((comp.value||9)+'V', 0, 34);
+
+  } else if(type === 'resistor') {
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2;
+    drawLine(ctx, -40,0,-20,0);
+    drawLine(ctx, 20,0,40,0);
+    ctx.beginPath();
+    const pts = [[-20,0],[-15,-12],[-5,12],[5,-12],[15,12],[20,0]];
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.stroke();
+    // Box outline
+    ctx.strokeStyle = 'rgba(88,166,255,0.25)'; ctx.lineWidth = 1;
+    ctx.strokeRect(-22,-14,44,28);
+    // Label
+    ctx.fillStyle = '#8b949e'; ctx.font = '10px Inter'; ctx.textAlign='center';
+    ctx.fillText((comp.value||100)+'Ω', 0, 30);
+
+  } else if(type === 'capacitor') {
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2;
+    drawLine(ctx,-40,0,-8,0);
+    drawLine(ctx,8,0,40,0);
+    ctx.fillStyle = '#58a6ff';
+    ctx.fillRect(-10,-16,3,32);
+    ctx.fillRect(7,-16,3,32);
+    ctx.fillStyle = '#8b949e'; ctx.font='10px Inter'; ctx.textAlign='center';
+    ctx.fillText((comp.value||100)+'μF', 0, 30);
+
+  } else if(type === 'inductor') {
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2;
+    drawLine(ctx,-40,0,-24,0);
+    drawLine(ctx,24,0,40,0);
+    const centers = [-18,-6,6,18];
+    centers.forEach(cx => {
+      ctx.beginPath();
+      ctx.arc(cx, 0, 9, Math.PI, 0);
+      ctx.stroke();
+    });
+    ctx.fillStyle = '#8b949e'; ctx.font='10px Inter'; ctx.textAlign='center';
+    ctx.fillText((comp.value||0.01)+'H', 0, 22);
+
+  } else if(type === 'switch') {
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2;
+    drawLine(ctx,-40,0,-16,0);
+    drawLine(ctx,16,0,40,0);
+    ctx.fillStyle = '#58a6ff';
+    fillCircle(ctx, -16, 0, 4);
+    fillCircle(ctx, 16, 0, 4);
+    if(comp.closed) {
+      drawLine(ctx,-16,0,16,0);
+    } else {
+      drawLine(ctx,-16,0,14,-14);
+    }
+    ctx.fillStyle = '#8b949e'; ctx.font='10px Inter'; ctx.textAlign='center';
+    ctx.fillText(comp.closed?'CLOSED':'OPEN', 0, 30);
+
+  } else if(type === 'bulb') {
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2;
+    drawLine(ctx,-40,0,-18,0);
+    drawLine(ctx,18,0,40,0);
+    const glowing = I > 0.05;
+    if(glowing) {
+      const grd = ctx.createRadialGradient(0,0,2,0,0,18);
+      grd.addColorStop(0,'rgba(245,158,11,0.6)');
+      grd.addColorStop(1,'rgba(245,158,11,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=20; ctx.shadowColor='#f59e0b';
+    }
+    ctx.strokeStyle = glowing ? '#f59e0b' : '#58a6ff';
+    ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle = glowing ? 'rgba(245,158,11,0.05)' : '#1c2333';
+    ctx.fill();
+    ctx.strokeStyle = glowing ? '#f59e0b' : '#58a6ff';
+    ctx.lineWidth = 2;
+    drawLine(ctx,-11,-11,11,11);
+    drawLine(ctx,-11,11,11,-11);
+    ctx.fillStyle = '#8b949e'; ctx.font='10px Inter'; ctx.textAlign='center';
+    ctx.fillText((comp.value||60)+'Ω', 0, 32);
+
+  } else if(type === 'ground') {
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2;
+    drawLine(ctx,0,0,0,20);
+    drawLine(ctx,-14,20,14,20);
+    drawLine(ctx,-9,26,9,26);
+    drawLine(ctx,-4,32,4,32);
+
+  } else if(type === 'ammeter') {
+    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+    drawLine(ctx,-40,0,-18,0);
+    drawLine(ctx,18,0,40,0);
+    ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2);
+    ctx.fillStyle = '#0d1120'; ctx.fill();
+    ctx.strokeStyle = '#3b82f6'; ctx.stroke();
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = 'bold 13px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('A', 0, 0);
+    ctx.textBaseline='alphabetic';
+
+  } else if(type === 'voltmeter') {
+    ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 2;
+    drawLine(ctx,-40,0,-18,0);
+    drawLine(ctx,18,0,40,0);
+    ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2);
+    ctx.fillStyle = '#0d1120'; ctx.fill();
+    ctx.strokeStyle = '#a78bfa'; ctx.stroke();
+    ctx.fillStyle = '#a78bfa';
+    ctx.font = 'bold 13px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('V', 0, 0);
+    ctx.textBaseline='alphabetic';
+
+  } else if(type === 'junction') {
+    ctx.fillStyle = '#f59e0b';
+    fillCircle(ctx, 0, 0, 6);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawLine(ctx, x1,y1,x2,y2) {
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+}
+function fillCircle(ctx, x,y,r) {
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+}
+
+// ============================================================
+//  DRAW TERMINAL HIGHLIGHTS
+// ============================================================
+function drawTerminals(comp, hoveredTermIdx) {
+  const terms = getTerminals(comp);
+  terms.forEach((t, i) => {
+    const {x: cx2, y: cy2} = worldToCanvas(t.x, t.y);
+    ctx.save();
+    if(i === hoveredTermIdx) {
+      ctx.fillStyle = '#10b981';
+      ctx.shadowBlur = 12; ctx.shadowColor = '#10b981';
+    } else {
+      ctx.fillStyle = '#58a6ff';
+      ctx.shadowBlur = 6; ctx.shadowColor = '#58a6ff';
+    }
+    fillCircle(ctx, cx2, cy2, 4 * scale * Math.min(1,0.5/scale + 0.5));
+    ctx.restore();
+  });
+}
+
+// ============================================================
+//  PARTICLES
+// ============================================================
+function updateParticles(dt) {
+  wires.forEach(w => {
+    const pts = particleMap[w.id];
+    if(!pts) return;
+    const I = Math.abs(w.current || 0);
+    const spd = Math.min(I * 60, 200); // px/s in world space
+    const dir = (w.current||0) >= 0 ? 1 : -1;
+    const wLen = Math.abs(w.x2-w.x1) + Math.abs(w.y2-w.y1);
+    const advance = wLen > 0 ? (spd * dt) / wLen : 0;
+
+    pts.forEach(p => {
+      if(I > 0.001) {
+        p.t += advance * dir;
+        if(p.t > 1) p.t -= 1;
+        if(p.t < 0) p.t += 1;
+      }
+    });
+  });
+}
+
+function getParticlePos(w, t) {
+  // L-shaped: horizontal first, then vertical
+  const mx = w.x2, my = w.y1;
+  const seg1 = Math.abs(mx - w.x1);
+  const seg2 = Math.abs(w.y2 - my);
+  const total = seg1 + seg2;
+  if(total === 0) return {x: w.x1, y: w.y1};
+  const dist = t * total;
+  if(dist <= seg1) {
+    const tt = seg1>0 ? dist/seg1 : 0;
+    return {x: w.x1 + (mx-w.x1)*tt, y: w.y1};
+  } else {
+    const rem = dist - seg1;
+    const tt = seg2>0 ? rem/seg2 : 0;
+    return {x: mx, y: my + (w.y2-my)*tt};
+  }
+}
+
+function drawParticles(w) {
+  const pts = particleMap[w.id];
+  if(!pts) return;
+  const I = Math.abs(w.current || 0);
+  const col = currentColor(I);
+
+  pts.forEach(p => {
+    const pos = getParticlePos(w, p.t);
+    const {x: cx2, y: cy2} = worldToCanvas(pos.x, pos.y);
+    ctx.save();
+    ctx.shadowBlur = 8; ctx.shadowColor = col;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(cx2, cy2, Math.max(2, 3*scale), 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ============================================================
+//  DRAW WIRE
+// ============================================================
+function drawWire(w) {
+  const I = w.current || 0;
+  const col = currentColor(I);
+  const lw = I > 0.01 ? Math.min(2+Math.abs(I)*0.5, 4) : 2;
+
+  const sx = w.x1*scale+panX, sy = w.y1*scale+panY;
+  const ex = w.x2*scale+panX, ey = w.y2*scale+panY;
+  const mx = w.x2*scale+panX, my = w.y1*scale+panY;
+
+  ctx.save();
+  if(Math.abs(I) > 0.1) {
+    ctx.shadowBlur = Math.min(Math.abs(I)*8, 20);
+    ctx.shadowColor = col;
+  }
+  ctx.strokeStyle = col;
+  ctx.lineWidth = lw * scale;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(mx, my);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ============================================================
+//  DRAW GRID
+// ============================================================
+function drawGrid() {
+  const startX = (-panX / scale / GRID | 0) * GRID;
+  const startY = (-panY / scale / GRID | 0) * GRID;
+  const endX = startX + canvasW/scale + GRID;
+  const endY = startY + canvasH/scale + GRID;
+
+  for(let wx = startX; wx < endX; wx += GRID) {
+    for(let wy = startY; wy < endY; wy += GRID) {
+      const isMajor = (Math.round(wx/GRID) % 5 === 0) && (Math.round(wy/GRID) % 5 === 0);
+      const {x: cx2, y: cy2} = worldToCanvas(wx, wy);
+      ctx.fillStyle = isMajor ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.035)';
+      ctx.beginPath();
+      ctx.arc(cx2, cy2, isMajor ? 1.5 : 1, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+}
+
+// ============================================================
+//  MAIN RENDER LOOP
+// ============================================================
+function loop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
+
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  // Background
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  drawGrid();
+
+  // Run analysis
+  analyzeCircuit();
+  updateParticles(dt);
+
+  // Draw wires
+  wires.forEach(w => drawWire(w));
+
+  // Draw particles
+  wires.forEach(w => drawParticles(w));
+
+  // Draw junction dots where 3+ wires meet
+  drawJunctionDots();
+
+  // Draw components
+  const hoveredCompIdx = getHoveredCompIdx();
+  components.forEach((comp, idx) => {
+    const {x: cx2, y: cy2} = worldToCanvas(comp.x, comp.y);
+    ctx.save();
+    ctx.translate(cx2, cy2);
+    ctx.scale(scale, scale);
+    const I = comp.compI || 0;
+    drawComponent(ctx, comp, comp.x, comp.y, I, comp===selectedComp, idx===hoveredCompIdx);
+    ctx.restore();
+  });
+
+  // Draw terminal highlights in wire mode
+  if(mode === 'wire') {
+    components.forEach(comp => {
+      const hw = getHoveredTerminalFor(comp);
+      if(hw >= 0 || wireStart) {
+        drawTerminals(comp, hw);
+      }
+    });
+  }
+
+  // Draw wire being placed (ghost)
+  if(wireStart) {
+    const {x: sx, y: sy} = worldToCanvas(wireStart.x, wireStart.y);
+    const ex = mouseCanvasX, ey = mouseCanvasY;
+    const mx = ex, my = sy;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(88,166,255,0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(mx, my);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Start dot
+    ctx.fillStyle = '#10b981';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#10b981';
+    fillCircle(ctx, sx, sy, 5);
+    ctx.restore();
+  }
+
+  // Draw ghost component when placing
+  if(mode === 'place' && placeType) {
+    const wx2 = snap(mouseWorldX), wy2 = snap(mouseWorldY);
+    const {x: cx2, y: cy2} = worldToCanvas(wx2, wy2);
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.translate(cx2, cy2);
+    ctx.scale(scale, scale);
+    drawComponent(ctx, {type:placeType, value:COMP_DEFS.find(d=>d.type===placeType)?.defaultVal||0, closed:false}, 0,0,0,false,false);
+    ctx.restore();
+  }
+
+  // Draw selection box
+  dashOffset += 0.5;
+  if(selectedComp) {
+    const {x: cx2, y: cy2} = worldToCanvas(selectedComp.x, selectedComp.y);
+    const hw = TERM_OFFSET + 8;
+    const hh = 28;
+    ctx.save();
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6,4]);
+    ctx.lineDashOffset = -dashOffset;
+    ctx.shadowBlur = 6; ctx.shadowColor = '#f59e0b';
+    ctx.strokeRect(cx2 - hw*scale, cy2 - hh*scale, hw*2*scale, hh*2*scale);
+    ctx.restore();
+  }
+
+  // Update status bar
+  document.getElementById('statusComponents').textContent = components.length + ' components';
+  document.getElementById('statusWires').textContent = wires.length + ' wires';
+  document.getElementById('statusZoom').textContent = 'Zoom: ' + Math.round(scale*100) + '%';
+
+  // Update sel panel values (live)
+  if(selectedComp) {
+    document.getElementById('selVoltage').textContent = fmtVal(selectedComp.compV||0,2) + ' V';
+    document.getElementById('selCurrent').textContent = fmtVal(selectedComp.compI||0,3) + ' A';
+    document.getElementById('selPower').textContent = fmtVal(selectedComp.compP||0,3) + ' W';
+  }
+
+  frameId = requestAnimationFrame(loop);
+}
+
+function fmtVal(v, d=2) {
+  return isFinite(v) ? v.toFixed(d) : '∞';
+}
+
+function getHoveredCompIdx() {
+  for(let i=components.length-1;i>=0;i--) {
+    if(hitTestComp(components[i], mouseWorldX, mouseWorldY)) return i;
+  }
+  return -1;
+}
+
+function getHoveredTerminalFor(comp) {
+  if(mode !== 'wire') return -1;
+  return hitTestTerminal(comp, mouseWorldX, mouseWorldY);
+}
+
+// ============================================================
+//  JUNCTION DOTS
+// ============================================================
+function drawJunctionDots() {
+  const endpointCount = {};
+  function addPoint(x, y) {
+    const k = `${Math.round(x)},${Math.round(y)}`;
+    endpointCount[k] = (endpointCount[k]||0)+1;
+  }
+  wires.forEach(w => {
+    addPoint(w.x1, w.y1);
+    addPoint(w.x2, w.y2);
+  });
+  Object.entries(endpointCount).forEach(([k, count]) => {
+    if(count >= 3) {
+      const [wx, wy] = k.split(',').map(Number);
+      const {x, y} = worldToCanvas(wx, wy);
+      ctx.save();
+      ctx.fillStyle = '#f59e0b';
+      ctx.shadowBlur = 8; ctx.shadowColor = '#f59e0b';
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+  });
+}
+
+// ============================================================
+//  VIEW CONTROLS
+// ============================================================
+function zoom(factor) {
+  const cx2 = canvasW/2, cy2 = canvasH/2;
+  const newScale = Math.max(0.25, Math.min(4, scale * factor));
+  const ratio = newScale / scale;
+  panX = cx2 - (cx2 - panX) * ratio;
+  panY = cy2 - (cy2 - panY) * ratio;
+  scale = newScale;
+  updateZoomUI();
+}
+
+function resetView() {
+  scale = 1;
+  panX = canvasW / 2;
+  panY = canvasH / 2;
+  updateZoomUI();
+}
+
+function updateZoomUI() {
+  const pct = Math.round(scale*100)+'%';
+  document.getElementById('zoomDisplay').textContent = pct;
+  document.getElementById('statusZoom').textContent = 'Zoom: '+pct;
+}
+
+// ============================================================
+//  CLEAR
+// ============================================================
+function clearAll() {
+  if(components.length===0 && wires.length===0) return;
+  pushUndo();
+  components = [];
+  wires = [];
+  particleMap = {};
+  selectedComp = null;
+  selectedWire = null;
+  updateSelPanel();
+}
+
+// ============================================================
+//  EXPORT PNG
+// ============================================================
+function exportPNG() {
+  // Render to a fresh offscreen canvas
+  const exp = document.createElement('canvas');
+  exp.width = canvasW * dpr;
+  exp.height = canvasH * dpr;
+  const ec = exp.getContext('2d');
+  ec.scale(dpr, dpr);
+  ec.fillStyle = '#0d1117';
+  ec.fillRect(0, 0, canvasW, canvasH);
+
+  // Copy current frame
+  ec.drawImage(canvas, 0, 0, canvasW, canvasH);
+
+  const link = document.createElement('a');
+  link.download = 'circuit.png';
+  link.href = exp.toDataURL('image/png');
+  link.click();
+}
+
+// ============================================================
+//  PRESETS
+// ============================================================
+function loadPreset(name) {
+  pushUndo();
+  components = [];
+  wires = [];
+  particleMap = {};
+  selectedComp = null;
+  idCounter = 1;
+
+  const cx = 0, cy = 0;
+  const G = GRID;
+
+  if(name === 'series') {
+    // Battery left, resistor top, bulb right — rectangular loop
+    const bat = createComp('battery',  -7*G, 0);
+    const res = createComp('resistor',  0, -5*G);
+    const blb = createComp('bulb',      7*G, 0);
+
+    bat.value = 9; res.value = 100; blb.value = 60;
+
+    components.push(bat, res, blb);
+
+    // Wire bat+ (right) up to res left
+    const w1 = createWire(bat.id,1,res.id,0, bat.x+TERM_OFFSET,bat.y, res.x-TERM_OFFSET,res.y);
+    // Wire res right to blb left
+    const w2 = createWire(res.id,1,blb.id,0, res.x+TERM_OFFSET,res.y, blb.x-TERM_OFFSET,blb.y);
+    // Wire blb right down to bat- left — use junction points
+    // Go via bottom: blb right -> bat left
+    const jRight = createComp('junction', blb.x+TERM_OFFSET, 4*G);
+    const jLeft  = createComp('junction', bat.x-TERM_OFFSET, 4*G);
+    components.push(jRight, jLeft);
+    const w3 = createWire(blb.id,1,jRight.id,0, blb.x+TERM_OFFSET,blb.y, jRight.x,jRight.y);
+    const w4 = createWire(jRight.id,0,jLeft.id,0, jRight.x,jRight.y, jLeft.x,jLeft.y);
+    const w5 = createWire(jLeft.id,0,bat.id,0, jLeft.x,jLeft.y, bat.x-TERM_OFFSET,bat.y);
+    wires.push(w1,w2,w3,w4,w5);
+
+  } else if(name === 'parallel') {
+    const bat = createComp('battery',   -8*G, 0);
+    const res = createComp('resistor',   2*G, -4*G);
+    const blb = createComp('bulb',       2*G,  4*G);
+
+    bat.value=9; res.value=100; blb.value=60;
+
+    const jTopL  = createComp('junction', -2*G, -4*G);
+    const jTopR  = createComp('junction',  6*G, -4*G);
+    const jBotL  = createComp('junction', -2*G,  4*G);
+    const jBotR  = createComp('junction',  6*G,  4*G);
+
+    components.push(bat,res,blb,jTopL,jTopR,jBotL,jBotR);
+
+    // Battery + -> top left junction
+    const w1 = createWire(bat.id,1,jTopL.id,0, bat.x+TERM_OFFSET,bat.y, jTopL.x,jTopL.y);
+    // Battery - -> bottom left junction
+    const w2 = createWire(bat.id,0,jBotL.id,0, bat.x-TERM_OFFSET,bat.y, jBotL.x,jBotL.y);
+    // Top rail: jTopL -> res left
+    const w3 = createWire(jTopL.id,0,res.id,0, jTopL.x,jTopL.y, res.x-TERM_OFFSET,res.y);
+    // res right -> jTopR
+    const w4 = createWire(res.id,1,jTopR.id,0, res.x+TERM_OFFSET,res.y, jTopR.x,jTopR.y);
+    // Top right -> bottom right
+    const w5 = createWire(jTopR.id,0,jBotR.id,0, jTopR.x,jTopR.y, jBotR.x,jBotR.y);
+    // Bottom rail: jBotL -> blb left
+    const w6 = createWire(jBotL.id,0,blb.id,0, jBotL.x,jBotL.y, blb.x-TERM_OFFSET,blb.y);
+    // blb right -> jBotR
+    const w7 = createWire(blb.id,1,jBotR.id,0, blb.x+TERM_OFFSET,blb.y, jBotR.x,jBotR.y);
+    wires.push(w1,w2,w3,w4,w5,w6,w7);
+
+  } else if(name === 'rc') {
+    const bat = createComp('battery',  -7*G, 0);
+    const res = createComp('resistor',  0,  -5*G);
+    const cap = createComp('capacitor', 7*G, 0);
+
+    bat.value=9; res.value=1000; cap.value=100;
+
+    const jTL = createComp('junction', -2*G, -5*G);
+    const jTR = createComp('junction',  4*G, -5*G);
+    const jBL = createComp('junction', -7*G-TERM_OFFSET, 4*G);
+    const jBR = createComp('junction',  7*G+TERM_OFFSET, 4*G);
+
+    components.push(bat,res,cap,jTL,jTR,jBL,jBR);
+
+    const w1 = createWire(bat.id,1,jTL.id,0, bat.x+TERM_OFFSET,bat.y, jTL.x,jTL.y);
+    const w2 = createWire(jTL.id,0,res.id,0, jTL.x,jTL.y, res.x-TERM_OFFSET,res.y);
+    const w3 = createWire(res.id,1,jTR.id,0, res.x+TERM_OFFSET,res.y, jTR.x,jTR.y);
+    const w4 = createWire(jTR.id,0,cap.id,1, jTR.x,jTR.y, cap.x+TERM_OFFSET,cap.y);
+    const w5 = createWire(bat.id,0,jBL.id,0, bat.x-TERM_OFFSET,bat.y, jBL.x,jBL.y);
+    const w6 = createWire(jBL.id,0,jBR.id,0, jBL.x,jBL.y, jBR.x,jBR.y);
+    const w7 = createWire(jBR.id,0,cap.id,0, jBR.x,jBR.y, cap.x-TERM_OFFSET,cap.y);
+    wires.push(w1,w2,w3,w4,w5,w6,w7);
+
+  } else if(name === 'divider') {
+    const bat = createComp('battery',  -8*G, 0);
+    const r1  = createComp('resistor', -1*G, -4*G);
+    const r2  = createComp('resistor',  5*G, -4*G);
+
+    bat.value=12; r1.value=100; r2.value=200;
+
+    const jTL = createComp('junction', -5*G, -4*G);
+    const jMid= createComp('junction',  3*G, -4*G);
+    const jTR = createComp('junction',  9*G, -4*G);
+    const jBL = createComp('junction', -8*G-TERM_OFFSET, 4*G);
+    const jBR = createComp('junction',  9*G, 4*G);
+
+    components.push(bat,r1,r2,jTL,jMid,jTR,jBL,jBR);
+
+    const w1 = createWire(bat.id,1,jTL.id,0, bat.x+TERM_OFFSET,bat.y, jTL.x,jTL.y);
+    const w2 = createWire(jTL.id,0,r1.id,0, jTL.x,jTL.y, r1.x-TERM_OFFSET,r1.y);
+    const w3 = createWire(r1.id,1,jMid.id,0, r1.x+TERM_OFFSET,r1.y, jMid.x,jMid.y);
+    const w4 = createWire(jMid.id,0,r2.id,0, jMid.x,jMid.y, r2.x-TERM_OFFSET,r2.y);
+    const w5 = createWire(r2.id,1,jTR.id,0, r2.x+TERM_OFFSET,r2.y, jTR.x,jTR.y);
+    const w6 = createWire(jTR.id,0,jBR.id,0, jTR.x,jTR.y, jBR.x,jBR.y);
+    const w7 = createWire(bat.id,0,jBL.id,0, bat.x-TERM_OFFSET,bat.y, jBL.x,jBL.y);
+    const w8 = createWire(jBL.id,0,jBR.id,0, jBL.x,jBL.y, jBR.x,jBR.y);
+    wires.push(w1,w2,w3,w4,w5,w6,w7,w8);
+  }
+
+  resetView();
+}
+
+// ============================================================
+//  BOOT
+// ============================================================
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('../service-worker.js').catch(() => {});
+}
+</script>
+<style>
+  .sparty-disclaimer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sparty-disclaimer-overlay.active {
+    display: flex;
+  }
+
+  .sparty-disclaimer-modal {
+    background-color: #161b22;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+
+  .sparty-disclaimer-modal h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e6edf3;
+  }
+
+  .sparty-disclaimer-modal a {
+    color: #f59e0b;
+    text-decoration: none;
+  }
+
+  .sparty-disclaimer-modal a:hover {
+    text-decoration: underline;
+  }
+
+  .sparty-disclaimer-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: flex-end;
+  }
+
+  .sparty-disclaimer-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sparty-disclaimer-btn-accept {
+    background-color: #10b981;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-accept:hover {
+    background-color: #059669;
+  }
+
+  .sparty-disclaimer-btn-back {
+    background-color: #6b7280;
+    color: white;
+  }
+
+  .sparty-disclaimer-btn-back:hover {
+    background-color: #4b5563;
+  }
+
+  body.sparty-disclaimer-active {
+    pointer-events: none;
+  }
+
+  body.sparty-disclaimer-active .sparty-disclaimer-overlay {
+    pointer-events: auto;
+  }
+</style>
+
+<div class="sparty-disclaimer-overlay" id="spartyDisclaimerOverlay">
+  <div class="sparty-disclaimer-modal">
+    <h2>Important Disclaimer</h2>
+    <p>SparkStudy is an educational supplement tool designed to assist with electrician apprenticeship exam preparation. This platform does NOT guarantee passing any exam, certification, or achieving any particular score. Your results depend on your individual effort, prior knowledge, formal education, and hands-on training. By continuing, you acknowledge that SparkStudy and its operators accept no responsibility for your exam results or career outcomes. For full details, please review our <a href="terms.html" target="_blank">Terms & Conditions</a>.</p>
+    <div class="sparty-disclaimer-buttons">
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-back" id="spartyDisclaimerBack">Go Back</button>
+      <button class="sparty-disclaimer-btn sparty-disclaimer-btn-accept" id="spartyDisclaimerAccept">I Understand & Accept</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const DISCLAIMER_KEY = 'sparty_disclaimer_accepted';
+    const overlay = document.getElementById('spartyDisclaimerOverlay');
+    const acceptBtn = document.getElementById('spartyDisclaimerAccept');
+    const backBtn = document.getElementById('spartyDisclaimerBack');
+
+    function showDisclaimer() {
+      overlay.classList.add('active');
+      document.body.classList.add('sparty-disclaimer-active');
+    }
+
+    function hideDisclaimer() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('sparty-disclaimer-active');
+    }
+
+    function acceptDisclaimer() {
+      localStorage.setItem(DISCLAIMER_KEY, 'true');
+      hideDisclaimer();
+    }
+
+    function goBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Check if disclaimer has been accepted
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Wait for DOM to be fully ready, then show disclaimer
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDisclaimer);
+      } else {
+        showDisclaimer();
+      }
+    }
+
+    // Event listeners
+    acceptBtn.addEventListener('click', acceptDisclaimer);
+    backBtn.addEventListener('click', goBack);
+  })();
+</script>
+
+<script>
+function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
+document.addEventListener('DOMContentLoaded',function(){
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+});
+</script>
+</body>
+</html>
