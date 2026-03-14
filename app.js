@@ -28,16 +28,16 @@ const CASHBACK_SCALE = [
 
 // ===== ALBERTA POLYTECHNIC SCHOOLS =====
 const SCHOOLS_LIST = [
-  { id: 'sait',          name: 'SAIT' },
-  { id: 'nait',          name: 'NAIT' },
-  { id: 'lakeland',      name: 'Lakeland' },
-  { id: 'lethbridge',    name: 'Lethbridge Poly' },
-  { id: 'red-deer',      name: 'Red Deer Poly' },
-  { id: 'medicine-hat',  name: 'Medicine Hat' },
-  { id: 'keyano',        name: 'Keyano' },
-  { id: 'northwestern',  name: 'Northwestern' },
-  { id: 'northern-lakes',name: 'Northern Lakes' },
-  { id: 'portage',       name: 'Portage' },
+  { id: 'sait',          name: 'SAIT',              short: 'SAIT' },
+  { id: 'nait',          name: 'NAIT',              short: 'NAIT' },
+  { id: 'lakeland',      name: 'Lakeland',          short: 'Lakeland' },
+  { id: 'lethbridge',    name: 'Lethbridge Poly',   short: 'Leth.' },
+  { id: 'red-deer',      name: 'Red Deer Poly',     short: 'RDP' },
+  { id: 'medicine-hat',  name: 'Medicine Hat',      short: 'MHC' },
+  { id: 'keyano',        name: 'Keyano',            short: 'Keyano' },
+  { id: 'northwestern',  name: 'Northwestern',      short: 'NWP' },
+  { id: 'northern-lakes',name: 'Northern Lakes',    short: 'NLC' },
+  { id: 'portage',       name: 'Portage',           short: 'Portage' },
 ];
 
 // ===== FIREBASE BRIDGE =====
@@ -489,7 +489,9 @@ function recordStudy(state) {
   const wasNewDay = state.sessions.lastStudy !== today;
   if (!state.sessions.daily[today]) state.sessions.daily[today] = { flashcards: 0, exams: 0, time: 0 };
   state = updateStreak(state);
+  state.sessions.lastActive = Date.now();
   Storage.set(state);
+  FireDB.saveUser(state);
   // Award daily login points once per day
   if (wasNewDay && !state.user.isOwner) {
     setTimeout(() => {
@@ -10938,12 +10940,18 @@ const Leaderboard = {
                   const cbBadge = cb > 0 ? `<span style="font-size:0.65rem;background:rgba(34,197,94,0.15);color:#22c55e;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700;">$${cb} back</span>` : '';
                   return `<span style="font-size:0.72rem;color:var(--text-muted);">Exam: <strong style="color:var(--text-primary);">${u.bestExam}%</strong>${cbBadge}</span>`;
                 })() : '';
+                const schoolName = u.school ? (SCHOOLS_LIST.find(s=>s.id===u.school)||{short:u.school}).short || u.school : '';
+                const recentlyActive = u.lastActive && (Date.now() - u.lastActive) < 15 * 60 * 1000;
+                const activeDot = recentlyActive ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:4px;box-shadow:0 0 4px #22c55e;" title="Online now"></span>` : '';
                 return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:${isMe?'rgba(245,158,11,0.06)':'transparent'};transition:background 0.2s;" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='${isMe?'rgba(245,158,11,0.06)':'transparent'}'">
                   <div style="width:30px;text-align:center;font-size:${i<3?'1.2rem':'0.85rem'};flex-shrink:0;">${medal}</div>
-                  <div style="width:34px;height:34px;border-radius:50%;background:${isMe?'var(--accent)':'var(--bg-secondary)'};color:${isMe?'#000':'var(--text-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.88rem;flex-shrink:0;">${u.avatar}</div>
+                  <div style="width:34px;height:34px;border-radius:50%;background:${isMe?'var(--accent)':'var(--bg-secondary)'};color:${isMe?'#000':'var(--text-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.88rem;flex-shrink:0;position:relative;">
+                    ${u.avatar}
+                    ${recentlyActive ? `<span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid var(--bg-primary);"></span>` : ''}
+                  </div>
                   <div style="flex:1;min-width:0;">
-                    <div style="font-weight:${isMe?'700':'500'};font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.name}${isMe?' (you)':''}</div>
-                    <div style="font-size:0.7rem;color:${rank.color};display:flex;align-items:center;gap:8px;flex-wrap:wrap;">${rank.badge} ${rank.name}${u.streak>0?` · ${u.streak}&#x1F525;`:''}${examBadge?` · ${examBadge}`:''}</div>
+                    <div style="font-weight:${isMe?'700':'500'};font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${activeDot}${u.name}${isMe?' (you)':''}</div>
+                    <div style="font-size:0.7rem;color:${rank.color};display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rank.badge} ${rank.name}${schoolName?`<span style="color:var(--text-muted);">· ${schoolName}</span>`:''}${u.period?`<span style="color:var(--text-muted);">P${u.period}</span>`:''}${u.streak>0?` · ${u.streak}&#x1F525;`:''}${examBadge?` · ${examBadge}`:''}</div>
                   </div>
                   <div style="font-weight:700;font-size:0.92rem;color:${i===0?'#f59e0b':i===1?'#9ca3af':i===2?'#cd7c2f':'var(--text-primary)'};text-align:right;flex-shrink:0;">${pts.toLocaleString()}<span style="font-size:0.7rem;font-weight:400;color:var(--text-muted);margin-left:2px;">pts</span></div>
                 </div>`;
