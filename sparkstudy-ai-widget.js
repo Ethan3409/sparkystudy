@@ -307,14 +307,13 @@
     panel.classList.remove('ss-open');
   }
 
-  // Hook into existing askaiBtn
-  const existingBtn = document.getElementById('askaiBtn');
-  if (existingBtn) {
-    existingBtn.addEventListener('click', function (e) {
+  // Hook into askaiBtn via event delegation (works even if button is added after widget loads)
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.closest('#askaiBtn')) {
       e.stopPropagation();
       panel.classList.contains('ss-open') ? closePanel() : openPanel();
-    });
-  }
+    }
+  });
   panel.querySelector('#ss-ai-close').addEventListener('click', closePanel);
 
   // ── Welcome message ───────────────────────────────────────────────────────
