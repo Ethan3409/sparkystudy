@@ -820,24 +820,120 @@ const Diagnostic = {
   currentIndex: 0,
   answers: [],
   startTime: null,
+  _selectedTopics: [],
+  _isRetake: false,
 
   render(state) {
     const container = document.getElementById('diagContent');
-    if (state && state.diagnostic.completed) {
+    const header = document.getElementById('diagHeader');
+    // If completed and not a retake, go to dashboard
+    if (state && state.diagnostic.completed && !this._isRetake) {
       App.navigate('dashboard');
       return;
     }
-    // Filter questions for the user's period
-    this.questions = DIAGNOSTIC_QUESTIONS.filter(dq => {
-      const t = TOPICS[dq.topic];
-      return t && t.period <= state.user.period;
-    });
-    // Shuffle
-    this.questions = this.questions.sort(() => Math.random() - 0.5);
+    this._isRetake = false;
+    if (header) header.innerHTML = '<h1>&#x1F9E0; Diagnostic Assessment</h1><p style="color:var(--text-secondary);margin-top:8px;">Tell us what you\'ve covered — we\'ll test only those topics.</p>';
+    this._renderTopicSelect(state, container);
+  },
+
+  // ── Screen 1: Topic Selection ─────────────────────────────────────────
+  _renderTopicSelect(state, container) {
+    const period = (state && state.user && state.user.period) || 1;
+    const allTopics = Object.values(TOPICS).filter(t => t.period <= period).sort((a,b) => a.order - b.order);
+
+    // Group by period
+    const byPeriod = {};
+    for (const t of allTopics) {
+      if (!byPeriod[t.period]) byPeriod[t.period] = [];
+      byPeriod[t.period].push(t);
+    }
+
+    const total = allTopics.length;
+    const selectedCount = this._selectedTopics.filter(id => allTopics.find(t => t.id === id)).length;
+
+    container.innerHTML = `
+      <div style="max-width:600px;margin:0 auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:0.85rem;color:var(--text-secondary);">Select topics you have already studied</div>
+          <div id="diagTopicCount" style="font-size:0.82rem;font-weight:700;color:var(--accent);">${selectedCount} / ${total} selected</div>
+        </div>
+
+        ${Object.entries(byPeriod).map(([p, topics]) => `
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
+              <div style="font-weight:700;font-size:0.92rem;">Period ${p} Topics</div>
+              <button class="btn btn-ghost btn-sm" onclick="Diagnostic._togglePeriod(${p})" style="font-size:0.78rem;">Select All</button>
+            </div>
+            <div style="padding:12px 16px;display:grid;gap:8px;">
+              ${topics.map(t => `
+                <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid ${this._selectedTopics.includes(t.id) ? 'var(--accent)' : 'var(--border)'};background:${this._selectedTopics.includes(t.id) ? 'rgba(245,158,11,0.06)' : 'transparent'};transition:all 0.15s;" onclick="Diagnostic._toggleTopic('${t.id}', ${p})">
+                  <div style="width:20px;height:20px;border-radius:5px;border:2px solid ${this._selectedTopics.includes(t.id) ? 'var(--accent)' : 'var(--border)'};background:${this._selectedTopics.includes(t.id) ? 'var(--accent)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;">
+                    ${this._selectedTopics.includes(t.id) ? '<span style="color:#000;font-size:12px;font-weight:900;">✓</span>' : ''}
+                  </div>
+                  <span style="font-size:0.88rem;">${t.icon} ${t.name}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:14px;text-align:center;">Only select topics you\'ve actually studied. Your results will only be as accurate as your selections.</p>
+
+        <button id="diagStartBtn" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:14px;opacity:${this._selectedTopics.length > 0 ? '1' : '0.4'};" onclick="Diagnostic._startQuiz()" ${this._selectedTopics.length === 0 ? 'disabled' : ''}>
+          Start Diagnostic (${this._buildQuestionSet().length} questions) &#8594;
+        </button>
+      </div>
+    `;
+  },
+
+  _toggleTopic(id, period) {
+    const idx = this._selectedTopics.indexOf(id);
+    if (idx >= 0) this._selectedTopics.splice(idx, 1);
+    else this._selectedTopics.push(id);
+    this._renderTopicSelect(Storage.get(), document.getElementById('diagContent'));
+  },
+
+  _togglePeriod(period) {
+    const periodTopics = Object.values(TOPICS).filter(t => t.period === period).map(t => t.id);
+    const allSelected = periodTopics.every(id => this._selectedTopics.includes(id));
+    if (allSelected) {
+      this._selectedTopics = this._selectedTopics.filter(id => !periodTopics.includes(id));
+    } else {
+      for (const id of periodTopics) {
+        if (!this._selectedTopics.includes(id)) this._selectedTopics.push(id);
+      }
+    }
+    this._renderTopicSelect(Storage.get(), document.getElementById('diagContent'));
+  },
+
+  // ── Build question set from selected topics ───────────────────────────
+  _buildQuestionSet() {
+    if (this._selectedTopics.length === 0) return [];
+    const perTopic = Math.min(5, Math.max(3, Math.floor(40 / this._selectedTopics.length)));
+    let questions = [];
+    for (const topicId of this._selectedTopics) {
+      const topicQs = DIAGNOSTIC_QUESTIONS.filter(q => q.topic === topicId);
+      const shuffled = topicQs.sort(() => Math.random() - 0.5).slice(0, perTopic);
+      questions = questions.concat(shuffled);
+    }
+    // Cap at 40, shuffle the full set
+    return questions.sort(() => Math.random() - 0.5).slice(0, 40);
+  },
+
+  // ── Screen 2: Quiz ────────────────────────────────────────────────────
+  _startQuiz() {
+    if (this._selectedTopics.length === 0) return;
+    this.questions = this._buildQuestionSet();
+    if (this.questions.length === 0) {
+      showToast('No questions available for selected topics yet. More coming soon!', 'info');
+      return;
+    }
     this.currentIndex = 0;
     this.answers = new Array(this.questions.length).fill(null);
     this.startTime = Date.now();
-    this.renderQuestion(container);
+    const header = document.getElementById('diagHeader');
+    if (header) header.innerHTML = '<h1>&#x1F9E0; Diagnostic</h1><p style="color:var(--text-secondary);margin-top:8px;">Answer honestly — this shapes your study plan.</p>';
+    this.renderQuestion(document.getElementById('diagContent'));
   },
 
   renderQuestion(container) {
@@ -847,30 +943,41 @@ const Diagnostic = {
     const pct = ((this.currentIndex) / this.questions.length * 100).toFixed(0);
 
     container.innerHTML = `
-      <div class="diag-progress">
-        <div class="diag-counter">Question ${this.currentIndex + 1} of ${this.questions.length}</div>
-        <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
-      </div>
-      <div class="diag-topic-badge">${topic.icon} ${topic.name}</div>
-      <div class="diag-question">${q.q}</div>
-      <div class="diag-options">
-        ${q.options.map((opt, i) => `
-          <div class="diag-option ${this.answers[this.currentIndex] === i ? 'selected' : ''}" onclick="Diagnostic.selectAnswer(${i})">
-            <div class="option-letter">${String.fromCharCode(65 + i)}</div>
-            <div>${opt}</div>
+      <div style="max-width:620px;margin:0 auto;">
+        <div class="diag-progress" style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <div class="diag-counter" style="font-size:0.82rem;color:var(--text-muted);">Question ${this.currentIndex + 1} of ${this.questions.length}</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);">${topic ? `${topic.icon} ${topic.name}` : ''}</div>
           </div>
-        `).join('')}
-        <div class="diag-option ${this.answers[this.currentIndex] === -1 ? 'selected' : ''}" onclick="Diagnostic.selectAnswer(-1)" style="border-style:dashed;opacity:0.75;">
-          <div class="option-letter" style="background:rgba(100,116,139,0.2);color:var(--text-muted);">?</div>
-          <div style="color:var(--text-muted);font-style:italic;">Haven't learned this yet</div>
+          <div class="progress-bar"><div class="fill" style="width:${pct}%;transition:width 0.4s ease;"></div></div>
         </div>
-      </div>
-      <div class="diag-actions">
-        <button class="btn btn-secondary" ${this.currentIndex === 0 ? 'disabled' : ''} onclick="Diagnostic.prev()">&#8592; Previous</button>
-        ${this.currentIndex < this.questions.length - 1
-          ? `<button class="btn btn-primary" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.next()">Next &#8594;</button>`
-          : `<button class="btn btn-primary" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.finish()">Finish Assessment</button>`
-        }
+
+        <div class="diag-question" style="font-size:1.05rem;font-weight:600;margin-bottom:24px;line-height:1.5;">${q.q}</div>
+
+        <div class="diag-options" style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+          ${q.options.map((opt, i) => `
+            <div class="diag-option ${this.answers[this.currentIndex] === i ? 'selected' : ''}"
+              onclick="Diagnostic.selectAnswer(${i})"
+              style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:10px;border:2px solid ${this.answers[this.currentIndex] === i ? 'var(--accent)' : 'var(--border)'};background:${this.answers[this.currentIndex] === i ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)'};cursor:pointer;transition:all 0.15s;">
+              <div class="option-letter" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;background:${this.answers[this.currentIndex] === i ? 'var(--accent)' : 'var(--bg-secondary)'};color:${this.answers[this.currentIndex] === i ? '#000' : 'var(--text-secondary)'};">${String.fromCharCode(65 + i)}</div>
+              <div style="font-size:0.9rem;">${opt}</div>
+            </div>
+          `).join('')}
+
+          <div class="diag-option ${this.answers[this.currentIndex] === -1 ? 'selected' : ''}"
+            onclick="Diagnostic.selectAnswer(-1)"
+            style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:10px;border:2px dashed ${this.answers[this.currentIndex] === -1 ? 'rgba(100,116,139,0.7)' : 'var(--border)'};background:${this.answers[this.currentIndex] === -1 ? 'rgba(100,116,139,0.1)' : 'transparent'};cursor:pointer;transition:all 0.15s;margin-top:4px;">
+            <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;background:rgba(100,116,139,0.15);color:var(--text-muted);">?</div>
+            <div style="color:var(--text-muted);font-size:0.88rem;font-style:italic;">I haven\'t learned this yet</div>
+          </div>
+        </div>
+
+        <div class="diag-actions" style="display:flex;justify-content:flex-end;">
+          ${this.currentIndex < this.questions.length - 1
+            ? `<button class="btn btn-primary" style="padding:11px 28px;" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.next()">Next &#8594;</button>`
+            : `<button class="btn btn-primary" style="padding:11px 28px;" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.finish()">See My Results &#8594;</button>`
+          }
+        </div>
       </div>
     `;
   },
@@ -886,72 +993,238 @@ const Diagnostic = {
     this.renderQuestion();
   },
 
-  prev() {
-    if (this.currentIndex > 0) { this.currentIndex--; this.renderQuestion(); }
-  },
-
   finish() {
     if (this.answers[this.currentIndex] === null) return;
     const state = Storage.get();
     const timeSpent = Date.now() - this.startTime;
 
-    // Score by topic
-    const topicScores = {};
-    const topicCounts = {};
-    let totalCorrect = 0;
+    // Score by topic — 75% threshold per spec
+    const topicCorrect  = {};
+    const topicTotal    = {};
+    const topicNotCovered = {};
+    let coveredCorrect  = 0;
+    let coveredTotal    = 0;
 
-    const notLearnedTopics = {};
     this.questions.forEach((q, i) => {
-      const isNYL = this.answers[i] === -1;
-      const correct = !isNYL && this.answers[i] === q.correct;
-      if (correct) totalCorrect++;
-      if (isNYL) { notLearnedTopics[q.topic] = true; return; }
-      if (!topicScores[q.topic]) { topicScores[q.topic] = 0; topicCounts[q.topic] = 0; }
-      topicCounts[q.topic]++;
-      if (correct) topicScores[q.topic]++;
+      const isNYL    = this.answers[i] === -1;
+      const isCorrect = !isNYL && this.answers[i] === q.correct;
+
+      if (!topicCorrect[q.topic])  { topicCorrect[q.topic] = 0; topicTotal[q.topic] = 0; topicNotCovered[q.topic] = 0; }
+
+      if (isNYL) {
+        topicNotCovered[q.topic]++;
+      } else {
+        topicTotal[q.topic]++;
+        coveredTotal++;
+        if (isCorrect) { topicCorrect[q.topic]++; coveredCorrect++; }
+      }
     });
 
-    // Calculate percentages and find weak/strong
-    const topicPcts = {};
-    const weak = [];
-    const strong = [];
-    const notLearned = Object.keys(notLearnedTopics);
-    Object.keys(topicScores).forEach(tid => {
-      const pct = Math.round((topicScores[tid] / topicCounts[tid]) * 100);
-      topicPcts[tid] = pct;
-      if (pct < 60) weak.push(tid);
-      else if (pct >= 80) strong.push(tid);
-    });
+    // Categorize topics
+    const strong     = [];
+    const needsWork  = [];
+    const notCovered = [];
+    const topicPcts  = {};
 
-    // Sort weak by worst first
-    weak.sort((a, b) => topicPcts[a] - topicPcts[b]);
+    for (const tid of this._selectedTopics) {
+      const answered = topicTotal[tid] || 0;
+      const nyl      = topicNotCovered[tid] || 0;
+      const correct  = topicCorrect[tid] || 0;
 
-    const pct = Math.round((totalCorrect / this.questions.length) * 100);
+      if (answered === 0) {
+        // All questions were "haven't learned" → Not Covered
+        notCovered.push(tid);
+      } else {
+        const pct = Math.round((correct / answered) * 100);
+        topicPcts[tid] = pct;
+        if (pct >= 75) strong.push(tid);
+        else needsWork.push(tid);
+      }
+    }
 
-    const answeredTotal = this.questions.filter((_,i) => this.answers[i] !== -1).length || 1;
-    const answeredPct = Math.round((totalCorrect / answeredTotal) * 100);
-    state.diagnostic = {
-      completed: true,
-      completedDate: Date.now(),
-      responses: this.questions.map((q, i) => ({ qId: q.id, selected: this.answers[i], correct: q.correct, topic: q.topic, isCorrect: this.answers[i] === q.correct, isNYL: this.answers[i] === -1 })),
-      weakAreas: weak,
-      strongAreas: strong,
-      notLearnedAreas: notLearned,
-      topicPcts,
-      score: totalCorrect,
-      total: this.questions.length,
-      pct: answeredPct,
-      timeSpent
+    needsWork.sort((a,b) => (topicPcts[a]||0) - (topicPcts[b]||0));
+
+    // Build session record
+    const session = {
+      sessionId:      Date.now(),
+      dateTaken:      new Date().toISOString(),
+      topicsSelected: [...this._selectedTopics],
+      answers:        this.questions.map((q,i) => ({
+        questionId:  q.id,
+        topic:       q.topic,
+        given:       this.answers[i],
+        correct:     q.correct,
+        result:      this.answers[i] === -1 ? 'not_covered' : (this.answers[i] === q.correct ? 'correct' : 'incorrect'),
+      })),
+      summary: { strong, needsWork, notCovered, topicPcts, coveredCorrect, coveredTotal },
+      timeSpent,
     };
 
-    state.sessions.streak = 1;
-    state.sessions.streakStart = getToday();
-    state.sessions.lastStudy = getToday();
+    // Update state — keep full history, also update main diagnostic fields for backwards compat
+    if (!state.diagnostic.sessions) state.diagnostic.sessions = [];
+    state.diagnostic.sessions.push(session);
+    state.diagnostic.completed      = true;
+    state.diagnostic.completedDate  = Date.now();
+    state.diagnostic.weakAreas      = needsWork;
+    state.diagnostic.strongAreas    = strong;
+    state.diagnostic.notLearnedAreas = notCovered;
+    state.diagnostic.topicPcts      = topicPcts;
+    state.diagnostic.score          = coveredCorrect;
+    state.diagnostic.total          = coveredTotal;
+    state.diagnostic.pct            = coveredTotal > 0 ? Math.round((coveredCorrect / coveredTotal) * 100) : 0;
+    state.sessions.streak           = state.sessions.streak || 1;
+    state.sessions.lastStudy        = getToday();
+
     Storage.set(state);
+    FireDB.saveUser(state);
+    SiteAnalytics.track('diagnostic_complete', { userId: state.user.id, score: state.diagnostic.pct, weak: needsWork.length, strong: strong.length });
 
-    SiteAnalytics.track('diagnostic_complete', { userId: state.user.id, score: pct, weakAreas: weak.length, strongAreas: strong.length });
+    this.renderResults(state, session);
+  },
 
-    this.renderResults(state);
+  // ── Screen 3: Results ─────────────────────────────────────────────────
+  renderResults(state, session) {
+    if (!session) session = state.diagnostic.sessions && state.diagnostic.sessions[state.diagnostic.sessions.length - 1];
+    if (!session) { App.navigate('dashboard'); return; }
+
+    const container = document.getElementById('diagContent');
+    const header    = document.getElementById('diagHeader');
+    if (header) header.innerHTML = '<h1>&#x1F3C6; Diagnostic Complete</h1><p style="color:var(--text-secondary);margin-top:8px;">Here\'s exactly where you stand.</p>';
+
+    const { strong, needsWork, notCovered, topicPcts, coveredCorrect, coveredTotal } = session.summary;
+    const pct = coveredTotal > 0 ? Math.round((coveredCorrect / coveredTotal) * 100) : 0;
+    const sessionCount = (state.diagnostic.sessions || []).length;
+
+    const topicCard = (tid, color, pctVal) => {
+      const t = TOPICS[tid];
+      if (!t) return '';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-radius:8px;background:var(--bg-secondary);margin-bottom:6px;">
+        <span style="font-size:0.88rem;">${t.icon} ${t.name}</span>
+        ${pctVal !== undefined ? `<strong style="color:${color};font-size:0.85rem;">${pctVal}%</strong>` : '<span style="font-size:0.78rem;color:var(--text-muted);">Not tested</span>'}
+      </div>`;
+    };
+
+    container.innerHTML = `
+      <div style="max-width:620px;margin:0 auto;" class="slide-up">
+
+        <!-- Score summary -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;text-align:center;">
+          <div style="font-size:3rem;font-weight:900;color:var(--accent);line-height:1;">${pct}%</div>
+          <div style="font-size:0.92rem;color:var(--text-secondary);margin-top:6px;">
+            You scored <strong style="color:var(--text-primary);">${coveredCorrect}/${coveredTotal}</strong> on topics you've studied
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">
+            ${notCovered.length > 0 ? `${notCovered.length} topic${notCovered.length===1?'':'s'} marked as not covered yet — not counted against you` : 'All selected topics tested'}
+          </div>
+          ${sessionCount > 1 ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">Diagnostic #${sessionCount} · ${new Date(session.dateTaken).toLocaleDateString()}</div>` : ''}
+        </div>
+
+        ${needsWork.length > 0 ? `
+        <!-- Needs Work -->
+        <div style="background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius);padding:20px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:1.1rem;">⚠️</span>
+            <h3 style="margin:0;font-size:1rem;color:#f59e0b;">Needs Work</h3>
+            <span style="margin-left:auto;font-size:0.72rem;background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:700;">${needsWork.length} topic${needsWork.length===1?'':'s'}</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 14px;">These are your priority study areas. Below 75% correct.</p>
+          ${needsWork.map(tid => topicCard(tid, '#f59e0b', topicPcts[tid])).join('')}
+        </div>
+        ` : ''}
+
+        ${strong.length > 0 ? `
+        <!-- Strong -->
+        <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius);padding:20px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:1.1rem;">✅</span>
+            <h3 style="margin:0;font-size:1rem;color:#22c55e;">Strong Areas</h3>
+            <span style="margin-left:auto;font-size:0.72rem;background:rgba(34,197,94,0.12);color:#22c55e;padding:2px 8px;border-radius:10px;font-weight:700;">${strong.length} topic${strong.length===1?'':'s'}</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 14px;">You're solid here — spaced repetition will maintain this.</p>
+          ${strong.map(tid => topicCard(tid, '#22c55e', topicPcts[tid])).join('')}
+        </div>
+        ` : ''}
+
+        ${notCovered.length > 0 ? `
+        <!-- Not Covered -->
+        <div style="background:rgba(100,116,139,0.04);border:1px solid rgba(100,116,139,0.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:1.1rem;">📋</span>
+            <h3 style="margin:0;font-size:1rem;color:var(--text-muted);">Not Covered Yet</h3>
+            <span style="margin-left:auto;font-size:0.72rem;background:rgba(100,116,139,0.12);color:var(--text-muted);padding:2px 8px;border-radius:10px;font-weight:700;">${notCovered.length} topic${notCovered.length===1?'':'s'}</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 14px;">Come back and retest these once you've covered them in class.</p>
+          ${notCovered.map(tid => topicCard(tid, 'var(--text-muted)', undefined)).join('')}
+        </div>
+        ` : ''}
+
+        <!-- CTAs -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${needsWork.length > 0 ? `
+          <button class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:15px;" onclick="Diagnostic._startWeakStudy()">
+            &#x26A1; Start Studying My Weak Areas
+          </button>` : `
+          <button class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:15px;" onclick="App.navigate('dashboard')">
+            &#x2713; Go to Dashboard
+          </button>`}
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary" style="flex:1;" onclick="Diagnostic._retakeFromResults()">&#x1F504; Retake Diagnostic</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="App.navigate('dashboard')">&#x2192; Dashboard</button>
+          </div>
+        </div>
+
+        ${sessionCount > 1 ? `
+        <div style="margin-top:20px;">
+          <details>
+            <summary style="cursor:pointer;font-size:0.82rem;color:var(--text-muted);padding:8px 0;">&#x25B6; Diagnostic history (${sessionCount} sessions)</summary>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
+              ${(state.diagnostic.sessions || []).slice().reverse().map((s,i) => {
+                const d = s.summary;
+                const p = d.coveredTotal > 0 ? Math.round((d.coveredCorrect/d.coveredTotal)*100) : 0;
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;font-size:0.82rem;">
+                  <span style="color:var(--text-muted);">${new Date(s.dateTaken).toLocaleDateString()}</span>
+                  <span>${d.coveredCorrect}/${d.coveredTotal} covered</span>
+                  <strong style="color:${getMasteryColor(p)};">${p}%</strong>
+                </div>`;
+              }).join('')}
+            </div>
+          </details>
+        </div>
+        ` : ''}
+
+        <!-- Plan selection for new users -->
+        ${!state.user.subscription || state.user.subscription.plan === 'trial' ? `
+        <div style="margin-top:24px;" id="diagPlanSelect">
+          ${Diagnostic._planSelectHTML(state)}
+        </div>` : ''}
+      </div>
+    `;
+  },
+
+  _startWeakStudy() {
+    const state = Storage.get();
+    const weak  = state.diagnostic.weakAreas || [];
+    if (weak.length === 0) { App.navigate('flashcards'); return; }
+    // Set a filter so Flashcards shows only weak topic cards
+    state._weakStudyTopics = weak;
+    Storage.set(state);
+    App.navigate('flashcards');
+    showToast(`Studying ${weak.length} weak topic${weak.length===1?'':'s'} — let\'s close the gaps!`, 'success');
+  },
+
+  _retakeFromResults() {
+    this._selectedTopics = [];
+    this._isRetake = true;
+    const state = Storage.get();
+    const header = document.getElementById('diagHeader');
+    if (header) header.innerHTML = '<h1>&#x1F9E0; Retake Diagnostic</h1><p style="color:var(--text-secondary);margin-top:8px;">Select topics to test — include anything new you\'ve covered since last time.</p>';
+    this._renderTopicSelect(state, document.getElementById('diagContent'));
+  },
+
+  retake() {
+    this._selectedTopics = [];
+    this._isRetake = true;
+    App.navigate('diagnostic');
   },
 
   skipDiagnostic() {
@@ -962,7 +1235,6 @@ const Diagnostic = {
     s.diagnostic.weakAreas = [];
     s.diagnostic.notLearnedAreas = Object.keys(TOPICS);
     Storage.set(s);
-    // Show the plan selector inline instead of going to dashboard
     const header = document.getElementById('diagHeader');
     const container = document.getElementById('diagContent');
     if (header) header.innerHTML = '<h1>&#x1F389; Almost there!</h1><p style="color:var(--text-secondary);margin-top:8px;">Start your free trial and select your year to unlock everything.</p>';
@@ -975,26 +1247,20 @@ const Diagnostic = {
     const trial = PRICING.elite.trialDays;
     return `
     <div style="max-width:480px;margin:0 auto;">
-
-      <!-- Plan card -->
       <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(139,92,246,0.06));border:2px solid var(--accent);border-radius:18px;padding:28px;margin-bottom:20px;position:relative;overflow:hidden;">
         <div style="position:absolute;top:14px;right:14px;background:var(--accent);color:#000;font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;">FREE TRIAL</div>
         <div style="font-size:1.5rem;font-weight:900;margin-bottom:4px;">&#x26A1; SparkyStudy Elite</div>
         <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:20px;">Everything you need to pass your apprenticeship exam</div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
           ${['All modules & lessons','Unlimited flashcards','Full practice exams','Diagnostic study plan','Smart analytics','Simulator tools'].map(f=>`<div style="font-size:0.82rem;display:flex;align-items:center;gap:6px;"><span style="color:#22c55e;font-size:0.9rem;">&#x2713;</span>${f}</div>`).join('')}
         </div>
-
         <div style="background:var(--bg-card);border-radius:12px;padding:16px;text-align:center;margin-bottom:4px;">
           <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">After your ${trial}-day free trial</div>
           <div style="font-size:2.2rem;font-weight:900;color:var(--accent);">$${price}<span style="font-size:1rem;font-weight:500;color:var(--text-secondary);">/year</span></div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">That's just $${(price/12).toFixed(2)}/month &mdash; less than a textbook</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">That's just $${(price/12).toFixed(2)}/month — less than a textbook</div>
         </div>
         <div style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:8px;">&#x26A0;&#xFE0F; You will not be charged today. After ${trial} days, your subscription is $${price}/year. Cancel anytime.</div>
       </div>
-
-      <!-- Year selection -->
       <div style="margin-bottom:18px;">
         <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">&#x1F393; Which year are you studying?</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="planYearGrid">
@@ -1008,8 +1274,6 @@ const Diagnostic = {
           </div>
         </div>
       </div>
-
-      <!-- Promo code -->
       <div style="margin-bottom:18px;">
         <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:6px;">Have a promo code?</label>
         <div style="display:flex;gap:8px;">
@@ -1018,8 +1282,6 @@ const Diagnostic = {
         </div>
         <div id="planPromoMsg" style="font-size:0.78rem;margin-top:5px;min-height:18px;"></div>
       </div>
-
-      <!-- CTA -->
       <button onclick="Diagnostic.confirmPlan()" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:16px;">Start My ${trial}-Day Free Trial &#8594;</button>
       <p style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:10px;line-height:1.5;">No payment required today. By starting your trial you agree to be billed $${price}/year after ${trial} days unless you cancel. You can cancel at any time from Settings.</p>
     </div>`;
@@ -1032,16 +1294,16 @@ const Diagnostic = {
     const y2 = document.getElementById('planY2');
     if (y1 && y2) {
       y1.style.borderColor = y === 1 ? 'var(--accent)' : 'var(--border)';
-      y1.style.background = y === 1 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
+      y1.style.background  = y === 1 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
       y2.style.borderColor = y === 2 ? 'var(--accent)' : 'var(--border)';
-      y2.style.background = y === 2 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
+      y2.style.background  = y === 2 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
     }
   },
 
   _applyPromo() {
     const code = (document.getElementById('planPromoInput')?.value || '').trim().toUpperCase();
-    const msg = document.getElementById('planPromoMsg');
-    if (!code) { if(msg) msg.textContent = ''; return; }
+    const msg  = document.getElementById('planPromoMsg');
+    if (!code) { if (msg) msg.textContent = ''; return; }
     const result = PromoCodes.apply(code);
     if (msg) { msg.textContent = result.message; msg.style.color = result.success ? 'var(--success)' : 'var(--danger)'; }
   },
@@ -1049,80 +1311,10 @@ const Diagnostic = {
   confirmPlan() {
     const state = Storage.get();
     if (!state) return;
-    const year = this._selectedYear || state.user.period || 1;
-    state.user.period = year;
+    state.user.period = this._selectedYear || state.user.period || 1;
     Storage.set(state);
     App.navigate('dashboard');
   },
-
-  renderResults(state) {
-    const container = document.getElementById('diagContent');
-    const d = state.diagnostic;
-    const header = document.getElementById('diagHeader');
-    header.innerHTML = '<h1>Diagnostic Complete!</h1><p style="color:var(--text-secondary);margin-top:8px;">Here\'s where you stand. Your study plan has been customized based on these results.</p>';
-
-    const topicEntries = Object.entries(d.topicPcts).sort((a, b) => a[1] - b[1]);
-
-    container.innerHTML = `
-      <div class="diag-results slide-up">
-        <div class="diag-score-circle" style="--score-pct:${d.pct}%">
-          <div class="diag-score-inner">
-            <div class="score-num">${d.pct}%</div>
-            <div class="score-label">${d.score}/${d.total} correct</div>
-          </div>
-        </div>
-        <p style="color:var(--text-secondary);margin-bottom:8px;">Time: ${Math.round(d.timeSpent / 60000)} minutes</p>
-        <p style="font-size:1.1rem;font-weight:600;margin-bottom:24px;">
-          ${d.pct >= 80 ? 'Great foundation! Let\'s sharpen the edges.' : d.pct >= 60 ? 'Good start! We\'ve identified areas to focus on.' : 'Perfect \u2014 now we know exactly where to focus your study time.'}
-        </p>
-
-        ${d.weakAreas.length > 0 ? `
-          <div style="margin-bottom:16px;">
-            <h3 style="color:var(--danger);margin-bottom:12px;">&#9888; Areas Needing Work</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-              ${d.weakAreas.map(tid => `<span class="badge badge-danger">${TOPICS[tid]?.name || tid} \u2014 ${d.topicPcts[tid]}%</span>`).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        ${(d.notLearnedAreas||[]).length > 0 ? `
-          <div style="margin-bottom:16px;">
-            <h3 style="color:var(--text-muted);margin-bottom:12px;">&#x1F4DA; Not Covered Yet</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-              ${(d.notLearnedAreas||[]).map(tid => `<span class="badge" style="background:rgba(100,116,139,0.15);color:var(--text-muted);border:1px dashed var(--border);">${TOPICS[tid]?.name || tid}</span>`).join('')}
-            </div>
-            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;">We'll start you here — no pressure.</p>
-          </div>
-        ` : ''}
-
-        ${d.strongAreas.length > 0 ? `
-          <div style="margin-bottom:24px;">
-            <h3 style="color:var(--success);margin-bottom:12px;">&#10003; Strong Areas</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-              ${d.strongAreas.map(tid => `<span class="badge badge-success">${TOPICS[tid]?.name || tid} \u2014 ${d.topicPcts[tid]}%</span>`).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        ${topicEntries.length > 0 ? `
-        <details style="margin-bottom:24px;text-align:left;">
-          <summary style="cursor:pointer;font-size:0.85rem;color:var(--text-muted);padding:8px 0;">&#x25B6; All topic scores</summary>
-          <div class="diag-breakdown" style="margin-top:12px;">
-            ${topicEntries.map(([tid, pct]) => `
-              <div class="diag-topic-result">
-                <span class="topic-name">${TOPICS[tid]?.icon || ''} ${TOPICS[tid]?.name || tid}</span>
-                <span class="topic-score" style="color:${getMasteryColor(pct)}">${pct}%</span>
-              </div>
-            `).join('')}
-          </div>
-        </details>` : ''}
-
-        <div id="diagPlanSelect" style="margin-top:8px;">
-          ${Diagnostic._planSelectHTML(state)}
-        </div>
-      </div>
-    `;
-  }
 };
 
 // ===== DASHBOARD.JS =====
@@ -1269,7 +1461,10 @@ const Dashboard = {
 
         <!-- Weak Areas -->
         <div class="card">
-          <div class="section-title">&#9888;&#65039; Focus Areas</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="section-title" style="margin-bottom:0;">&#9888;&#65039; Focus Areas</div>
+            <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="Diagnostic.retake()">&#x1F504; Retake Diagnostic</button>
+          </div>
           <div class="weak-areas-list">
             ${weakTopics.map(wt => `
               <div class="weak-area-item">
@@ -9262,11 +9457,8 @@ const Settings = {
   },
 
   retakeDiagnostic() {
-    if (!confirm('This will reset your diagnostic results and generate a new study plan. Continue?')) return;
-    const state = Storage.get();
-    state.diagnostic = { completed: false, responses: [], weakAreas: [], strongAreas: [], score: 0, pct: 0 };
-    Storage.set(state);
-    App.navigate('diagnostic');
+    if (!confirm('This will start a new diagnostic session. Your history will be preserved. Continue?')) return;
+    Diagnostic.retake();
   },
 
   resetAll() {
