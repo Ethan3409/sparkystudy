@@ -319,7 +319,7 @@
   // ── Welcome message ───────────────────────────────────────────────────────
   function addWelcomeMessage() {
     addAIMessage(
-      "Hey Ethan! 👋 I'm your SparkStudy AI — trained on the **2024 Canadian Electrical Code**.\n\nAsk me anything: CEC rules, practice exam questions, concept explanations, or calculation walkthroughs. Let's get you Red Seal ready! ⚡",
+      "Hey! I'm your SparkStudy AI — trained on the **2024 Canadian Electrical Code** and Alberta AIT apprentice curriculum for all 4 periods.\n\nI've studied this material front to back so you don't have to figure it out alone. Ask me anything and I'll break it down in plain language — no textbook fluff. CEC rules, exam questions, calculations, concept explanations, whatever you need. ⚡",
       []
     );
   }
