@@ -623,5 +623,20 @@ document.addEventListener('DOMContentLoaded',function(){
     try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
 });
 </script>
+
+<!-- SparkStudy AI Widget -->
+<script>
+(function(){
+  var btn = document.createElement("button");
+  btn.id = "askaiBtn";
+  btn.title = "Ask SparkStudy AI";
+  btn.innerHTML = "&#9889;";
+  btn.style.cssText = "position:fixed;bottom:24px;left:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);border:none;color:#fff;font-size:1.5rem;cursor:pointer;z-index:9997;box-shadow:0 4px 20px rgba(249,115,22,0.5);transition:transform 0.15s;";
+  btn.onmouseover = function(){ this.style.transform="scale(1.1)"; };
+  btn.onmouseout  = function(){ this.style.transform="scale(1)"; };
+  document.body.appendChild(btn);
+})();
+</script>
+<script src="../sparkstudy-ai-widget.js" defer></script>
 </body>
 </html>
