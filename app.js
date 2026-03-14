@@ -4443,9 +4443,7 @@ const Tools = {
       case 'motor-sim': this._updateMotorSim(); break;
       case 'pf-triangle': this._updatePFSim(); break;
       case 'vd-calc': this._updateVDCalc(); break;
-      case 'exam-checker':
-        container.innerHTML = ExamChecker.render();
-        break;
+      case 'exam-checker': break;
       case 'demand-factor': this._updateDemandFactor(); break;
       case 'demand-factor-calc': this._updateDemandCalc(); break;
       case 'conduit-fill': this._updateConduitFill(); break;
@@ -4478,6 +4476,7 @@ const Tools = {
       case 'motor-sim': return header + this._simMotor();
       case 'pf-triangle': return header + this._simPFTriangle();
       case 'vd-calc': return header + this._simVDCalc();
+      case 'exam-checker': return header + ExamChecker.renderContent();
       case 'demand-factor': return header + this._simDemandFactor();
       case 'demand-factor-calc': return header + this._simDemandCalc();
       case 'conduit-fill': return header + this._simConduitFill();
@@ -11105,6 +11104,14 @@ document.head.appendChild(confettiStyle);
 // ===== FLOATING ACTION BUTTONS (Formula + Timer) =====
 
 const ExamChecker = {
+  renderContent() {
+    return '<div style="max-width:800px;margin:0 auto;">' +
+      '<p style="color:var(--text-secondary);margin-bottom:20px;">Paste your exam questions below. The AI will find the correct CEC answer for each one with the exact rule citation.</p>' +
+      '<textarea id="examInput" style="width:100%;height:280px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text-primary);font-size:0.88rem;resize:vertical;font-family:inherit;box-sizing:border-box;line-height:1.6;" placeholder="Paste your exam questions here...\n\nExample:\n1. A Class 2 circuit may be wired with aluminum conductors. True or False?\n2. What is the minimum separation between Class 2 and power circuits?"></textarea>' +
+      '<button onclick="ExamChecker.check()" class="btn btn-primary" style="margin-top:12px;width:100%;padding:14px;font-size:1rem;font-weight:700;">&#x26A1; Check All Answers Against CEC 2024</button>' +
+      '<div id="examResults" style="margin-top:24px;"></div>' +
+      '</div>';
+  },
   render() {
     return '<div style="max-width:800px;margin:0 auto;padding:24px 16px;">' +
       '<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;">&#x1F4CB; CEC Exam Checker</h1>' +
