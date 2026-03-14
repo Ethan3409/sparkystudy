@@ -2488,32 +2488,19 @@ const Notes = {
     const html = this._load(userId, this.currentTopic);
     if (!html.trim()) { showToast('Write some notes first!', 'info'); return; }
     const state  = Storage.get();
-    const apiKey = (state && state.user && state.user.claudeApiKey) || '';
-    if (!apiKey) {
-      // Fall back to local quiz generator
-      showToast('No Claude API key — using local quiz generator. Add your key in Settings for AI-powered questions.', 'info');
-      this._generateQuiz(userId);
-      return;
-    }
     const text = html.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0, 6000);
     showToast('⚡ Generating AI quiz…', 'info');
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 3000,
-          messages: [{ role: 'user', content: `You are a quiz generator for Alberta electrical apprentices. Based on these notes, generate 10 questions. Mix fill-in-the-blank, multiple-choice (4 options), and short-answer questions. For each question include the correct answer and a one-sentence explanation citing where in the notes the answer comes from.\n\nReturn ONLY a JSON array:\n[{"type":"blank","question":"The formula for Ohm's Law is ________","answer":"V = IR","explanation":"Ohm's Law is stated in the fundamentals section."},{"type":"mc","question":"What does XL represent?","options":["Inductive reactance","Capacitive reactance","Resistance","Impedance"],"answer":"Inductive reactance","explanation":"XL = inductive reactance, from the reactance section."},{"type":"short","question":"Explain the difference between bonding and grounding.","answer":"Bonding connects conductive parts together; grounding connects to earth.","explanation":"Covered in the grounding & bonding section."},...]\n\nNotes:\n${text}` }]
+          question: `You are a quiz generator for Alberta electrical apprentices. Based on these notes, generate 10 questions. Mix fill-in-the-blank, multiple-choice (4 options), and short-answer questions. For each question include the correct answer and a one-sentence explanation.\n\nReturn ONLY a JSON array like:\n[{"type":"blank","question":"The formula for Ohm's Law is ________","answer":"V = IR","explanation":"From the fundamentals section."},{"type":"mc","question":"What does XL represent?","options":["Inductive reactance","Capacitive reactance","Resistance","Impedance"],"answer":"Inductive reactance","explanation":"XL = inductive reactance."},{"type":"short","question":"Explain the difference between bonding and grounding.","answer":"Bonding connects conductive parts; grounding connects to earth.","explanation":"Covered in grounding section."}]\n\nNotes:\n${text}`,
+          history: []
         })
       });
       const data = await res.json();
-      const rawText = data.content?.[0]?.text || '';
+      const rawText = data.answer || '';
       const m = rawText.match(/\[[\s\S]*\]/);
       if (!m) throw new Error('No JSON array');
       const questions = JSON.parse(m[0]).slice(0, 10);
@@ -2542,60 +2529,9 @@ const Notes = {
   async _uploadPages(event, userId) {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
-    const state  = Storage.get();
-    const apiKey = (state && state.user && state.user.claudeApiKey) || '';
-    if (!apiKey) {
-      showToast('Add your Claude API key in Settings → AI Features to use photo OCR.', 'info');
-      App.navigate('settings');
-      return;
-    }
     const editor = document.getElementById('notesEditor');
     const status = document.getElementById('notesStatus');
-    for (let i = 0; i < files.length; i++) {
-      if (status) status.textContent = `Processing page ${i+1} of ${files.length}…`;
-      try {
-        const base64 = await new Promise((res, rej) => {
-          const reader = new FileReader();
-          reader.onload  = e => res(e.target.result.split(',')[1]);
-          reader.onerror = rej;
-          reader.readAsDataURL(files[i]);
-        });
-        const mimeType = files[i].type || 'image/jpeg';
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
-          body: JSON.stringify({
-            model: 'claude-opus-4-6',
-            max_tokens: 4096,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
-                { type: 'text',  text: 'Extract all text from this electrical training module page. Preserve headings, bullet points, tables, and any technical values exactly as written. Format headings with <h3> tags, bullet points as <ul><li> lists, and plain paragraphs as <p> tags.' }
-              ]
-            }]
-          })
-        });
-        const data = await res.json();
-        const extracted = data.content?.[0]?.text || '';
-        if (extracted && editor) {
-          editor.innerHTML += `<hr style="margin:16px 0;opacity:0.3;"><p style="font-size:0.7rem;color:var(--text-muted);">— Page ${i+1} extracted —</p>${extracted}`;
-          this._save(userId, this.currentTopic, editor.innerHTML);
-        }
-      } catch(err) {
-        console.error(`[Notes OCR] page ${i+1}:`, err);
-        showToast(`Page ${i+1} failed to process.`, 'error');
-      }
-    }
-    if (status) status.textContent = `${files.length} page${files.length===1?'':'s'} extracted!`;
-    showToast(`✓ ${files.length} page${files.length===1?'':'s'} processed and added to your notes.`, 'success');
-    Points.award('Module uploaded', Points.ACTIONS.module_upload.base, true);
-    // Reset file input so the same files can be re-selected if needed
+    showToast('📷 Photo OCR coming soon — for now, paste your module text directly into the editor.', 'info');
     event.target.value = '';
   },
 
@@ -9166,20 +9102,6 @@ const Settings = {
           <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;text-align:center;">This will permanently delete all your progress.</div>
         </div>
 
-        <!-- AI Features (Claude API Key) -->
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
-          <h3 style="margin:0 0 6px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F916; AI Features</h3>
-          <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 16px;">Add your Anthropic API key to enable AI-powered study plans, notes OCR (photo-to-text), and smarter quiz generation.</p>
-          <div style="display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
-            <input type="password" id="claudeKeyInput" placeholder="sk-ant-..." value="${state.user.claudeApiKey||''}"
-              style="flex:1;min-width:220px;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.88rem;">
-            <button class="btn btn-primary btn-sm" onclick="Settings.saveClaudeKey()" style="white-space:nowrap;">Save Key</button>
-          </div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;">
-            Get your key at <strong>console.anthropic.com</strong>. Stored locally on your device only — never sent to our servers.
-          </div>
-          ${state.user.claudeApiKey ? `<div style="margin-top:10px;font-size:0.82rem;color:var(--success);display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span> API key saved — AI features active</div>` : ''}
-        </div>
 
         <!-- Schedule Upload -->
         ${Settings._scheduleHTML(state)}
@@ -11303,17 +11225,6 @@ const StudyPlan = {
     }
     const container = document.getElementById('studyPlanContainer');
     if (container) container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);">⚡ Generating your study plan…</div>`;
-    const apiKey = (state.user && state.user.claudeApiKey) || '';
-    if (!apiKey) {
-      if (container) container.innerHTML = `
-        <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:20px;text-align:center;">
-          <div style="font-size:1.4rem;margin-bottom:8px;">🔑</div>
-          <div style="font-weight:700;margin-bottom:6px;">Claude API Key Required</div>
-          <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:14px;">Add your Anthropic API key in Settings → AI Features to enable AI study plans.</div>
-          <button class="btn btn-primary btn-sm" onclick="App.navigate('settings')">Go to Settings</button>
-        </div>`;
-      return;
-    }
     const topics     = getTopicsForPeriod(state.user.period);
     const topicData  = topics.map(t => ({ name: t.name, mastery: getTopicMastery(state, t.id) }));
     const weakTopics = topicData.filter(t => t.mastery < 60).sort((a,b) => a.mastery - b.mastery).slice(0,5);
@@ -11321,22 +11232,13 @@ const StudyPlan = {
     const todayStr   = new Date().toISOString().split('T')[0];
     const prompt = `You are a study plan generator for Alberta electrical apprentices.\nStudent:\n- Period: ${state.user.period}\n- Days until exam: ${daysLeft}\n- Overall mastery: ${getOverallMastery(state)}%\n- Weakest topics: ${weakTopics.map(t=>`${t.name} (${t.mastery}%)`).join(', ')}\n- Streak: ${state.sessions.streak} days\n\nGenerate a day-by-day study plan for the next ${planDays} days starting ${todayStr}.\nReturn ONLY a JSON array, no explanation:\n[{"day":1,"date":"${todayStr}","topic":"AC Theory","minutes":30,"type":"flashcards","note":"Focus on sine waves"},...]\nAllowed types: flashcards, quiz, review, exam-prep. Keep it practical.`;
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 2048,
-          messages: [{ role: 'user', content: prompt }]
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
       });
       const data = await res.json();
-      const text = data.content?.[0]?.text || '';
+      const text = data.answer || '';
       const m    = text.match(/\[[\s\S]*\]/);
       if (!m) throw new Error('No JSON array in response');
       const plan = JSON.parse(m[0]);
