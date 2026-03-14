@@ -11686,7 +11686,7 @@ const AskAI = {
         <input id="askaiInput" class="askai-input" type="text"
           placeholder="e.g. What is impedance?"
           onkeydown="if(event.key==='Enter')AskAI._submitInput()"
-          maxlength="300" />
+          maxlength="10000" />
         <button class="askai-send-btn" onclick="AskAI._submitInput()">➤</button>
       </div>
     `;
