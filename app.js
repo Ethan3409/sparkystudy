@@ -10729,6 +10729,7 @@ function createFAB() {
   fab.id = 'fabContainer';
   fab.style.cssText = 'position:fixed;bottom:24px;left:24px;display:flex;flex-direction:column;gap:8px;z-index:800;';
   fab.innerHTML = `
+    <button id="askaiBtn" title="Ask SparkStudy AI" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);border:none;color:#fff;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);box-shadow:0 4px 20px rgba(249,115,22,0.5);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">&#9889;</button>
     <button onclick="FormulaSheet.toggle()" title="Formula Sheet" style="width:48px;height:48px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--accent);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);box-shadow:var(--shadow);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">&#128211;</button>
     <button onclick="Pomodoro.toggle()" title="Pomodoro Timer" style="width:48px;height:48px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--accent);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);box-shadow:var(--shadow);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">&#9200;</button>
   `;
