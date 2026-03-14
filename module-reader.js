@@ -220,6 +220,24 @@
   `;
   document.head.appendChild(style);
 
+  // ── Progress tracking ─────────────────────────────────────────────────────
+  const PROGRESS_KEY = 'sparkstudy_module_progress';
+
+  function getProgress() {
+    try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function markPageRead(moduleId, pageIdx, totalPages) {
+    const p = getProgress();
+    if (!p[moduleId]) p[moduleId] = { pagesRead: [], completed: false };
+    if (!p[moduleId].pagesRead.includes(pageIdx)) p[moduleId].pagesRead.push(pageIdx);
+    if (p[moduleId].pagesRead.length >= totalPages) p[moduleId].completed = true;
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  }
+  function getModuleProgress(moduleId) {
+    const p = getProgress();
+    return p[moduleId] || { pagesRead: [], completed: false };
+  }
+
   // ── State ─────────────────────────────────────────────────────────────────
   let currentModule = null;
   let currentPage = 0;
@@ -450,12 +468,13 @@
     if (currentPage > 0) { currentPage--; renderOverlay(); scrollTop(); }
   };
   window._mrNext = function () {
+    markPageRead(currentModule.module_id, currentPage, currentModule.pages.length);
     if (currentPage < currentModule.pages.length - 1) {
       currentPage++;
       renderOverlay();
       scrollTop();
     } else {
-      closeModule();
+      showCompletion();
     }
   };
   window._mrAskAI = function () {
@@ -470,9 +489,57 @@
     }
   };
 
+  function showCompletion() {
+    const body = document.getElementById('mr-body-content');
+    if (!body) return;
+    body.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:3.5rem;margin-bottom:16px;">🏆</div>
+        <h2 style="color:#f59e0b;font-size:1.5rem;margin-bottom:8px;">Module Complete!</h2>
+        <p style="color:#8b949e;margin-bottom:24px;">${currentModule.title} — all ${currentModule.pages.length} pages read.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="mr-btn mr-btn-primary" onclick="window._mrAskAI();window._mrClose();" style="padding:10px 20px;">⚡ Quiz me on this module</button>
+          <button class="mr-btn mr-btn-secondary" onclick="window._mrClose();" style="padding:10px 20px;">✓ Done</button>
+        </div>
+      </div>`;
+    // Update footer
+    const footer = overlay.querySelector('.mr-footer');
+    if (footer) footer.style.display = 'none';
+    updateCardBadges();
+  }
+
   function closeModule() {
+    if (currentModule) markPageRead(currentModule.module_id, currentPage, currentModule.pages.length);
     if (overlay) { overlay.remove(); overlay = null; }
     document.body.style.overflow = '';
+    updateCardBadges();
+  }
+
+  function updateCardBadges() {
+    document.querySelectorAll('.module-card').forEach(function (card) {
+      const numEl = card.querySelector('.module-number');
+      if (!numEl) return;
+      const num = parseInt(numEl.textContent.trim(), 10);
+      const m = Object.values(MODULE_DATA).find((_, i) => Object.keys(MODULE_DATA)[i] == num);
+      if (!m) return;
+      const moduleId = 'm' + num;
+      const prog = getModuleProgress(moduleId);
+      const existing = card.querySelector('.mr-badge');
+      if (existing) existing.remove();
+      if (prog.completed) {
+        const badge = document.createElement('span');
+        badge.className = 'mr-badge';
+        badge.textContent = '✓ Complete';
+        badge.style.cssText = 'display:inline-block;margin-top:6px;padding:3px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;border-radius:20px;font-size:0.72rem;font-weight:700;';
+        card.appendChild(badge);
+      } else if (prog.pagesRead.length > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'mr-badge';
+        badge.textContent = `${prog.pagesRead.length} pages read`;
+        badge.style.cssText = 'display:inline-block;margin-top:6px;padding:3px 10px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:#f59e0b;border-radius:20px;font-size:0.72rem;font-weight:700;';
+        card.appendChild(badge);
+      }
+    });
   }
 
   function scrollTop() {
@@ -483,7 +550,7 @@
 
   // ── Wire up module cards ───────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
-    // Find all module cards and make them clickable if data available
+    updateCardBadges();
     const cards = document.querySelectorAll('.module-card');
     cards.forEach(function (card) {
       const numEl = card.querySelector('.module-number');

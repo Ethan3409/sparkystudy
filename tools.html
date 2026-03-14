@@ -544,6 +544,26 @@
         <a href="#" onclick="sparkyLogout();return false;" class="sn-link sn-logout">Logout</a>
     </div>
 </nav>
+<script>
+(function(){
+  // Exam countdown in nav
+  try {
+    var keys = Object.keys(localStorage).filter(function(k){ return k.startsWith('sparkstudy_v1_'); });
+    if (!keys.length) return;
+    var state = JSON.parse(localStorage.getItem(keys[0]) || '{}');
+    var examDate = state.classSchedule && state.classSchedule.examDate;
+    if (!examDate) return;
+    var days = Math.ceil((new Date(examDate) - new Date()) / 86400000);
+    if (days < 0 || days > 365) return;
+    var el = document.createElement('div');
+    el.className = 'mr-countdown';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(249,115,22,0.08));border-bottom:1px solid rgba(245,158,11,0.2);padding:6px 16px;text-align:center;font-size:0.78rem;font-weight:700;color:#f59e0b;z-index:9990;letter-spacing:0.03em;';
+    el.innerHTML = '&#9889; Exam in <strong>' + days + ' day' + (days===1?'':'s') + '</strong> — keep studying!';
+    document.body.prepend(el);
+    document.body.style.paddingTop = '32px';
+  } catch(e){}
+})();
+</script>
 <!-- Main content -->
     <div class="container">
         <!-- Search -->
