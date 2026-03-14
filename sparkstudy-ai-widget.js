@@ -255,6 +255,25 @@
     }
     #ss-ai-send:hover { opacity: 0.9; transform: scale(1.05); }
     #ss-ai-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .ss-upload-btn {
+      width: 38px; height: 38px;
+      background: #1a1b26;
+      border: 1px solid #2a2b38;
+      border-radius: 10px;
+      color: #9ca3af;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; align-self: flex-end;
+      font-size: 16px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .ss-upload-btn:hover { border-color: #f97316; color: #f97316; }
+    #ss-file-preview {
+      padding: 0 12px 8px;
+      font-size: 11px;
+      color: #f97316;
+      display: none;
+    }
 
     @media (max-width: 420px) {
       #ss-ai-panel { right: 8px; left: 8px; width: auto; bottom: 80px; }
@@ -280,7 +299,16 @@
       <button class="ss-suggestion">AFCI requirements dwelling</button>
     </div>
     <div id="ss-ai-messages"></div>
+    <div id="ss-file-preview"></div>
     <div id="ss-ai-input-row">
+      <label class="ss-upload-btn" title="Upload document or image">
+        📎
+        <input type="file" id="ss-file-input" accept=".txt,.pdf,image/*" style="display:none;">
+      </label>
+      <label class="ss-upload-btn" title="Take a photo">
+        📷
+        <input type="file" id="ss-camera-input" accept="image/*" capture="environment" style="display:none;">
+      </label>
       <textarea id="ss-ai-input" placeholder="Ask about CEC rules, get a practice exam…" rows="1"></textarea>
       <button id="ss-ai-send">➤</button>
     </div>
@@ -296,6 +324,41 @@
   const inputEl = panel.querySelector('#ss-ai-input');
   const sendBtn = panel.querySelector('#ss-ai-send');
   const suggestionsEl = panel.querySelector('#ss-ai-suggestions');
+  const filePreviewEl = panel.querySelector('#ss-file-preview');
+  let pendingFileText = '';
+
+  // ── File / Camera handling ────────────────────────────────────────────────
+  async function handleFile(file) {
+    if (!file) return;
+    const name = file.name || 'photo';
+    if (file.type.startsWith('image/')) {
+      // Show image preview in chat and ask AI to describe content
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file);
+      });
+      const img = document.createElement('div');
+      img.className = 'ss-msg ss-user';
+      img.innerHTML = `<img src="${dataUrl}" style="max-width:100%;border-radius:8px;display:block;margin-bottom:4px;"><span style="font-size:11px;opacity:0.7;">📷 ${name}</span>`;
+      messagesEl.appendChild(img);
+      scrollToBottom();
+      hideSuggestions();
+      pendingFileText = `[User uploaded an image: ${name}. Describe what study material or electrical content you can see, and help them understand it.]`;
+      filePreviewEl.style.display = 'none';
+      await sendRaw(pendingFileText);
+      pendingFileText = '';
+    } else if (file.type === 'text/plain') {
+      const text = await file.text();
+      pendingFileText = text.slice(0, 8000);
+      filePreviewEl.textContent = `📎 ${name} ready — type a question or just hit send to have me summarize it.`;
+      filePreviewEl.style.display = 'block';
+    } else {
+      filePreviewEl.textContent = `⚠️ PDF text extraction coming soon — paste the text directly for now.`;
+      filePreviewEl.style.display = 'block';
+    }
+  }
+
+  panel.querySelector('#ss-file-input').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value=''; });
+  panel.querySelector('#ss-camera-input').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value=''; });
 
   // ── Open/close ────────────────────────────────────────────────────────────
   function openPanel() {
@@ -319,7 +382,7 @@
   // ── Welcome message ───────────────────────────────────────────────────────
   function addWelcomeMessage() {
     addAIMessage(
-      "Hey! I'm your SparkStudy AI.\n\nShare your notes, modules, or any course material with me and I'll learn every bit of it front to back. Once you do, ask me anything — I'll break it down in plain language so it actually makes sense. CEC rules, exam questions, calculations, concepts — whatever you're working through. ⚡\n\nPaste your material below to get started.",
+      "Hey! I'm your SparkStudy AI.\n\nI already have the full **2024 Canadian Electrical Code** locked in. Share any additional course notes, modules, or study material with me and I'll learn every bit of it front to back — then break it all down in plain language so it actually makes sense.\n\nAsk me anything or upload your material using the buttons below. ⚡",
       []
     );
   }
@@ -393,46 +456,53 @@
   }
 
   // ── Send ──────────────────────────────────────────────────────────────────
-  async function sendMessage() {
-    const q = inputEl.value.trim();
-    if (!q || isLoading) return;
-
-    hideSuggestions();
+  async function sendRaw(question) {
     isLoading = true;
-    inputEl.value = '';
-    inputEl.style.height = 'auto';
     sendBtn.disabled = true;
-
-    addUserMessage(q);
     const typing = addTyping();
-
-    history.push({ role: 'user', content: q });
-
+    history.push({ role: 'user', content: question });
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q, history: history.slice(-6) })
+        body: JSON.stringify({ question, history: history.slice(-6) })
       });
       const data = await res.json();
       typing.remove();
-
       if (data.error) {
         addAIMessage('Sorry, something went wrong: ' + data.error, []);
       } else {
         addAIMessage(data.answer, data.sources);
         history.push({ role: 'assistant', content: data.answer });
-        // Keep history manageable
         if (history.length > 20) history = history.slice(-20);
       }
     } catch (err) {
       typing.remove();
       addAIMessage('Connection error — make sure you have internet access and try again.', []);
     }
-
     isLoading = false;
     sendBtn.disabled = false;
     inputEl.focus();
+  }
+
+  async function sendMessage() {
+    let q = inputEl.value.trim();
+    if (!q && !pendingFileText) return;
+    if (isLoading) return;
+
+    hideSuggestions();
+    filePreviewEl.style.display = 'none';
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+
+    // If there's a pending file, prepend it to the question
+    const fullQuestion = pendingFileText
+      ? (q ? `Here is my material:\n\n${pendingFileText}\n\nMy question: ${q}` : `Here is my material — please read it and summarize the key points so I can understand it clearly:\n\n${pendingFileText}`)
+      : q;
+    pendingFileText = '';
+
+    if (q) addUserMessage(q);
+    await sendRaw(fullQuestion);
   }
 
   // ── Input events ──────────────────────────────────────────────────────────
