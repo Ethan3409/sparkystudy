@@ -776,7 +776,7 @@ const App = {
   renderPage(page, state) {
     switch (page) {
       case 'diagnostic': Diagnostic.render(state); break;
-      case 'dashboard': Dashboard.render(state); break;
+      case 'dashboard': Dashboard.render(state); requestPushPermission(); break;
       case 'flashcards': Flashcards.render(state); break;
       case 'exams': Exams.render(state); break;
       case 'study-guide': StudyGuide.render(state); break;
@@ -10726,6 +10726,32 @@ confettiStyle.textContent = '@keyframes confettiFall { 0% { top: -20px; opacity:
 document.head.appendChild(confettiStyle);
 
 // ===== FLOATING ACTION BUTTONS (Formula + Timer) =====
+// ── Push notification opt-in ──────────────────────────────────────────────
+function requestPushPermission() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  if (Notification.permission === 'granted' || Notification.permission === 'denied') return;
+  if (localStorage.getItem('ss_push_asked')) return;
+  localStorage.setItem('ss_push_asked', '1');
+  // Delay so it doesn't pop up immediately on load
+  setTimeout(() => {
+    const banner = document.createElement('div');
+    banner.id = 'pushBanner';
+    banner.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;z-index:1000;box-shadow:var(--shadow-lg);max-width:380px;width:calc(100vw - 32px);';
+    banner.innerHTML = `
+      <div style="font-weight:700;margin-bottom:6px;">🔔 Study reminders</div>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:14px;">Get a nudge when you haven't studied and your exam is coming up.</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" style="flex:1;" onclick="
+          Notification.requestPermission().then(p => {
+            document.getElementById('pushBanner').remove();
+            if(p==='granted') showToast('Reminders on! We\\'ll nudge you to study.','success');
+          });">Turn on</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('pushBanner').remove();">Not now</button>
+      </div>`;
+    document.body.appendChild(banner);
+  }, 4000);
+}
+
 function createFAB() {
   const fab = document.createElement('div');
   fab.id = 'fabContainer';
