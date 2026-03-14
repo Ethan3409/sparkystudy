@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>sparkystudy — Alberta Electrical Apprentice Study Platform</title>
+<meta name="theme-color" content="#f59e0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="sparkystudy">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>
+// Bust stale SW cache once per app version — runs inline so it fires before app.js loads
+(function(){
+  var V = 'v3';
+  if ('serviceWorker' in navigator && sessionStorage.getItem('sw-ver') !== V) {
+    navigator.serviceWorker.getRegistration().then(function(reg){
+      sessionStorage.setItem('sw-ver', V);
+      if (reg) { reg.unregister().then(function(){ location.reload(); }); }
+    });
+  }
+})();
+</script>
+</head>
+<body>
+<!-- Firebase SDK (v8 compat) — loaded async so it never blocks the page -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+</head>
+<body>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    sparkystudy
+  </div>
+  <ul class="nav-links nav-hidden" id="navLinks">
+    <li><a href="#" data-page="dashboard">Dashboard</a></li>
+
+    <!-- Study dropdown -->
+    <li class="nav-dropdown">
+      <button class="nav-dropdown-btn" id="navDropStudy">
+        Study
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-dropdown-menu">
+        <a href="#" data-page="flashcards">🃏 Flashcards</a>
+        <a href="#" data-page="exams">📝 Exams</a>
+        <a href="#" data-page="lessons">📚 Lessons</a>
+        <a href="#" data-page="study-guide">📖 Study Guide</a>
+        <a href="#" data-page="review">⭐ Review Wrong</a>
+        <li id="navGroupLink" style="display:none;list-style:none;"><a href="#" data-page="group" style="color:#8b5cf6;">👥 Group</a></li>
+      </div>
+    </li>
+
+    <!-- Practice dropdown -->
+    <li class="nav-dropdown">
+      <button class="nav-dropdown-btn" id="navDropPractice">
+        Practice
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-dropdown-menu">
+        <a href="#" data-page="tools">🔧 Simulators</a>
+        <a href="#" data-page="math">🧮 Math Practice</a>
+        <a href="#" data-page="notes">📝 Notes</a>
+      </div>
+    </li>
+
+    <li><a href="#" data-page="leaderboard">🏆 Leaderboard</a></li>
+    <li><a href="#" data-page="analytics">Analytics</a></li>
+  </ul>
+  <div class="nav-right nav-hidden" id="navRight">
+    <div class="nav-streak" id="navStreak" title="Study streak">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 4-3 6-3 10a5 5 0 0 0 8.5 3.5c-1 2.5-3.5 4.5-6.5 4.5-4 0-7-3-7-7C4 8 8 4 12 2z"/></svg>
+      <span id="streakCount">0</span> day streak
+    </div>
+    <span class="owner-badge" id="ownerBadge" style="display:none;cursor:pointer;" title="Go to Owner Analytics" onclick="App.navigate('owner')">&#x1F451; Owner</span>
+    <div class="nav-avatar" id="navAvatar" onclick="App.navigate('settings')">?</div>
+  </div>
+  <button class="burger" id="burgerBtn" onclick="openMobileDrawer()" aria-label="Open menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+</nav>
+
+<!-- MOBILE DRAWER OVERLAY -->
+<div class="mobile-drawer-overlay" id="drawerOverlay" onclick="closeMobileDrawer()"></div>
+
+<!-- MOBILE DRAWER -->
+<nav class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <div class="mobile-drawer-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      sparkystudy
+    </div>
+    <button class="mobile-drawer-close" onclick="closeMobileDrawer()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="mobile-drawer-user" id="drawerUser" style="display:none;">
+    <div class="mobile-drawer-avatar" id="drawerAvatar">?</div>
+    <div>
+      <div class="mobile-drawer-name" id="drawerName">—</div>
+      <div class="mobile-drawer-streak">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 4-3 6-3 10a5 5 0 0 0 8.5 3.5c-1 2.5-3.5 4.5-6.5 4.5-4 0-7-3-7-7C4 8 8 4 12 2z"/></svg>
+        <span id="drawerStreak">0</span> day streak
+      </div>
+    </div>
+  </div>
+  <div class="mobile-drawer-nav" id="drawerNav">
+    <!-- populated by updateMobileDrawer() -->
+  </div>
+</nav>
+
+<!-- BOTTOM NAV BAR -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-item" id="bn-dashboard" onclick="App.navigate('dashboard');closeMobileDrawer();">
+    <div class="bn-icon">🏠</div>
+    <span>Home</span>
+  </button>
+  <button class="bn-item" id="bn-flashcards" onclick="App.navigate('flashcards');closeMobileDrawer();">
+    <div class="bn-icon">🃏</div>
+    <span>Cards</span>
+  </button>
+  <button class="bn-item" id="bn-exams" onclick="App.navigate('exams');closeMobileDrawer();">
+    <div class="bn-icon">📝</div>
+    <span>Exams</span>
+  </button>
+  <button class="bn-item" id="bn-lessons" onclick="App.navigate('lessons');closeMobileDrawer();">
+    <div class="bn-icon">📚</div>
+    <span>Lessons</span>
+  </button>
+  <button class="bn-item" id="bn-more" onclick="openMobileDrawer()">
+    <div class="bn-icon">☰</div>
+    <span>More</span>
+  </button>
+</nav>
+
+<!-- APP CONTAINER -->
+<div class="app-container">
+
+<!-- ======= LANDING PAGE ======= -->
+<div class="page" id="page-landing">
+
+  <!-- HERO: Diagnostic-Focused -->
+  <div class="landing-hero" style="min-height:auto;padding:60px 24px 40px;">
+    <div class="hero-content" style="max-width:900px;">
+      <div class="hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Alberta Electrical Apprentice &mdash; Period 1 &amp; 2
+      </div>
+      <h1 class="hero-title">Find Out Exactly What You Don't Know</h1>
+      <p class="hero-subtitle">Take a 5-minute diagnostic. We'll pinpoint your weak spots across every exam topic, then build a personalized study plan that focuses your time where it actually matters.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" onclick="App.navigate('signup')" style="font-size:1.15rem;padding:18px 40px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Start Your Diagnostic
+        </button>
+        <button class="btn btn-secondary btn-lg" onclick="App.navigate('login')">Log In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS: 3-Step Diagnostic Flow -->
+  <div style="padding:60px 24px;background:linear-gradient(180deg,transparent,rgba(245,158,11,0.03));">
+    <div style="max-width:900px;margin:0 auto;text-align:center;">
+      <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;">How It Works</h2>
+      <p style="color:var(--text-secondary);margin-bottom:40px;">Three steps. Five minutes. A completely personalized study experience.</p>
+
+      <div class="hero-steps" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;text-align:center;">
+        <!-- Step 1 -->
+        <div class="card card-glow" style="padding:32px 24px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:12px;left:16px;font-size:3rem;font-weight:900;color:rgba(245,158,11,0.08);">01</div>
+          <div style="font-size:2.5rem;margin-bottom:16px;">&#129504;</div>
+          <h3 style="font-size:1.1rem;margin-bottom:8px;">Diagnostic Assessment</h3>
+          <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6;">40 questions across every topic on your exam. We adapt in real-time to find exactly where the gaps are.</p>
+          <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+            <span class="badge badge-warning">Ohm's Law</span>
+            <span class="badge badge-danger">AC Theory</span>
+            <span class="badge badge-success">Safety</span>
+            <span class="badge badge-info">CEC Code</span>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="card card-glow" style="padding:32px 24px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:12px;left:16px;font-size:3rem;font-weight:900;color:rgba(245,158,11,0.08);">02</div>
+          <div style="font-size:2.5rem;margin-bottom:16px;">&#127919;</div>
+          <h3 style="font-size:1.1rem;margin-bottom:8px;">Your Weak Areas Exposed</h3>
+          <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6;">See a full breakdown of every topic — what you know cold, what needs work, and what's costing you marks.</p>
+          <div style="margin-top:16px;font-size:0.8rem;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:60%;height:6px;background:#ef4444;border-radius:3px;"></div><span style="color:var(--text-muted);">Transformers 42%</span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:75%;height:6px;background:#fbbf24;border-radius:3px;"></div><span style="color:var(--text-muted);">Motors 68%</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:90%;height:6px;background:#10b981;border-radius:3px;"></div><span style="color:var(--text-muted);">Safety 92%</span></div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="card card-glow" style="padding:32px 24px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:12px;left:16px;font-size:3rem;font-weight:900;color:rgba(245,158,11,0.08);">03</div>
+          <div style="font-size:2.5rem;margin-bottom:16px;">&#128640;</div>
+          <h3 style="font-size:1.1rem;margin-bottom:8px;">Personalized Study Plan</h3>
+          <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6;">Flashcards, practice exams, and study guides — all weighted toward your weakest topics. No time wasted.</p>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px;font-size:0.8rem;color:var(--text-muted);">
+            <div style="display:flex;align-items:center;gap:6px;">&#10003; Spaced repetition flashcards</div>
+            <div style="display:flex;align-items:center;gap:6px;">&#10003; Timed practice exams</div>
+            <div style="display:flex;align-items:center;gap:6px;">&#10003; Topic study guides</div>
+            <div style="display:flex;align-items:center;gap:6px;">&#10003; Progress analytics</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" onclick="App.navigate('signup')" style="margin-top:40px;font-size:1.1rem;padding:16px 36px;">
+        Take the Diagnostic Now &mdash; It's Free
+      </button>
+    </div>
+  </div>
+
+  <!-- DIAGNOSTIC PREVIEW / DEMO -->
+  <div style="padding:60px 24px;background:var(--bg-secondary);">
+    <div style="max-width:800px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:40px;">
+        <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:8px;">See a Sample Diagnostic Question</h2>
+        <p style="color:var(--text-secondary);">This is what the assessment looks like. 40 questions like this, covering everything on your exam.</p>
+      </div>
+
+      <div class="card hero-diag-demo" style="max-width:650px;margin:0 auto;padding:32px;">
+        <div class="diag-topic-badge" style="pointer-events:none;">&#9889; Ohm's Law &amp; Basic Theory</div>
+        <div style="font-size:1.1rem;font-weight:600;line-height:1.6;margin:16px 0 24px;">A 120V circuit has a resistance of 30 ohms. What is the current flowing through the circuit?</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="diag-option" style="cursor:default;opacity:0.7;"><div class="option-letter">A</div><div>2 Amperes</div></div>
+          <div class="diag-option selected" style="cursor:default;"><div class="option-letter" style="background:var(--accent);color:#000;border-color:var(--accent);">B</div><div>4 Amperes</div></div>
+          <div class="diag-option" style="cursor:default;opacity:0.7;"><div class="option-letter">C</div><div>6 Amperes</div></div>
+          <div class="diag-option" style="cursor:default;opacity:0.7;"><div class="option-letter">D</div><div>3600 Amperes</div></div>
+        </div>
+        <div style="margin-top:20px;padding:14px;background:var(--success-bg);border-radius:var(--radius-sm);border-left:3px solid var(--success);">
+          <div style="font-weight:600;color:var(--success);font-size:0.85rem;">&#10003; Correct! Using Ohm's Law: I = V/R = 120/30 = 4A</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT YOU GET AFTER DIAGNOSTIC -->
+  <div style="padding:60px 24px;">
+    <div style="max-width:900px;margin:0 auto;text-align:center;">
+      <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:8px;">After Your Diagnostic, You Get</h2>
+      <p style="color:var(--text-secondary);margin-bottom:40px;">Everything is personalized to your specific weak areas.</p>
+      <div class="features-grid" style="text-align:left;">
+        <div class="feature-card">
+          <div class="feature-icon">&#128293;</div>
+          <h3>Spaced Repetition Flashcards</h3>
+          <p>110+ cards using the SM-2 algorithm (same science as Anki). Cards reappear right before you'd forget them. Weighted toward your weak topics.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128221;</div>
+          <h3>Practice Exams</h3>
+          <p>Timed 50-question mock exams that mirror the real Alberta IP format. Instant grading with explanations for every question.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128200;</div>
+          <h3>Exam Score Predictor</h3>
+          <p>See your estimated exam score in real-time based on your current mastery. Know exactly when you're ready.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#9200;</div>
+          <h3>Cram Mode</h3>
+          <p>"Exam tomorrow?" One click to drill only your weakest material. Maximum impact in minimum time.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128214;</div>
+          <h3>Topic Study Guides</h3>
+          <p>Concise guides with key formulas, CEC references, and concepts for every topic. Plus a floating formula sheet accessible anywhere.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#127942;</div>
+          <h3>Streaks &amp; Progress</h3>
+          <p>Daily goals, study streaks, mastery heat maps, and analytics. Watch yourself improve and stay motivated.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTALL APP BANNER -->
+  <div id="landingInstallBanner" style="display:none;padding:48px 24px;background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(16,185,129,0.04));border-top:1px solid rgba(34,197,94,0.2);border-bottom:1px solid rgba(34,197,94,0.2);">
+    <div style="max-width:700px;margin:0 auto;display:flex;align-items:center;gap:32px;flex-wrap:wrap;justify-content:center;">
+      <div style="font-size:4rem;flex-shrink:0;">&#x1F4F2;</div>
+      <div style="flex:1;min-width:240px;">
+        <h2 style="font-size:1.4rem;font-weight:800;margin:0 0 6px;color:#22c55e;">Install sparkystudy on Your Device</h2>
+        <p style="color:var(--text-secondary);margin:0 0 4px;font-size:0.95rem;line-height:1.5;">Add to your home screen for instant access, offline study, and a full native app experience — no App Store needed.</p>
+        <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;font-size:0.8rem;color:var(--text-muted);">
+          <span>&#10003; Works offline</span>
+          <span>&#10003; No App Store</span>
+          <span>&#10003; Home screen icon</span>
+          <span>&#10003; Fast &amp; lightweight</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:center;flex-shrink:0;">
+        <button id="landingInstallBtn" onclick="PWA.promptInstall()" class="btn btn-lg" style="background:#22c55e;color:#000;font-weight:700;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px;">
+          &#x2B07; Install App — It's Free
+        </button>
+        <button onclick="document.getElementById('landingInstallBanner').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;">
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL CTA -->
+  <div style="padding:80px 24px;text-align:center;background:radial-gradient(ellipse at 50% 100%, rgba(245,158,11,0.08) 0%, transparent 60%);">
+    <div style="max-width:600px;margin:0 auto;">
+      <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:12px;">Stop Guessing. Start Studying Smart.</h2>
+      <p style="color:var(--text-secondary);margin-bottom:32px;font-size:1.05rem;line-height:1.7;">Five minutes is all it takes to find out exactly where you stand. Every study session after that is targeted, efficient, and personalized to you.</p>
+      <button class="btn btn-primary btn-lg" onclick="App.navigate('signup')" style="font-size:1.15rem;padding:18px 44px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Start Your Free Diagnostic
+      </button>
+      <div style="margin-top:16px;color:var(--text-muted);font-size:0.85rem;">No credit card required. Takes about 5 minutes.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======= SIGNUP PAGE ======= -->
+<div class="page" id="page-signup">
+  <div class="auth-page">
+    <div class="auth-card">
+      <h2>Create Your Account</h2>
+      <p class="auth-subtitle">Start mastering your electrical exam today</p>
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Enter your name">
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="signupEmail" placeholder="your@email.com">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Create a password">
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" onclick="Auth.signup()">Create Account &amp; Take Diagnostic</button>
+      <div class="auth-divider">Already have an account? <a href="#" onclick="App.navigate('login')">Log in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= LOGIN PAGE ======= -->
+<div class="page" id="page-login">
+  <div class="auth-page">
+    <div class="auth-card">
+      <h2>Welcome Back</h2>
+      <p class="auth-subtitle">Continue your study journey</p>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password">
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" onclick="Auth.login()">Log In</button>
+      <div class="auth-divider">Don't have an account? <a href="#" onclick="App.navigate('signup')">Sign up</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= DIAGNOSTIC PAGE ======= -->
+<div class="page" id="page-diagnostic">
+  <div class="diagnostic-page">
+    <div class="diag-header" id="diagHeader">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1>Diagnostic Assessment</h1>
+          <p style="color:var(--text-secondary);margin-top:8px;">Answer these questions so we can build your personalized study plan. Don't worry about getting them all right — this helps us find where to focus.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button class="btn btn-ghost btn-sm" onclick="Diagnostic.skipDiagnostic()" style="font-size:0.8rem;">Skip for now</button>
+          <button class="btn btn-ghost btn-sm" onclick="Auth.logout()" style="font-size:0.8rem;color:#ef4444;">Log out</button>
+        </div>
+      </div>
+    </div>
+    <div id="diagContent"></div>
+  </div>
+</div>
+
+<!-- ======= DASHBOARD ======= -->
+<div class="page" id="page-dashboard">
+  <div class="container" id="dashContent"></div>
+</div>
+
+<!-- ======= FLASHCARDS ======= -->
+<div class="page" id="page-flashcards">
+  <div class="container" id="fcContent"></div>
+</div>
+
+<!-- ======= EXAMS ======= -->
+<div class="page" id="page-exams">
+  <div class="container-wide" id="examContent"></div>
+</div>
+
+<!-- ======= STUDY GUIDE ======= -->
+<div class="page" id="page-study-guide">
+  <div class="container-wide" id="sgContent"></div>
+</div>
+
+<!-- ======= TOOLS / SIMULATORS ======= -->
+<div class="page" id="page-tools">
+  <div class="container-wide" id="toolsContent"></div>
+</div>
+
+<!-- ======= ANALYTICS ======= -->
+<div class="page" id="page-analytics">
+  <div class="container" id="analyticsContent"></div>
+</div>
+
+<!-- ======= REVIEW ======= -->
+<div class="page" id="page-review">
+  <div class="container" id="reviewContent"></div>
+</div>
+
+<!-- ======= SETTINGS ======= -->
+<div class="page" id="page-settings">
+  <div class="container" id="settingsContent"></div>
+</div>
+
+<!-- ======= LESSONS ======= -->
+<div class="page" id="page-lessons">
+  <div class="container-wide" id="lessonsContent"></div>
+</div>
+
+<!-- ======= NOTES ======= -->
+<div class="page" id="page-notes">
+  <div class="container-wide" id="notesContent"></div>
+</div>
+
+<!-- ======= WRONG ANSWER STUDY ======= -->
+<div class="page" id="page-wrong-study">
+  <div class="container-wide" id="wrongStudyContent"></div>
+</div>
+
+<!-- ======= OWNER ANALYTICS ======= -->
+<div class="page" id="page-group">
+  <div class="container" id="groupContent"></div>
+</div>
+
+<div class="page" id="page-owner">
+  <div class="container" id="ownerContent"></div>
+</div>
+
+<!-- ======= MATH PRACTICE ======= -->
+<div class="page" id="page-math">
+  <div class="container" id="mathContent"></div>
+</div>
+
+<!-- ======= LEADERBOARD ======= -->
+<div class="page" id="page-leaderboard">
+  <div class="container" id="leaderboardContent"></div>
+</div>
+
+</div><!-- /app-container -->
+
+<!-- Data and App scripts (loaded after Firebase SDK via defer) -->
+<script src="data.js?v=3" defer></script>
+<script src="app.js?v=3" defer></script>
+</body>
+</html>
