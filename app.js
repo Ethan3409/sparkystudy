@@ -4339,7 +4339,7 @@ const Tools = {
     { id: 'motor-sim', name: 'Motor Speed & Torque', icon: '&#x2699;', desc: 'Change frequency, poles, and load to see sync speed, slip, and torque', period: 2 },
     { id: 'pf-triangle', name: 'Power Triangle', icon: '&#x1F4CA;', desc: 'Interactive power triangle — drag to adjust true, reactive, and apparent power', period: 2 },
     { id: 'vd-calc', name: 'Voltage Drop Calculator', icon: '&#x1F9EE;', desc: 'Calculate voltage drop for copper and aluminum conductors per CEC standards', period: 1 },
-    { id: 'exam-checker', name: 'CEC Exam Checker', icon: '&#x1F4CB;', desc: 'Paste exam questions and get correct CEC answers with rule citations instantly', period: 0 },
+    { id: 'exam-checker', name: 'CEC Exam Checker', icon: '&#x1F4CB;', desc: 'Paste exam questions and get correct CEC answers with rule citations instantly', period: 1 },
     { id: 'demand-factor', name: 'Demand Factor Practice', icon: '&#x1F3E0;', desc: 'Scenario-based CEC 8-200 practice tool — read a home description and calculate the service size', period: 1 },
     { id: 'demand-factor-calc', name: 'Demand Factor Calculator', icon: '&#x1F9EE;', desc: 'CEC Rule 8-200 residential demand load calculator — enter your own loads and see the math', period: 1 },
     { id: 'conduit-fill', name: 'Conduit Fill Calculator', icon: '&#x1F4D0;', desc: 'Calculate conduit fill percentage per CEC Table 8 for common raceway types', period: 1 },
@@ -4365,7 +4365,7 @@ const Tools = {
     const catIcons = { 'DC Fundamentals': '&#x26A1;', 'Code & Sizing': '&#x1F4D5;', 'AC & Power': '&#x1F4C8;', 'Equipment': '&#x2699;', 'Diagrams & Drawings': '&#x1F4CB;' };
     const cats = [
       { label: 'DC Fundamentals', ids: ['ohm-sim', 'series-sim', 'parallel-sim'] },
-      { label: 'Code & Sizing', ids: ['wire-sizer', 'vd-calc', 'demand-factor-calc', 'demand-factor', 'conduit-fill'] },
+      { label: 'Code & Sizing', ids: ['exam-checker', 'wire-sizer', 'vd-calc', 'demand-factor-calc', 'demand-factor', 'conduit-fill'] },
       { label: 'AC & Power', ids: ['ac-wave', 'pf-triangle', 'rlc-impedance'] },
       { label: 'Equipment', ids: ['transformer-sim', 'motor-sim'] },
       { label: 'Diagrams & Drawings', ids: ['diagram-sim'] },
