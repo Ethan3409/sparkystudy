@@ -17,7 +17,7 @@
 <script>
 // Bust stale SW cache once per app version — runs inline so it fires before app.js loads
 (function(){
-  var V = 'v3';
+  var V = 'v5';
   if ('serviceWorker' in navigator && sessionStorage.getItem('sw-ver') !== V) {
     navigator.serviceWorker.getRegistration().then(function(reg){
       sessionStorage.setItem('sw-ver', V);
