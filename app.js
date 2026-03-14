@@ -4339,6 +4339,7 @@ const Tools = {
     { id: 'motor-sim', name: 'Motor Speed & Torque', icon: '&#x2699;', desc: 'Change frequency, poles, and load to see sync speed, slip, and torque', period: 2 },
     { id: 'pf-triangle', name: 'Power Triangle', icon: '&#x1F4CA;', desc: 'Interactive power triangle — drag to adjust true, reactive, and apparent power', period: 2 },
     { id: 'vd-calc', name: 'Voltage Drop Calculator', icon: '&#x1F9EE;', desc: 'Calculate voltage drop for copper and aluminum conductors per CEC standards', period: 1 },
+    { id: 'exam-checker', name: 'CEC Exam Checker', icon: '&#x1F4CB;', desc: 'Paste exam questions and get correct CEC answers with rule citations instantly', period: 0 },
     { id: 'demand-factor', name: 'Demand Factor Practice', icon: '&#x1F3E0;', desc: 'Scenario-based CEC 8-200 practice tool — read a home description and calculate the service size', period: 1 },
     { id: 'demand-factor-calc', name: 'Demand Factor Calculator', icon: '&#x1F9EE;', desc: 'CEC Rule 8-200 residential demand load calculator — enter your own loads and see the math', period: 1 },
     { id: 'conduit-fill', name: 'Conduit Fill Calculator', icon: '&#x1F4D0;', desc: 'Calculate conduit fill percentage per CEC Table 8 for common raceway types', period: 1 },
@@ -4442,6 +4443,9 @@ const Tools = {
       case 'motor-sim': this._updateMotorSim(); break;
       case 'pf-triangle': this._updatePFSim(); break;
       case 'vd-calc': this._updateVDCalc(); break;
+      case 'exam-checker':
+        container.innerHTML = ExamChecker.render();
+        break;
       case 'demand-factor': this._updateDemandFactor(); break;
       case 'demand-factor-calc': this._updateDemandCalc(); break;
       case 'conduit-fill': this._updateConduitFill(); break;
@@ -11099,6 +11103,40 @@ confettiStyle.textContent = '@keyframes confettiFall { 0% { top: -20px; opacity:
 document.head.appendChild(confettiStyle);
 
 // ===== FLOATING ACTION BUTTONS (Formula + Timer) =====
+
+const ExamChecker = {
+  render() {
+    return '<div style="max-width:800px;margin:0 auto;padding:24px 16px;">' +
+      '<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;">&#x1F4CB; CEC Exam Checker</h1>' +
+      '<p style="color:var(--text-secondary);margin-bottom:20px;">Paste your exam questions below — the AI will find the correct answer for each one using the 2024 Canadian Electrical Code.</p>' +
+      '<textarea id="examInput" style="width:100%;height:300px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text-primary);font-size:0.9rem;resize:vertical;font-family:inherit;box-sizing:border-box;" placeholder="Paste your exam questions here..."></textarea>' +
+      '<button onclick="ExamChecker.check()" class="btn btn-primary" style="margin-top:12px;width:100%;padding:14px;font-size:1rem;font-weight:700;">&#x26A1; Check Answers</button>' +
+      '<div id="examResults" style="margin-top:24px;"></div>' +
+      '</div>';
+  },
+  async check() {
+    const input = document.getElementById('examInput');
+    const results = document.getElementById('examResults');
+    if (!input || !input.value.trim()) return;
+    results.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">&#x23F3; Checking answers against the CEC...</div>';
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: input.value.trim() })
+      });
+      const data = await res.json();
+      const html = data.answer
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong></strong>')
+        .replace(/\n/g, '<br>');
+      results.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;line-height:1.8;">' + html + '</div>';
+    } catch(err) {
+      results.innerHTML = '<div style="color:var(--error);padding:20px;">Error: ' + err.message + '</div>';
+    }
+  }
+};
+
 function createFAB() {
   const fab = document.createElement('div');
   fab.id = 'fabContainer';
