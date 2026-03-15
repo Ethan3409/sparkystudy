@@ -9013,6 +9013,41 @@ const Lessons = {
   activeLesson: null,
   _ttsActive: false,
 
+  _elAudio: null,
+
+  async _elSpeak(text) {
+    const apiKey = localStorage.getItem('el_api_key');
+    const voiceId = localStorage.getItem('el_voice_id');
+    if (!apiKey || !voiceId) return false;
+    const btn = document.getElementById('lessons-read-btn');
+    if (btn) { btn.textContent = '⏳ Loading...'; btn.style.color = '#f59e0b'; btn.style.borderColor = 'rgba(245,158,11,0.4)'; }
+    try {
+      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text.substring(0, 5000),
+          model_id: 'eleven_monolingual_v1',
+          voice_settings: { stability: 0.55, similarity_boost: 0.80 }
+        })
+      });
+      if (!res.ok) return false;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      this._elAudio = new Audio(url);
+      this._elAudio.onended = () => {
+        this._ttsActive = false;
+        URL.revokeObjectURL(url);
+        const b = document.getElementById('lessons-read-btn');
+        if (b) { b.textContent = '🔊 Read Aloud'; b.style.color = '#58a6ff'; b.style.borderColor = 'rgba(88,166,255,0.3)'; b.style.background = 'rgba(88,166,255,0.1)'; }
+      };
+      this._elAudio.play();
+      this._ttsActive = true;
+      if (btn) { btn.textContent = '⏹ Stop'; btn.style.color = '#10b981'; btn.style.borderColor = 'rgba(16,185,129,0.3)'; btn.style.background = 'rgba(16,185,129,0.1)'; }
+      return true;
+    } catch(e) { return false; }
+  },
+
   _getBestVoice() {
     const voices = speechSynthesis.getVoices();
     if (!voices.length) return null;
@@ -9059,21 +9094,25 @@ const Lessons = {
   },
 
   _stopReading() {
+    if (this._elAudio) { this._elAudio.pause(); this._elAudio = null; }
     speechSynthesis.cancel();
     this._ttsActive = false;
     const btn = document.getElementById('lessons-read-btn');
     if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.background = 'rgba(88,166,255,0.1)'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.color = '#58a6ff'; }
   },
 
-  _toggleRead() {
+  async _toggleRead() {
     if (this._ttsActive) { this._stopReading(); return; }
     if (!this.activeLesson) return;
     const text = this._getLessonText(this.activeLesson);
     if (!text) return;
+    // Try ElevenLabs first
+    const used = await this._elSpeak(text);
+    if (used) return;
+    // Fall back to browser TTS
     speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 0.92;
-    utter.pitch = 1.0;
+    utter.rate = 0.92; utter.pitch = 1.0;
     const tryVoice = () => { const v = this._getBestVoice(); if (v) utter.voice = v; };
     tryVoice();
     if (!utter.voice) speechSynthesis.onvoiceschanged = () => { tryVoice(); speechSynthesis.onvoiceschanged = null; };
@@ -9379,6 +9418,26 @@ const Settings = {
           </div>
         </div>
 
+        <!-- ElevenLabs Voice Settings -->
+        <div style="background:var(--bg-card);border:1px solid rgba(88,166,255,0.25);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
+          <h3 style="margin:0 0 6px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">🔊 Read Aloud Voice</h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 16px;">Enter your ElevenLabs API key and Voice ID to use your custom voice for lesson read-aloud. Saved locally — never uploaded anywhere.</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">API Key</label>
+              <input id="el-api-key-input" type="password" placeholder="sk_..." value="${localStorage.getItem('el_api_key') || ''}"
+                style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text-primary);font-size:0.85rem;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Voice ID</label>
+              <input id="el-voice-id-input" type="text" placeholder="e.g. FOSKkhOXCEGmWEXxIIpp" value="${localStorage.getItem('el_voice_id') || ''}"
+                style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text-primary);font-size:0.85rem;box-sizing:border-box;">
+            </div>
+            <button class="btn btn-primary" onclick="Settings.saveElevenLabs()" style="align-self:flex-start;">Save Voice Settings</button>
+            <div id="el-save-msg" style="font-size:0.8rem;color:var(--success);display:none;">✓ Saved! Open any lesson and click Read Aloud.</div>
+          </div>
+        </div>
+
         <!-- Danger Zone -->
         <div style="background:var(--bg-card);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
           <h3 style="margin:0 0 16px;font-size:1.05rem;color:var(--danger);display:flex;align-items:center;gap:8px;">&#x26A0; Danger Zone</h3>
@@ -9541,6 +9600,15 @@ const Settings = {
     a.click();
     URL.revokeObjectURL(url);
     showToast('Data exported!', 'success');
+  },
+
+  saveElevenLabs() {
+    const key = document.getElementById('el-api-key-input')?.value.trim();
+    const voice = document.getElementById('el-voice-id-input')?.value.trim();
+    if (key) localStorage.setItem('el_api_key', key);
+    if (voice) localStorage.setItem('el_voice_id', voice);
+    const msg = document.getElementById('el-save-msg');
+    if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
   },
 
   retakeDiagnostic() {
