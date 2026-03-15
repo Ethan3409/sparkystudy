@@ -1,8 +1,18 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const nodemailer = require('nodemailer');
+
+// Safe Stripe init — server still starts even if key is missing
+let stripe = null;
+try {
+  if (process.env.STRIPE_SECRET_KEY) {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  } else {
+    console.warn('⚠️  STRIPE_SECRET_KEY not set — Stripe endpoints will return 503');
+  }
+} catch(e) {
+  console.error('Stripe init failed:', e.message);
+}
 
 // Simple in-memory rate limit: max 3 support messages per IP per hour
 const contactRateLimit = new Map();
@@ -66,6 +76,7 @@ app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 // ── POST /api/create-checkout-session ───────────────────────────────────────
 // Creates a Stripe Checkout Session and returns the URL to redirect the user.
 app.post('/api/create-checkout-session', async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Payment system not configured yet. Please contact support.' });
   try {
     const { email, promo } = req.body;
 
@@ -109,6 +120,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 // ── GET /api/verify-session?session_id=xxx ──────────────────────────────────
 // Called by payment-success.html to confirm payment status and get plan details.
 app.get('/api/verify-session', async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Payment system not configured yet.' });
   const { session_id } = req.query;
   if (!session_id) return res.status(400).json({ error: 'Missing session_id' });
 

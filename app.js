@@ -128,10 +128,40 @@ const FireDB = {
       const batch = this.db.batch();
       snap.docs.forEach(d => batch.delete(d.ref));
       await batch.commit();
-      // If there were 500 (max batch), run again to catch the rest
       if (snap.docs.length === 500) await this.clearVisits();
       return snap.docs.length;
     } catch(e) { console.warn('clearVisits failed', e); return 0; }
+  },
+
+  // ── Support messages ───────────────────────────────────────────────────────
+  async saveMessage(msg) {
+    if (!this.ready) return;
+    try { await this.db.collection('support').doc(msg.id).set({ ...msg, _ts: firebase.firestore.FieldValue.serverTimestamp() }); }
+    catch(e) { console.warn('saveMessage failed:', e.message); }
+  },
+  async getAllMessages() {
+    if (!this.ready) return null;
+    try {
+      const snap = await this.db.collection('support').orderBy('sentAt', 'desc').limit(200).get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { return null; }
+  },
+  async replyMessage(msgId, reply) {
+    if (!this.ready) return;
+    try {
+      await this.db.collection('support').doc(msgId).update({
+        replies: firebase.firestore.FieldValue.arrayUnion(reply),
+        status: 'replied',
+        readByOwner: true
+      });
+    } catch(e) { console.warn('replyMessage failed:', e.message); }
+  },
+  async getMessagesForUser(userId) {
+    if (!this.ready) return null;
+    try {
+      const snap = await this.db.collection('support').where('userId', '==', userId).orderBy('sentAt', 'desc').get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { return null; }
   }
 };
 
@@ -146,6 +176,60 @@ const ACTIVE_USER_KEY = 'sparkstudy_active';
 const PREV_ACCOUNT_KEY = 'sparkstudy_prev_uid';
 
 const BACKUP_USER_KEY = 'sparkstudy_backup_uid';
+const SUPPORT_KEY = 'sparkstudy_support';
+
+// ===== SUPPORT MESSAGES =====
+const SupportMessages = {
+  getAll() {
+    try { return JSON.parse(localStorage.getItem(SUPPORT_KEY) || '[]'); } catch(e) { return []; }
+  },
+  _save(msgs) { localStorage.setItem(SUPPORT_KEY, JSON.stringify(msgs)); },
+  getForUser(userId) { return this.getAll().filter(m => m.userId === userId); },
+  unreadCount() { return this.getAll().filter(m => !m.readByOwner).length; },
+
+  send(userId, userName, userEmail, subject, message) {
+    const msg = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      userId, userName, userEmail, subject, message,
+      sentAt: Date.now(), status: 'open', replies: [], readByOwner: false
+    };
+    const msgs = this.getAll();
+    msgs.unshift(msg);
+    this._save(msgs);
+    FireDB.saveMessage(msg);
+    return msg;
+  },
+
+  reply(msgId, replyText) {
+    const msgs = this.getAll();
+    const msg = msgs.find(m => m.id === msgId);
+    if (!msg) return;
+    const reply = { message: replyText, sentAt: Date.now() };
+    msg.replies = msg.replies || [];
+    msg.replies.push(reply);
+    msg.status = 'replied';
+    msg.readByOwner = true;
+    this._save(msgs);
+    FireDB.replyMessage(msgId, reply);
+  },
+
+  markReadByOwner(msgId) {
+    const msgs = this.getAll();
+    const msg = msgs.find(m => m.id === msgId);
+    if (msg) { msg.readByOwner = true; this._save(msgs); }
+  },
+
+  // Merge cloud messages into local store (called after Firebase fetch)
+  mergeCloud(cloudMsgs) {
+    if (!cloudMsgs || !cloudMsgs.length) return;
+    const local = this.getAll();
+    const localIds = new Set(local.map(m => m.id));
+    cloudMsgs.forEach(m => { if (!localIds.has(m.id)) local.push(m); });
+    local.sort((a, b) => b.sentAt - a.sentAt);
+    this._save(local);
+  }
+};
+
 const Storage = {
   // Active user session
   get() {
@@ -630,11 +714,21 @@ const Auth = {
     if (pass.length < 6) return showErr('Password must be at least 6 characters.');
     if (!this.selectedPeriod) return showErr('Please select which period you are in.');
 
-    // Check local first, then Firestore
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) return showErr('Please enter a valid email address.');
+
+    // Check email not already used (local first, then cloud)
     if (Storage.findByEmailLocal(email)) return showErr('An account with this email already exists. Please log in.');
     if (FireDB.ready) {
       const cloudUser = await FireDB.findByEmail(email);
       if (cloudUser) return showErr('An account with this email already exists. Please log in.');
+    }
+
+    // Check name not already used
+    const allUsers = UserRegistry.getAll();
+    if (allUsers.some(u => u.name.toLowerCase().trim() === name.toLowerCase().trim())) {
+      return showErr('That name is already taken — please use a different name.');
     }
 
     // Store pending signup data so payment-success.html can create the account
@@ -652,6 +746,10 @@ const Auth = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, period: this.selectedPeriod })
       });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Payment service is temporarily unavailable. Please try again in a moment.');
+      }
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
@@ -660,7 +758,7 @@ const Auth = {
       }
     } catch (e) {
       if (btn) { btn.textContent = '⚡ Start Free Trial & Add Card'; btn.disabled = false; }
-      showErr('Could not connect to checkout: ' + e.message);
+      showErr(e.message);
       localStorage.removeItem('sparkstudy_pending_signup');
     }
   },
@@ -9914,10 +10012,14 @@ const Settings = {
                 style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;resize:vertical;line-height:1.5;font-family:inherit;"></textarea>
               <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;text-align:right;" id="supportCharCount">0 / 2000</div>
             </div>
-            <button class="btn btn-primary" id="supportSendBtn" onclick="Settings.sendSupport('${state.user.name}','${state.user.email}')" style="align-self:flex-start;padding:10px 28px;">
+            <button class="btn btn-primary" id="supportSendBtn" onclick="Settings.sendSupport('${state.user.id}','${state.user.name}','${state.user.email}')" style="align-self:flex-start;padding:10px 28px;">
               Send Message
             </button>
             <div id="supportResult" style="display:none;"></div>
+          </div>
+          <div id="supportHistory"></div>
+          <script>Settings._refreshSupportHistory('${state.user.id}');</script>
+          <div style="display:none">
           </div>
           <script>
             (function() {
@@ -10098,7 +10200,7 @@ const Settings = {
     Diagnostic.retake();
   },
 
-  async sendSupport(name, email) {
+  sendSupport(userId, userName, userEmail) {
     const subject = document.getElementById('supportSubject')?.value || 'General Question';
     const message = document.getElementById('supportMessage')?.value?.trim() || '';
     const btn = document.getElementById('supportSendBtn');
@@ -10107,34 +10209,49 @@ const Settings = {
     if (!message) { showToast('Please enter a message.', 'error'); return; }
     if (message.length > 2000) { showToast('Message too long (max 2000 characters).', 'error'); return; }
 
-    btn.textContent = 'Sending...';
-    btn.disabled = true;
-    if (result) result.style.display = 'none';
+    SupportMessages.send(userId, userName, userEmail, subject, message);
 
-    try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject, message })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to send');
-
-      if (result) {
-        result.style.display = 'block';
-        result.innerHTML = '<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:12px 16px;font-size:0.88rem;color:#a7f3d0;">✓ Message sent! We\'ll get back to you soon.</div>';
-      }
-      document.getElementById('supportMessage').value = '';
-      document.getElementById('supportCharCount').textContent = '0 / 2000';
-      btn.textContent = '✓ Sent';
-    } catch (e) {
-      if (result) {
-        result.style.display = 'block';
-        result.innerHTML = '<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px 16px;font-size:0.88rem;color:#fca5a5;">Failed to send: ' + e.message + '</div>';
-      }
-      btn.textContent = 'Send Message';
-      btn.disabled = false;
+    if (result) {
+      result.style.display = 'block';
+      result.innerHTML = '<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:12px 16px;font-size:0.88rem;color:#a7f3d0;">✓ Message sent! We\'ll get back to you as soon as possible.</div>';
     }
+    document.getElementById('supportMessage').value = '';
+    document.getElementById('supportCharCount').textContent = '0 / 2000';
+    btn.textContent = '✓ Sent';
+    btn.disabled = true;
+
+    // Refresh the message history below
+    Settings._refreshSupportHistory(userId);
+  },
+
+  _refreshSupportHistory(userId) {
+    const el = document.getElementById('supportHistory');
+    if (!el) return;
+    const msgs = SupportMessages.getForUser(userId);
+    if (!msgs.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div style="margin-top:24px;">
+        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Your Messages</h4>
+        ${msgs.map(m => `
+          <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+              <span style="font-size:0.82rem;font-weight:700;">${m.subject}</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);">${new Date(m.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</span>
+            </div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:${m.replies&&m.replies.length?'10px':'0'};">${m.message.replace(/</g,'&lt;')}</div>
+            ${(m.replies||[]).map(r => `
+              <div style="background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;margin-top:8px;">
+                <div style="font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:4px;">Owner · ${new Date(r.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+                <div style="font-size:0.85rem;">${r.message.replace(/</g,'&lt;')}</div>
+              </div>
+            `).join('')}
+            <div style="margin-top:8px;">
+              <span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:${m.status==='replied'?'rgba(16,185,129,0.12)':'rgba(245,158,11,0.1)'};color:${m.status==='replied'?'#10b981':'#f59e0b'};font-weight:600;">${m.status==='replied'?'Replied':'Open'}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
   },
 
   resetAll() {
@@ -10376,13 +10493,21 @@ const OwnerDashboard = {
       {id:'diagnostics',label:'Diagnostics',icon:'&#x1F3AF;'},{id:'exams',label:'Exams',icon:'&#x1F4DD;'},
       {id:'flashcards',label:'Flashcards',icon:'&#x1F4DA;'},{id:'traffic',label:'Traffic',icon:'&#x1F6A6;'},
       {id:'engagement',label:'Engagement',icon:'&#x1F525;'},{id:'revenue',label:'Revenue',icon:'&#x1F4B0;'},
-      {id:'plans',label:'Plans & Pricing',icon:'&#x1F4B3;'},{id:'events',label:'Event Log',icon:'&#x1F4DC;'},
-      {id:'export',label:'Export',icon:'&#x1F4E5;'}
+      {id:'plans',label:'Plans & Pricing',icon:'&#x1F4B3;'},{id:'support',label:'Support',icon:'&#x1F4AC;'},
+      {id:'events',label:'Event Log',icon:'&#x1F4DC;'},{id:'export',label:'Export',icon:'&#x1F4E5;'}
     ];
     container.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;"><div><h1 style="margin:0;">&#x1F451; Owner Analytics</h1><p style="color:var(--text-secondary);margin-top:4px;">Real-time insights &mdash; '+D.totalUsers+' users, '+D.totalVisits+' visits'+cloudBadge+'</p></div><div style="display:flex;align-items:center;gap:12px;"><span class="oa-live-dot"></span><span style="font-size:0.85rem;color:#22c55e;">Live</span><span style="font-size:0.75rem;color:var(--text-muted);">'+new Date().toLocaleTimeString()+'</span><button class="btn btn-ghost btn-sm" onclick="App.navigate(\'dashboard\')" style="border:1px solid var(--border);">&#x1F519; My Dashboard</button><button class="btn btn-secondary btn-sm" onclick="OwnerDashboard.render()">&#x21BB; Refresh</button><button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Logout</button></div></div><div class="oa-tabs" style="flex-wrap:wrap;">'+tabs.map(t=>'<div class="oa-tab '+(this.currentTab===t.id?'active':'')+'" onclick="OwnerDashboard.switchTab(\''+t.id+'\')">'+t.icon+' '+t.label+'</div>').join('')+'</div><div id="oaTabContent"></div>';
     const tc = document.getElementById('oaTabContent');
     const fn = '_tab_'+this.currentTab;
-    if(this[fn]) tc.innerHTML = this[fn](D);
+    if(this[fn]) {
+      const result = this[fn](D);
+      if (result && typeof result.then === 'function') {
+        tc.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">Loading...</div>';
+        result.then(html => { if(tc) tc.innerHTML = html || ''; });
+      } else {
+        tc.innerHTML = result || '';
+      }
+    }
   },
 
   switchTab(t) { this.currentTab=t; this.render(); },
@@ -10637,6 +10762,68 @@ const OwnerDashboard = {
     document.getElementById('groupTotalLarge').textContent='$'+tt;
     document.getElementById('groupTotalDisplay').textContent=val+' students \u00B7 $'+tt+' total \u00B7 Save '+svp+'%';
     document.getElementById('groupSavingsDisplay').textContent='Save $'+sv+' ('+svp+'%) vs individual';
+  },
+
+  async _tab_support(D) {
+    // Pull cloud messages into local store
+    if (FireDB.ready) {
+      const cloud = await FireDB.getAllMessages();
+      if (cloud) SupportMessages.mergeCloud(cloud);
+    }
+    const msgs = SupportMessages.getAll();
+    const open = msgs.filter(m => m.status === 'open').length;
+    const replied = msgs.filter(m => m.status === 'replied').length;
+
+    if (!msgs.length) return `
+      <div class="oa-section" style="text-align:center;padding:60px 20px;">
+        <div style="font-size:3rem;margin-bottom:12px;">&#x1F4AC;</div>
+        <h3 style="margin-bottom:8px;">No support messages yet</h3>
+        <p style="color:var(--text-secondary);">Messages from users will appear here.</p>
+      </div>`;
+
+    return `
+      <div class="oa-grid" style="margin-bottom:24px;">
+        <div class="oa-stat"><div class="oa-stat-value">${msgs.length}</div><div class="oa-stat-label">Total</div></div>
+        <div class="oa-stat"><div class="oa-stat-value" style="color:#f59e0b;">${open}</div><div class="oa-stat-label">Open</div></div>
+        <div class="oa-stat"><div class="oa-stat-value" style="color:#22c55e;">${replied}</div><div class="oa-stat-label">Replied</div></div>
+      </div>
+      ${msgs.map(m => `
+        <div class="oa-section" style="margin-bottom:12px;" id="smsg-${m.id}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <div>
+              <div style="font-weight:700;font-size:0.95rem;">${m.userName} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;">&mdash; ${m.userEmail}</span></div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">${m.subject} &middot; ${new Date(m.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+            <span style="font-size:0.75rem;padding:3px 10px;border-radius:20px;font-weight:700;background:${m.status==='replied'?'rgba(34,197,94,0.12)':'rgba(245,158,11,0.12)'};color:${m.status==='replied'?'#22c55e':'#f59e0b'};">${m.status==='replied'?'Replied':'Open'}</span>
+          </div>
+          <div style="background:var(--bg-input);border-radius:8px;padding:12px;font-size:0.88rem;line-height:1.6;margin-bottom:10px;">${m.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+          ${(m.replies||[]).map(r => `
+            <div style="background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:8px;">
+              <div style="font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:4px;">You (Owner) &middot; ${new Date(r.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+              <div style="font-size:0.85rem;">${r.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+            </div>
+          `).join('')}
+          <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">
+            <textarea id="reply-${m.id}" rows="2" placeholder="Type your reply — user will see it as from 'Owner'..."
+              style="flex:1;padding:8px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.85rem;resize:vertical;font-family:inherit;line-height:1.5;"></textarea>
+            <button onclick="OwnerDashboard.sendReply('${m.id}')" style="padding:8px 16px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;white-space:nowrap;height:38px;">Send Reply</button>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  },
+
+  async sendReply(msgId) {
+    const ta = document.getElementById('reply-' + msgId);
+    const text = ta ? ta.value.trim() : '';
+    if (!text) return showToast('Please type a reply first.', 'error');
+    SupportMessages.reply(msgId, text);
+    showToast('Reply sent.', 'success');
+    // Re-render the support tab
+    const tc = document.getElementById('oaTabContent');
+    if (tc) tc.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">Refreshing...</div>';
+    const html = await this._tab_support(this._gatherData());
+    if (tc) tc.innerHTML = html;
   },
 
   _tab_events(D) {
