@@ -86,7 +86,7 @@ async function verify() {
         <div class="trial-row"><span class="label">Next renewal</span><span class="value">${expiresStr}</span></div>
         <div class="trial-row"><span class="label">Status</span><span class="value" style="color:var(--green);">✓ Active</span></div>
       </div>
-      <a href="index.html" class="btn">⚡ Start Studying Now</a>
+      <a href="index.html#diagnostic" class="btn" onclick="localStorage.setItem('sparkstudy_goto','diagnostic')">⚡ Start Studying Now</a>
     `;
   } catch (err) {
     card.innerHTML = `
@@ -101,33 +101,104 @@ async function verify() {
   }
 }
 
+function createAccountFromPending(data) {
+  // Read pending signup data saved before Stripe redirect
+  let pending = null;
+  try { pending = JSON.parse(localStorage.getItem('sparkstudy_pending_signup') || 'null'); } catch(e) {}
+  if (!pending || !pending.email) return false;
+
+  const uid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  const trialEnd = data.trial_end || new Date(Date.now() + 7 * 86400000).toISOString();
+  const trialStart = data.trial_start || new Date().toISOString();
+  const expiresAt = data.expires_at || new Date(Date.now() + 365 * 86400000).toISOString();
+
+  const state = {
+    user: {
+      id: uid,
+      name: pending.name,
+      email: pending.email,
+      password: pending.password,
+      period: parseInt(pending.period) || 1,
+      signupDate: Date.now(),
+      lastLogin: Date.now(),
+      isOwner: false,
+      subscription: {
+        plan: 'elite',
+        status: 'paid',
+        paid: true,
+        paidAt: new Date().toISOString(),
+        trial: true,
+        trial_start_date: trialStart,
+        trial_end_date: trialEnd,
+        elite_expires_at: expiresAt,
+        subscription_id: data.subscription_id || null,
+        startDate: Date.now(),
+        trialEnd: new Date(trialEnd).getTime(),
+        endDate: null,
+        groupId: null,
+        groupSize: null
+      }
+    },
+    diagnostic: { completed: false, responses: [], weakAreas: [], strongAreas: [], score: 0, pct: 0 },
+    flashcards: {},
+    exams: { attempts: [], bookmarked: [] },
+    sessions: { streak: 0, streakStart: null, lastStudy: null, totalTime: 0, daily: {} },
+    studyGuide: { lessonProgress: {} },
+    studyPlan: { dailyFlashcards: 20, dailyMinutes: 30 },
+    preferences: { showHints: true },
+    points: { total: 0, weekly: 0, weekStart: Date.now(), history: [] },
+    mathSettings: { enabledCategories: null },
+    mathStats: {},
+    _v: '1.0'
+  };
+
+  localStorage.setItem('sparkstudy_v1_' + uid, JSON.stringify(state));
+  localStorage.setItem('sparkstudy_active', uid);
+  localStorage.setItem('sparkstudy_backup_uid', uid);
+
+  // Add to user registry
+  const reg = (() => { try { return JSON.parse(localStorage.getItem('sparkstudy_users') || '[]'); } catch(e) { return []; } })();
+  reg.push({ id: uid, name: pending.name, email: pending.email, period: state.user.period, signupDate: state.user.signupDate, isOwner: false });
+  localStorage.setItem('sparkstudy_users', JSON.stringify(reg));
+
+  // Clear pending data
+  localStorage.removeItem('sparkstudy_pending_signup');
+  return true;
+}
+
 function activateElite(data) {
   try {
-    // Update sparty_auth
-    const auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
-    auth.plan = 'elite';
-    auth.paid = true;
-    auth.paidAt = new Date().toISOString();
-    auth.subscription_id = data.subscription_id || null;
-    auth.trial = data.trial || false;
-    auth.trial_start_date = data.trial_start || new Date().toISOString();
-    auth.trial_end_date = data.trial_end || new Date(Date.now() + 7 * 86400000).toISOString();
-    auth.elite_expires_at = data.expires_at || new Date(Date.now() + 365 * 86400000).toISOString();
-    localStorage.setItem('sparty_auth', JSON.stringify(auth));
+    // First try to create brand-new account from pending signup (new flow)
+    const created = createAccountFromPending(data);
+    if (created) return; // Account fully created with elite status — done
 
-    // Update sparkstudy_v1 (main app state)
-    const state = JSON.parse(localStorage.getItem('sparkstudy_v1') || '{}');
-    if (state && state.user) {
-      state.user.subscription = state.user.subscription || {};
-      state.user.subscription.plan = 'elite';
-      state.user.subscription.paid = true;
-      state.user.subscription.paidAt = auth.paidAt;
-      state.user.subscription.trial = auth.trial;
-      state.user.subscription.trial_start_date = auth.trial_start_date;
-      state.user.subscription.trial_end_date = auth.trial_end_date;
-      state.user.subscription.elite_expires_at = auth.elite_expires_at;
-      localStorage.setItem('sparkstudy_v1', JSON.stringify(state));
-    }
+    // Fallback: update existing logged-in account (old flow / returning user upgrading)
+    const activeUid = localStorage.getItem('sparkstudy_active');
+    if (!activeUid) return;
+    const stateKey = 'sparkstudy_v1_' + activeUid;
+    const state = JSON.parse(localStorage.getItem(stateKey) || 'null');
+    if (!state || !state.user) return;
+
+    const paidAt = new Date().toISOString();
+    const trialEnd = data.trial_end || new Date(Date.now() + 7 * 86400000).toISOString();
+    const trialStart = data.trial_start || new Date().toISOString();
+    const expiresAt = data.expires_at || new Date(Date.now() + 365 * 86400000).toISOString();
+
+    state.user.subscription = state.user.subscription || {};
+    state.user.subscription.plan = 'elite';
+    state.user.subscription.status = 'paid';
+    state.user.subscription.paid = true;
+    state.user.subscription.paidAt = paidAt;
+    state.user.subscription.trial = data.trial || false;
+    state.user.subscription.trial_start_date = trialStart;
+    state.user.subscription.trial_end_date = trialEnd;
+    state.user.subscription.elite_expires_at = expiresAt;
+    state.user.subscription.subscription_id = data.subscription_id || null;
+    state.user.subscription.trialEnd = new Date(trialEnd).getTime();
+    localStorage.setItem(stateKey, JSON.stringify(state));
   } catch (e) {
     console.warn('Could not update localStorage:', e);
   }

@@ -145,18 +145,32 @@ const ANALYTICS_KEY = 'sparkstudy_analytics';
 const ACTIVE_USER_KEY = 'sparkstudy_active';
 const PREV_ACCOUNT_KEY = 'sparkstudy_prev_uid';
 
+const BACKUP_USER_KEY = 'sparkstudy_backup_uid';
 const Storage = {
   // Active user session
   get() {
-    const uid = localStorage.getItem(ACTIVE_USER_KEY);
+    let uid = localStorage.getItem(ACTIVE_USER_KEY);
+    // ── Data-loss recovery: if active key is missing, restore from backup ──
+    if (!uid) {
+      const backup = localStorage.getItem(BACKUP_USER_KEY);
+      if (backup) {
+        const backupState = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + backup)); } catch(e) { return null; } })();
+        if (backupState && backupState.user) {
+          localStorage.setItem(ACTIVE_USER_KEY, backup);
+          uid = backup;
+        }
+      }
+    }
     if (!uid) return null;
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + uid)) || null; } catch(e) { return null; }
   },
   set(state) {
     if (!state || !state.user) return;
     const uid = state.user.id;
-    localStorage.setItem(STORAGE_KEY + '_' + uid, JSON.stringify(state));
+    const json = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY + '_' + uid, json);
     localStorage.setItem(ACTIVE_USER_KEY, uid);
+    localStorage.setItem(BACKUP_USER_KEY, uid); // ← backup so data survives accidental session clear
     // Update user registry
     UserRegistry.update(state.user);
     // Async cloud sync — non-blocking, never breaks local flow
@@ -167,9 +181,10 @@ const Storage = {
     const uid = localStorage.getItem(ACTIVE_USER_KEY);
     if (uid) localStorage.removeItem(STORAGE_KEY + '_' + uid);
     localStorage.removeItem(ACTIVE_USER_KEY);
+    localStorage.removeItem(BACKUP_USER_KEY);
   },
   logout() { localStorage.removeItem(ACTIVE_USER_KEY); },
-  setActiveUser(uid) { localStorage.setItem(ACTIVE_USER_KEY, uid); },
+  setActiveUser(uid) { localStorage.setItem(ACTIVE_USER_KEY, uid); localStorage.setItem(BACKUP_USER_KEY, uid); },
   getUserById(uid) {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + uid)) || null; } catch(e) { return null; }
   },
@@ -580,8 +595,12 @@ const Auth = {
   isOwnerAnalytics: false,
   selectPeriod(p) {
     this.selectedPeriod = p;
-    document.querySelectorAll('.period-option').forEach(el => {
-      el.classList.toggle('selected', parseInt(el.dataset.period) === p);
+    // Handle both old .period-option and new signup .signup-period-opt
+    document.querySelectorAll('.period-option, .signup-period-opt').forEach(el => {
+      const selected = parseInt(el.dataset.period) === p;
+      el.style.borderColor = selected ? '#f59e0b' : 'var(--border)';
+      el.style.background = selected ? 'rgba(245,158,11,0.08)' : '';
+      el.classList.toggle('selected', selected);
     });
   },
   appliedPromo: null,
@@ -603,18 +622,47 @@ const Auth = {
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const pass = document.getElementById('signupPassword').value;
-    if (!name || !email || !pass) return showToast('Please fill in all fields', 'error');
-    // Check local first (fast), then Firestore (catches accounts from other devices)
-    if (Storage.findByEmailLocal(email)) return showToast('An account with this email already exists. Please log in.', 'error');
+    const errEl = document.getElementById('signupError');
+    const btn = document.getElementById('signupBtn');
+    const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } else showToast(msg, 'error'); };
+
+    if (!name || !email || !pass) return showErr('Please fill in all fields.');
+    if (pass.length < 6) return showErr('Password must be at least 6 characters.');
+    if (!this.selectedPeriod) return showErr('Please select which period you are in.');
+
+    // Check local first, then Firestore
+    if (Storage.findByEmailLocal(email)) return showErr('An account with this email already exists. Please log in.');
     if (FireDB.ready) {
       const cloudUser = await FireDB.findByEmail(email);
-      if (cloudUser) return showToast('An account with this email already exists. Please log in.', 'error');
+      if (cloudUser) return showErr('An account with this email already exists. Please log in.');
     }
-    // Default to period 1 — user will pick their year on the plan selection screen after diagnostic
-    const state = Storage.createDefault(name, email, pass, this.selectedPeriod || 1);
-    SiteAnalytics.track('signup', { email, period: this.selectedPeriod || 1 });
-    showToast('Account created! Starting your diagnostic...', 'success');
-    App.navigate('diagnostic');
+
+    // Store pending signup data so payment-success.html can create the account
+    const pending = { name, email, password: pass, period: this.selectedPeriod };
+    localStorage.setItem('sparkstudy_pending_signup', JSON.stringify(pending));
+
+    if (btn) { btn.textContent = '⏳ Redirecting to checkout...'; btn.disabled = true; }
+    if (errEl) errEl.style.display = 'none';
+
+    // Create Stripe checkout session
+    const BACKEND = 'https://web-production-a1f63.up.railway.app';
+    try {
+      const res = await fetch(`${BACKEND}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, period: this.selectedPeriod })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Could not create checkout session');
+      }
+    } catch (e) {
+      if (btn) { btn.textContent = '⚡ Start Free Trial & Add Card'; btn.disabled = false; }
+      showErr('Could not connect to checkout: ' + e.message);
+      localStorage.removeItem('sparkstudy_pending_signup');
+    }
   },
   async login() {
     const email = document.getElementById('loginEmail').value.trim();
@@ -721,12 +769,57 @@ function checkSubscriptionExpiry(state) {
   }
 }
 
+function updateTrialBanner(state) {
+  const banner = document.getElementById('trial-banner');
+  if (!banner) return;
+  if (!state || !state.user) { banner.style.display = 'none'; return; }
+  const sub = state.user.subscription || {};
+  const now = Date.now();
+
+  // Support both Stripe-style and old-style trial fields
+  let trialEnd = null;
+  let inTrial = false;
+  if (sub.plan === 'elite' && sub.trial && sub.trial_end_date) {
+    trialEnd = new Date(sub.trial_end_date).getTime();
+    inTrial = trialEnd > now;
+  } else if (sub.status === 'trial' && sub.trialEnd) {
+    trialEnd = sub.trialEnd;
+    inTrial = trialEnd > now;
+  }
+
+  if (!inTrial || !trialEnd) { banner.style.display = 'none'; return; }
+
+  const daysLeft = Math.max(0, Math.ceil((trialEnd - now) / 86400000));
+  const hoursLeft = Math.max(0, Math.ceil((trialEnd - now) / 3600000));
+  const timeStr = daysLeft > 1 ? `${daysLeft} days` : daysLeft === 1 ? '1 day' : `${hoursLeft} hours`;
+  const endDateStr = new Date(trialEnd).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  const urgent = daysLeft <= 1;
+  const color = urgent ? '#ef4444' : '#f59e0b';
+  const bg = urgent ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.08)';
+  const border = urgent ? 'rgba(239,68,68,0.35)' : 'rgba(245,158,11,0.3)';
+
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div style="background:${bg};border-bottom:1px solid ${border};padding:9px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:0.85rem;">
+        <span style="font-size:1rem;">${urgent ? '🚨' : '⏳'}</span>
+        <span><strong style="color:${color};">${timeStr} left</strong> on your free trial — billing starts ${endDateStr}${urgent ? '. <strong>Cancel now to avoid charges.</strong>' : ''}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <a href="payment.html" style="font-size:0.78rem;font-weight:700;color:${color};text-decoration:none;white-space:nowrap;">Manage subscription →</a>
+        <button onclick="this.parentElement.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px;">✕</button>
+      </div>
+    </div>
+  `;
+}
+
 const App = {
   currentPage: null,
   navigate(page) {
     const state = Storage.get();
     // Check subscription/trial expiry on every navigation
     checkSubscriptionExpiry(state);
+    updateTrialBanner(state);
     const publicPages = ['landing', 'signup', 'login'];
     const ownerPages = ['owner'];
 
@@ -835,8 +928,16 @@ const App = {
     const state = Storage.get();
     if (state) {
       SiteAnalytics.trackVisit(state.user.id);
-      if (!state.diagnostic.completed) this.navigate('diagnostic');
-      else this.navigate('dashboard');
+      // Check if coming back from payment-success with a post-payment redirect
+      const gotoPage = localStorage.getItem('sparkstudy_goto');
+      if (gotoPage) {
+        localStorage.removeItem('sparkstudy_goto');
+        this.navigate(gotoPage);
+      } else if (!state.diagnostic.completed) {
+        this.navigate('diagnostic');
+      } else {
+        this.navigate('dashboard');
+      }
     } else {
       this.navigate('landing');
     }
@@ -2402,10 +2503,13 @@ const Exams = {
 // ===== NOTES MODULE =====
 const Notes = {
   currentTopic: 'general',
-  mode: 'edit',   // 'edit' | 'quiz' | 'study'
+  _currentPeriod: 0,  // 0=general, 1-4=period, 5=community
+  mode: 'edit',   // 'edit' | 'quiz' | 'study' | 'community'
   quizCards: [],
   quizIdx: 0,
   quizAnswers: {},
+  _communityNotes: [],
+  _communityLoading: false,
 
   // Special characters for electrical trade
   CHARS: [
@@ -2420,21 +2524,39 @@ const Notes = {
     { label:'½', tip:'Half' }, { label:'¼', tip:'Quarter' }, { label:'¾', tip:'3/4' },
   ],
 
+  // period:0 = all-periods general topics; period:1-4 = specific year
   TOPICS_LIST: [
-    { id:'general', name:'📝 General Notes', icon:'📝' },
-    { id:'safety', name:'Safety', icon:'🦺' },
-    { id:'tools', name:'Tools & Equipment', icon:'🔧' },
-    { id:'conductors', name:'Conductors & Cables', icon:'🔌' },
-    { id:'wiring-methods', name:'Wiring Methods', icon:'📐' },
-    { id:'residential', name:'Residential Wiring', icon:'🏠' },
-    { id:'grounding-bonding', name:'Grounding & Bonding', icon:'⏚' },
-    { id:'overcurrent', name:'Overcurrent Protection', icon:'⚡' },
-    { id:'motors', name:'Motors', icon:'⚙️' },
-    { id:'transformers', name:'Transformers', icon:'🔄' },
-    { id:'ac-theory', name:'AC Theory', icon:'〰️' },
-    { id:'dc-theory', name:'DC Theory', icon:'🔋' },
-    { id:'code-cec', name:'CEC Code', icon:'📖' },
-    { id:'exam-prep', name:'Exam Prep', icon:'🎯' },
+    // General (all periods)
+    { id:'general',       name:'General Notes',          icon:'📝', period:0 },
+    { id:'safety',        name:'Safety',                 icon:'🦺', period:0 },
+    { id:'code-cec',      name:'CEC Code',               icon:'📖', period:0 },
+    { id:'exam-prep',     name:'Exam Prep',              icon:'🎯', period:0 },
+    { id:'formulas',      name:'Formulas & Calcs',       icon:'🧮', period:0 },
+    // Period 1 — AC Theory & Fundamentals
+    { id:'p1-ac-fund',    name:'AC Fundamentals',        icon:'〰️', period:1 },
+    { id:'p1-ind-cap',    name:'Inductors & Capacitors', icon:'🔄', period:1 },
+    { id:'p1-ac-circuits',name:'AC Circuits',            icon:'⚡', period:1 },
+    { id:'p1-general',    name:'P1 General Notes',       icon:'📝', period:1 },
+    // Period 2 — Magnetic Controls
+    { id:'p2-relays',     name:'Relays & Contactors',    icon:'🔌', period:2 },
+    { id:'p2-timers',     name:'Timers & Smart Relays',  icon:'⏱️', period:2 },
+    { id:'p2-pilot',      name:'Pilot & Overcurrent',    icon:'🔐', period:2 },
+    { id:'p2-diagrams',   name:'Drawing & Diagrams',     icon:'📐', period:2 },
+    { id:'p2-general',    name:'P2 General Notes',       icon:'📝', period:2 },
+    // Period 3 — Motor Control & Distribution
+    { id:'p3-motors',     name:'Motor Starters',         icon:'⚙️', period:3 },
+    { id:'p3-pf',         name:'Power Factor Correction',icon:'🔺', period:3 },
+    { id:'p3-xfmr',       name:'Transformers (Advanced)',icon:'🔄', period:3 },
+    { id:'p3-dist',       name:'Distribution Systems',   icon:'🏭', period:3 },
+    { id:'p3-wiring',     name:'Wiring Methods',         icon:'🏗️', period:3 },
+    { id:'p3-general',    name:'P3 General Notes',       icon:'📝', period:3 },
+    // Period 4 — Commercial & Industrial
+    { id:'p4-commercial', name:'Commercial Wiring',      icon:'🏢', period:4 },
+    { id:'p4-industrial', name:'Industrial Automation',  icon:'🤖', period:4 },
+    { id:'p4-plc',        name:'PLCs & Controllers',     icon:'💻', period:4 },
+    { id:'p4-power',      name:'Power Systems',          icon:'⚡', period:4 },
+    { id:'p4-service',    name:'Service Entrance',       icon:'🔌', period:4 },
+    { id:'p4-general',    name:'P4 General Notes',       icon:'📝', period:4 },
   ],
 
   _storageKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}`; },
@@ -2454,36 +2576,71 @@ const Notes = {
     return text ? text.split(/\s+/).filter(Boolean).length : 0;
   },
 
-  _allNoteIds(userId) {
-    return this.TOPICS_LIST.map(t => ({ ...t, has: !!localStorage.getItem(this._storageKey(userId, t.id)) }));
+  _allNoteIds(userId, period) {
+    const list = period === 0
+      ? this.TOPICS_LIST.filter(t => t.period === 0)
+      : this.TOPICS_LIST.filter(t => t.period === period);
+    return list.map(t => ({ ...t, has: !!localStorage.getItem(this._storageKey(userId, t.id)) }));
   },
 
   render(state) {
     const container = document.getElementById('notesContent');
     if (!container || !state) return;
     const userId = state.user.id;
+    // Default period to user's period on first load
+    if (this._currentPeriod === 0 && state.user.period) {
+      // keep general (0) as default, that's fine
+    }
     if (this.mode === 'quiz') { this._renderQuiz(container, userId); return; }
     if (this.mode === 'study') { this._renderStudy(container, userId); return; }
+    if (this.mode === 'community') { this._renderCommunity(container, state); return; }
     this._renderEditor(container, state);
   },
 
   _renderEditor(container, state) {
     const userId = state.user.id;
+    const userPeriod = state.user.period || 2;
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
     const savedHtml = this._load(userId, this.currentTopic);
-    const topics = this._allNoteIds(userId);
+    const topics = this._allNoteIds(userId, this._currentPeriod);
+    const sharingEnabled = (state.user.subscription || {}).notesSharing !== false;
+
+    const periodTabs = [
+      { p: 0, label: 'General' },
+      { p: 1, label: 'P1' },
+      { p: 2, label: 'P2' },
+      { p: 3, label: 'P3' },
+      { p: 4, label: 'P4' },
+    ];
 
     container.innerHTML = `
       <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;min-height:calc(100vh - 120px);">
         <!-- Sidebar -->
         <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:14px;height:fit-content;position:sticky;top:80px;">
-          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;padding:0 4px;margin-bottom:10px;">Topics</div>
+          <!-- Period tabs -->
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+            ${periodTabs.map(({p, label}) => `
+              <button onclick="Notes._switchPeriod(${p},'${userId}')" style="flex:1;min-width:0;padding:5px 2px;font-size:0.72rem;font-weight:700;border-radius:6px;border:1px solid ${this._currentPeriod===p?'var(--accent)':'var(--border)'};background:${this._currentPeriod===p?'rgba(245,158,11,0.15)':'transparent'};color:${this._currentPeriod===p?'var(--accent)':'var(--text-muted)'};cursor:pointer;transition:all 0.15s;${p===userPeriod&&this._currentPeriod!==p?'border-style:dashed;':''}">${label}</button>
+            `).join('')}
+          </div>
+          <!-- Community tab -->
+          <button onclick="Notes._openCommunity('${userId}')" style="width:100%;padding:8px;font-size:0.78rem;font-weight:600;border-radius:8px;border:1px solid rgba(88,166,255,0.3);background:rgba(88,166,255,0.06);color:#58a6ff;cursor:pointer;margin-bottom:12px;transition:all 0.15s;">
+            🌐 Community Notes
+          </button>
+          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;padding:0 4px;margin-bottom:8px;">
+            ${this._currentPeriod === 0 ? 'General Topics' : `Period ${this._currentPeriod} Modules`}
+          </div>
           ${topics.map(t => `
             <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
-              ${t.icon} ${t.name}
+              ${t.icon} <span style="font-size:0.82rem;">${t.name}</span>
               ${t.has ? '<span style="float:right;font-size:0.65rem;color:var(--accent);">●</span>' : ''}
             </div>
           `).join('')}
+          ${this._currentPeriod >= 3 ? `
+            <div style="margin-top:12px;padding:10px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2);font-size:0.72rem;color:var(--text-muted);line-height:1.5;">
+              📚 Period ${this._currentPeriod} lesson content is coming soon. Add your own class notes here and share them with the community!
+            </div>
+          ` : ''}
         </div>
 
         <!-- Main editor pane -->
@@ -8344,8 +8501,43 @@ const Review = {
 // ===== LESSONS MODULE =====
 
 const LESSONS_CONTENT = [
+  // ── Period 1 ──────────────────────────────────────────────────────────────
   {
-    id: 'm21',
+    id: 'm11', period: 1, comingSoon: true,
+    title: 'Fundamentals of Alternating Current',
+    icon: '〰️',
+    subtitle: 'Sine waves, frequency, and AC generation basics',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
+    border: 'rgba(139,92,246,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'This lesson is being prepared. Check back soon!' }]
+  },
+  {
+    id: 'm12', period: 1, comingSoon: true,
+    title: 'Properties of Inductors and Capacitors',
+    icon: '🔋',
+    subtitle: 'Reactance, impedance, and energy storage in AC circuits',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
+    border: 'rgba(139,92,246,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'This lesson is being prepared. Check back soon!' }]
+  },
+  {
+    id: 'm13', period: 1, comingSoon: true,
+    title: 'Inductors and Capacitors in Circuits',
+    icon: '⚡',
+    subtitle: 'Series and parallel RLC circuits, resonance, and power factor',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
+    border: 'rgba(139,92,246,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'This lesson is being prepared. Check back soon!' }]
+  },
+  // ── Period 2 ──────────────────────────────────────────────────────────────
+  {
+    id: 'm21', period: 2,
     title: 'Relays & Contactors',
     icon: '🔌',
     subtitle: 'The Brain and Muscle of Industrial Control',
@@ -8495,7 +8687,7 @@ const LESSONS_CONTENT = [
     ]
   },
   {
-    id: 'm22',
+    id: 'm22', period: 2,
     title: 'Timers & Smart Relays',
     icon: '⏱',
     subtitle: 'Time-Based Control and Programmable Logic',
@@ -8619,7 +8811,7 @@ const LESSONS_CONTENT = [
     ]
   },
   {
-    id: 'm23',
+    id: 'm23', period: 2,
     title: 'Pilot & Overcurrent Devices',
     icon: '🛡',
     subtitle: 'The Guardians of Every Circuit',
@@ -8759,7 +8951,7 @@ const LESSONS_CONTENT = [
     ]
   },
   {
-    id: 'm24',
+    id: 'm24', period: 2,
     title: 'Drawing & Diagram Conversion',
     icon: '📋',
     subtitle: 'Reading the Language Every Electrician Must Speak',
@@ -8884,6 +9076,74 @@ const LESSONS_CONTENT = [
         ]
       }
     ]
+  },
+  // ── Period 3 ──────────────────────────────────────────────────────────────
+  {
+    id: 'm31', period: 3, comingSoon: true,
+    title: 'Three-Phase Power Systems',
+    icon: '🔺',
+    subtitle: 'Delta and wye configurations, power calculations, and load balancing',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06))',
+    border: 'rgba(245,158,11,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 3 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm32', period: 3, comingSoon: true,
+    title: 'Transformers & Power Distribution',
+    icon: '🏭',
+    subtitle: 'Transformer theory, connections, and distribution system design',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06))',
+    border: 'rgba(245,158,11,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 3 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm33', period: 3, comingSoon: true,
+    title: 'Grounding & Bonding Systems',
+    icon: '🌍',
+    subtitle: 'Equipment grounding, system grounding, and bonding requirements',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06))',
+    border: 'rgba(245,158,11,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 3 lessons are being developed. Check back soon!' }]
+  },
+  // ── Period 4 ──────────────────────────────────────────────────────────────
+  {
+    id: 'm41', period: 4, comingSoon: true,
+    title: 'Motor Controls & Drive Systems',
+    icon: '⚙️',
+    subtitle: 'VFDs, soft starters, and advanced motor protection',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
+    border: 'rgba(239,68,68,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm42', period: 4, comingSoon: true,
+    title: 'Industrial Automation & PLCs',
+    icon: '🤖',
+    subtitle: 'Programmable logic controllers, ladder logic, and SCADA systems',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
+    border: 'rgba(239,68,68,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm43', period: 4, comingSoon: true,
+    title: 'Code & Standards — Red Seal Prep',
+    icon: '📜',
+    subtitle: 'Canadian Electrical Code mastery and Red Seal exam strategies',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
+    border: 'rgba(239,68,68,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
   }
 ];
 const Lessons = {
@@ -9114,13 +9374,24 @@ const Lessons = {
   },
 
   _renderIndex(container, state) {
+    if (!state.user.isOwner) {
+      container.innerHTML = `
+        <div style="padding:60px 24px;text-align:center;">
+          <div style="font-size:3rem;margin-bottom:16px;">📚</div>
+          <h2 style="font-size:1.4rem;margin-bottom:8px;">Lessons Coming Soon</h2>
+          <p style="color:var(--text-secondary);font-size:0.95rem;max-width:400px;margin:0 auto;">Written lesson modules are being developed and will be available in a future update.</p>
+        </div>
+      `;
+      return;
+    }
+    const lessons = LESSONS_CONTENT.filter(l => l.period === 2);
     container.innerHTML = `
       <div style="padding:24px 0 8px;">
         <h1 style="font-size:2rem;margin-bottom:6px;">&#x1F4DA; Lessons</h1>
-        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">Deep-dive lessons for every available module — real explanations, real-world examples, and the kind of context that makes everything click.</p>
+        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">Deep-dive lessons for Period 2 — real explanations, real-world examples, and the kind of context that makes everything click.</p>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-top:24px;">
-        ${LESSONS_CONTENT.map(lesson => `
+        ${lessons.map(lesson => `
           <div onclick="Lessons._open('${lesson.id}')" style="cursor:pointer;background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:24px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;"
             onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'"
             onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -9138,6 +9409,8 @@ const Lessons = {
   },
 
   _open(lessonId) {
+    const state = Storage.get();
+    if (!state || !state.user.isOwner) return;
     this.activeLesson = lessonId;
     const container = document.getElementById('lessonsContent');
     if (container) this._renderLesson(lessonId, container);
@@ -9356,24 +9629,74 @@ const Lessons = {
       const questions = text.split(/\nQ:|\nQ\./).filter(q => q.trim());
       if (questions.length === 0) { result.innerHTML = '<p style="color:var(--text-muted);">' + text.replace(/\n/g, '<br>') + '</p>'; }
       else {
-        result.innerHTML = questions.map((q, i) => {
+        // Store parsed quiz data for answer selection
+        Lessons._quizData = questions.map((q, i) => {
           const lines = q.trim().split('\n');
           const qText = lines[0].trim();
           const options = lines.filter(l => /^[A-D]\)/.test(l.trim()));
           const answerLine = lines.find(l => l.startsWith('ANSWER:'));
-          return `<div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:16px;margin-bottom:12px;">
-            <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">Q${i+1}: ${qText}</div>
+          const correctLetter = answerLine ? (answerLine.match(/ANSWER:\s*([A-D])/)||[])[1] : null;
+          return { qText, options, answerLine, correctLetter };
+        });
+        result.innerHTML = Lessons._quizData.map((q, i) => `
+          <div id="ai-quiz-q-${i}" style="background:rgba(0,0,0,0.2);border-radius:10px;padding:16px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">Q${i+1}: ${q.qText}</div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
-              ${options.map(o => `<div style="padding:7px 12px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:0.85rem;">${o.trim()}</div>`).join('')}
+              ${q.options.map((o, oi) => `
+                <button onclick="Lessons._aiQuizAnswer(${i},${oi})" id="ai-quiz-q${i}-opt${oi}"
+                  style="text-align:left;padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-size:0.85rem;color:var(--text-primary);cursor:pointer;transition:background 0.15s,border-color 0.15s;width:100%;"
+                  onmouseover="if(!this.dataset.answered)this.style.background='rgba(124,58,237,0.15)'"
+                  onmouseout="if(!this.dataset.answered)this.style.background='rgba(255,255,255,0.04)'"
+                >${o.trim()}</button>
+              `).join('')}
             </div>
-            ${answerLine ? `<details><summary style="font-size:0.82rem;color:#a78bfa;font-weight:600;cursor:pointer;">Reveal Answer</summary><div style="margin-top:8px;padding:10px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:0.85rem;color:#a7f3d0;">${answerLine.replace('ANSWER:','').trim()}</div></details>` : ''}
-          </div>`;
-        }).join('');
+            ${q.answerLine ? `<details><summary style="font-size:0.82rem;color:#a78bfa;font-weight:600;cursor:pointer;">&#9654; Reveal Answer</summary><div style="margin-top:8px;padding:10px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:0.85rem;color:#a7f3d0;">${q.answerLine.replace('ANSWER:','').trim()}</div></details>` : ''}
+          </div>`).join('');
       }
       if (btn) { btn.textContent = '🔄 Regenerate'; btn.disabled = false; }
     } catch(e) {
       result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
       if (btn) { btn.textContent = '⚡ Generate 5 Questions'; btn.disabled = false; }
+    }
+  },
+
+  _quizData: [],
+
+  _aiQuizAnswer(qIdx, optIdx) {
+    const q = Lessons._quizData[qIdx];
+    if (!q) return;
+    // Disable all options for this question
+    for (let i = 0; i < q.options.length; i++) {
+      const btn = document.getElementById(`ai-quiz-q${qIdx}-opt${i}`);
+      if (btn) { btn.disabled = true; btn.dataset.answered = '1'; btn.style.cursor = 'default'; btn.onmouseover = null; btn.onmouseout = null; }
+    }
+    const selectedLetter = q.options[optIdx] ? q.options[optIdx].trim().charAt(0) : null;
+    const isCorrect = selectedLetter && q.correctLetter && selectedLetter === q.correctLetter;
+    // Highlight selected and correct
+    for (let i = 0; i < q.options.length; i++) {
+      const btn = document.getElementById(`ai-quiz-q${qIdx}-opt${i}`);
+      if (!btn) continue;
+      const letter = q.options[i].trim().charAt(0);
+      if (letter === q.correctLetter) {
+        btn.style.background = 'rgba(16,185,129,0.2)';
+        btn.style.borderColor = 'rgba(16,185,129,0.6)';
+        btn.style.color = '#a7f3d0';
+      } else if (i === optIdx && !isCorrect) {
+        btn.style.background = 'rgba(239,68,68,0.2)';
+        btn.style.borderColor = 'rgba(239,68,68,0.5)';
+        btn.style.color = '#fca5a5';
+      }
+    }
+    // Show feedback below
+    const container = document.getElementById(`ai-quiz-q-${qIdx}`);
+    if (container) {
+      const feedback = document.createElement('div');
+      feedback.style.cssText = `margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-weight:600;background:${isCorrect ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'};color:${isCorrect ? '#a7f3d0' : '#fca5a5'};border:1px solid ${isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};`;
+      feedback.textContent = isCorrect ? '✓ Correct!' : `✗ Incorrect — correct answer is ${q.correctLetter})`;
+      // Insert before the details element (or at end)
+      const details = container.querySelector('details');
+      if (details) container.insertBefore(feedback, details);
+      else container.appendChild(feedback);
     }
   },
 
@@ -9422,25 +9745,35 @@ const Lessons = {
 
   async _aiStudyPlan(btn) {
     const state = Storage.get();
+    const period = state.user.period || 2;
     const daysLeft = ClassSchedule.getDaysUntilExam(state);
     const mastery = getOverallMastery(state);
     const dueCards = SM2.getDueCards(state).length;
     const streak = state.sessions.streak || 0;
-    const planBtn = btn || document.getElementById('ai-plan-btn');
+    const planBtn = typeof btn === 'object' ? btn : document.getElementById('ai-plan-btn');
     const result = document.getElementById('ai-plan-result');
     if (planBtn) { planBtn.textContent = '⏳ Building your plan...'; planBtn.disabled = true; }
-    const prompt = `You are SparkStudy AI coach for an Alberta 2nd-period electrical apprentice. Create a practical, specific study plan based on their current stats:\n- Overall mastery: ${mastery}%\n- Days until exam: ${daysLeft !== null ? daysLeft + ' days' : 'unknown'}\n- Flashcards due today: ${dueCards}\n- Current study streak: ${streak} days\n- Available Period 2 modules: Relays & Contactors, Timers & Smart Relays, Pilot & Overcurrent Devices, Drawing & Diagram Conversion\n\nWrite a focused 5-7 day study plan. Be specific about which modules to study each day and how long. Keep it practical and motivating. Format with bold day headers and bullet points. Under 250 words.`;
+    if (result) result.innerHTML = '';
+    const prompt = `You are SparkStudy AI coach for an Alberta Period ${period} electrical apprentice. Create a practical, specific study plan based on:\n- Overall mastery: ${mastery}%\n- Days until exam: ${daysLeft !== null ? daysLeft + ' days' : 'not set — assume 30 days'}\n- Flashcards due today: ${dueCards}\n- Study streak: ${streak} days\n\nWrite a focused 7-day study plan. Be specific: which topics each day, how long, which activity (flashcards/quiz/lessons/review). Keep it motivating and practical. Format with **Day 1:** headers and bullet points. Under 300 words.`;
     try {
       const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: prompt, history: [] })
       });
+      if (!res.ok) throw new Error('Server returned ' + res.status);
       const data = await res.json();
-      const text = (data.answer || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-      if (result) result.innerHTML = `<div style="padding:16px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.25);border-radius:10px;font-size:0.88rem;line-height:1.65;color:var(--text-secondary);">${text}</div>`;
+      const raw = data.answer || data.text || data.response || '';
+      if (!raw.trim()) throw new Error('Empty response from AI');
+      const text = raw
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^### (.+)$/gm, '<strong style="color:var(--accent)">$1</strong>')
+        .replace(/^- /gm, '• ')
+        .replace(/\n/g, '<br>');
+      if (result) result.innerHTML = `<div style="padding:16px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.25);border-radius:10px;font-size:0.88rem;line-height:1.75;color:var(--text-secondary);">${text}</div>`;
       if (planBtn) { planBtn.textContent = '🔄 Regenerate Plan'; planBtn.disabled = false; }
     } catch(e) {
-      if (result) result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
+      console.error('[StudyPlan]', e);
+      if (result) result.innerHTML = `<div style="padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:0.85rem;color:var(--danger);">Could not generate plan: ${e.message}. Check your internet connection and try again.</div>`;
       if (planBtn) { planBtn.textContent = '🤖 Build My Study Plan'; planBtn.disabled = false; }
     }
   },
@@ -9543,10 +9876,20 @@ const Settings = {
         </div>
 
         <!-- Danger Zone -->
-        <div style="background:var(--bg-card);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
-          <h3 style="margin:0 0 16px;font-size:1.05rem;color:var(--danger);display:flex;align-items:center;gap:8px;">&#x26A0; Danger Zone</h3>
-          <button class="btn btn-danger" onclick="Settings.resetAll()" style="width:100%;">Reset All Data</button>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;text-align:center;">This will permanently delete all your progress.</div>
+        <div style="background:var(--bg-card);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+          <h3 style="margin:0 0 8px;font-size:1.05rem;color:var(--danger);display:flex;align-items:center;gap:8px;">&#x26A0; Danger Zone</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">To permanently delete your account and all progress, type <strong style="color:var(--danger);">DELETE MY ACCOUNT</strong> below and then click the button. This cannot be undone.</p>
+          <input type="text" id="deleteConfirmInput" placeholder='Type "DELETE MY ACCOUNT" to confirm'
+            style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:var(--text-primary);font-size:0.88rem;margin-bottom:10px;">
+          <button class="btn btn-danger" onclick="Settings.resetAll()" style="width:100%;opacity:0.6;" id="deleteConfirmBtn" disabled>Delete My Account &amp; All Data</button>
+          <script>
+            document.getElementById('deleteConfirmInput').addEventListener('input', function() {
+              const btn = document.getElementById('deleteConfirmBtn');
+              const match = this.value.trim() === 'DELETE MY ACCOUNT';
+              btn.disabled = !match;
+              btn.style.opacity = match ? '1' : '0.6';
+            });
+          </script>
         </div>
 
 
@@ -9721,9 +10064,14 @@ const Settings = {
   },
 
   resetAll() {
-    if (!confirm('This will delete ALL your progress, flashcard data, and exam history. This cannot be undone. Are you sure?')) return;
+    const input = document.getElementById('deleteConfirmInput');
+    if (!input || input.value.trim() !== 'DELETE MY ACCOUNT') {
+      showToast('Please type "DELETE MY ACCOUNT" in the box first.', 'error');
+      return;
+    }
+    if (!confirm('Last chance — this will permanently delete ALL your progress, flashcards, exams, and account data. There is no undo.')) return;
     Storage.clear();
-    showToast('All data reset', 'info');
+    showToast('Account deleted.', 'info');
     App.navigate('landing');
   }
 };
@@ -9931,7 +10279,18 @@ const OwnerDashboard = {
         FireDB.getAllUsers(),
         FireDB.getVisits(30)
       ]);
-      if (cloudUsers && cloudUsers.length >= 0) this._cloudUsers = cloudUsers;
+      if (cloudUsers && cloudUsers.length >= 0) {
+        this._cloudUsers = cloudUsers;
+        // Cache cloud users into localStorage so getUserById works for all accounts
+        cloudUsers.forEach(s => {
+          if (s && s.user && !s.user.isOwner) {
+            const key = STORAGE_KEY + '_' + s.user.id;
+            if (!localStorage.getItem(key)) {
+              localStorage.setItem(key, JSON.stringify(s));
+            }
+          }
+        });
+      }
       if (cloudVisits) this._cloudVisits = cloudVisits;
     }
     const D = this._gatherData();
@@ -9985,9 +10344,49 @@ const OwnerDashboard = {
   },
 
   _renderUserDetail(st) {
-    const u=st.user;const tm=Object.keys(TOPICS).map(tid=>{const cds=Object.entries(st.flashcards||{}).filter(([id])=>{const fc=FLASHCARD_BANK.find(f=>f.id===id);return fc&&fc.topic===tid;});if(!cds.length)return{name:TOPICS[tid]?.name||tid,m:0};return{name:TOPICS[tid]?.name||tid,m:Math.round(cds.reduce((s,[,c])=>s+c.correct/Math.max(c.correct+c.incorrect,1),0)/cds.length*100)};}).filter(t=>t.m>0).sort((a,b)=>a.m-b.m);
+    const u=st.user;
+    const sub=u.subscription||{};
+    const now=Date.now();
+    const isTrial=sub.status==='trial';
+    const isPaid=sub.status==='paid';
+    const isElite=isPaid||(isTrial&&sub.trialEnd&&sub.trialEnd>now);
+    const trialLeft=isTrial&&sub.trialEnd?Math.max(0,Math.ceil((sub.trialEnd-now)/86400000)):0;
+    const planLabel=isPaid?'Elite (Paid)':isTrial?'Trial ('+trialLeft+'d left)':'Free / Expired';
+    const planColor=isPaid?'#f59e0b':isTrial&&trialLeft>0?'#3b82f6':'#6b7280';
+    // Also check Stripe-style fields (set by payment-success.html)
+    const stripePlan=sub.plan;
+    const stripeLabel=stripePlan==='elite'?(sub.trial?'Elite Trial':'Elite Paid'):'';
+    const displayPlan=stripeLabel||planLabel;
+    const signupDate=u.signupDate?new Date(u.signupDate).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}):'Unknown';
+    const lastLogin=u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}):'Never';
+    const trialEndStr=sub.trial_end_date?new Date(sub.trial_end_date).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'}):(sub.trialEnd?new Date(sub.trialEnd).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'}):'—');
+    const tm=Object.keys(TOPICS).map(tid=>{const cds=Object.entries(st.flashcards||{}).filter(([id])=>{const fc=FLASHCARD_BANK.find(f=>f.id===id);return fc&&fc.topic===tid;});if(!cds.length)return{name:TOPICS[tid]?.name||tid,m:0};return{name:TOPICS[tid]?.name||tid,m:Math.round(cds.reduce((s,[,c])=>s+c.correct/Math.max(c.correct+c.incorrect,1),0)/cds.length*100)};}).filter(t=>t.m>0).sort((a,b)=>a.m-b.m);
     const weak=tm.slice(0,3),strong=tm.slice(-3).reverse();
-    return '<div class="oa-section" style="margin-top:8px;"><h3>&#x1F464; '+u.name+' <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;">&mdash; '+u.email+'</span></h3><div class="oa-grid" style="grid-template-columns:repeat(3,1fr);"><div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Weakest</span>'+weak.map(t=>'<div style="font-size:0.85rem;">'+t.name+': <strong>'+t.m+'%</strong></div>').join('')+'</div><div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Strongest</span>'+strong.map(t=>'<div style="font-size:0.85rem;">'+t.name+': <strong style="color:#22c55e;">'+t.m+'%</strong></div>').join('')+'</div><div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Exams</span>'+(st.exams.attempts||[]).slice(-3).reverse().map(ex=>'<div style="font-size:0.85rem;">'+new Date(ex.date).toLocaleDateString()+': <strong>'+ex.pct+'%</strong></div>').join('')+'</div></div></div>';
+    const isBanned=!!u.banned;
+    return `<div class="oa-section" style="margin-top:8px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div>
+          <h3 style="margin:0 0 4px;">&#x1F464; ${u.name} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;">&mdash; ${u.email}</span></h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+            <span style="font-size:0.78rem;font-weight:700;padding:3px 10px;border-radius:20px;background:${planColor}22;border:1px solid ${planColor}55;color:${planColor};">${displayPlan}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);">Period ${u.period||'?'}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);">Joined ${signupDate}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);">Last login ${lastLogin}</span>
+            ${isTrial&&trialLeft>0?'<span style="font-size:0.78rem;color:var(--text-muted);">Trial ends '+trialEndStr+'</span>':''}
+            ${sub.subscription_id?'<span style="font-size:0.72rem;font-family:monospace;color:var(--text-muted);">Stripe: '+sub.subscription_id+'</span>':''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="OwnerDashboard.blockUser('${u.id}')" style="font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid ${isBanned?'#22c55e':'#f59e0b'};background:transparent;color:${isBanned?'#22c55e':'#f59e0b'};cursor:pointer;">${isBanned?'Unblock':'Block'}</button>
+          <button onclick="OwnerDashboard.removeUser('${u.id}')" style="font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid #ef4444;background:transparent;color:#ef4444;cursor:pointer;">Remove</button>
+        </div>
+      </div>
+      <div class="oa-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Weakest Topics</span>${weak.map(t=>'<div style="font-size:0.85rem;margin-top:4px;">'+t.name+': <strong style="color:#ef4444;">'+t.m+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No data yet</div>'}</div>
+        <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Strongest Topics</span>${strong.map(t=>'<div style="font-size:0.85rem;margin-top:4px;">'+t.name+': <strong style="color:#22c55e;">'+t.m+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No data yet</div>'}</div>
+        <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Recent Exams</span>${(st.exams.attempts||[]).slice(-3).reverse().map(ex=>'<div style="font-size:0.85rem;margin-top:4px;">'+new Date(ex.date).toLocaleDateString()+': <strong style="color:'+(ex.pct>=70?'#22c55e':'#ef4444')+';">'+ex.pct+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No exams yet</div>'}</div>
+      </div>
+    </div>`;
   },
 
   _tab_diagnostics(D) {

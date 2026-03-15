@@ -99,6 +99,9 @@
   </button>
 </nav>
 
+<!-- TRIAL COUNTDOWN BANNER — shown for all users in active trial -->
+<div id="trial-banner" style="display:none;"></div>
+
 <!-- MOBILE DRAWER OVERLAY -->
 <div class="mobile-drawer-overlay" id="drawerOverlay" onclick="closeMobileDrawer()"></div>
 
@@ -338,10 +341,11 @@
 
 <!-- ======= SIGNUP PAGE ======= -->
 <div class="page" id="page-signup">
-  <div class="auth-page">
-    <div class="auth-card">
-      <h2>Create Your Account</h2>
-      <p class="auth-subtitle">Start mastering your electrical exam today</p>
+  <div class="auth-page" style="align-items:flex-start;padding-top:40px;">
+    <div class="auth-card" style="max-width:520px;width:100%;">
+      <h2 style="font-size:1.6rem;">Start Your Free Trial</h2>
+      <p class="auth-subtitle">7 days free — $0 today. Cancel anytime before your trial ends and you won't be charged.</p>
+
       <div class="input-group">
         <label>Full Name</label>
         <input type="text" id="signupName" placeholder="Enter your name">
@@ -352,9 +356,55 @@
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="signupPassword" placeholder="Create a password">
+        <input type="password" id="signupPassword" placeholder="Create a password (min 6 chars)">
       </div>
-      <button class="btn btn-primary btn-block btn-lg" onclick="Auth.signup()">Create Account &amp; Take Diagnostic</button>
+
+      <!-- Period selector -->
+      <div class="input-group">
+        <label>Which period are you in?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;" id="signupPeriodGrid">
+          <div class="signup-period-opt" data-period="1" onclick="Auth.selectPeriod(1)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 1</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">First year</div>
+          </div>
+          <div class="signup-period-opt" data-period="2" onclick="Auth.selectPeriod(2)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 2</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Second year</div>
+          </div>
+          <div class="signup-period-opt" data-period="3" onclick="Auth.selectPeriod(3)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 3</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Third year</div>
+          </div>
+          <div class="signup-period-opt" data-period="4" onclick="Auth.selectPeriod(4)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 4</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Fourth year</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing summary box -->
+      <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:16px 18px;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-weight:700;font-size:0.95rem;color:#10b981;">Elite Annual Plan</span>
+          <span style="font-weight:800;font-size:1.1rem;">$79 CAD<span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);">/yr</span></span>
+        </div>
+        <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.7;">
+          ✓ 7-day free trial — card required, charged after trial<br>
+          ✓ Cancel before trial ends → $0 charged<br>
+          ✓ Unlimited flashcards, exams &amp; diagnostic<br>
+          ✓ AI study tools &amp; personalized plan
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block btn-lg" id="signupBtn" onclick="Auth.signup()" style="font-size:1rem;padding:14px;">
+        ⚡ Start Free Trial &amp; Add Card
+      </button>
+      <p style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-top:10px;">You won't be charged until your 7-day trial ends. Cancel anytime.</p>
+      <div id="signupError" style="color:#ef4444;font-size:0.85rem;text-align:center;margin-top:8px;display:none;"></div>
       <div class="auth-divider">Already have an account? <a href="#" onclick="App.navigate('login')">Log in</a></div>
     </div>
   </div>
