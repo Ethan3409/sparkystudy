@@ -465,7 +465,7 @@
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, history: history.slice(-6) })
+        body: JSON.stringify({ question, history: history.slice(-6), systemContext: window._sparkStudyCtx || '' })
       });
       const data = await res.json();
       typing.remove();

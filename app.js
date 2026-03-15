@@ -11565,30 +11565,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// -- Override AskAI to use Railway CEC API with user-context system prompt --
-AskAI.ask = async function(question) {
-  if (!question.trim() || this._typing) return;
-  question = question.trim();
-  this._history.push({ role: 'user', text: question });
-  this._renderMessages();
-  this._typing = true;
-  this._scrollBottom();
+// -- Build user-context system prompt and expose it for the AI widget --
+(function() {
   try {
-    // Build system prompt with user context
-    let systemContext = '';
-    try {
-      const state = Storage.get();
-      if (state && !state.user.isOwner) {
-        const overallMastery = getOverallMastery(state);
-        const topics      = getTopicsForPeriod(state.user.period);
-        const weakTopics  = topics.map(t => ({ name: t.name, mastery: getTopicMastery(state, t.id) }))
-          .sort((a,b) => a.mastery - b.mastery).slice(0,3);
-        const daysLeft    = ClassSchedule.getDaysUntilExam(state);
-        const cs          = state.classSchedule || {};
-        const schoolName  = cs.school ? (SCHOOLS_LIST.find(s=>s.id===cs.school)?.name || cs.school) : 'Not set';
-        const realScores  = state.realExamScores || [];
-        const lastReal    = realScores.length > 0 ? realScores.slice().sort((a,b)=>b.submittedAt-a.submittedAt)[0] : null;
-        systemContext = `You are SparkStudy, an AI study assistant built specifically for Alberta electrical apprentices.
+    const state = Storage.get();
+    if (!state || state.user.isOwner) return;
+    const overallMastery = getOverallMastery(state);
+    const topics     = getTopicsForPeriod(state.user.period);
+    const weakTopics = topics.map(t => ({ name: t.name, mastery: getTopicMastery(state, t.id) }))
+      .sort((a,b) => a.mastery - b.mastery).slice(0,3);
+    const daysLeft   = ClassSchedule.getDaysUntilExam(state);
+    const cs         = state.classSchedule || {};
+    const schoolName = cs.school ? (SCHOOLS_LIST.find(s=>s.id===cs.school)?.name || cs.school) : 'Not set';
+    const realScores = state.realExamScores || [];
+    const lastReal   = realScores.length > 0 ? realScores.slice().sort((a,b)=>b.submittedAt-a.submittedAt)[0] : null;
+    window._sparkStudyCtx = `You are SparkStudy, an AI study assistant built specifically for Alberta electrical apprentices.
 
 Current user context:
 - Name: ${state.user.name}
@@ -11603,28 +11594,5 @@ Current user context:
 
 You have access to Alberta AIT curriculum for all 4 periods and the Canadian Electrical Code (CEC).
 Your job is to quiz them, explain concepts in plain English with CEC citations, build study plans, and motivate them. Always be direct and practical — these are trades guys, not academics. When they get something wrong, tell them exactly why and where to find the right answer.`;
-      }
-    } catch(e) {}
-
-    const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question,
-        history: this._history.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })),
-        systemContext,
-      })
-    });
-    const data = await res.json();
-    const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: '??' }));
-    this._history.push({ role: 'ai', text: data.answer || data.error || 'No response.', sources, followUps: [] });
-  } catch(err) {
-    this._history.push({ role: 'ai', text: 'Connection error. Make sure you are online.', sources: [], followUps: [] });
-  }
-  this._typing = false;
-  this._renderMessages();
-  this._scrollBottom();
-};
-AskAI._welcomeBubble = function() {
-  return '<div class="askai-bubble askai-ai"><div class="askai-bubble-text">Hey! I am your SparkStudy AI, trained on the <strong>2024 Canadian Electrical Code</strong>.<br><br>Ask me CEC rules, get practice exam questions, or have me explain any concept. Red Seal ready! \u26a1</div><div class="askai-sources" style="margin-top:10px;"><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'Practice exam: branch circuits\')">&#128161; Practice exam: branch circuits</span><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'Explain bonding vs grounding\')">&#128161; Explain bonding vs grounding</span><span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk(\'GFCI requirements dwelling\')">&#128161; GFCI requirements</span></div></div>';
-};
+  } catch(e) {}
+})();
