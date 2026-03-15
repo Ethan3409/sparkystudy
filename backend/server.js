@@ -3,6 +3,19 @@ const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 
+// Safe Anthropic init
+let anthropic = null;
+try {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const Anthropic = require('@anthropic-ai/sdk');
+    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  } else {
+    console.warn('⚠️  ANTHROPIC_API_KEY not set — AI chat will return 503');
+  }
+} catch(e) {
+  console.error('Anthropic init failed:', e.message);
+}
+
 // Safe Stripe init — server still starts even if key is missing
 let stripe = null;
 try {
@@ -77,6 +90,38 @@ app.use(express.json());
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+// ── POST /api/chat ───────────────────────────────────────────────────────────
+// AI chat — only answers based on provided module/notes context.
+// If no context, tells the user to add module content.
+app.post('/api/chat', async (req, res) => {
+  if (!anthropic) return res.status(503).json({ error: 'AI not configured. Add ANTHROPIC_API_KEY to Railway Variables.' });
+  const { question, history = [], systemContext = '' } = req.body;
+  if (!question) return res.status(400).json({ error: 'Missing question' });
+
+  const hasContext = typeof systemContext === 'string' && systemContext.trim().length > 30;
+  const systemPrompt = hasContext
+    ? `You are SparkStudy AI, a study assistant for Alberta electrical apprentices. Answer questions based ONLY on the module/notes content provided below. Stay focused on that content. If the answer is not clearly in the content, say so and suggest the student add more notes.\n\nModule/Notes Content:\n${systemContext.slice(0, 8000)}`
+    : `You are SparkStudy AI, a study assistant for Alberta electrical apprentices. No specific module or notes content has been loaded. Answer as helpfully as you can, but always end your response with this exact line:\n\n⚠️ *I can't be fully certain without your module content. For accurate course-specific answers, upload your notes using the 📎 button.*`;
+
+  const messages = [
+    ...(Array.isArray(history) ? history : []).slice(-6).map(h => ({ role: h.role, content: String(h.content) })),
+    { role: 'user', content: question }
+  ];
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages
+    });
+    res.json({ answer: response.content[0].text, sources: [] });
+  } catch (err) {
+    console.error('Chat error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── POST /api/create-checkout-session ───────────────────────────────────────
 // Creates a Stripe Checkout Session and returns the URL to redirect the user.

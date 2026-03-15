@@ -5,11 +5,11 @@
  *
  * Or paste the contents directly into your existing JS file.
  *
- * API endpoint: https://web-production-a1f63.up.railway.app/api/chat
+ * API endpoint: https://sparkystudy-production.up.railway.app/api/chat
  */
 
 (function () {
-  const API_URL = 'https://web-production-a1f63.up.railway.app/api/chat';
+  const API_URL = 'https://sparkystudy-production.up.railway.app/api/chat';
 
   // ── Inject CSS ────────────────────────────────────────────────────────────
   const style = document.createElement('style');
@@ -382,7 +382,7 @@
   // ── Welcome message ───────────────────────────────────────────────────────
   function addWelcomeMessage() {
     addAIMessage(
-      "Hey! I'm your SparkStudy AI.\n\nI already have the full **2024 Canadian Electrical Code** locked in. Share any additional course notes, modules, or study material with me and I'll learn every bit of it front to back — then break it all down in plain language so it actually makes sense.\n\nAsk me anything or upload your material using the buttons below. ⚡",
+      "Hey! I'm your SparkStudy AI. ⚡\n\nI answer questions based on **your module notes and course content**. Upload your notes or module pages using the 📎 button and I'll answer from that material.\n\nWithout notes loaded, I'll do my best but will flag when I'm uncertain. Add your content for accurate course-specific answers!",
       []
     );
   }

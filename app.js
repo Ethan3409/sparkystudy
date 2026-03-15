@@ -911,6 +911,23 @@ function updateTrialBanner(state) {
   `;
 }
 
+// Sync user notes into window._sparkStudyCtx so the AI widget answers from them
+function syncAIContext(state) {
+  if (!state || !state.user) { window._sparkStudyCtx = ''; return; }
+  const uid = state.user.id;
+  const notes = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('sparky_notes_' + uid + '_')) {
+      const topic = key.replace('sparky_notes_' + uid + '_', '');
+      const html = localStorage.getItem(key) || '';
+      const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (text.length > 20) notes.push('=== ' + topic + ' ===\n' + text);
+    }
+  }
+  window._sparkStudyCtx = notes.join('\n\n').slice(0, 8000);
+}
+
 const App = {
   currentPage: null,
   navigate(page) {
@@ -918,6 +935,7 @@ const App = {
     // Check subscription/trial expiry on every navigation
     checkSubscriptionExpiry(state);
     updateTrialBanner(state);
+    syncAIContext(state);
     const publicPages = ['landing', 'signup', 'login'];
     const ownerPages = ['owner'];
 
@@ -10503,7 +10521,7 @@ const OwnerDashboard = {
       const result = this[fn](D);
       if (result && typeof result.then === 'function') {
         tc.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">Loading...</div>';
-        result.then(html => { if(tc) tc.innerHTML = html || ''; });
+        result.then(html => { if(tc) tc.innerHTML = html || ''; }).catch(err => { if(tc) tc.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">Error loading tab: '+err.message+'</div>'; });
       } else {
         tc.innerHTML = result || '';
       }
@@ -10562,6 +10580,17 @@ const OwnerDashboard = {
     const tm=Object.keys(TOPICS).map(tid=>{const cds=Object.entries(st.flashcards||{}).filter(([id])=>{const fc=FLASHCARD_BANK.find(f=>f.id===id);return fc&&fc.topic===tid;});if(!cds.length)return{name:TOPICS[tid]?.name||tid,m:0};return{name:TOPICS[tid]?.name||tid,m:Math.round(cds.reduce((s,[,c])=>s+c.correct/Math.max(c.correct+c.incorrect,1),0)/cds.length*100)};}).filter(t=>t.m>0).sort((a,b)=>a.m-b.m);
     const weak=tm.slice(0,3),strong=tm.slice(-3).reverse();
     const isBanned=!!u.banned;
+    // ── Activity data ──
+    const sess=st.sessions||{};
+    const daily=sess.daily||{};
+    const totalMs=sess.totalTime||0;
+    const totalTimeStr=totalMs>=3600000?`${Math.floor(totalMs/3600000)}h ${Math.floor((totalMs%3600000)/60000)}m`:`${Math.floor(totalMs/60000)}m`;
+    const lastActiveStr=u.lastLogin?new Date(u.lastLogin).toLocaleString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Never';
+    const dailyRows=Object.entries(daily).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,30).map(([date,d])=>{
+      const mins=Math.floor((d.time||0)/60000);
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;"><span style="color:var(--accent);">${date}</span><span style="color:var(--text-muted);">${mins}m · ${d.flashcards||0} cards · ${d.exams||0} exams</span></div>`;
+    }).join('')||'<div style="color:var(--text-muted);font-size:0.8rem;padding:6px 0;">No sessions yet</div>';
+    const recentActivity=((st.points||{}).history||[]).slice(-30).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.78rem;"><span style="color:var(--text-secondary);">${p.reason}</span><span style="color:#22c55e;font-weight:600;flex-shrink:0;margin-left:8px;">+${p.amount}pts · ${new Date(p.timestamp).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:0.8rem;padding:6px 0;">No activity yet</div>';
     return `<div class="oa-section" style="margin-top:8px;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
         <div>
@@ -10570,7 +10599,7 @@ const OwnerDashboard = {
             <span style="font-size:0.78rem;font-weight:700;padding:3px 10px;border-radius:20px;background:${planColor}22;border:1px solid ${planColor}55;color:${planColor};">${displayPlan}</span>
             <span style="font-size:0.78rem;color:var(--text-muted);">Period ${u.period||'?'}</span>
             <span style="font-size:0.78rem;color:var(--text-muted);">Joined ${signupDate}</span>
-            <span style="font-size:0.78rem;color:var(--text-muted);">Last login ${lastLogin}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);">Last seen ${this._timeAgo(u.lastLogin)}</span>
             ${isTrial&&trialLeft>0?'<span style="font-size:0.78rem;color:var(--text-muted);">Trial ends '+trialEndStr+'</span>':''}
             ${sub.subscription_id?'<span style="font-size:0.72rem;font-family:monospace;color:var(--text-muted);">Stripe: '+sub.subscription_id+'</span>':''}
           </div>
@@ -10585,6 +10614,30 @@ const OwnerDashboard = {
         <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Strongest Topics</span>${strong.map(t=>'<div style="font-size:0.85rem;margin-top:4px;">'+t.name+': <strong style="color:#22c55e;">'+t.m+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No data yet</div>'}</div>
         <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Recent Exams</span>${(st.exams.attempts||[]).slice(-3).reverse().map(ex=>'<div style="font-size:0.85rem;margin-top:4px;">'+new Date(ex.date).toLocaleDateString()+': <strong style="color:'+(ex.pct>=70?'#22c55e':'#ef4444')+';">'+ex.pct+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No exams yet</div>'}</div>
       </div>
+      <details style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
+        <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--text-muted);list-style:none;display:flex;align-items:center;gap:8px;user-select:none;padding:2px 0;">
+          &#x25B6; Activity Log &nbsp;&middot;&nbsp; Last seen ${this._timeAgo(u.lastLogin)} &nbsp;&middot;&nbsp; ${totalTimeStr} total study time
+        </summary>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;">
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Overview</div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x1F550; Last login: <strong>${lastActiveStr}</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x23F1; Total study time: <strong>${totalTimeStr}</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x1F525; Streak: <strong>${sess.streak||0} days</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x1F4C5; Last studied: <strong>${sess.lastStudy||'Never'}</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x2B50; Points: <strong>${(st.points||{}).total||0}</strong></div>
+            <div style="font-size:0.83rem;">&#x1F4DD; Exams taken: <strong>${(st.exams.attempts||[]).length}</strong></div>
+          </div>
+          <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;">
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Daily Sessions</div>
+            ${dailyRows}
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;margin-top:10px;max-height:160px;overflow-y:auto;">
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Recent Activity</div>
+          ${recentActivity}
+        </div>
+      </details>
     </div>`;
   },
 
