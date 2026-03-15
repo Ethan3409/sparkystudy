@@ -17,7 +17,7 @@
 <script>
 // Bust stale SW cache once per app version — runs inline so it fires before app.js loads
 (function(){
-  var V = 'v5';
+  var V = 'v6';
   if ('serviceWorker' in navigator && sessionStorage.getItem('sw-ver') !== V) {
     navigator.serviceWorker.getRegistration().then(function(reg){
       sessionStorage.setItem('sw-ver', V);
@@ -468,8 +468,8 @@
 </div><!-- /app-container -->
 
 <!-- Data and App scripts (loaded after Firebase SDK via defer) -->
-<script src="data.js?v=5" defer></script>
-<script src="app.js?v=5" defer></script>
-<script src="sparkstudy-ai-widget.js" defer></script>
+<script src="data.js?v=6" defer></script>
+<script src="app.js?v=6" defer></script>
+<script src="sparkstudy-ai-widget.js?v=6" defer></script>
 </body>
 </html>

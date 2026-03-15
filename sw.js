@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sparkystudy-v5';
+const CACHE_NAME = 'sparkystudy-v6';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {
