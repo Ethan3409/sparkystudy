@@ -9011,6 +9011,74 @@ const LESSONS_CONTENT = [
 
 const Lessons = {
   activeLesson: null,
+  _ttsActive: false,
+
+  _getBestVoice() {
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    const preferred = [
+      'Google US English',
+      'Google UK English Female',
+      'Microsoft Aria Online (Natural) - English (United States)',
+      'Microsoft Jenny Online (Natural) - English (United States)',
+      'Microsoft Guy Online (Natural) - English (United States)',
+      'Microsoft Zira',
+    ];
+    for (const name of preferred) {
+      const v = voices.find(v => v.name === name || v.name.startsWith(name));
+      if (v) return v;
+    }
+    const natural = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Google')));
+    if (natural) return natural;
+    return voices.find(v => v.lang.startsWith('en-US') || v.lang.startsWith('en-GB')) || voices[0];
+  },
+
+  _getLessonText(lessonId) {
+    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    if (!lesson) return '';
+    let text = lesson.title + '. ' + lesson.subtitle + '. ';
+    for (const s of lesson.sections) {
+      if (s.title) text += s.title.replace(/[^\w\s.,!?'-]/g, '') + '. ';
+      if (s.body) text += s.body + ' ';
+      if (s.formula) text += 'Formula: ' + s.formula.replace(/[×÷√]/g, ' ') + '. ';
+      if (s.questions) s.questions.forEach(q => { text += q.q + ' Answer: ' + q.a + '. '; });
+      if (s.tips) s.tips.forEach(t => { text += t + ' '; });
+      if (s.objectives) s.objectives.forEach(o => { text += o + '. '; });
+    }
+    return text.replace(/\s+/g, ' ').trim();
+  },
+
+  _stopReading() {
+    speechSynthesis.cancel();
+    this._ttsActive = false;
+    const btn = document.getElementById('lessons-read-btn');
+    if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.background = 'rgba(88,166,255,0.1)'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.color = '#58a6ff'; }
+  },
+
+  _toggleRead() {
+    if (this._ttsActive) { this._stopReading(); return; }
+    if (!this.activeLesson) return;
+    const text = this._getLessonText(this.activeLesson);
+    if (!text) return;
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.92;
+    utter.pitch = 1.0;
+    const tryVoice = () => { const v = this._getBestVoice(); if (v) utter.voice = v; };
+    tryVoice();
+    if (!utter.voice) speechSynthesis.onvoiceschanged = () => { tryVoice(); speechSynthesis.onvoiceschanged = null; };
+    utter.onstart = () => {
+      this._ttsActive = true;
+      const btn = document.getElementById('lessons-read-btn');
+      if (btn) { btn.textContent = '⏹ Stop Reading'; btn.style.background = 'rgba(16,185,129,0.1)'; btn.style.borderColor = 'rgba(16,185,129,0.3)'; btn.style.color = '#10b981'; }
+    };
+    utter.onend = utter.onerror = () => {
+      this._ttsActive = false;
+      const btn = document.getElementById('lessons-read-btn');
+      if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.background = 'rgba(88,166,255,0.1)'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.color = '#58a6ff'; }
+    };
+    speechSynthesis.speak(utter);
+  },
 
   render(state) {
     if (!state) return;
@@ -9056,6 +9124,7 @@ const Lessons = {
   },
 
   _back() {
+    this._stopReading();
     this.activeLesson = null;
     const container = document.getElementById('lessonsContent');
     const state = Storage.get();
@@ -9071,9 +9140,14 @@ const Lessons = {
 
     container.innerHTML = `
       <div style="padding:16px 0;">
-        <button onclick="Lessons._back()" style="background:none;border:1px solid var(--border);color:var(--text-secondary);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;margin-bottom:20px;display:flex;align-items:center;gap:6px;">
-          &#8592; All Lessons
-        </button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+          <button onclick="Lessons._back()" style="background:none;border:1px solid var(--border);color:var(--text-secondary);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;gap:6px;">
+            &#8592; All Lessons
+          </button>
+          <button id="lessons-read-btn" onclick="Lessons._toggleRead()" style="background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.15s;">
+            🔊 Read Aloud
+          </button>
+        </div>
         <div style="background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:32px;margin-bottom:28px;">
           <div style="font-size:3rem;margin-bottom:12px;">${lesson.icon}</div>
           <h1 style="font-size:1.9rem;margin:0 0 6px;color:${lesson.color};">${lesson.title}</h1>
