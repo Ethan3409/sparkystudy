@@ -211,6 +211,26 @@
     }
     .mr-ask-btn:hover { background: rgba(249,115,22,0.2); }
 
+    .mr-read-btn {
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.25);
+      color: #58a6ff;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mr-read-btn:hover { background: rgba(88,166,255,0.16); }
+    .mr-read-btn.reading {
+      background: rgba(16,185,129,0.1);
+      border-color: rgba(16,185,129,0.3);
+      color: #10b981;
+    }
+    .mr-read-btn.reading:hover { background: rgba(16,185,129,0.2); }
+    .mr-footer-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
     @media (max-width: 600px) {
       .mr-overlay { padding: 8px; }
       .mr-body { padding: 20px 16px; }
@@ -298,7 +318,10 @@
         </div>
         <div class="mr-footer">
           <span class="mr-page-count">Page ${currentPage + 1} of ${m.pages.length}</span>
-          <button class="mr-ask-btn" onclick="window._mrAskAI()">⚡ Ask AI about this</button>
+          <div class="mr-footer-actions">
+            <button class="mr-read-btn" id="mr-read-btn" onclick="window._mrToggleRead()">🔊 Read Aloud</button>
+            <button class="mr-ask-btn" onclick="window._mrAskAI()">⚡ Ask AI about this</button>
+          </div>
           <div class="mr-nav">
             <button class="mr-btn mr-btn-secondary" onclick="window._mrPrev()" ${currentPage === 0 ? 'disabled' : ''}>← Previous</button>
             <button class="mr-btn mr-btn-primary" onclick="window._mrNext()">
@@ -462,9 +485,101 @@
     return null;
   }
 
+  // ── Text-to-Speech ─────────────────────────────────────────────────────────
+  let ttsActive = false;
+
+  function getBestVoice() {
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    // Preferred voices in order — Google and Microsoft Natural sound great
+    const preferred = [
+      'Google US English',
+      'Google UK English Female',
+      'Microsoft Aria Online (Natural) - English (United States)',
+      'Microsoft Jenny Online (Natural) - English (United States)',
+      'Microsoft Guy Online (Natural) - English (United States)',
+      'Microsoft Zira',
+      'Microsoft David',
+    ];
+    for (const name of preferred) {
+      const v = voices.find(v => v.name === name || v.name.startsWith(name));
+      if (v) return v;
+    }
+    // Any online/natural English voice
+    const natural = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Google')));
+    if (natural) return natural;
+    // Any English voice
+    return voices.find(v => v.lang.startsWith('en-US') || v.lang.startsWith('en-GB')) || voices[0];
+  }
+
+  function getPageText() {
+    const body = document.getElementById('mr-body-content');
+    if (!body) return '';
+    // Walk text nodes, skipping table cells (numbers only) and figure labels
+    let text = '';
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null);
+    let node;
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (!parent) continue;
+      // Skip tiny label elements
+      if (parent.classList.contains('mr-figure-label') || parent.classList.contains('mr-section-title') || parent.classList.contains('mr-objective-badge')) continue;
+      // Skip pure-number table cells
+      if ((parent.tagName === 'TD' || parent.tagName === 'TH') && /^[\d.,% ]+$/.test(node.textContent.trim())) continue;
+      const t = node.textContent.trim();
+      if (t) text += t + ' ';
+    }
+    return text.replace(/\s+/g, ' ').trim();
+  }
+
+  function stopReading() {
+    speechSynthesis.cancel();
+    ttsActive = false;
+    const btn = document.getElementById('mr-read-btn');
+    if (btn) { btn.textContent = '🔊 Read Aloud'; btn.classList.remove('reading'); }
+  }
+
+  function startReading() {
+    stopReading();
+    const text = getPageText();
+    if (!text) return;
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.92;
+    utter.pitch = 1.0;
+
+    // Voice loads async — try immediately, then retry after voices load
+    const trySetVoice = () => {
+      const v = getBestVoice();
+      if (v) utter.voice = v;
+    };
+    trySetVoice();
+    if (!utter.voice) {
+      speechSynthesis.onvoiceschanged = () => { trySetVoice(); speechSynthesis.onvoiceschanged = null; };
+    }
+
+    utter.onstart = () => {
+      ttsActive = true;
+      const btn = document.getElementById('mr-read-btn');
+      if (btn) { btn.textContent = '⏹ Stop'; btn.classList.add('reading'); }
+    };
+    utter.onend = utter.onerror = () => {
+      ttsActive = false;
+      const btn = document.getElementById('mr-read-btn');
+      if (btn) { btn.textContent = '🔊 Read Aloud'; btn.classList.remove('reading'); }
+    };
+
+    speechSynthesis.speak(utter);
+  }
+
+  window._mrToggleRead = function () {
+    if (ttsActive) { stopReading(); } else { startReading(); }
+  };
+
   // ── Navigation ─────────────────────────────────────────────────────────────
   window._mrClose = function () { closeModule(); };
   window._mrPrev = function () {
+    stopReading();
     if (currentPage > 0) { currentPage--; renderOverlay(); scrollTop(); }
   };
   window._mrNext = function () {
@@ -509,6 +624,7 @@
   }
 
   function closeModule() {
+    stopReading();
     if (currentModule) markPageRead(currentModule.module_id, currentPage, currentModule.pages.length);
     if (overlay) { overlay.remove(); overlay = null; }
     document.body.style.overflow = '';
