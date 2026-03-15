@@ -1319,6 +1319,8 @@ const Diagnostic = {
 
 // ===== DASHBOARD.JS =====
 // ===== DASHBOARD MODULE =====
+const APP_VERSION = 'v6-2026-03-14';
+
 const Dashboard = {
   render(state) {
     if (!state) return;
@@ -1348,6 +1350,7 @@ const Dashboard = {
       <div class="dash-welcome">
         <h1>Welcome back, ${state.user.name.split(' ')[0]}!</h1>
         <p>Period ${state.user.period} Electrical Apprentice &mdash; ${dueCards.length > 0 ? `${dueCards.length} flashcards due today` : 'All caught up on flashcards!'}</p>
+        <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">App ${APP_VERSION}</div>
       </div>
 
       ${(() => {
