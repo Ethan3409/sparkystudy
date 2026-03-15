@@ -9038,46 +9038,155 @@ const Lessons = {
   _ttsActive: false,
 
   _elAudio: null,
+  _elSectionOffsets: [],
+  _elSpeedRate: 1.0,
+  _ttsPaused: false,
 
-  async _elSpeak(text) {
+  _buildReadText(fromIdx) {
+    const lesson = LESSONS_CONTENT.find(l => l.id === this.activeLesson);
+    if (!lesson) return { text: '', offsets: [] };
+    let text = '';
+    const offsets = [];
+    for (let i = fromIdx; i < lesson.sections.length; i++) {
+      const s = lesson.sections[i];
+      const start = text.length;
+      let t = (s.title || '').replace(/[^\w\s.,!?'-]/g, '') + '. ';
+      if (s.body) t += s.body + ' ';
+      if (s.formula) t += 'Formula: ' + s.formula.replace(/[^\w\s.,!?=+\-\/()]/g, '') + '. ';
+      if (s.tips) s.tips.forEach(tip => { t += tip + ' '; });
+      if (s.objectives) s.objectives.forEach(o => { t += o + '. '; });
+      text += t;
+      offsets.push({ idx: i, start, end: text.length });
+    }
+    return { text: text.trim(), offsets };
+  },
+
+  async _elSpeakFrom(fromIdx) {
+    this._stopReading();
+    const { text, offsets } = this._buildReadText(fromIdx);
+    if (!text) return;
+    this._elSectionOffsets = offsets;
+    const btn = document.getElementById('lessons-read-btn');
+    if (btn) { btn.textContent = '⏳ Loading...'; btn.style.color = '#f59e0b'; btn.style.borderColor = 'rgba(245,158,11,0.4)'; btn.style.background = 'rgba(245,158,11,0.08)'; }
     const apiKey = 'sk_a12bbd22810bcf3f97ab287a173d0095a6342fd658cbe756';
     const voiceId = 'FOSKkhOXCEGmWEXxIIpp';
-    const btn = document.getElementById('lessons-read-btn');
-    if (btn) { btn.textContent = '⏳ Loading...'; btn.style.color = '#f59e0b'; btn.style.borderColor = 'rgba(245,158,11,0.4)'; }
     try {
       const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
         headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: text.substring(0, 5000),
-          model_id: 'eleven_turbo_v2_5',
-          voice_settings: { stability: 0.55, similarity_boost: 0.80 }
-        })
+        body: JSON.stringify({ text: text.substring(0, 5000), model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.55, similarity_boost: 0.80 } })
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.color = '#58a6ff'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.background = 'rgba(88,166,255,0.1)'; }
         alert('ElevenLabs error: ' + (err.detail?.message || err.detail || res.status));
-        return false;
+        return;
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       this._elAudio = new Audio(url);
+      this._elAudio.playbackRate = this._elSpeedRate;
+      const totalChars = Math.min(text.length, 5000);
+      this._elAudio.addEventListener('timeupdate', () => {
+        if (!this._elAudio) return;
+        const pct = this._elAudio.currentTime / (this._elAudio.duration || 1);
+        const charPos = Math.floor(pct * totalChars);
+        const cur = offsets.find(o => charPos >= o.start && charPos < o.end);
+        if (cur) this._highlightSection(cur.idx);
+        const slider = document.getElementById('read-ctrl-seek');
+        if (slider) slider.value = Math.floor(pct * 100);
+      });
       this._elAudio.onended = () => {
-        this._ttsActive = false;
+        this._ttsActive = false; this._ttsPaused = false;
         URL.revokeObjectURL(url);
+        this._clearHighlights(); this._hideReadControls();
         const b = document.getElementById('lessons-read-btn');
         if (b) { b.textContent = '🔊 Read Aloud'; b.style.color = '#58a6ff'; b.style.borderColor = 'rgba(88,166,255,0.3)'; b.style.background = 'rgba(88,166,255,0.1)'; }
       };
       this._elAudio.play();
-      this._ttsActive = true;
+      this._ttsActive = true; this._ttsPaused = false;
+      this._showReadControls();
       if (btn) { btn.textContent = '⏹ Stop'; btn.style.color = '#10b981'; btn.style.borderColor = 'rgba(16,185,129,0.3)'; btn.style.background = 'rgba(16,185,129,0.1)'; }
-      return true;
     } catch(e) {
       if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.color = '#58a6ff'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.background = 'rgba(88,166,255,0.1)'; }
       alert('ElevenLabs connection error: ' + e.message);
-      return false;
     }
+  },
+
+  _highlightSection(idx) {
+    document.querySelectorAll('.lesson-sec-active').forEach(el => {
+      el.classList.remove('lesson-sec-active');
+      el.style.outline = ''; el.style.boxShadow = '';
+    });
+    const el = document.getElementById('lesson-section-' + idx);
+    if (el) {
+      el.classList.add('lesson-sec-active');
+      el.style.outline = '2px solid rgba(249,115,22,0.7)';
+      el.style.boxShadow = '0 0 20px rgba(249,115,22,0.12)';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  },
+
+  _clearHighlights() {
+    document.querySelectorAll('.lesson-sec-active').forEach(el => {
+      el.classList.remove('lesson-sec-active');
+      el.style.outline = ''; el.style.boxShadow = '';
+    });
+  },
+
+  _showReadControls() {
+    let bar = document.getElementById('read-controls-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'read-controls-bar';
+      bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#0d1117;border-top:2px solid rgba(249,115,22,0.4);padding:10px 20px;display:flex;align-items:center;gap:12px;z-index:9999;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,0.5);';
+      bar.innerHTML = `
+        <span style="font-size:0.8rem;color:#f97316;font-weight:700;">🔊 Reading</span>
+        <input type="range" id="read-ctrl-seek" min="0" max="100" value="0" style="flex:1;min-width:80px;accent-color:#f97316;cursor:pointer;" oninput="Lessons._seekTo(this.value)">
+        <button onclick="Lessons._togglePause()" id="read-ctrl-pause" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.4);color:#f97316;padding:6px 14px;border-radius:7px;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;">⏸ Pause</button>
+        <select id="read-ctrl-speed" onchange="Lessons._setSpeed(this.value)" style="background:#1f2937;border:1px solid #374151;color:#e5e7eb;padding:5px 10px;border-radius:7px;font-size:0.82rem;cursor:pointer;">
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+        </select>
+        <button onclick="Lessons._stopReading()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:6px 12px;border-radius:7px;font-size:0.82rem;cursor:pointer;">⏹ Stop</button>
+      `;
+      document.body.appendChild(bar);
+    } else {
+      bar.style.display = 'flex';
+    }
+    const speedSel = document.getElementById('read-ctrl-speed');
+    if (speedSel) speedSel.value = String(this._elSpeedRate);
+  },
+
+  _hideReadControls() {
+    const bar = document.getElementById('read-controls-bar');
+    if (bar) bar.style.display = 'none';
+    this._clearHighlights();
+  },
+
+  _togglePause() {
+    if (!this._elAudio) return;
+    const btn = document.getElementById('read-ctrl-pause');
+    if (this._ttsPaused) {
+      this._elAudio.play(); this._ttsPaused = false;
+      if (btn) btn.textContent = '⏸ Pause';
+    } else {
+      this._elAudio.pause(); this._ttsPaused = true;
+      if (btn) btn.textContent = '▶ Resume';
+    }
+  },
+
+  _seekTo(pct) {
+    if (!this._elAudio || !this._elAudio.duration) return;
+    this._elAudio.currentTime = (pct / 100) * this._elAudio.duration;
+  },
+
+  _setSpeed(rate) {
+    this._elSpeedRate = parseFloat(rate);
+    if (this._elAudio) this._elAudio.playbackRate = this._elSpeedRate;
   },
 
   _getBestVoice() {
@@ -9128,37 +9237,15 @@ const Lessons = {
   _stopReading() {
     if (this._elAudio) { this._elAudio.pause(); this._elAudio = null; }
     speechSynthesis.cancel();
-    this._ttsActive = false;
+    this._ttsActive = false; this._ttsPaused = false;
+    this._hideReadControls();
     const btn = document.getElementById('lessons-read-btn');
     if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.background = 'rgba(88,166,255,0.1)'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.color = '#58a6ff'; }
   },
 
   async _toggleRead() {
     if (this._ttsActive) { this._stopReading(); return; }
-    if (!this.activeLesson) return;
-    const text = this._getLessonText(this.activeLesson);
-    if (!text) return;
-    // Try ElevenLabs first
-    const used = await this._elSpeak(text);
-    if (used) return;
-    // Fall back to browser TTS
-    speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 0.92; utter.pitch = 1.0;
-    const tryVoice = () => { const v = this._getBestVoice(); if (v) utter.voice = v; };
-    tryVoice();
-    if (!utter.voice) speechSynthesis.onvoiceschanged = () => { tryVoice(); speechSynthesis.onvoiceschanged = null; };
-    utter.onstart = () => {
-      this._ttsActive = true;
-      const btn = document.getElementById('lessons-read-btn');
-      if (btn) { btn.textContent = '⏹ Stop Reading'; btn.style.background = 'rgba(16,185,129,0.1)'; btn.style.borderColor = 'rgba(16,185,129,0.3)'; btn.style.color = '#10b981'; }
-    };
-    utter.onend = utter.onerror = () => {
-      this._ttsActive = false;
-      const btn = document.getElementById('lessons-read-btn');
-      if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.background = 'rgba(88,166,255,0.1)'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.color = '#58a6ff'; }
-    };
-    speechSynthesis.speak(utter);
+    await this._elSpeakFrom(0);
   },
 
   render(state) {
@@ -9353,11 +9440,12 @@ const Lessons = {
     }
 
     return `
-      <div style="background:${style.bg};border:1px solid ${style.border};border-radius:14px;padding:24px;margin-bottom:18px;">
+      <div id="lesson-section-${idx}" style="background:${style.bg};border:1px solid ${style.border};border-radius:14px;padding:24px;margin-bottom:18px;transition:outline 0.2s,box-shadow 0.2s;">
         <h3 style="font-size:1.05rem;margin:0 0 14px;display:flex;align-items:center;gap:8px;">${s.title}</h3>
         ${inner}
         <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <button onclick="Lessons._aiExplain(${idx})" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);color:#f97316;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;">⚡ AI Explain This</button>
+          <button onclick="Lessons._aiExplain(${idx})" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);color:#f97316;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">⚡ AI Explain This</button>
+          <button onclick="Lessons._elSpeakFrom(${idx})" style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.25);color:#58a6ff;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">▶ Start reading here</button>
         </div>
         <div id="ai-explain-${idx}" style="display:none;margin-top:12px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:14px;font-size:0.88rem;line-height:1.65;color:var(--text-primary);"></div>
       </div>`;
