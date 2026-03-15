@@ -9016,20 +9016,30 @@ const Lessons = {
   _getBestVoice() {
     const voices = speechSynthesis.getVoices();
     if (!voices.length) return null;
+    // Microsoft Neural (Online Natural) voices first — these sound closest to real speech
     const preferred = [
-      'Google US English',
-      'Google UK English Female',
       'Microsoft Aria Online (Natural) - English (United States)',
       'Microsoft Jenny Online (Natural) - English (United States)',
       'Microsoft Guy Online (Natural) - English (United States)',
-      'Microsoft Zira',
+      'Microsoft Davis Online (Natural) - English (United States)',
+      'Microsoft Ana Online (Natural) - English (United States)',
+      'Microsoft Brian Online (Natural) - English (United States)',
+      'Microsoft Emma Online (Natural) - English (United Kingdom)',
+      'Microsoft Ryan Online (Natural) - English (United Kingdom)',
     ];
     for (const name of preferred) {
       const v = voices.find(v => v.name === name || v.name.startsWith(name));
       if (v) return v;
     }
-    const natural = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Google')));
-    if (natural) return natural;
+    // Any Microsoft Natural/Online English voice
+    const msNatural = voices.find(v => v.name.includes('Microsoft') && v.name.includes('Natural') && v.lang.startsWith('en'));
+    if (msNatural) return msNatural;
+    // Any Microsoft Online English voice
+    const msOnline = voices.find(v => v.name.includes('Microsoft') && v.name.includes('Online') && v.lang.startsWith('en'));
+    if (msOnline) return msOnline;
+    // Fall back to Google
+    const google = voices.find(v => v.name.startsWith('Google') && v.lang.startsWith('en'));
+    if (google) return google;
     return voices.find(v => v.lang.startsWith('en-US') || v.lang.startsWith('en-GB')) || voices[0];
   },
 
