@@ -224,11 +224,79 @@ const SupportMessages = {
     if (!cloudMsgs || !cloudMsgs.length) return;
     const local = this.getAll();
     const localIds = new Set(local.map(m => m.id));
-    cloudMsgs.forEach(m => { if (!localIds.has(m.id)) local.push(m); });
+    // Also update existing messages with new replies from cloud
+    cloudMsgs.forEach(cm => {
+      const existing = local.find(m => m.id === cm.id);
+      if (existing) {
+        if ((cm.replies||[]).length > (existing.replies||[]).length) {
+          existing.replies = cm.replies;
+          existing.status = cm.status;
+        }
+      } else {
+        local.push(cm);
+      }
+    });
     local.sort((a, b) => b.sentAt - a.sentAt);
     this._save(local);
+  },
+
+  // Returns messages that have new replies the user hasn't seen yet
+  getUnreadReplies(userId) {
+    const seen = (() => { try { return JSON.parse(localStorage.getItem('sparkstudy_seen_replies') || '{}'); } catch(e) { return {}; } })();
+    return this.getForUser(userId).filter(m => (m.replies||[]).length > (seen[m.id] || 0));
+  },
+
+  // Mark all current replies as seen
+  markRepliesRead(userId) {
+    const seen = {};
+    this.getForUser(userId).forEach(m => { seen[m.id] = (m.replies||[]).length; });
+    localStorage.setItem('sparkstudy_seen_replies', JSON.stringify(seen));
   }
 };
+
+// Show popup if owner has replied to user's support messages
+async function checkOwnerReplies(userId) {
+  if (!userId) return;
+  // Sync from Firebase first so we get the latest replies
+  if (FireDB.ready) {
+    const cloud = await FireDB.getMessagesForUser(userId).catch(() => null);
+    if (cloud) SupportMessages.mergeCloud(cloud);
+  }
+  const unread = SupportMessages.getUnreadReplies(userId);
+  if (!unread.length) return;
+  SupportMessages.markRepliesRead(userId);
+
+  // Build popup HTML
+  const repliesHtml = unread.map(m => {
+    const latestReply = m.replies[m.replies.length - 1];
+    return `
+      <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">Re: <strong>${m.subject}</strong></div>
+        <div style="font-size:0.88rem;line-height:1.6;">${latestReply.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;">From Owner · ${new Date(latestReply.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</div>
+      </div>`;
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'supportReplyModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.2s ease;';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#d97706);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">&#x1F4AC;</div>
+        <div>
+          <h3 style="margin:0;font-size:1.05rem;">New Reply from Support</h3>
+          <div style="font-size:0.78rem;color:var(--text-muted);">The SparkStudy team responded to your message</div>
+        </div>
+      </div>
+      ${repliesHtml}
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button onclick="document.getElementById('supportReplyModal').remove();App.navigate('settings');" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--accent),#d97706);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">View in Settings</button>
+        <button onclick="document.getElementById('supportReplyModal').remove();" style="padding:10px 20px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);cursor:pointer;font-size:0.9rem;">Dismiss</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
 
 const Storage = {
   // Active user session
@@ -829,6 +897,8 @@ const Auth = {
     showToast('Welcome back, ' + state.user.name + '!', 'success');
     if (!state.diagnostic.completed) App.navigate('diagnostic');
     else App.navigate('dashboard');
+    // Check for owner replies after a short delay (let page render first)
+    setTimeout(() => checkOwnerReplies(state.user.id), 1500);
   },
   logout() {
     this.isOwnerAnalytics = false;
@@ -2828,6 +2898,26 @@ const Notes = {
             <span id="notesWordCount">0 words</span>
             <span>Tip: <strong style="color:var(--accent);">★ Key Term</strong> = auto-quiz card</span>
           </div>
+
+          ${!savedHtml ? `
+          <!-- Upload prompt banner (shown when notes are empty) -->
+          <div style="margin-top:12px;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:14px;padding:20px 22px;display:flex;align-items:flex-start;gap:16px;">
+            <div style="font-size:2rem;flex-shrink:0;">📚</div>
+            <div>
+              <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px;color:var(--accent);">Add your module content here</div>
+              <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
+                The AI study tools (quiz generator, flashcard creator, AI tutor) all work from <strong>your notes</strong>.
+                Paste or type your module content, or use <strong>📷 Upload Pages</strong> above to photograph your textbook pages.
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent);color:#000;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;">
+                  📷 Upload Module Pages
+                  <input type="file" accept="image/*" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
+                </label>
+                <button onclick="document.getElementById('notesEditor').focus()" style="padding:8px 16px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;font-size:0.85rem;color:var(--text-primary);cursor:pointer;">✏️ Type Notes</button>
+              </div>
+            </div>
+          </div>` : ''}
         </div>
       </div>
     `;
