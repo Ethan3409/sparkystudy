@@ -2,6 +2,20 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const nodemailer = require('nodemailer');
+
+// Simple in-memory rate limit: max 3 support messages per IP per hour
+const contactRateLimit = new Map();
+function checkContactRate(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000; // 1 hour
+  const entry = contactRateLimit.get(ip) || { count: 0, resetAt: now + windowMs };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs; }
+  if (entry.count >= 3) return false;
+  entry.count++;
+  contactRateLimit.set(ip, entry);
+  return true;
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -142,6 +156,59 @@ app.get('/api/verify-session', async (req, res) => {
   } catch (err) {
     console.error('Error verifying session:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/contact ────────────────────────────────────────────────────────
+// Forwards support messages to the owner email. Owner email never sent to client.
+app.post('/api/contact', async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+  if (!checkContactRate(ip)) {
+    return res.status(429).json({ error: 'Too many messages. Please wait an hour before sending another.' });
+  }
+
+  const { name, email, subject, message } = req.body;
+  if (!name || !email || !message) return res.status(400).json({ error: 'Missing required fields.' });
+  if (message.length > 2000) return res.status(400).json({ error: 'Message too long (max 2000 characters).' });
+
+  const ownerEmail = process.env.CONTACT_EMAIL;
+  if (!ownerEmail) {
+    console.error('CONTACT_EMAIL env var not set');
+    return res.status(500).json({ error: 'Support email not configured.' });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS   // Gmail App Password (not your real password)
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"SparkStudy Support" <${process.env.SMTP_USER}>`,
+      to: ownerEmail,
+      replyTo: email,
+      subject: `[SparkStudy Support] ${subject || 'General Inquiry'} — from ${name}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;">
+          <h2 style="color:#f59e0b;">New Support Message — SparkStudy</h2>
+          <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
+            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;width:100px;">From</td><td style="padding:8px;border:1px solid #e5e7eb;">${name}</td></tr>
+            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;">Email</td><td style="padding:8px;border:1px solid #e5e7eb;">${email}</td></tr>
+            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;">Subject</td><td style="padding:8px;border:1px solid #e5e7eb;">${subject || 'No subject'}</td></tr>
+          </table>
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;white-space:pre-wrap;">${message.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          <p style="color:#9ca3af;font-size:0.85rem;margin-top:16px;">Reply directly to this email to respond to ${name}.</p>
+        </div>
+      `
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Contact email failed:', err.message);
+    res.status(500).json({ error: 'Failed to send message. Please try again.' });
   }
 });
 

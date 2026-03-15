@@ -9893,6 +9893,41 @@ const Settings = {
         </div>
 
 
+        <!-- Contact / Support -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+          <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F4AC; Contact Support</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;">Have a question, found a bug, or need help with billing? Send us a message and we'll get back to you.</p>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px;">Subject</label>
+              <select id="supportSubject" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;">
+                <option value="General Question">General Question</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Billing / Subscription">Billing / Subscription</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Account Issue">Account Issue</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px;">Message</label>
+              <textarea id="supportMessage" rows="5" placeholder="Describe your question or issue..."
+                style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;resize:vertical;line-height:1.5;font-family:inherit;"></textarea>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;text-align:right;" id="supportCharCount">0 / 2000</div>
+            </div>
+            <button class="btn btn-primary" id="supportSendBtn" onclick="Settings.sendSupport('${state.user.name}','${state.user.email}')" style="align-self:flex-start;padding:10px 28px;">
+              Send Message
+            </button>
+            <div id="supportResult" style="display:none;"></div>
+          </div>
+          <script>
+            (function() {
+              const ta = document.getElementById('supportMessage');
+              const cc = document.getElementById('supportCharCount');
+              if (ta && cc) ta.addEventListener('input', () => { cc.textContent = ta.value.length + ' / 2000'; });
+            })();
+          </script>
+        </div>
+
         <!-- Schedule Upload -->
         ${Settings._scheduleHTML(state)}
 
@@ -10061,6 +10096,45 @@ const Settings = {
   retakeDiagnostic() {
     if (!confirm('This will start a new diagnostic session. Your history will be preserved. Continue?')) return;
     Diagnostic.retake();
+  },
+
+  async sendSupport(name, email) {
+    const subject = document.getElementById('supportSubject')?.value || 'General Question';
+    const message = document.getElementById('supportMessage')?.value?.trim() || '';
+    const btn = document.getElementById('supportSendBtn');
+    const result = document.getElementById('supportResult');
+
+    if (!message) { showToast('Please enter a message.', 'error'); return; }
+    if (message.length > 2000) { showToast('Message too long (max 2000 characters).', 'error'); return; }
+
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    if (result) result.style.display = 'none';
+
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject, message })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+
+      if (result) {
+        result.style.display = 'block';
+        result.innerHTML = '<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:12px 16px;font-size:0.88rem;color:#a7f3d0;">✓ Message sent! We\'ll get back to you soon.</div>';
+      }
+      document.getElementById('supportMessage').value = '';
+      document.getElementById('supportCharCount').textContent = '0 / 2000';
+      btn.textContent = '✓ Sent';
+    } catch (e) {
+      if (result) {
+        result.style.display = 'block';
+        result.innerHTML = '<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px 16px;font-size:0.88rem;color:#fca5a5;">Failed to send: ' + e.message + '</div>';
+      }
+      btn.textContent = 'Send Message';
+      btn.disabled = false;
+    }
   },
 
   resetAll() {
