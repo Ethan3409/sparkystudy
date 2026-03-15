@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to Elite — SparkStudy</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3; --muted:#8b949e; --accent:#f59e0b; --green:#10b981; --red:#ef4444; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+.card {
+  background:var(--panel); border:1px solid var(--border); border-radius:20px;
+  padding:3rem 2.5rem; max-width:480px; width:90%; text-align:center;
+}
+.icon { font-size:4rem; margin-bottom:1rem; animation:popIn 0.5s ease-out; }
+@keyframes popIn { 0%{transform:scale(0)} 60%{transform:scale(1.2)} 100%{transform:scale(1)} }
+h1 { font-size:1.8rem; font-weight:800; margin-bottom:0.5rem; color:var(--green); }
+.sub { color:var(--muted); font-size:0.95rem; margin-bottom:2rem; line-height:1.5; }
+.trial-box {
+  background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3);
+  border-radius:12px; padding:1.25rem; margin-bottom:2rem; text-align:left;
+}
+.trial-box h3 { font-size:0.9rem; font-weight:700; color:var(--green); margin-bottom:0.75rem; }
+.trial-row { display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.4rem; }
+.trial-row .label { color:var(--muted); }
+.trial-row .value { font-weight:600; }
+.btn {
+  display:inline-block; width:100%; padding:1rem;
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  color:#000; border:none; border-radius:10px;
+  font-size:1rem; font-weight:800; cursor:pointer; text-decoration:none;
+  transition:transform 0.15s, box-shadow 0.15s;
+}
+.btn:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(245,158,11,0.35); }
+.loading { color:var(--muted); font-size:0.9rem; }
+.error-box {
+  background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+  border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;
+  color:var(--red); font-size:0.88rem; display:none;
+}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="loading">⏳ Verifying your payment…</div>
+</div>
+
+<script>
+const BACKEND = 'https://web-production-a1f63.up.railway.app';
+
+async function verify() {
+  const card = document.getElementById('card');
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+
+  if (!sessionId) {
+    card.innerHTML = '<div class="error-box" style="display:block">No session ID found. If you completed payment, please contact support.</div><a href="payment.html" class="btn" style="display:block;text-decoration:none;">Try again</a>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND}/api/verify-session?session_id=${sessionId}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Payment could not be verified');
+    }
+
+    // ── Unlock Elite in localStorage ────────────────────────────────────────
+    activateElite(data);
+
+    // ── Render success screen ───────────────────────────────────────────────
+    const trialEnd = data.trial_end ? new Date(data.trial_end) : null;
+    const trialEndStr = trialEnd ? trialEnd.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Active';
+    const expiresStr = data.expires_at ? new Date(data.expires_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' }) : 'In 1 year';
+
+    card.innerHTML = `
+      <div class="icon">⚡</div>
+      <h1>You're Elite!</h1>
+      <p class="sub">Your 7-day free trial is active. You won't be charged until <strong>${trialEndStr}</strong>. Cancel anytime before then — no questions asked.</p>
+      <div class="trial-box">
+        <h3>Subscription Summary</h3>
+        <div class="trial-row"><span class="label">Plan</span><span class="value">Elite Annual — $79 CAD/yr</span></div>
+        <div class="trial-row"><span class="label">Trial ends</span><span class="value" style="color:var(--accent);">${trialEndStr}</span></div>
+        <div class="trial-row"><span class="label">Next renewal</span><span class="value">${expiresStr}</span></div>
+        <div class="trial-row"><span class="label">Status</span><span class="value" style="color:var(--green);">✓ Active</span></div>
+      </div>
+      <a href="index.html" class="btn">⚡ Start Studying Now</a>
+    `;
+  } catch (err) {
+    card.innerHTML = `
+      <div class="icon">⚠️</div>
+      <h1 style="color:var(--accent);">Almost there</h1>
+      <p class="sub">We couldn't automatically verify your payment session. If you completed checkout, your account may already be upgraded — try logging in.<br><br>Error: ${err.message}</p>
+      <div style="display:flex;gap:0.75rem;flex-direction:column;">
+        <a href="index.html" class="btn">Go to App</a>
+        <a href="payment.html" style="color:var(--muted);font-size:0.85rem;text-decoration:none;">Try checkout again</a>
+      </div>
+    `;
+  }
+}
+
+function activateElite(data) {
+  try {
+    // Update sparty_auth
+    const auth = JSON.parse(localStorage.getItem('sparty_auth') || '{}');
+    auth.plan = 'elite';
+    auth.paid = true;
+    auth.paidAt = new Date().toISOString();
+    auth.subscription_id = data.subscription_id || null;
+    auth.trial = data.trial || false;
+    auth.trial_start_date = data.trial_start || new Date().toISOString();
+    auth.trial_end_date = data.trial_end || new Date(Date.now() + 7 * 86400000).toISOString();
+    auth.elite_expires_at = data.expires_at || new Date(Date.now() + 365 * 86400000).toISOString();
+    localStorage.setItem('sparty_auth', JSON.stringify(auth));
+
+    // Update sparkstudy_v1 (main app state)
+    const state = JSON.parse(localStorage.getItem('sparkstudy_v1') || '{}');
+    if (state && state.user) {
+      state.user.subscription = state.user.subscription || {};
+      state.user.subscription.plan = 'elite';
+      state.user.subscription.paid = true;
+      state.user.subscription.paidAt = auth.paidAt;
+      state.user.subscription.trial = auth.trial;
+      state.user.subscription.trial_start_date = auth.trial_start_date;
+      state.user.subscription.trial_end_date = auth.trial_end_date;
+      state.user.subscription.elite_expires_at = auth.elite_expires_at;
+      localStorage.setItem('sparkstudy_v1', JSON.stringify(state));
+    }
+  } catch (e) {
+    console.warn('Could not update localStorage:', e);
+  }
+}
+
+verify();
+</script>
+</body>
+</html>

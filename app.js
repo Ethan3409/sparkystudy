@@ -693,10 +693,40 @@ const Auth = {
 };
 
 // ===== APP / ROUTER =====
+// ── Trial / subscription expiry check ───────────────────────────────────────
+function checkSubscriptionExpiry(state) {
+  if (!state || !state.user || !state.user.subscription) return;
+  const sub = state.user.subscription;
+  const now = new Date();
+
+  // Downgrade if elite_expires_at is past
+  if (sub.plan === 'elite' && sub.elite_expires_at) {
+    if (new Date(sub.elite_expires_at) < now) {
+      sub.plan = 'free';
+      sub.paid = false;
+      Storage.set(state);
+      showToast('Your Elite subscription has expired. Your study data is preserved.', 'info');
+      return;
+    }
+  }
+
+  // If still in trial but trial_end_date is past, stay elite (Stripe handles billing)
+  // This client-side check just shows a reminder banner
+  if (sub.plan === 'elite' && sub.trial && sub.trial_end_date) {
+    if (new Date(sub.trial_end_date) < now) {
+      // Trial ended — Stripe should have charged. Mark trial as ended.
+      sub.trial = false;
+      Storage.set(state);
+    }
+  }
+}
+
 const App = {
   currentPage: null,
   navigate(page) {
     const state = Storage.get();
+    // Check subscription/trial expiry on every navigation
+    checkSubscriptionExpiry(state);
     const publicPages = ['landing', 'signup', 'login'];
     const ownerPages = ['owner'];
 
@@ -1355,6 +1385,20 @@ const Dashboard = {
         <p>Period ${state.user.period} Electrical Apprentice &mdash; ${dueCards.length > 0 ? `${dueCards.length} flashcards due today` : 'All caught up on flashcards!'}</p>
         <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">App ${APP_VERSION}</div>
       </div>
+
+      ${(() => {
+        const sub = state.user.subscription || {};
+        if (sub.plan !== 'elite' || !sub.trial || !sub.trial_end_date) return '';
+        const trialEnd = new Date(sub.trial_end_date);
+        const daysLeft = Math.max(0, Math.ceil((trialEnd - Date.now()) / 86400000));
+        if (daysLeft > 7) return '';
+        const color = daysLeft <= 1 ? 'var(--danger)' : 'var(--accent)';
+        const trialStr = trialEnd.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+        return `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius);padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div style="font-size:0.88rem;">⏳ <strong style="color:${color};">${daysLeft} day${daysLeft!==1?'s':''} left</strong> on your free trial — billing starts ${trialStr}</div>
+          <a href="payment.html" style="font-size:0.78rem;font-weight:700;color:var(--accent);text-decoration:none;white-space:nowrap;">Manage subscription →</a>
+        </div>`;
+      })()}
 
       ${(() => {
         const pts = (state.points && state.points.total) || 0;
