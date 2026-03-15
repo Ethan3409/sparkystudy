@@ -9016,9 +9016,8 @@ const Lessons = {
   _elAudio: null,
 
   async _elSpeak(text) {
-    const apiKey = localStorage.getItem('el_api_key');
-    const voiceId = localStorage.getItem('el_voice_id');
-    if (!apiKey || !voiceId) return false;
+    const apiKey = 'sk_a12bbd22810bcf3f97ab287a173d0095a6342fd658cbe756';
+    const voiceId = 'FOSKkhOXCEGmWEXxIIpp';
     const btn = document.getElementById('lessons-read-btn');
     if (btn) { btn.textContent = '⏳ Loading...'; btn.style.color = '#f59e0b'; btn.style.borderColor = 'rgba(245,158,11,0.4)'; }
     try {
@@ -9415,26 +9414,6 @@ const Settings = {
             <button class="btn btn-secondary" onclick="Settings.retakeDiagnostic()" style="justify-content:flex-start;gap:10px;">
               <span style="font-size:1.1rem;">&#x1F504;</span> Retake Diagnostic Assessment
             </button>
-          </div>
-        </div>
-
-        <!-- ElevenLabs Voice Settings -->
-        <div style="background:var(--bg-card);border:1px solid rgba(88,166,255,0.25);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
-          <h3 style="margin:0 0 6px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">🔊 Read Aloud Voice</h3>
-          <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 16px;">Enter your ElevenLabs API key and Voice ID to use your custom voice for lesson read-aloud. Saved locally — never uploaded anywhere.</p>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            <div>
-              <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">API Key</label>
-              <input id="el-api-key-input" type="password" placeholder="sk_..." value="${localStorage.getItem('el_api_key') || ''}"
-                style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text-primary);font-size:0.85rem;box-sizing:border-box;">
-            </div>
-            <div>
-              <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Voice ID</label>
-              <input id="el-voice-id-input" type="text" placeholder="e.g. FOSKkhOXCEGmWEXxIIpp" value="${localStorage.getItem('el_voice_id') || ''}"
-                style="width:100%;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text-primary);font-size:0.85rem;box-sizing:border-box;">
-            </div>
-            <button class="btn btn-primary" onclick="Settings.saveElevenLabs()" style="align-self:flex-start;">Save Voice Settings</button>
-            <div id="el-save-msg" style="font-size:0.8rem;color:var(--success);display:none;">✓ Saved! Open any lesson and click Read Aloud.</div>
           </div>
         </div>
 
