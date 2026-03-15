@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 // Safe Stripe init — server still starts even if key is missing
 let stripe = null;
