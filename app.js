@@ -882,6 +882,9 @@ const Diagnostic = {
         <button id="diagStartBtn" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:14px;opacity:${this._selectedTopics.length > 0 ? '1' : '0.4'};" onclick="Diagnostic._startQuiz()" ${this._selectedTopics.length === 0 ? 'disabled' : ''}>
           Start Diagnostic (${this._buildQuestionSet().length} questions) &#8594;
         </button>
+        <button onclick="Diagnostic.skipDiagnostic()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);color:var(--text-muted);padding:12px;border-radius:10px;cursor:pointer;font-size:0.85rem;">
+          Skip for now &mdash; I\'ll do this later
+        </button>
       </div>
     `;
   },
@@ -1538,6 +1541,14 @@ const Dashboard = {
               <div class="qa-desc">Track progress</div>
             </div>
           </div>
+        </div>
+
+        <!-- AI Study Plan -->
+        <div class="card full-width" style="background:linear-gradient(135deg,rgba(88,166,255,0.06),rgba(139,92,246,0.06));border-color:rgba(88,166,255,0.25);">
+          <div class="section-title" style="display:flex;align-items:center;gap:8px;">🤖 AI Study Plan</div>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 14px;">Get a personalized study plan based on your current progress and exam date.</p>
+          <button id="ai-plan-btn" onclick="Lessons._aiStudyPlan(this)" style="background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;">🤖 Build My Study Plan</button>
+          <div id="ai-plan-result" style="margin-top:14px;"></div>
         </div>
 
         <!-- Mastery Heat Map -->
@@ -8290,330 +8301,6 @@ const Review = {
 
 const LESSONS_CONTENT = [
   {
-    id: 'm1',
-    title: 'AC Fundamentals',
-    icon: '〜',
-    subtitle: 'The Invisible River That Powers Everything',
-    color: '#f59e0b',
-    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(234,88,12,0.06))',
-    border: 'rgba(245,158,11,0.3)',
-    readTime: '12 min read',
-    sections: [
-      {
-        type: 'hook',
-        title: '⚡ Picture This',
-        body: `Right now, the electrons in your outlet aren't traveling from the power plant to your house — they're just jiggling back and forth, 60 times per second, barely moving anywhere at all.\n\nAnd yet your lights are on. Your phone is charging. Your coffee maker just finished its cycle.\n\nHow? Welcome to AC power — arguably the greatest electrical engineering trick ever pulled off.`
-      },
-      {
-        type: 'story',
-        title: '🏆 The War of Currents',
-        body: `In the late 1880s, Thomas Edison and Nikola Tesla were locked in a bitter fight over which electrical system would power the world.\n\nEdison backed DC (direct current) — electrons flowing one direction, like water through a pipe. Safe, predictable. But DC couldn't be stepped up to high voltage efficiently, which meant it lost half its energy as heat over long distances. Edison's system needed a power station every mile or two.\n\nTesla backed AC (alternating current) — electrons oscillating back and forth. Edison called it dangerous and even publicly electrocuted animals to prove his point (truly a PR disaster). But AC had one killer advantage: it could be transformed.\n\nUsing a transformer, AC voltage could be stepped up to 100,000V to travel hundreds of kilometers with minimal loss, then stepped back down to a safe level at your house. Tesla and Westinghouse won. The world runs on AC to this day.`
-      },
-      {
-        type: 'concept',
-        title: '📐 The Sine Wave: Nature\'s Favorite Shape',
-        body: `AC voltage follows a sine wave — the same mathematical curve you see in ocean waves, sound waves, and light waves. It's not a coincidence: it's what you get when something rotates.\n\nA generator is literally just a coil of wire spinning in a magnetic field. As the coil rotates, the voltage it produces traces a perfect sine wave:\n• Starting at 0 when the coil is parallel to the magnetic field\n• Rising to a positive peak when the coil is at 90°\n• Back to 0 at 180°\n• Dropping to a negative peak at 270°\n• Back to 0 at 360° (one full rotation)\n\nIn North America, the generator completes 60 of these rotations every second — that's 60 Hz (hertz). Europe uses 50 Hz. Your equipment is designed specifically for the frequency it was built for.`,
-        formula: 'v(t) = Vpeak × sin(2πft)\nWhere: f = 60 Hz, t = time in seconds'
-      },
-      {
-        type: 'keypoint',
-        title: '⚡ Peak vs. RMS: The Number That Actually Matters',
-        body: `Here's where people get confused. When we say a standard outlet is "120V," that's NOT the peak voltage. The actual peak is about 170V.\n\nSo why do we say 120V? Because of RMS — Root Mean Square — a mathematical average that represents the equivalent DC heating effect.\n\nA 120V RMS AC supply does the same work as a 120V DC supply on a resistive load. It's the practical, useful number. The peak voltage is 1.414 times the RMS value (that factor is √2).\n\nThis matters enormously for equipment ratings, insulation ratings, and any calculations involving power.`,
-        formula: 'VRMS = Vpeak ÷ √2 = Vpeak × 0.707\nVpeak = VRMS × √2 = VRMS × 1.414\nExample: 120V RMS → Peak = 120 × 1.414 = 169.7V'
-      },
-      {
-        type: 'analogy',
-        title: '🌊 Frequency & Period: Thinking in Time',
-        body: `Think of frequency like the tempo of a song. 60 Hz means the wave completes 60 full cycles per second — it's a very fast tempo. The period is the time for one complete cycle: 1/60 = 0.0167 seconds (about 16.7 milliseconds).\n\nWhy does this matter on the job? Because:\n• Fluorescent lights flicker at 120 Hz (twice per cycle) — if you ever see a strobe effect on rotating equipment, that's why\n• Induction motor speeds are directly tied to frequency: a 2-pole motor at 60 Hz runs at 3600 RPM (synchronous speed)\n• Harmonic frequencies (120 Hz, 180 Hz, 240 Hz...) are multiples of the fundamental and can cause heating in transformers and neutral conductors`,
-        formula: 'f = 1/T   T = 1/f\nAt 60 Hz: T = 1/60 = 16.7 ms\nMotor sync speed = (120 × f) ÷ number of poles'
-      },
-      {
-        type: 'concept',
-        title: '🔄 Phase: Where Are You in the Cycle?',
-        body: `Phase describes the timing relationship between two sine waves. If two waves start at exactly the same time, they're "in phase" — they work together perfectly.\n\nIf one wave is shifted in time relative to another, there's a phase difference, measured in degrees (since one full cycle = 360°).\n\nThis becomes critical in three-phase power, where three sine waves are deliberately spaced 120° apart. Those three phases allow generators to produce constant power (not pulsing like single-phase), allow smaller conductors for the same power, and enable self-starting motors.\n\nOn the job: when connecting three-phase motors, phase rotation order (A-B-C vs A-C-B) determines which direction the motor spins. Get it wrong and the motor runs backwards.`
-      },
-      {
-        type: 'real-world',
-        title: '🔧 Real World: Why Your Outlets Are 120V and 240V',
-        body: `Canadian residential service comes into your panel as 240V single-phase (two hot legs, each 120V to neutral, 240V between them). This clever setup means:\n\n• Normal outlets (120V): use one hot leg + neutral\n• High-power appliances (240V): use both hot legs\n\nThe two hot legs are 180° out of phase with each other — when one is at +170V peak, the other is at -170V peak. The difference between them is always 240V.\n\nThis is why a 240V circuit doesn't need a neutral for heating loads — it's just phase-to-phase. But 240V circuits with control electronics (like ovens with displays) DO use neutral for the low-voltage control circuits.`
-      },
-      {
-        type: 'quiz',
-        title: '🧠 Quick Check',
-        questions: [
-          { q: 'A 240V RMS supply has a peak voltage of approximately:', a: '340V (240 × 1.414 = 339.4V)' },
-          { q: 'At 60 Hz, how long does one complete AC cycle take?', a: '16.7 milliseconds (1/60 second)' },
-          { q: 'Why does AC power win over DC for long-distance transmission?', a: 'AC voltage can be transformed (stepped up/down). High voltage = low current = low I²R losses over long distances.' }
-        ]
-      },
-      {
-        type: 'protip',
-        title: '🛠 Pro Tips',
-        tips: [
-          'When measuring AC with a multimeter, you\'re always reading RMS unless the meter specifies otherwise.',
-          'Three-phase panels label phases as A, B, C (or L1, L2, L3). The voltage between any two phases is always 1.732 × the phase-to-neutral voltage. At 120V/208V service: 120 × √3 = 207.8V ≈ 208V.',
-          'Harmonics are a real problem in modern buildings loaded with computers and variable frequency drives. They cause neutral conductors to overheat even when balanced — always check neutral sizing in these environments.'
-        ]
-      },
-      {
-        type: 'objectives',
-        title: 'Module 1 Objectives',
-        objectives: [
-          'Describe the difference between alternating current (AC) and direct current (DC), and explain why AC is used for electrical power distribution.',
-          'Describe how a generator produces a sine wave through the rotation of a conductor in a magnetic field.',
-          'Identify the components of a sine wave: amplitude, peak value, peak-to-peak value, period, frequency, and phase angle.',
-          'Calculate peak voltage from RMS voltage using Vpk = VRMS × √2, and calculate RMS voltage from peak voltage using VRMS = Vpk × 0.707.',
-          'Calculate peak-to-peak voltage (Vpp = 2 × Vpk) and average voltage (Vavg = Vpk × 0.637) for a sine wave.',
-          'Define frequency (Hz) as the number of complete cycles per second, and period (T) as the time for one complete cycle.',
-          'Apply the reciprocal relationship between frequency and period: f = 1/T and T = 1/f.',
-          'Explain why North American power systems operate at 60 Hz and describe the consequences of using 60 Hz equipment on a 50 Hz system.',
-          'Define phase angle and explain what it means for two waveforms to be in phase or out of phase with each other.',
-          'Describe how three-phase power is generated, identifying the 120° phase separation between the three waveforms.',
-          'Identify the advantages of three-phase power over single-phase power: constant power delivery, smaller conductors for the same power, and self-starting induction motors.',
-          'Apply the relationship between line voltage and phase voltage in a three-phase wye-connected system: VL = VΦ × √3.',
-          'Describe the construction of Canadian residential single-phase 120/240V service, identifying the two hot legs, neutral, and their voltage relationships.',
-          'Apply Ohm\'s Law calculations to AC resistive circuits using RMS values for voltage and current.'
-        ],
-        questions: [
-          { q: 'A 347V RMS AC supply has a peak voltage of approximately:', a: '347 × 1.414 = 490.7V peak. (VRMS × √2 = Vpeak)' },
-          { q: 'In a 120/240V residential service, what is the voltage between the two hot legs?', a: '240V. The two hot legs are 180° out of phase — each is 120V to neutral, but measured between them the difference is always 240V.' },
-          { q: 'At 60 Hz, the period of one complete AC cycle is:', a: 'T = 1/f = 1/60 = 0.0167 seconds (16.7 milliseconds).' },
-          { q: 'Why is the RMS value of an AC voltage more useful than the peak voltage for most calculations?', a: 'RMS represents the equivalent DC heating effect — a 120V RMS AC supply does the same work on a resistive load as 120V DC. It\'s the practical measure for power, heat, and load calculations.' },
-          { q: 'A three-phase 208V system has a phase-to-neutral voltage of:', a: '208 ÷ √3 = 120V per phase. Line voltage = phase voltage × √3, so phase voltage = line voltage ÷ √3.' }
-        ]
-      },
-      {
-        type: 'outcome',
-        title: 'Module Desired Outcome',
-        outcome: 'The student will describe the characteristics and measurements of alternating current (AC) waveforms and apply these to basic AC calculations.',
-        questions: [
-          { q: 'An electrician measures 169.7V peak on a circuit. What is the RMS voltage, and is this circuit suitable for 120V-rated equipment?', a: 'VRMS = 169.7 × 0.707 = 120V. Yes — this is a standard 120V RMS circuit. The peak of 169.7V ≈ 170V is normal for 120V RMS AC.' },
-          { q: 'A 600V/208V transformer secondary produces 208V line-to-line. What is the voltage from one phase to neutral? What is the peak voltage of the line-to-line waveform?', a: 'Phase-to-neutral: 208 ÷ √3 = 120V. Peak of line-to-line: 208 × √2 = 294.2V peak. The insulation of conductors must be rated for at least the peak voltage.' },
-          { q: 'A motor rated for 60 Hz is connected to a 50 Hz supply at the same voltage. Describe what happens and why.', a: 'The motor runs at 50/60 = 83.3% of its rated speed (synchronous speed = 120f/poles). It also draws more current because the lower frequency means higher inductive reactance… wait, lower XL = lower impedance = more current. The motor will overheat. Additionally, fans and pumps driving it may lose required performance. Equipment must be matched to the supply frequency.' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'm2',
-    title: 'Properties of Inductors & Capacitors',
-    icon: '🔄',
-    subtitle: 'The Components That Make AC Interesting',
-    color: '#8b5cf6',
-    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(59,130,246,0.06))',
-    border: 'rgba(139,92,246,0.3)',
-    readTime: '14 min read',
-    sections: [
-      {
-        type: 'hook',
-        title: '⚡ The Components That Fight Back',
-        body: `Resistors are boring. Feed them voltage, they resist, they heat up. Simple.\n\nBut inductors and capacitors? These components have attitude. They store energy. They fight changes in the circuit. They shift the phase of current. And together, they make possible everything from radio tuners to motor starters to power factor correction systems that utilities charge you thousands of dollars for.\n\nUnderstanding L and C is what separates an apprentice who can run wire from a journeyman who understands why the system works.`
-      },
-      {
-        type: 'story',
-        title: '🌀 The Inductor: Magnetism Fights Back',
-        body: `An inductor is just a coil of wire — but wrapping wire into a coil creates a magnetic field when current flows through it. And here's the key insight: magnetic fields store energy.\n\nWhen you try to increase current through an inductor, the growing magnetic field induces a voltage that opposes the increase (Lenz's Law). When you try to decrease current, the collapsing field tries to maintain the current.\n\nIn other words: an inductor resists changes in current. It's electrical inertia.\n\nThe unit is the henry (H), named after Joseph Henry who discovered electromagnetic induction (yes, Faraday gets more credit, but Henry actually discovered it first — he just published later).\n\nReal-world inductors include motor windings, transformer primary coils, fluorescent lamp ballasts, and relay coils. Basically anything that uses a magnetic field to do work is an inductor.`
-      },
-      {
-        type: 'concept',
-        title: '📊 Inductive Reactance: Resistance That Cares About Frequency',
-        body: `Inductors don't have resistance in the traditional sense — they have reactance. And unlike resistance (which is fixed), inductive reactance changes with frequency.\n\nHigher frequency → inductor changes current faster → it fights back harder → more reactance.\n\nLower frequency (or DC) → slower change → inductor barely resists → nearly zero reactance at DC.\n\nThis is why inductors are used as "chokes" to block high-frequency signals while passing DC — perfect for power supply filters in electronics.`,
-        formula: 'XL = 2πfL\nWhere: XL = inductive reactance (Ω), f = frequency (Hz), L = inductance (H)\n\nExample: L = 100mH at 60 Hz\nXL = 2π × 60 × 0.1 = 37.7 Ω'
-      },
-      {
-        type: 'keypoint',
-        title: '⏰ Inductive Phase Shift: Current Lags',
-        body: `Here's the most important characteristic for your exam: in a purely inductive circuit, current LAGS voltage by 90°.\n\nMnemonic: ELI the ICE man\n• ELI: in an inductive (L) circuit, voltage (E) leads current (I)\n• ICE: in a capacitive (C) circuit, current (I) leads voltage (E)\n\nPhysically, this makes sense: voltage is applied first, but the inductor's opposition means current builds up slowly afterward. The voltage is always "ahead" of the current by a quarter-cycle (90°).\n\nThis phase shift is the root cause of poor power factor in industrial facilities. Inductive motors, transformers, and ballasts all cause lagging current, and utilities charge extra for it.`,
-        formula: 'In a pure inductor: θ = 90° (current lags voltage)'
-      },
-      {
-        type: 'story',
-        title: '⚡ The Capacitor: Electric Fields Fight Back',
-        body: `A capacitor stores energy in an electric field rather than a magnetic field. The basic structure is two conductive plates separated by an insulator (the dielectric). Push charge onto the plates, an electric field builds up between them — and energy is stored.\n\nCapacitors resist changes in voltage. Try to change the voltage across a capacitor quickly, and the capacitor absorbs or releases charge to fight you.\n\nWhen you disconnect a capacitor from a circuit, it holds its charge — sometimes for a very long time. This is why capacitors in equipment like large drives and power supplies can be lethally dangerous even hours after power is removed. Always verify capacitors are discharged with a properly rated discharge resistor before working inside high-voltage equipment.\n\nThe unit is the farad (F), but practical capacitors are usually in microfarads (μF) or nanofarads (nF) — a full farad is enormous.`
-      },
-      {
-        type: 'concept',
-        title: '📊 Capacitive Reactance: The Opposite of Inductive',
-        body: `Capacitive reactance is the opposite of inductive reactance in almost every way:\n\n• Higher frequency → capacitor charges/discharges faster → less time to fight → LESS reactance\n• Lower frequency (or DC) → very slow charging → capacitor barely lets anything through → infinite reactance at DC\n\nThis is why capacitors block DC but pass AC — essential in virtually every electronic circuit for signal coupling and filtering.`,
-        formula: 'XC = 1 / (2πfC)\nWhere: XC = capacitive reactance (Ω), f = frequency (Hz), C = capacitance (F)\n\nExample: C = 100μF at 60 Hz\nXC = 1 / (2π × 60 × 0.0001) = 26.5 Ω\n\nNote: XC decreases as frequency increases (opposite of XL)'
-      },
-      {
-        type: 'keypoint',
-        title: '⏰ Capacitive Phase Shift: Current Leads',
-        body: `In a purely capacitive circuit, current LEADS voltage by 90°.\n\nPhysical intuition: when you first connect voltage to a capacitor, current rushes in immediately to charge the plates — before the voltage has had time to build up. Current is "eager," getting there before voltage.\n\nThis leading current is the exact opposite of inductive lagging current, which is why capacitors are used to correct power factor: they cancel out the lagging effect of inductive loads.\n\nPower factor correction capacitor banks are installed at industrial facilities, transformer substations, and motor control panels. They reduce the reactive current the utility has to supply, reducing losses and avoiding demand charges.`,
-        formula: 'In a pure capacitor: θ = -90° (current leads voltage)'
-      },
-      {
-        type: 'real-world',
-        title: '🔧 Real World: The Motor Start Capacitor',
-        body: `Single-phase induction motors can't self-start without help — the single-phase supply creates a pulsating (not rotating) magnetic field. A start capacitor solves this by creating a second, phase-shifted current in a separate start winding.\n\nThe capacitor shifts the current in the start winding by about 90°, creating a phase difference between the run and start windings. The two magnetic fields, 90° apart in time and space, create a rotating field that kicks the motor off.\n\nOnce up to speed, a centrifugal switch disconnects the start capacitor (which is only rated for intermittent duty). Run capacitors (smaller, continuous duty rated) stay in circuit to improve power factor and efficiency.\n\nIf a single-phase motor hums but won't start, or starts only when you give it a spin by hand — the start capacitor is bad. Test it with a capacitance meter.`
-      },
-      {
-        type: 'quiz',
-        title: '🧠 Quick Check',
-        questions: [
-          { q: 'A 50 mH inductor at 60 Hz has a reactance of:', a: 'XL = 2π × 60 × 0.05 = 18.85 Ω' },
-          { q: 'In a purely inductive circuit, current _____ voltage by 90°.', a: 'LAGS (use ELI: voltage E leads current I in inductor L)' },
-          { q: 'A 47 μF capacitor at 60 Hz has a reactance of:', a: 'XC = 1/(2π × 60 × 0.000047) = 56.4 Ω' },
-          { q: 'Why is capacitive reactance high at DC (0 Hz)?', a: 'XC = 1/(2πfC) — dividing by frequency approaching zero gives infinity. DC cannot charge/discharge a capacitor continuously, so it blocks DC.' }
-        ]
-      },
-      {
-        type: 'protip',
-        title: '🛠 Pro Tips',
-        tips: [
-          'Remember ELI the ICE man — it\'s the most exam-tested concept related to L and C. ELI = E leads I in Inductor. ICE = I leads E in Capacitor.',
-          'Capacitors store dangerous charge. On anything with a large capacitor bank (drives, UPS systems, motor start panels), verify voltage with your meter before touching. Some will hold a lethal charge for many minutes.',
-          'Inductive reactance and capacitive reactance cancel each other out at resonance (when XL = XC). Resonance is exploited in radio tuning circuits and power factor correction, but can also cause dangerous overvoltages in unintended resonant conditions.'
-        ]
-      },
-      {
-        type: 'objectives',
-        title: 'Module 2 Objectives',
-        objectives: [
-          'Define inductance (L) and explain the principle of self-induction using Faraday\'s and Lenz\'s Laws.',
-          'Describe how a magnetic field stores energy in an inductor and explain why an inductor opposes changes in current.',
-          'Identify the factors that determine the inductance of a coil: number of turns, core permeability, cross-sectional area, and coil length.',
-          'Calculate inductive reactance using XL = 2πfL and explain how XL changes with frequency and inductance.',
-          'Describe the phase relationship between voltage and current in a purely inductive circuit (current lags voltage by 90°).',
-          'Apply the ELI mnemonic (E leads I in L) to remember inductor phase relationships.',
-          'Define capacitance (C) and describe how an electric field stores energy between the plates of a capacitor.',
-          'Identify the factors that determine capacitance: plate area, plate separation, and dielectric material.',
-          'Calculate capacitive reactance using XC = 1/(2πfC) and explain how XC changes with frequency and capacitance.',
-          'Describe the phase relationship between voltage and current in a purely capacitive circuit (current leads voltage by 90°).',
-          'Apply the ICE mnemonic (I leads E in C) to remember capacitor phase relationships.',
-          'Explain why inductors pass DC but block high-frequency AC signals, and why capacitors block DC but pass AC.',
-          'Identify common applications of inductors in electrical systems: motor windings, transformer coils, fluorescent ballasts, reactor coils, and relay coils.',
-          'Identify common applications of capacitors: power factor correction, motor starting, filter circuits, and energy storage.',
-          'Describe the safety hazard of stored charge in large capacitors and explain the proper procedure for discharging capacitors before working on equipment.'
-        ],
-        questions: [
-          { q: 'A 200mH inductor is connected to a 60 Hz supply. What is its inductive reactance?', a: 'XL = 2πfL = 2π × 60 × 0.2 = 75.4 Ω' },
-          { q: 'A 100μF capacitor is connected to a 60 Hz supply. What is its capacitive reactance?', a: 'XC = 1/(2πfC) = 1/(2π × 60 × 0.0001) = 26.5 Ω' },
-          { q: 'In a purely inductive circuit, current lags voltage by how many degrees? Apply ELI to confirm.', a: '90°. ELI: in an inductor (L), voltage (E) leads current (I) — meaning current lags voltage by 90°.' },
-          { q: 'Why must large capacitors in industrial equipment be discharged before working on them?', a: 'Capacitors store charge and hold it even after power is removed. Large capacitors in drives, UPS systems, and power supplies can retain lethal voltage for many minutes or hours. They must be discharged through a rated resistor and verified with a voltmeter before touching.' },
-          { q: 'What happens to inductive reactance if the frequency doubles? What happens to capacitive reactance if the frequency doubles?', a: 'XL doubles (XL = 2πfL — directly proportional to f). XC halves (XC = 1/(2πfC) — inversely proportional to f). This is why inductors increasingly block higher frequencies and capacitors increasingly pass them.' }
-        ]
-      },
-      {
-        type: 'outcome',
-        title: 'Module Desired Outcome',
-        outcome: 'The student will describe the properties of inductors and capacitors and explain their effects on current and voltage in AC circuits.',
-        questions: [
-          { q: 'A technician connects a 50mH coil directly across a 120V, 60Hz supply. Calculate the inductive reactance and the current that will flow. Is this a safe thing to do without knowing the coil\'s resistance?', a: 'XL = 2π × 60 × 0.05 = 18.85 Ω. Assuming ideal inductor: I = V/XL = 120/18.85 = 6.37A. In practice, a real coil has DC resistance too — total current depends on Z = √(R² + XL²). Without knowing resistance, you could draw much more current than the coil is rated for. Always check the coil\'s rated current before connecting.' },
-          { q: 'Explain why a large variable frequency drive should have its capacitor bank discharged before a technician works inside, even 30 minutes after power is removed. How would you verify it is safe?', a: 'Large DC bus capacitors in drives can hold hundreds of volts for extended periods after power off — the bus voltage decays slowly through high-resistance discharge resistors. To verify: wait the manufacturer\'s specified discharge time (typically 5-15 min), then measure DC bus voltage with a properly rated meter between the DC+ and DC- terminals. Voltage must be below 50V (or per the drive\'s safety threshold) before proceeding.' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'm3',
-    title: 'Inductors & Capacitors in Circuits',
-    icon: '⚡',
-    subtitle: 'Reactance, Impedance, and the Power Triangle',
-    color: '#06b6d4',
-    gradient: 'linear-gradient(135deg,rgba(6,182,212,0.12),rgba(59,130,246,0.06))',
-    border: 'rgba(6,182,212,0.3)',
-    readTime: '15 min read',
-    sections: [
-      {
-        type: 'hook',
-        title: '⚡ Resistance Isn\'t Everything',
-        body: `In a DC circuit, life is simple: Ohm's Law, resistance, done. But in an AC circuit with inductors and capacitors, resistance is just one piece of the puzzle.\n\nWhen you combine resistance (R) with reactance (XL or XC), you get impedance (Z) — the total opposition to current flow in an AC circuit. And impedance doesn't just determine how much current flows — it determines when it flows.\n\nMaster impedance and you understand why motors draw reactive current, why long fluorescent ballast circuits need power factor capacitors, and why neutral conductors in some commercial buildings carry more current than the phase conductors.`
-      },
-      {
-        type: 'concept',
-        title: '📐 Impedance: The Full Picture',
-        body: `You cannot simply add resistance and reactance together — they're at different angles. R is always at 0° (in phase with voltage), while XL is at +90° and XC is at -90°.\n\nTo combine them, use the Pythagorean theorem on the impedance triangle:\n• Z = √(R² + (XL - XC)²)\n\nWhen XL > XC: net reactance is inductive, current lags voltage\nWhen XC > XL: net reactance is capacitive, current leads voltage\nWhen XL = XC: resonance — Z = R only, current is in phase with voltage\n\nThe phase angle θ tells you how far current is shifted from voltage:\nθ = arctan((XL - XC) / R)`,
-        formula: 'Z = √(R² + X²)\nwhere X = XL - XC (net reactance)\n\nFor an RL circuit: Z = √(R² + XL²)\nFor an RC circuit: Z = √(R² + XC²)\nFor an RLC circuit: Z = √(R² + (XL - XC)²)'
-      },
-      {
-        type: 'concept',
-        title: '⚡ Series RL Circuit: Motors and Ballasts',
-        body: `Almost every inductive load you'll work with is a series RL circuit: resistance from the copper windings plus inductance from the coil. Motors, transformers, relay coils, and fluorescent ballasts are all RL loads.\n\nIn a series RL circuit:\n• Voltage across R is in phase with current\n• Voltage across L leads current by 90°\n• Total supply voltage is the phasor sum: VS = √(VR² + VL²)\n• Current lags supply voltage by angle θ = arctan(XL/R)\n\nExample: A motor coil has R = 8Ω and XL = 6Ω at 60 Hz.\nZ = √(8² + 6²) = √(64 + 36) = √100 = 10 Ω\nCurrent lags voltage by θ = arctan(6/8) = 36.87°`,
-        formula: 'Series RL:\nZ = √(R² + XL²)\nVR = I × R\nVL = I × XL\nVS = √(VR² + VL²)\nθ = arctan(XL / R)   [current lags]'
-      },
-      {
-        type: 'concept',
-        title: '🔋 Series RC Circuit: Timers and Filters',
-        body: `Series RC circuits appear in motor start circuits, timing circuits, and filter networks. Current leads voltage in a capacitive circuit, which is the exact opposite of an RL load.\n\nExample: A circuit has R = 30Ω and C = 100μF at 60 Hz.\nXC = 1/(2π × 60 × 0.0001) = 26.5 Ω\nZ = √(30² + 26.5²) = √(900 + 702) = √1602 = 40.0 Ω\nθ = arctan(26.5/30) = 41.4° (current leads voltage)`,
-        formula: 'Series RC:\nZ = √(R² + XC²)\nVR = I × R\nVC = I × XC\nVS = √(VR² + VC²)\nθ = arctan(XC / R)   [current leads]'
-      },
-      {
-        type: 'keypoint',
-        title: '🔺 The Power Triangle: Real, Reactive, Apparent',
-        body: `Power in AC circuits comes in three flavors:\n\n• True Power (P) — measured in Watts (W). This is REAL power that does actual work: heats elements, spins motors, powers computers. Calculated from I²R (the resistive component only).\n\n• Reactive Power (Q) — measured in VAR (Volt-Amps Reactive). This power is NOT consumed — it just sloshes back and forth between the source and the inductor/capacitor. It does no useful work, but it occupies conductor and transformer capacity.\n\n• Apparent Power (S) — measured in VA (Volt-Amps). This is what the utility actually has to supply: it's the total current times the total voltage, regardless of phase angle. S = V × I.\n\nThese three form a right triangle (just like the impedance triangle):\n S = √(P² + Q²)\n\nPower factor = P / S = cos(θ)`,
-        formula: 'P = I² × R = S × cos(θ)     [Watts — does work]\nQ = I² × X = S × sin(θ)     [VAR — does no work]\nS = V × I = √(P² + Q²)      [VA — what the utility supplies]\n\nPF = P/S = cos(θ)\nPF = 1.0 = perfect (resistive only)\nPF = 0.8 = typical induction motor (lagging)'
-      },
-      {
-        type: 'real-world',
-        title: '🏭 Real World: Power Factor Correction',
-        body: `A large factory runs 200A of current on a 600V system. Power factor is 0.72 lagging (very common with lots of induction motors).\n\nApparent power: S = 600 × 200 = 120 kVA\nTrue power: P = 120 × 0.72 = 86.4 kW\n\nThe utility charges based on the 120 kVA demand (they have to supply that much current), but only 86.4 kW of useful work is being done. The remaining 33.6 kVAR is reactive power wasting conductor capacity.\n\nSolution: install capacitor banks sized to cancel the inductive reactive power (Q). This brings PF closer to 1.0, reducing the apparent current the utility must supply — which reduces your demand charges and line losses.\n\nAs an electrician, you'll install and maintain these power factor correction banks. The capacitors are usually switched in and out automatically based on load.`
-      },
-      {
-        type: 'concept',
-        title: '🎯 Resonance: When XL = XC',
-        body: `Resonance occurs when inductive and capacitive reactances are equal and opposite — they cancel each other out, leaving only resistance. The results are dramatic:\n\n• Series resonance: impedance drops to minimum (Z = R only), current reaches maximum\n• Parallel resonance: impedance rises to maximum, current from source is minimum\n\nResonant frequency: fr = 1 / (2π√(LC))\n\nThis principle is used intentionally in radio tuners (adjusting C to resonate at a specific station's frequency) and power factor correction banks. Unintentionally, harmonics from VFDs can excite resonance in power factor correction capacitors, causing damaging overvoltages and capacitor failures.`,
-        formula: 'Resonant frequency:\nfr = 1 / (2π × √(L × C))\n\nAt resonance: XL = XC, Z = R, PF = 1.0\nSeries resonance: maximum current\nParallel resonance: minimum current from source'
-      },
-      {
-        type: 'quiz',
-        title: '🧠 Quick Check',
-        questions: [
-          { q: 'A series RL circuit has R = 6Ω and XL = 8Ω. What is the impedance?', a: 'Z = √(6² + 8²) = √(36 + 64) = √100 = 10 Ω' },
-          { q: 'A motor draws 20A at 240V with a power factor of 0.85. What is the true power?', a: 'S = 240 × 20 = 4800 VA; P = 4800 × 0.85 = 4080 W' },
-          { q: 'Why does reactive power (VAR) not appear on your electricity bill?', a: 'Reactive power does no useful work — it just oscillates between source and load. But utilities often charge for high reactive demand because it increases their current supply requirements.' }
-        ]
-      },
-      {
-        type: 'protip',
-        title: '🛠 Pro Tips',
-        tips: [
-          'The impedance triangle and power triangle are the SAME shape at the SAME angle. If you know Z, R, and X for the circuit, you know the ratio of P, S, and Q too.',
-          'Power factor of 0.8 lagging is the absolute minimum for most industrial facilities before the utility starts charging demand penalties. If you see power factor capacitors in a commercial or industrial panel, their job is to bring PF back above 0.9 or 0.95.',
-          'On exam questions involving power: always identify whether the given voltage/current is per-phase or line-to-line in a three-phase system. Three-phase power = 3 × Vphase × Iphase × PF, or equivalently √3 × Vline × Iline × PF.'
-        ]
-      },
-      {
-        type: 'objectives',
-        title: 'Module 3 Objectives',
-        objectives: [
-          'Define impedance (Z) as the total opposition to AC current flow, combining resistance and reactance.',
-          'Calculate series circuit impedance using the impedance formula: Z = √(R² + X²) where X = XL − XC.',
-          'Analyze a series RLC circuit to calculate total impedance, circuit current, and individual component voltage drops.',
-          'Calculate parallel circuit impedance using branch currents (IR, IL, IC) and total current IT = √(IR² + (IL − IC)²).',
-          'Construct and interpret the impedance triangle, identifying the relationships between R, X, Z, and phase angle θ.',
-          'Define true power (P) in watts as the power consumed by resistance and producing real work: P = I²R = V²/R.',
-          'Define reactive power (Q) in volt-amperes reactive (VAR) as the power oscillating between source and reactive components: Q = I²X.',
-          'Define apparent power (S) in volt-amperes (VA) as the total power supplied by the source: S = V × I.',
-          'Construct and interpret the power triangle, applying the Pythagorean relationship: S² = P² + Q².',
-          'Define power factor (PF) as the ratio of true power to apparent power: PF = P/S = cos θ.',
-          'Classify power factor as leading (capacitive load) or lagging (inductive load) and explain its significance.',
-          'Identify the causes of poor power factor in industrial electrical systems (inductive loads: motors, transformers, ballasts).',
-          'Describe how power factor correction capacitors improve power factor and reduce reactive current demand.',
-          'Calculate the capacitance required for power factor correction given initial and target power factors.',
-          'Solve AC circuit problems involving series and parallel combinations of R, L, and C components.'
-        ],
-        questions: [
-          { q: 'A series RLC circuit has R = 30Ω, XL = 60Ω, XC = 20Ω. What is the total impedance?', a: 'X = XL − XC = 60 − 20 = 40Ω. Z = √(R² + X²) = √(30² + 40²) = √(900 + 1600) = √2500 = 50Ω.' },
-          { q: 'A circuit draws 10A at 120V with a power factor of 0.8 lagging. Calculate P, Q, and S.', a: 'S = V × I = 120 × 10 = 1200 VA. P = S × PF = 1200 × 0.8 = 960W. Q = √(S² − P²) = √(1200² − 960²) = 720 VAR.' },
-          { q: 'What does a lagging power factor mean in terms of current and voltage phase relationship?', a: 'Lagging PF means current lags behind voltage — the load is inductive. The current waveform peaks after the voltage waveform. This increases reactive current and causes the utility to supply more apparent power than the real power consumed.' },
-          { q: 'Why do utilities charge industrial customers for poor power factor?', a: 'Poor power factor means the utility must supply more current (more apparent power) to deliver the same real power. More current means larger conductors, more transformer capacity, and more I²R losses in the distribution system — all of which cost money. Industrial customers with PF below 0.85-0.90 typically face demand surcharges.' },
-          { q: 'At resonance in a series RLC circuit, what happens to impedance and why?', a: 'At resonance, XL = XC, so they cancel: X = XL − XC = 0. Total impedance Z = √(R² + 0²) = R — the circuit is purely resistive with minimum impedance. Current is at maximum. This is why resonance circuits are used as tuned filters.' }
-        ]
-      },
-      {
-        type: 'outcome',
-        title: 'Module Desired Outcome',
-        outcome: 'The student will analyze AC circuits containing resistors, inductors, and capacitors, and calculate impedance, current, voltage, and power relationships.',
-        questions: [
-          { q: 'A 120V, 60Hz circuit contains a 40Ω resistor in series with a 0.1H inductor and a 100μF capacitor. Calculate XL, XC, Z, and the current. Is the circuit inductive or capacitive?', a: 'XL = 2π × 60 × 0.1 = 37.7Ω. XC = 1/(2π × 60 × 0.0001) = 26.5Ω. X = XL − XC = 37.7 − 26.5 = 11.2Ω (net inductive). Z = √(40² + 11.2²) = √(1600 + 125.4) = √1725.4 = 41.5Ω. I = V/Z = 120/41.5 = 2.89A. The circuit is inductive (XL > XC).' },
-          { q: 'An industrial facility has a total load of 500kW at 0.70 power factor lagging. Calculate the apparent power, reactive power, and the reactive current. Why is this a problem for the utility?', a: 'S = P/PF = 500,000/0.70 = 714.3 kVA. Q = √(S² − P²) = √(714.3² − 500²) = 510.2 kVAR. At 480V 3-phase: IL = S/(√3 × VL) = 714,300/(1.732 × 480) = 859A. Only 500,000/(1.732 × 480) = 601A of that does real work. The utility must size its equipment for 859A, not 601A — the extra 258A is purely reactive current producing no useful work, creating extra losses and requiring larger equipment.' }
-        ]
-      }
-    ]
-  },
-  {
     id: 'm21',
     title: 'Relays & Contactors',
     icon: '🔌',
@@ -8621,92 +8308,144 @@ const LESSONS_CONTENT = [
     color: '#10b981',
     gradient: 'linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.06))',
     border: 'rgba(16,185,129,0.3)',
-    readTime: '13 min read',
+    readTime: '22 min read',
     sections: [
       {
         type: 'hook',
-        title: '⚡ Small Signal, Big Power',
-        body: `Imagine you want to turn on a 100-horsepower motor from across a factory floor. You can't run a wire carrying 150 amps to a little pushbutton at a control station — that would melt the wiring and probably kill the operator.\n\nSo instead, you run a low-voltage, low-current control circuit to a relay or contactor. A tiny 24V signal energizes a coil, which creates a magnetic field, which pulls in a set of contacts, which closes a circuit carrying the full motor current.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. And relays and contactors are what make it possible.`
+        title: 'Small Signal, Big Power',
+        body: `Imagine you want to start a 100-horsepower motor from a control panel across a factory floor. You cannot run conductors carrying 150 amps to a tiny pushbutton at a control station — that would require enormous conductors, create a serious shock hazard, and make every button a potential arc-flash source.\n\nSo instead, you run a low-voltage, low-current control wire to a relay or contactor. A 24V signal energizes a coil, which creates a magnetic field, which pulls in a metal armature, which closes a set of contacts, which completes the circuit carrying full motor power.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. Relays handle the thinking; contactors supply the muscle. Understanding these devices is the foundation of everything else in industrial electrical work.`
+      },
+      {
+        type: 'story',
+        title: 'How a Relay Actually Works',
+        body: `Strip away the plastic shell and every relay or contactor has the same four key parts working together:\n\nThe coil is a conductor wound into many loops around an iron core. When current flows through the coil, the core becomes an electromagnet.\n\nThe core is the stationary iron or steel piece that becomes magnetized when the coil is energized. It is made from laminated sheets of steel insulated from each other — this is critical and covered later.\n\nThe armature is the moveable metal piece. When the coil is energized, the magnetized core attracts the armature and pulls it in. This mechanical movement is what changes the contact positions from normal to operated.\n\nThe armature springs return the armature to its normal (de-energized) position when the coil is de-energized. The contact springs absorb the impact of closing contacts, provide a wiping action to keep contact surfaces clean, and prevent contact bounce.`
       },
       {
         type: 'concept',
-        title: '🔌 Relay vs. Contactor: Same Idea, Different Scale',
-        body: `A relay and a contactor work on exactly the same principle — an electromagnetic coil pulls in an armature to open or close contacts. The difference is scale and purpose:\n\n• Relays: designed for control circuits. Low current (typically < 10A), multiple sets of contacts, used to route signals and interlock circuits. Think of a relay as the logic device.\n\n• Contactors: designed for power circuits. High current (10A to thousands of amps), fewer contact sets (usually 3 main power contacts + a few auxiliary), built for starting and stopping motors and loads. Think of a contactor as the muscle.\n\nContactors have arc suppression features that relays don't — when you interrupt 150A at 600V, there's a tremendous arc. Special materials, magnet blow-out coils, and arc chutes deal with this energy. A relay's contacts would weld together.`
+        title: 'Types of Relays: Plug-in, Power, and Industrial',
+        body: `Not all relays are created equal. There are several distinct families, each suited to different applications:\n\n• Plug-in relays (general-purpose): the most common type in control panels. Come in tubular (round pin) and spade pin configurations. Rated for relatively low currents. Sockets allow easy replacement without rewiring. Contacts available as NO, NC, or Form C (changeover).\n\n• Power relays: physically larger, designed for heavier loads than plug-in types but lighter than full contactors. Used for switching moderate industrial loads, heating elements, and lighting circuits.\n\n• Industrial control relays (NEMA/IEC rated): designed specifically for control circuit service in industrial environments. Feature adder decks — additional contact assemblies that can be snapped on to increase the number of available contacts without changing the relay body.\n\n• Low-voltage lighting relays: specialized relays with coils rated below 30V AC or below 60V DC, used in lighting management and low-voltage switching systems such as those found in commercial buildings and ballast switching applications.`
       },
       {
         type: 'concept',
-        title: '📐 Contact Types: NO, NC, and Why It Matters',
-        body: `Every relay and contactor has contacts in one of two resting states:\n\n• Normally Open (NO): contacts are open when the coil is de-energized. When the coil energizes, they close. This is the most common type for motor starters — you want the motor off by default.\n\n• Normally Closed (NC): contacts are closed when the coil is de-energized. When the coil energizes, they open. Used for safety circuits: if power fails, the NC contact stays closed (safe state) or opens to de-energize a dangerous load.\n\nCritical: "normally" refers to the state with NO power applied. A pushbutton, relay contact, or limit switch is described by its state at rest. This seems obvious but trips up electricians constantly during troubleshooting — a closed NC contact means the coil is NOT energized.`
+        title: 'Contactors: Power-Duty Switching',
+        body: `A contactor is an electromagnetically operated switch designed for repetitive switching of power circuit loads. While relays handle control signals, contactors handle the main load current directly.\n\n• Magnetic contactors for motor loads (AC3 duty): designed for the high inrush currents of induction motor starting and the arc suppression requirements of interrupting motor current.\n\n• Magnetic contactors for non-motor loads (AC1 duty): used for resistive and mildly inductive loads such as heaters and lighting banks. Rated differently because there is no inrush and the power factor is higher.\n\n• Non-reversing contactors: single contactor unit for loads that only need to run in one direction. One set of main contacts (typically 3 poles for three-phase) plus auxiliary contacts.\n\n• Reversing contactors: two interlocked contactor units — one for forward, one for reverse. A mechanical interlock physically prevents both contactors from closing simultaneously, which would create a phase-to-phase short circuit. Electrical interlocking via NC auxiliary contacts is also used, and best practice is to use both.`,
+        formula: 'NEMA vs IEC: IEC contactors are smaller for equivalent current ratings due to higher temperature ratings and smaller required creepage distances. IEC must be derated for North American conditions.'
       },
       {
         type: 'keypoint',
-        title: '🔒 Seal-In Contacts: The Self-Latching Trick',
-        body: `Here's one of the most important circuits you'll build: the motor starter with seal-in contacts.\n\nProblem: you use a momentary pushbutton (springs back when released) to start a motor. But once you release the button, the control circuit opens and the motor stops. How do you keep the motor running?\n\nSolution: add an auxiliary NO contact from the contactor, wired in parallel with the start button. When you press Start, the contactor energizes. The auxiliary contact (now closed, since the coil is energized) bridges across the start button — creating an alternate current path that holds the coil energized even after you release Start.\n\nPress Stop (an NC pushbutton in series) and the circuit opens — contactor drops out, motor stops, and the now-open auxiliary contact removes the seal-in. Circuit is back to its normal, off state.\n\nThis is called a three-wire control circuit. It's also inherently safe: if power fails, the contactor drops out and won't restart automatically when power returns (unlike a two-wire circuit).`
-      },
-      {
-        type: 'real-world',
-        title: '🔀 Interlock Circuits: Preventing Disasters',
-        body: `Interlocking is the technique of using contacts to prevent dangerous simultaneous operations. The classic example is a reversing motor starter:\n\nA forward contactor (F) and reverse contactor (R) cannot EVER be energized at the same time — doing so would connect two phases together and short the power supply. So you wire it so each contactor's NC auxiliary contact is in series with the coil of the other.\n\nThis means: if F is energized (its NC contact is now open), the circuit path to R's coil is broken — you physically cannot energize R while F is on. This is electrical interlock.\n\nFor extra safety, add mechanical interlock — a physical lever that prevents both contactors from pulling in simultaneously. Belt-and-suspenders approach.\n\nAs an apprentice, you'll be asked to wire these interlocks. Get them wrong and you risk a phase-to-phase fault, a very unpleasant explosion, and a failed inspection.`
+        title: 'Contact Form Designations',
+        body: `Contact configurations are described using standardized Form designations. You will encounter these on specification sheets and data books:\n\n• Form A (SPST-NO): Single-Pole Single-Throw, Normally Open. The most common contact type. Open at rest, closes when coil energizes.\n\n• Form B (SPST-NC): Single-Pole Single-Throw, Normally Closed. Closed at rest, opens when coil energizes. Used in safety and interlock circuits.\n\n• Form C (SPDT): Single-Pole Double-Throw, also called a changeover contact. Has a common terminal, one NO contact, and one NC contact. When coil energizes, common transfers from NC to NO.\n\n• Form X (SPST-NO double-make): a normally open contact that makes in two places simultaneously. Reduces the voltage across each make point and spreads arcing over two surfaces.\n\n• Form Y (SPST-NC double-break): a normally closed contact that breaks in two places simultaneously. Used in higher-voltage applications where single-break would struggle to extinguish the arc.`,
+        formula: 'Form A = SPST-NO | Form B = SPST-NC | Form C = SPDT (changeover) | Form X = double-make NO | Form Y = double-break NC'
       },
       {
         type: 'concept',
-        title: '🌡️ Overload Relays: Protecting the Motor',
-        body: `Every motor starter includes an overload relay (OL relay) to protect the motor from overheating. The overload relay monitors current and trips if the current exceeds a threshold for a sustained period.\n\nTwo main types:\n\n• Thermal overload: a bimetallic strip or eutectic alloy that deforms as it heats up (proportional to I² × t). Heats up like the motor does. Trips after a time delay proportional to the overcurrent — brief spikes don't trip it, but sustained overloads do.\n\n• Electronic overload: measures actual current through the motor, calculates thermal model mathematically, trips more accurately and consistently than thermal types. Can also provide phase loss protection and trip history.\n\nThe OL relay's contacts are wired in series with the contactor coil circuit. When the OL trips, it opens its NC contact, which de-energizes the contactor coil, which opens the power contacts, which stops the motor. The motor cannot restart until the OL is manually reset.`,
-        formula: 'Overload relay setting range: typically 0.8 × to 1.25 × motor FLA\nCEC requires OL protection for motors: set at no more than 125% of FLA for motors with SF ≥ 1.15 and temperature rise ≤ 40°C'
+        title: 'Nameplate Information and Terminal Numbering',
+        body: `Every relay and contactor has a nameplate or data label that contains the essential ratings. You must be able to read these before installation:\n\n• Coil voltage rating: the voltage at which the coil is designed to operate (e.g., 120V AC, 24V DC, 240V AC). Operating outside this range causes premature failure.\n\n• Contact voltage rating: the maximum voltage the contacts are rated to switch. Must equal or exceed the circuit voltage.\n\n• Continuous current rating: the maximum current the contacts can carry continuously without overheating. Expressed in amperes.\n\n• Horsepower rating: for motor contactors, the maximum horsepower load at a specified voltage (e.g., 10 HP at 208V, 15 HP at 480V).\n\n• NEMA pilot duty rating: the current available for control circuits from the contacts, expressed in VA at a specific power factor.\n\nTerminal numbering: coil terminals are typically labeled A1 and A2. Main power contacts are labeled 1/2 (L1/T1), 3/4 (L2/T2), 5/6 (L3/T3). Auxiliary contacts are labeled 13/14 (NO), 21/22 (NC), etc. IEC and NEMA may use different schemes — always consult the device wiring diagram.`
+      },
+      {
+        type: 'concept',
+        title: 'Laminations and Shading Coils',
+        body: `Two features of AC contactors and relays exist specifically to deal with problems caused by alternating current:\n\nLaminations: The iron core and armature are not solid blocks of steel. They are built from many thin sheets (laminations) of silicon steel, each sheet insulated from its neighbors by an oxide coating or varnish. This is necessary because a magnetic field changing at 60 Hz would induce eddy currents in a solid iron core — circulating currents that produce heat and reduce efficiency. Laminated construction confines eddy currents to tiny loops within each thin sheet, dramatically reducing losses and heating.\n\nShading coils: A copper ring (shading coil) is installed across a portion of the pole face on the core and armature. Without it, the 60 Hz alternating current would cause the magnetic flux to pass through zero 120 times per second, releasing the armature briefly each time. The result would be a 120 Hz chattering noise and rapid wear. The shading coil creates a phase-shifted flux in the shaded portion of the pole face, so when the main flux is at zero, the shaded flux is still holding the armature in. With both in place, the armature never releases during normal operation.`
+      },
+      {
+        type: 'concept',
+        title: 'Contact Materials and Their Properties',
+        body: `Contact materials are chosen based on the trade-offs between conductivity, durability, resistance to welding, and oxidation behaviour:\n\n• Silver contacts: the most common material for control relays. Silver oxide (which forms on the surface) is electrically conductive, so silver contacts are self-cleaning — the oxide does not increase contact resistance the way copper oxide does. However, silver contacts can weld together under high inrush currents.\n\n• Copper contacts: used in high-current applications. Copper has a hard surface that is more resistant to contact welding than silver. However, copper oxide is non-conductive, so copper contacts are prone to pitting and increased contact resistance if they arc frequently or are used in contaminated environments.\n\n• Cadmium contacts (silver-cadmium oxide): a versatile alloy combining silver's conductivity with cadmium's arc resistance. Does not conduct quite as well as pure silver but handles a wide variety of current and voltage applications. Widely used in industrial contactors.`
+      },
+      {
+        type: 'concept',
+        title: 'Bridge Contacts and Bifurcated Contacts',
+        body: `Standard contacts make and break in one place — a simple bridge. But there are more sophisticated designs for specific applications:\n\n• Bridge contacts: the moving contact bridges across two stationary contacts, making the circuit in two places simultaneously. This creates a double-break action, distributing arcing across two gaps and improving arc extinction.\n\n• Bifurcated bridge contacts: the contact assembly is split into two parallel paths, each with its own bridge. This gives four contact points per pole. Bifurcated contacts split the arc over multiple surfaces, dramatically reducing the energy at any single point. They are used in applications requiring long contact life with frequent switching.\n\nContact life expectancy: all contact life decreases with increasing frequency of operation and with arcing. Arcing occurs when contacts interrupt current — the collapsing magnetic field in inductive loads drives current to arc across the opening gap. Each arc erodes the contact surface slightly. Contactors designed for motor starting must handle this arc repeatedly and still meet their rated life.`
+      },
+      {
+        type: 'concept',
+        title: 'Spring Tension: Critical to Correct Operation',
+        body: `Both armature springs and contact springs have calibrated tension that must be within specification for the relay to operate correctly. This is a critical maintenance concept:\n\n• Armature springs (return springs): when the coil de-energizes, these springs push the armature back to its normal position, restoring all contacts to their normal state. If spring tension is too loose, the armature may not fully return — contacts may remain partially operated. If springs are broken or missing, contacts will not return at all.\n\n• Contact springs: these press the contacts together with sufficient force to ensure low-resistance contact, and also absorb the mechanical shock of the contacts closing (reducing bounce). If contact springs are too loose, contact resistance increases and arcing worsens on opening. If contact springs are too tight, the magnetic force of the coil may not be sufficient to overcome spring tension — the armature cannot pull in fully, causing chattering or failure to operate.\n\nSpring tension is factory-set and generally not field-adjustable. If springs are suspect, replace the relay — do not attempt to bend or adjust them.`
+      },
+      {
+        type: 'keypoint',
+        title: 'Seal-In Voltage and Drop-Out Voltage',
+        body: `Relays and contactors do not have a single "operate voltage" — they have two distinct thresholds that are important to understand:\n\nSeal-in voltage (pull-in voltage): the minimum voltage required to pull the armature fully in and hold it. For AC coils, this is approximately 85% of the rated coil voltage. Example: for a 240V coil, seal-in voltage ≈ 240 × 0.85 = 204V. Below this voltage, the armature may not fully seat.\n\nDrop-out voltage: the voltage at which the magnetic field becomes too weak to hold the armature against the spring force, and the armature releases. This is approximately 50% of rated coil voltage. Example: for a 240V coil, drop-out ≈ 120V.\n\nThe seal-in voltage is always significantly higher than the drop-out voltage. This hysteresis is by design: once sealed in, the air gap between core and armature is very small, and the magnetic reluctance is low — the coil can hold the armature with much less flux than was required to initially pull it in.`,
+        formula: 'Seal-in voltage ≈ 0.85 × rated coil voltage\nDrop-out voltage ≈ 0.50 × rated coil voltage\nExample (240V coil): Seal-in ≈ 204V, Drop-out ≈ 120V'
+      },
+      {
+        type: 'concept',
+        title: 'Inductance Changes During Operation',
+        body: `One of the most important electrical characteristics of relay and contactor coils is how their current draw changes during the pull-in cycle:\n\nBefore the armature seals: there is a large air gap between the core and the armature. A large air gap means high magnetic reluctance, which means low inductance. Low inductance means low inductive reactance (XL = 2πfL), which means the coil presents low impedance to the supply voltage. The result: the coil draws very high current — typically 4 to 10 times the sealed current.\n\nAfter the armature seals: the air gap is eliminated (the armature is in contact with the core). Very small air gap = very low reluctance = very high inductance. High inductance = high inductive reactance = high impedance. The result: coil current drops dramatically to its normal sealed value.\n\nThis is why a contactor that is held open mechanically (or chattering due to low voltage) draws enormous current and will burn out the coil quickly. The coil is only designed for sustained current at the sealed inductance — not the high pull-in current.`,
+        formula: 'Coil current: Inrush = 4-10 × I_sealed\nXL = 2πfL (inductance L increases dramatically when armature seals in)\nBurnt coil = usually held open or chattering — sustained inrush current'
+      },
+      {
+        type: 'keypoint',
+        title: 'Effects of Incorrect Coil Voltage',
+        body: `Operating a relay or contactor coil at the wrong voltage causes predictable and serious failures. Knowing these helps with troubleshooting:\n\nVoltage too high (above ~110% of rated): The coil draws excess current, heating the coil windings. The armature is pulled in violently, causing mechanical shock to the contacts and shortening their life. Contact surfaces may weld together. Over time, insulation breaks down and the coil burns out. Maximum allowable supply is typically 110% of rated coil voltage.\n\nVoltage too low (below ~85% of rated): The magnetic field is insufficient to fully seat the armature. The armature chatters — partially pulled in, spring pushes it back, partially pulled in again — at 120 times per second (twice per AC cycle). This chattering causes the coil to draw high inrush current continuously, generates heat, and erodes the contact surfaces rapidly. The coil will burn out quickly. The shading coil cannot prevent chattering caused by insufficient voltage — it only prevents the normal AC flux zero-crossings from causing release when the armature IS fully seated.`,
+        formula: 'Safe operating range: 85% to 110% of rated coil voltage\nFor 240V coil: minimum = 204V, maximum = 264V\nChattering = low voltage. Violent operation/welded contacts = high voltage'
+      },
+      {
+        type: 'real-world',
+        title: 'NEMA vs IEC Contactors: Choosing the Right Standard',
+        body: `North American electrical work uses two different standards for contactors and motor starters, and you will encounter both:\n\nNEMA (National Electrical Manufacturers Association): the traditional North American standard. NEMA contactors are categorized by size numbers (Size 0 through Size 9). They are generally oversized compared to their IEC equivalents for the same load — this gives them excellent tolerance for high ambient temperatures, severe duty cycles, and less-than-ideal maintenance conditions. Easy to apply: choose the NEMA size for the motor HP and voltage from a table.\n\nIEC (International Electrotechnical Commission): the international standard, now widely used in North America especially in industrial OEM equipment. IEC contactors are smaller and lighter than NEMA equivalents. They have higher temperature ratings and tighter manufacturing tolerances. IEC contactors must be carefully applied — using one in a higher ambient temperature or more severe duty cycle than specified will cause premature failure. Smaller creepage distances (the surface path between conductors) require careful attention to contamination.\n\nAs a rule: NEMA is more forgiving of adverse conditions. IEC requires more careful application engineering.`
+      },
+      {
+        type: 'analogy',
+        title: 'The Relay as a Remote-Controlled Switch',
+        body: `Think of a relay as exactly what it is: a remote-controlled switch. The coil is the remote control — it can be operated by a low-power signal from any distance over small control wires. The contacts are the switch — they can handle the full load current of the controlled circuit.\n\nThe crucial advantage: the control circuit and the controlled circuit are completely electrically isolated. The control circuit might be 24V DC from a PLC output card. The controlled circuit might be 600V AC driving a large motor. These two circuits never touch each other electrically — the only connection is through the magnetic field in the relay.\n\nThis isolation is also a safety feature: a person touching the 24V control wiring is not in danger from the 600V power circuit, even though their touch controls the motor. Separation of control and power is one of the fundamental principles of safe industrial design.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'What is the purpose of seal-in (holding) contacts in a motor starter?', a: 'To maintain the contactor coil circuit energized after the momentary start pushbutton is released. The NC auxiliary contact wired in parallel with the start button holds the circuit.' },
-          { q: 'What happens to an NC contact when its coil is energized?', a: 'It opens. NC = Normally Closed = closed when de-energized. Energizing the coil causes the armature to pull in, opening the NC contact.' },
-          { q: 'Why is a reversing starter interlocked?', a: 'To prevent both forward and reverse contactors from energizing simultaneously, which would cause a phase-to-phase short circuit.' }
+          { q: 'What is the purpose of laminations in a relay core and armature?', a: 'Laminations break up the iron core into thin sheets insulated from each other. This restricts eddy currents (induced circulating currents) to tiny loops within each sheet, reducing eddy current losses that would otherwise cause heat and reduce efficiency in AC devices.' },
+          { q: 'A 240V AC contactor coil has a seal-in voltage of approximately:', a: '204V (240 × 0.85 = 204V). Below this voltage the armature cannot fully seat. Drop-out is approximately 120V (240 × 0.50).' },
+          { q: 'Why does a relay coil draw much higher current before the armature seals in compared to after?', a: 'Before sealing: large air gap = high magnetic reluctance = low inductance = low XL = low impedance = high current. After sealing: air gap eliminated = low reluctance = high inductance = high XL = high impedance = low current. Inrush is typically 4-10× sealed current.' },
+          { q: 'A Form C contact has three terminals. Name them and describe the contact action when the coil energizes.', a: 'Common (C), Normally Open (NO), and Normally Closed (NC). With coil de-energized: Common is connected to NC. When coil energizes: armature pulls in, Common transfers to NO (NC opens simultaneously). This is a changeover or SPDT action.' },
+          { q: 'What is the difference between electrical interlock and mechanical interlock on a reversing contactor?', a: 'Electrical interlock: NC auxiliary contact of each contactor is wired in series with the coil circuit of the other — if one is energized, its NC contact opens to break the other\'s coil circuit. Mechanical interlock: a physical linkage prevents both contactor armatures from seating simultaneously. Best practice uses both for redundant protection against phase-to-phase shorts.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'When troubleshooting a contactor that chatters or "machine-guns" — check coil voltage first. Low voltage (below ~85% of rated) means the coil can\'t fully pull in the armature. The armature drops out, coil voltage rises, pulls back in, repeat. Also check for a shorted shading ring (in AC contactors).',
-          'Always check the "normal" state of contacts before a job: an NC contact with the system off should have continuity. If it doesn\'t, the coil is either still energized, or the contact is damaged.',
-          'Three-wire vs. two-wire control: three-wire (momentary pushbutton with seal-in) is safety preferred — loss of power means motor won\'t auto-restart. Two-wire (maintained contact) will restart automatically when power returns. Use two-wire only where that\'s the intended behavior and is safe.'
+          'A chattering or buzzing contactor always has one of two causes: coil voltage too low (below ~85% rated) or a broken shading coil. Check supply voltage at the coil terminals first. If voltage is correct, inspect the shading ring — it is a copper ring embedded in the pole face of the core or armature. A broken shading ring causes 120 Hz chatter even at correct voltage.',
+          'When you replace a relay or contactor, always check the coil voltage rating on the new device nameplate before installing it. Installing a 120V coil in a 240V circuit will destroy it instantly. Installing a 240V coil in a 120V circuit means it will never pull in.',
+          'IEC-style contactors used in North American installations must be evaluated for duty cycle and ambient temperature. An IEC contactor rated for a 10 HP motor at 40°C must be derated if the panel ambient exceeds that temperature. NEMA contactors are much more tolerant of adverse conditions.',
+          'The adder deck system on industrial control relays is extremely useful: you can add normally open or normally closed contact blocks to a relay without replacing the coil assembly. This saves cost when adding interlocks to an existing installation.'
         ]
       },
       {
         type: 'objectives',
         title: 'Module 21 Objectives',
         objectives: [
-          'Describe the operating principle of an electromagnetic relay, identifying the coil, armature, and contact assembly.',
-          'Distinguish between a relay and a contactor based on current ratings, contact types, and intended applications.',
-          'Define Normally Open (NO) and Normally Closed (NC) contacts and identify their state when the coil is de-energized ("normal" condition).',
-          'Identify the standard contact configurations: Form A (NO only), Form B (NC only), and Form C (changeover: NO + NC).',
-          'Describe the purpose of seal-in (holding) contacts and draw a three-wire control circuit using seal-in contacts for a motor starter.',
-          'Explain the safety advantage of three-wire control (momentary pushbutton with seal-in) versus two-wire control (maintained contact) for motor circuits.',
-          'Describe the purpose of electrical interlock circuits and explain how NC auxiliary contacts are used to prevent simultaneous energization of forward and reverse contactors.',
-          'Describe the purpose of mechanical interlocks and explain why both electrical and mechanical interlocks are used together.',
-          'Draw and explain the operation of a reversing motor starter control circuit including both start/stop control and proper interlock.',
-          'Describe the construction and operation of a thermal overload relay, identifying the bimetallic element and its response to sustained overcurrent.',
-          'Describe the construction and operation of an electronic overload relay and explain its advantages over the thermal type.',
-          'Explain how to set an overload relay based on motor full-load amperes (FLA) and identify the consequences of setting it too high or too low.',
-          'Describe the role of auxiliary contacts in relaying status information, interlocking, and control circuit functions.',
-          'Identify the key nameplate specifications of a contactor: coil voltage, contact ampere rating (AC3 or AC4 duty), and auxiliary contact count.',
-          'Troubleshoot a basic motor control circuit using knowledge of normal contact states, coil energization, and seal-in operation.'
+          'Describe the operating principle of an electromagnetic relay, identifying the coil, core, armature, armature springs, and contact springs.',
+          'Explain the purpose of laminations in relay and contactor cores and armatures, and describe how they reduce eddy current losses.',
+          'Explain the purpose of the shading coil in an AC relay or contactor and describe what would happen without it.',
+          'Identify and describe the four main relay types: plug-in, power, industrial control (with adder decks), and low-voltage lighting relays.',
+          'Distinguish between a relay and a contactor based on current ratings, arc suppression, and intended applications.',
+          'Define and compare NEMA and IEC contactor ratings, identifying the key differences in sizing philosophy, temperature rating, and creepage distance.',
+          'Identify non-reversing and reversing contactor configurations and explain why reversing contactors require both mechanical and electrical interlocking.',
+          'Define contact form designations: Form A (SPST-NO), Form B (SPST-NC), Form C (SPDT), Form X (double-make NO), Form Y (double-break NC).',
+          'Describe the properties of silver, copper, and silver-cadmium oxide contact materials and identify their relative strengths and weaknesses.',
+          'Describe bridge contacts and bifurcated bridge contacts and explain how they improve contact life.',
+          'Read relay and contactor nameplate information including coil voltage, contact voltage rating, continuous current rating, HP rating, and NEMA pilot duty rating.',
+          'Identify standard terminal numbering for contactor coils (A1/A2) and main contacts (1/2, 3/4, 5/6) and auxiliary contacts (13/14, 21/22).',
+          'Define seal-in voltage and drop-out voltage and calculate each for a given coil voltage rating.',
+          'Explain the inductance change that occurs when the armature seals, and describe why inrush current is 4-10× the sealed current.',
+          'Describe the effects of operating a coil above 110% and below 85% of its rated voltage.',
+          'Describe the purpose of seal-in (holding) contacts and explain the three-wire control circuit operation.',
+          'Identify the safety advantage of three-wire control (momentary start with seal-in) versus two-wire control (maintained contact).'
         ],
         questions: [
-          { q: 'A relay has 4 contacts: 2 NO and 2 NC. When the coil is energized, what is the state of each contact?', a: 'When the coil energizes: the 2 NO contacts CLOSE, and the 2 NC contacts OPEN. "Normal" refers to the state with no coil power applied.' },
-          { q: 'Why does a reversing motor starter require interlocking between the forward and reverse contactors?', a: 'If both F and R contactors energized simultaneously, they would connect two AC phases together, creating a phase-to-phase short circuit — an extremely high fault current that would destroy the contactors and pose a severe safety hazard. Interlocks (electrical and mechanical) prevent this.' },
-          { q: 'A motor\'s FLA is 15A. The overload relay has an adjustment range of 10-18A. Where should it be set?', a: 'Per CEC, OL relays are typically set at 100-125% of FLA for standard motors. For 15A FLA, set to 15-18.75A — so the upper end of the range (18A) if the motor has a 1.15 service factor, or closer to 15A for a standard motor. Must not exceed 125% of FLA for motors with 40°C rise and SF ≥ 1.15.' },
-          { q: 'What is the difference between three-wire and two-wire motor control, and which is preferred for personnel safety?', a: 'Three-wire: uses momentary pushbuttons with seal-in contact — motor stops if power is lost and must be manually restarted. Two-wire: uses a maintained contact — motor restarts automatically when power returns. Three-wire is preferred for safety: automatic restart after an unexpected power loss can injure personnel near equipment.' },
-          { q: 'A contactor chatters repeatedly (buzzing sound while operating). List two possible causes.', a: '1) Coil voltage too low (below ~85% rated) — the magnetic field is too weak to fully seat the armature, so it drops in and out at twice the line frequency. 2) Broken or missing shading ring — the shading ring maintains flux during AC zero-crossings; without it, the armature releases 120 times per second.' }
+          { q: 'A relay coil is rated 120V AC. Calculate the approximate seal-in voltage and drop-out voltage.', a: 'Seal-in ≈ 120 × 0.85 = 102V. Drop-out ≈ 120 × 0.50 = 60V.' },
+          { q: 'Why does a contactor coil burn out when the armature is held open (cannot seat)?', a: 'With the armature open, the large air gap keeps inductance very low. Low inductance = low XL = low impedance = very high coil current (4-10× normal sealed current). The coil is rated only for the much lower sealed current. Sustained inrush current overheats and destroys the coil insulation.' },
+          { q: 'A reversing motor starter is wired with only electrical interlock (no mechanical). An apprentice energizes both forward and reverse coils simultaneously. What happens?', a: 'Both sets of main contacts close simultaneously. This connects two different AC phases directly together through the motor — a phase-to-phase bolted fault. Extremely high fault current flows. The result is destruction of the contactors, potential arc blast, blown fuses or tripped breaker, and possible personnel injury. Both electrical AND mechanical interlocks are required as a redundant safety measure.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will describe the function of relays and contactors and demonstrate understanding of their application in industrial motor control circuits.',
+        outcome: 'The student will describe the construction, operating principles, ratings, and application of relays and contactors in industrial motor control, including coil voltage effects, contact materials, and interlocking requirements.',
         questions: [
-          { q: 'You are asked to wire a motor starter with two start/stop stations (one local, one remote), interlocked against a second motor so only one can run at a time. Describe the wiring approach for the interlocks and the multiple stations.', a: 'Multiple stops: wire both STOP buttons (NC) in series with each other and in the coil circuit — any one can shut down the motor. Multiple starts: wire both START buttons (NO) in parallel — any one can start the motor. Seal-in: wire an auxiliary NO contact from this contactor in parallel with the START buttons. Interlock with second motor: wire an NC auxiliary contact from the second motor\'s contactor in series with this motor\'s coil circuit — if the second motor runs, its NC contact opens and prevents this motor from starting.' },
-          { q: 'A technician replaces a thermal overload relay\'s heaters with the next larger size because the relay was nuisance-tripping. Explain what is wrong with this approach and what the correct solution is.', a: 'Installing larger heaters raises the overload trip threshold above the motor\'s actual thermal limit. The motor can now draw sustained overcurrent without the OL tripping — it will overheat, degrade insulation, and eventually fail. The correct approach is to measure the actual current and compare to FLA: if the motor is drawing normal current and the OL trips, the heaters are incorrect (too small) for the motor. Replace with heaters matched to the motor\'s FLA. If the motor is drawing high current, find the cause — mechanical overload, low voltage, phase loss, or a failing motor.' }
+          { q: 'During commissioning of a new motor starter, the electrician observes that the contactor makes a buzzing noise and the motor barely turns. Diagnose the likely cause and describe the correct repair procedure.', a: 'The buzzing indicates the contactor armature is chattering — it cannot fully seat. Most likely cause: supply voltage to the coil is below the seal-in threshold (85% of rated). Measure voltage at coil terminals A1-A2 while the start button is held. Compare to nameplate rating. If voltage is correct but chattering continues, inspect the shading rings on the core pole faces — a broken shading ring causes chattering even at correct voltage. Do not operate the contactor in this condition as the sustained inrush current will burn out the coil.' },
+          { q: 'Explain why a contactor\'s coil draws 6 times its normal current at the moment of initial energization but settles to 1/6 of that value once the armature seats. What is the practical consequence for coil selection?', a: 'At energization the armature is fully separated from the core. The large air gap creates high magnetic reluctance, resulting in very low inductance. Low inductance means low inductive reactance (XL = 2πfL), so the coil presents low impedance and draws high current. Once the armature seats, the air gap disappears, reluctance drops dramatically, inductance rises correspondingly, XL increases, impedance rises, and current falls to the low sealed value. Practical consequence: the coil must be rated for intermittent inrush without overheating, but the sustained sealed current must not exceed the coil\'s continuous current rating. A coil that chatters draws the high inrush current continuously and will fail.' }
         ]
       }
     ]
@@ -8717,94 +8456,120 @@ const LESSONS_CONTENT = [
     icon: '⏱',
     subtitle: 'Time-Based Control and Programmable Logic',
     color: '#f97316',
-    gradient: 'linear-gradient(135deg,rgba(249,115,22,0.12),rgba(245,158,11,0.06))',
+    gradient: 'linear-gradient(135deg,rgba(249,115,22,0.12),rgba(234,88,12,0.06))',
     border: 'rgba(249,115,22,0.3)',
-    readTime: '12 min read',
+    readTime: '18 min read',
     sections: [
       {
         type: 'hook',
-        title: '⏰ When "Now" Isn\'t Good Enough',
-        body: `Not everything in a control system should happen instantaneously. A conveyor needs to run for 5 seconds before a downstream process starts. A blower should keep running for 2 minutes after an oven shuts off to prevent heat damage. A pump needs a rest period between starts to avoid overheating.\n\nTimers solve all of these problems. They add the dimension of time to control logic, turning simple on/off decisions into time-sequenced operations. And smart relays take this further — they're essentially tiny programmable computers that can replace dozens of timers, counters, and relays with a single compact device.`
+        title: 'When Now Is Not Good Enough',
+        body: `A lubrication pump must run for three minutes before the main spindle drive starts. A cooling fan must keep running for two minutes after the oven shuts off, or the heating elements will overheat. An alarm horn needs to beep for five seconds, silence, then beep again — indefinitely — until acknowledged.\n\nNone of these functions can be done with a simple relay. They require time. And that is exactly what timing relays and smart relays provide: the ability to add the dimension of time to control logic.\n\nFrom the simplest spring-wound mechanical timer to fully programmable smart relays that replace an entire panel of discrete devices, timing control is one of the most fundamental tools in industrial electrical work.`
       },
       {
         type: 'concept',
-        title: '📊 ON-Delay Timer (TON): Wait, Then Act',
-        body: `The most common timer type. An ON-delay timer waits a preset time after receiving an input signal before energizing its output.\n\nSequence:\n1. Input signal arrives (coil energizes)\n2. Timing begins\n3. After preset time, output contact closes (timed contact)\n4. If input is removed before timing completes, timer resets — nothing happens\n5. When input is removed after timing, output immediately opens\n\nReal world uses: motor startup delay (allow pressures/temperatures to stabilize before starting), conveyor sequencing (upstream conveyor starts, downstream conveyor delays 3 seconds), HVAC damper control (open damper before starting fan).\n\nInstantaneous contacts: some timers also have an "instantaneous" contact that closes the moment the coil energizes (before timing starts) — useful for starting a different operation while timing proceeds.`,
-        formula: 'ON-delay: Input ON → timer counts → output ON after preset time\nInput OFF (anytime) → timer resets → output OFF immediately'
+        title: 'Timer Types: From Mechanical to Electronic',
+        body: `Timing mechanisms have evolved through several generations, each with different accuracy and application suitability:\n\n• Spring-wound interval timers: a clockwork mechanism wound by a motor or manually. Timing accuracy is limited — acceptable for applications where exact timing is not critical, such as process hold times with wide tolerances. Not suitable for precision control.\n\n• Mechanical and electronic time switches: real-clock-based devices that switch outputs on and off at preset times of day or week. Used for daily/weekly scheduling such as lighting control, HVAC scheduling, and irrigation systems. Not suitable for triggering control sequences based on process events.\n\n• Timing relays: the precision tool for control sequences. Response to a control input with a precisely adjustable time delay. Available with pneumatic, fluid dashpot, or electronic timing mechanisms. Used wherever accurate, repeatable time delays are required in a control circuit.`
       },
       {
         type: 'concept',
-        title: '⏲ OFF-Delay Timer (TOF): Keeps Running After Stop',
-        body: `An OFF-delay timer does the opposite: it keeps its output energized for a preset time after the input signal is REMOVED.\n\nSequence:\n1. Input signal arrives → output immediately energizes\n2. Input signal removed → timing begins\n3. After preset time, output de-energizes\n\nReal world uses: cooling fan delay (keep fan running after motor stops to remove heat), exhaust hood (keep running after cooking stops), parking garage lighting (lights stay on for 5 minutes after you leave the area), anti-short-cycle protection on compressors.`,
-        formula: 'OFF-delay: Input ON → output immediately ON\nInput OFF → timer counts → output OFF after preset time'
-      },
-      {
-        type: 'concept',
-        title: '🔁 Recycling (Repeat Cycle) Timers: Pulse Generators',
-        body: `A recycling timer automatically and repeatedly cycles its output on and off at adjustable intervals. Think of it as a built-in pulse generator.\n\nTwo adjustable settings:\n• ON time: how long output stays energized\n• OFF time: how long output stays de-energized\n\nReal world uses: intermittent windshield wiper control, irrigation systems (water for 2 min, pause 30 min), alarm horns (beep-pause-beep), automatic lubrication systems (pump for 10 seconds every 15 minutes).`
+        title: 'Timing Control Methods: How the Delay Is Generated',
+        body: `Inside a timing relay, the delay is produced by one of three mechanisms — each with different characteristics:\n\n• Pneumatic timing: a bellows or piston mechanism with an adjustable needle valve controls how fast air flows through an orifice. The slower the airflow, the longer the delay. Pneumatic timers are rugged and immune to electrical interference, but drift with temperature and are not highly precise. Adjustment range is typically limited.\n\n• Fluid dashpot (oil-dashpot): a piston moves through a chamber of fluid. The needle valve controls how fast fluid transfers between two chambers. Similar characteristics to pneumatic — reliable but not highly precise. Less common in modern installations.\n\n• Electronic timing: uses an RC (resistor-capacitor) circuit or a digital timer chip. The RC circuit charges a capacitor through a resistor, and the timing is set by changing the resistance value. Digital electronic timers use a crystal oscillator reference and are extremely accurate and repeatable. Adjustment is easy (potentiometer or digital keypad), range is wide, and accuracy is far superior to pneumatic or dashpot types.`
       },
       {
         type: 'keypoint',
-        title: '💻 Smart Relays: Tiny PLCs',
-        body: `A smart relay (also called a programmable logic relay or PLR) is a compact, inexpensive device that combines inputs, outputs, and programmable logic in one unit. Common brands: Siemens LOGO!, Schneider Electric Zelio, Allen-Bradley Pico.\n\nCapabilities in a package the size of a large relay:\n• 8-24 digital inputs\n• 4-16 digital outputs\n• Analog inputs (some models)\n• Built-in clock/calendar\n• Multiple timer functions (ON, OFF, repeat cycle, single-shot)\n• Counter functions\n• Logic gates (AND, OR, NOT, XOR)\n• Simple arithmetic\n• Communication (some models)\n\nA single smart relay can replace a panel stuffed with 10-15 individual relays, timers, and counters — at a fraction of the cost and panel space. They're programmed either through a front panel display or via laptop with free software.`
+        title: 'TDOE: Time Delay on Energization (On-Delay)',
+        body: `TDOE (Time Delay On Energization) is also called an on-delay timer. It is the most common timer type in industrial control.\n\nOperation sequence:\n1. Control signal energizes the coil — timing begins immediately.\n2. Instant contacts (if present) change state immediately at energization.\n3. Timed contacts remain in their normal position during the timing period.\n4. After the preset time elapses, timed contacts change state (NO closes, NC opens).\n5. When the coil is de-energized, timed contacts return to normal immediately — there is no delay off.\n\nIf the coil is de-energized before the timing period completes, the timer resets and the timed contacts never change state.\n\nTypical applications: lubrication pump pre-run (pump runs 3 minutes before main machinery starts), conveyor sequencing (upstream conveyor starts, wait 5 seconds, downstream starts), HVAC damper pre-open (damper opens, wait 30 seconds, fan starts).`,
+        formula: 'On-delay: Coil ON → timing starts → after preset time, timed contacts change state\nCoil OFF (any time) → timer resets immediately → timed contacts return to normal immediately'
+      },
+      {
+        type: 'keypoint',
+        title: 'TDOD: Time Delay on De-energization (Off-Delay)',
+        body: `TDOD (Time Delay On De-energization) is also called an off-delay timer. It keeps its timed output active for a set period after the input signal is removed.\n\nOperation sequence:\n1. Control signal energizes the coil — timed contacts change state immediately (NO closes, NC opens).\n2. While the coil remains energized, timed contacts remain changed.\n3. When the coil is de-energized, timing begins.\n4. After the preset time elapses, timed contacts return to their normal state.\n\nTypical applications: motor cooling fan run-on (fan keeps running 2 minutes after motor stops), oven exhaust hood (hood stays on 3 minutes after cooking stops), anti-short-cycle timer for compressors (prevents restarting within a minimum off time).`,
+        formula: 'Off-delay: Coil ON → timed contacts change state immediately\nCoil OFF → timing starts → after preset time, timed contacts return to normal'
+      },
+      {
+        type: 'concept',
+        title: 'Interval and One-Shot Timing',
+        body: `Beyond on-delay and off-delay, there are two additional timing modes that are useful in specific applications:\n\nInterval timing: the coil energizes → timed contacts immediately change state → after the preset time, contacts return to normal (regardless of whether the coil is still energized). The contacts stay normal until the coil is de-energized and re-energized again. Example: a warning horn sounds for exactly 10 seconds when a door is opened.\n\nOne-shot timing: triggered by a momentary signal applied to the start terminal (not by continuous coil energization). When the start signal is received, contacts change state for the preset time period, then return to normal. The process can be triggered again by another start pulse. Example: a lathe operation where the operator presses a button to run the part feed for a preset time, then it stops automatically regardless of whether the button is still held.`
+      },
+      {
+        type: 'concept',
+        title: 'Repeat Cycle Timing (Flicker)',
+        body: `A repeat cycle timer (also called a flicker relay or recycling timer) continuously cycles its output between the changed and normal state as long as it is energized.\n\nTwo types:\n• Symmetrical: the on-time and off-time are equal. The output is a square wave with a 50% duty cycle.\n• Non-symmetrical: the on-time and off-time are independently adjustable. This allows precise control of the ratio of on to off time.\n\nApplications:\n• Intermittent windshield wiper control\n• Alarm horn cycling (beep pattern)\n• Automatic lubrication systems (pump for 15 seconds every 10 minutes)\n• Pilot light flashing to indicate a specific alarm or status\n• Irrigation zone cycling\n\nNote: for very precise pulse generation, electronic repeat-cycle timers are far more accurate than pneumatic types.`
+      },
+      {
+        type: 'concept',
+        title: 'Multi-Function Timing Relays',
+        body: `Modern electronic timing relays are available in multi-function versions that can provide several different timing modes from a single unit. A selector switch or DIP switch on the relay body selects the mode.\n\nFeatures of multi-function timing relays:\n• Selectable mode: on-delay, off-delay, interval, one-shot, repeat cycle symmetrical, repeat cycle non-symmetrical — all available in one relay.\n• Independently adjustable on-time and off-time (for non-symmetrical repeat cycle).\n• Digital display showing elapsed time or preset time.\n• Wide timing range: from milliseconds to hours in a single unit.\n• Supply voltage flexibility: many models accept a wide input voltage range (24-240V AC/DC).\n\nA multi-function timer reduces inventory requirements — one part number covers many different timing applications in a facility.`
+      },
+      {
+        type: 'keypoint',
+        title: 'Smart Relays: Simplified Programmable Controllers',
+        body: `A smart relay (also called a programmable logic relay or PLR) is a compact, self-contained device that combines digital inputs, digital outputs, program memory, and a real-time clock in a single DIN-rail-mounted package.\n\nPhysical characteristics:\n• 8 to 24 digital inputs\n• 4 to 16 digital or relay outputs\n• Analog inputs on some models\n• Built-in real-time clock with calendar\n• Front-panel display and navigation buttons for programming and monitoring\n• Optional computer interface for programming via laptop (free software)\n• Power supply typically 24V DC or 100-240V AC\n\nProgramming methods: function block diagrams (connect pre-built function blocks graphically) or ladder logic (standard IEC 61131-3 LD language). Most smart relays can be programmed from the front panel keypad for simple applications, or from a laptop for complex ones.\n\nA single smart relay can replace 10-15 discrete relays, timers, and counters, at a fraction of the panel space and cost. Logic changes require software changes, not rewiring.`,
+        formula: 'Smart relay advantage: reprogrammable without rewiring. Logic changes = software changes only.'
+      },
+      {
+        type: 'concept',
+        title: 'Smart Relay Functions and Applications',
+        body: `Smart relays support all standard timing functions plus advanced features not available in discrete devices:\n\nStandard functions available:\n• Standard relay (non-timed on/off)\n• TDOE (on-delay)\n• TDOD (off-delay)\n• Interval timing\n• One-shot timing\n• Repeat cycle symmetrical\n• Repeat cycle non-symmetrical\n• Real-time scheduling (daily/weekly/monthly calendar switching)\n• Totalizing timer with reset (accumulates on-time over multiple starts)\n\nTypical smart relay applications:\n• Car wash automation: sequential start of water pump, brushes, rinse, dryer based on sensor inputs and timing\n• Commercial lighting management: schedule-based control with override inputs\n• Access control and door locking: time-based unlock with sensor confirmation\n• Small machinery automation: replace an entire relay panel for a simple machine\n• HVAC control: economizer cycles, damper sequencing, setback scheduling\n• Pumping stations: level-based starts with anti-short-cycle protection`
       },
       {
         type: 'real-world',
-        title: '🏭 Ladder Logic: The Language of Control',
-        body: `Industrial control programs are written in ladder logic — a visual programming language that looks like a schematic of relay contacts and coils laid out in rungs, like a ladder.\n\nEach rung is a logical statement:\n• Contacts on the left side = conditions (inputs)\n• Coils on the right side = outputs\n• Current "flows" left to right if all contacts are satisfied\n\nA normally open contact in ladder logic = an input that must be TRUE to pass logic.\nA normally closed contact = an input that must be FALSE to pass logic.\n\nLadder logic translates directly from hardwired relay logic — if you understand relay control circuits, you already understand the fundamentals of ladder logic programming. This is why learning relay control is so valuable for the modern electrician: PLCs and smart relays have taken over, but they still speak the language of relays.`
+        title: 'Applying Timers: A Conveyor Sequence Example',
+        body: `A manufacturing line requires a precise startup sequence:\n\n1. When the Start button is pressed, a warning horn sounds immediately.\n2. After 5 seconds, the infeed conveyor starts.\n3. After another 3 seconds, the main processing conveyor starts.\n4. After another 3 seconds, the outfeed conveyor starts.\n5. When Stop is pressed, all conveyors stop. The cooling fan runs for 2 minutes after Stop.\n\nSolution using discrete timers:\n• T1 (on-delay, 5 sec): energized by Start. When T1 times out, starts infeed conveyor.\n• T2 (on-delay, 8 sec): energized by Start. When T2 times out, starts processing conveyor.\n• T3 (on-delay, 11 sec): energized by Start. When T3 times out, starts outfeed conveyor.\n• T4 (off-delay, 2 min): cooling fan stays on 2 minutes after Stop.\n\nSolution using a smart relay: all four timing functions replaced by four function blocks in a single smart relay. One device, no additional wiring between timers. Easy to adjust timing values without opening the panel.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'An ON-delay timer starts timing when the input turns ON. True or False: if the input turns off before timing completes, the output will energize for the remaining delay time.', a: 'FALSE. If the input is removed before the preset time expires, the timer resets and the output never energizes.' },
-          { q: 'A blower motor needs to keep running for 3 minutes after an oven shuts off. Which timer type is used?', a: 'OFF-delay timer (TOF). The blower energizes immediately when the oven runs, then stays on for 3 minutes after the oven shuts off.' },
-          { q: 'What is the key advantage of a smart relay (PLR) over hardwired relay logic?', a: 'Flexibility and space savings. A single smart relay replaces many individual relays, timers, and counters. The logic is software-defined and can be reprogrammed without rewiring.' }
+          { q: 'An on-delay timer (TDOE) has its coil energized. Its timed contacts have not yet changed state. What happens if the coil is de-energized before the timer times out?', a: 'The timer resets completely. The timed contacts never change state. The output remains in its normal position as if the coil was never energized. This is the key feature of TDOE — it requires the coil to stay energized for the full preset time before anything happens.' },
+          { q: 'A motor cooling fan must keep running for 3 minutes after the motor stops. Which timer type is used, and describe its connection?', a: 'Off-delay timer (TDOD). The timer coil is energized while the motor runs (wired in parallel with the motor contactor coil, or from the motor running auxiliary contact). When the motor stops (coil de-energizes), the off-delay timer starts timing. After 3 minutes, the timer\'s timed NO contact opens, de-energizing the fan contactor.' },
+          { q: 'What advantage does a smart relay have over a panel of discrete relays and timers for a multi-step sequence?', a: 'Reprogrammability without rewiring. If the sequence timing or logic needs to change, only the software program is changed. With discrete relays, any change requires physical rewiring. Smart relays also eliminate the space and wiring of 10-15 separate devices, improving reliability and reducing cost.' },
+          { q: 'Describe the difference between interval timing and on-delay timing.', a: 'On-delay: timed contacts change state AFTER the preset time, and remain changed as long as the coil is energized. Interval: timed contacts change state IMMEDIATELY when the coil energizes, then return to normal after the preset time (regardless of coil state). After an interval, contacts stay normal until coil is cycled.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'When troubleshooting timer circuits, separate the timing function from the contact function. First verify the coil is energizing (voltage across coil terminals). Then verify the timer is actually timing (LED or display indicator). Then check the output contacts.',
-          'ON-delay or OFF-delay? Ask yourself: "does the output come ON after a delay, or does it go OFF after a delay?" That question answers it every time.',
-          'Smart relays use the IEC61131-3 standard for ladder logic — the same standard as full PLCs. Time you spend learning Siemens LOGO! or Zelio programming translates directly into understanding Allen-Bradley, Siemens S7, and other industrial PLC platforms.'
+          'On-delay or off-delay? Ask yourself one question: does the output come ON after a delay, or does it go OFF after a delay? The answer is the timer type. On-delay = output comes on after waiting. Off-delay = output goes off after waiting.',
+          'When troubleshooting a timer that appears not to be timing: verify coil voltage first (measure across A1/A2 or coil terminals). Then verify the timer is actually timing — most electronic timers have an LED that flashes during timing. If the LED is not flashing, the coil is not energized. If the LED is flashing but contacts do not change, the output contacts may be failed.',
+          'Smart relay programs can be saved and transferred. Always back up the program from any smart relay before maintenance. If the device is replaced, the program can be loaded into the new unit in minutes rather than spending hours re-commissioning from scratch.',
+          'Totalizing timers in smart relays are valuable for maintenance scheduling: they accumulate total motor run-hours across many start/stop cycles and can trigger an output when service is due. This eliminates the need for separate hour meters.'
         ]
       },
       {
         type: 'objectives',
         title: 'Module 22 Objectives',
         objectives: [
-          'Define ON-delay (TDOE – Time Delay On Energization) timer operation, describing contact behavior during timing and after the time period elapses.',
-          'Define OFF-delay (TDOD – Time Delay On De-energization) timer operation, describing contact behavior and when the timing period begins.',
-          'Identify typical industrial applications for ON-delay timers: star-delta motor starting, conveyor sequencing, process heating warm-up, and alarm time delays.',
-          'Identify typical industrial applications for OFF-delay timers: motor cooling fan run-on, conveyor coast-down, oil pressure pre-lube, and alarm/fault clearance delays.',
-          'Describe the operating principle of pneumatic (dashpot) timers, identifying the bellows, needle valve, and how they produce the timing delay.',
-          'Describe the operating principle of electronic timers, explaining how RC circuits or digital clocks generate timing delays.',
-          'Identify the advantages of electronic and programmable timers over pneumatic types: greater accuracy, wider range, digital display, and easier adjustment.',
-          'Define a smart relay (programmable relay or micro-PLC) and describe its physical structure: inputs, outputs, power supply, and program memory.',
-          'Describe the basic structure of ladder logic programming, identifying rungs, contacts (NO and NC), coils, and the left and right power rails.',
-          'Explain the correspondence between hardwired relay control circuits and ladder logic diagrams.',
-          'Read basic ladder logic diagrams and predict the output state for a given set of input conditions.',
-          'Identify timer function blocks in ladder logic: TON (on-delay) and TOF (off-delay), and describe their preset time (PT) and elapsed time (ET) parameters.',
-          'Identify counter function blocks in ladder logic: CTU (count-up) and CTD (count-down), and describe their preset value (PV) and current value (CV) parameters.',
-          'Describe the IEC 61131-3 standard and identify the five programming languages it defines: LD (ladder), FBD (function block diagram), SFC, ST, and IL.'
+          'Identify three types of timer mechanisms: spring-wound, mechanical/electronic time switch, and timing relay, and describe the appropriate application for each.',
+          'Describe three timing control methods: pneumatic (air orifice), fluid dashpot (needle valve), and electronic (RC circuit or digital), and compare their relative accuracy.',
+          'Define TDOE (Time Delay on Energization) and describe the complete operation sequence of timed contacts from coil energization through de-energization.',
+          'Define TDOD (Time Delay on De-energization) and describe the complete operation sequence of timed contacts from coil energization through de-energization.',
+          'Identify typical industrial applications for on-delay timers and off-delay timers.',
+          'Describe interval timing operation: timed contacts change state immediately at energization, return to normal after preset time regardless of coil state.',
+          'Describe one-shot timing operation: triggered by a momentary start signal, contacts change for preset time then return to normal.',
+          'Describe repeat cycle (flicker) timer operation, and distinguish between symmetrical and non-symmetrical repeat cycle.',
+          'Describe multi-function timing relays and explain the advantage of having multiple timing modes in one device.',
+          'Define a smart relay (PLR) and describe its physical structure: inputs, outputs, memory, real-time clock, and programming interface.',
+          'Identify the timing functions available in a smart relay: standard relay, TDOE, TDOD, interval, one-shot, repeat cycle, real-time scheduling, totalizing timer.',
+          'Identify typical smart relay applications: car wash automation, lighting management, access control, HVAC, and small machine control.',
+          'Describe the programming methods for smart relays: front-panel keypad, function block diagram (FBD), and ladder logic (LD).',
+          'Explain the key advantage of smart relays over discrete relay panels: reprogrammability without rewiring.'
         ],
         questions: [
-          { q: 'A TON (on-delay) timer is energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TON input energizes, NO contacts remain OPEN and NC contacts remain CLOSED — output doesn\'t change yet. After the preset time elapses, the NO contacts CLOSE and NC contacts OPEN. When the input de-energizes, all contacts return to normal state immediately (no delay off).' },
-          { q: 'A TOF (off-delay) timer is de-energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TOF input de-energizes, the output contacts DO NOT return to normal immediately — timing begins. After the preset time elapses, the NO contacts OPEN and NC contacts CLOSE (returning to normal state).' },
-          { q: 'In a star-delta motor starting circuit, what does the timer control?', a: 'The timer controls the transition from star (wye) connection to delta connection. The motor starts in star (reduced voltage), and after the preset time (typically 5-15 seconds, when the motor has accelerated to near full speed), the timer transfers to delta (full voltage). Switching too early causes high inrush; switching too late provides no benefit.' },
-          { q: 'In a ladder logic rung, two NO contacts are drawn in series before a coil. What logic does this represent?', a: 'AND logic — BOTH contacts must be closed (TRUE) for the coil to energize. In relay control terms, this means both switches must be ON simultaneously.' },
-          { q: 'What is the key advantage of using a smart relay instead of discrete relays and timers for a multi-step sequential process?', a: 'Smart relays can be reprogrammed without rewiring — logic changes are made in software. Discrete relay panels require physical rewiring, addition of new relays, and re-tracing logic every time the process changes. Smart relays also take less panel space, are more reliable (no contact wear for logic functions), and provide built-in timers, counters, and displays.' }
+          { q: 'A TDOE timer coil is energized. After 8 seconds (the preset), its timed NO contact closes. The coil is then de-energized. What happens to the timed NO contact?', a: 'The timed NO contact immediately returns to open (its normal state) when the coil de-energizes. TDOE has no delay on de-energization — once the coil drops out, timed contacts return to normal instantly.' },
+          { q: 'A TDOD timer coil is de-energized after running for 30 seconds. The preset is 2 minutes. Describe contact behavior.', a: 'When the TDOD coil de-energizes, the timed contacts remain changed (NO stays closed, NC stays open) and timing begins. After 2 minutes, the contacts return to their normal state (NO opens, NC closes).' },
+          { q: 'An alarm horn must sound for exactly 10 seconds when a door opens, regardless of whether the door is still open. Which timer mode is appropriate?', a: 'Interval timing. The coil energizes when the door opens, the timed output immediately activates the horn. After 10 seconds, the timed contact returns to normal regardless of whether the door (coil) is still energized. The horn stops after exactly 10 seconds.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will describe timer types and their application in industrial control, and demonstrate basic understanding of smart relay and programmable logic control.',
+        outcome: 'The student will identify timer types and timing control methods, describe the operation of TDOE, TDOD, interval, one-shot, and repeat-cycle timers, and explain the function and advantages of smart relays in industrial control applications.',
         questions: [
-          { q: 'A conveyor system requires that: 1) a warning horn sounds for 5 seconds before the conveyor starts, 2) the conveyor runs for its cycle, and 3) after the stop button is pressed, the cooling fan runs for an additional 60 seconds. Describe which timer types you would use for each function.', a: 'Function 1 (pre-start warning): ON-delay timer — when start is pressed, the horn output energizes immediately (NO contact closes), and after 5 seconds the timer\'s timed contact energizes the conveyor. Function 3 (fan run-on): OFF-delay timer — the fan output is energized while the conveyor runs, and when the stop button is pressed, the OFF-delay timer continues powering the fan for 60 seconds before returning to off state.' },
-          { q: 'Draw a ladder logic rung (describe it in words) that energizes a pump (Output Y1) when: float switch (Input X1) is activated AND pressure switch (Input X2) is NOT activated, and a stop button (Input X3) has not been pressed (NC contact in circuit).', a: 'Rung: [X1 NO]—[X2 NC]—[X3 NC]—(Y1). Reading left to right: X1 must be CLOSED (float switch activated), X2 must be OPEN/deactivated (NC contact: the pressure switch NC contact must still be passing — meaning high pressure NOT present), X3 must be CLOSED (stop button NC contact: not pressed). All three in series before the Y1 coil. When all three conditions are met, the pump output Y1 energizes.' }
+          { q: 'A conveyor startup sequence requires: warning horn for 5 seconds before any conveyor starts, then infeed starts, then main conveyor starts 3 seconds later, then outfeed starts 3 seconds after that. When Stop is pressed, all conveyors stop immediately but the cooling fan runs for 2 minutes. Identify the timer type for each timed function and describe how the timing is achieved.', a: 'Horn (5 sec pre-start): ON-delay timer T1. At Start, T1 begins timing. Horn is energized immediately (instant contact). After 5 seconds, T1 timed contact closes to energize infeed contactor. Infeed-to-main (3 sec): ON-delay timer T2, preset 8 sec (5+3), or T2 starts from T1 timed contact. After 3 sec, main conveyor starts. Main-to-outfeed (3 sec): ON-delay timer T3, or cascaded from T2, adding another 3 sec. Cooling fan run-on (2 min): OFF-delay timer T4. Fan is energized while any conveyor runs. When Stop is pressed, OFF-delay begins. Fan stays on 2 minutes, then drops out.' },
+          { q: 'A facility manager wants to change the warning horn duration from 5 seconds to 10 seconds. Describe how this is done on a discrete timer panel versus a smart relay panel.', a: 'Discrete timer: locate the physical T1 timer relay in the panel, adjust the timing potentiometer or dial from 5 to 10 seconds, re-test the sequence. Smart relay: connect a laptop, open the program in the free software, locate the T1 timer function block, change the preset value from 5 sec to 10 sec, upload the program to the smart relay, test. The smart relay approach requires no tools or physical panel access beyond a computer connection.' }
         ]
       }
     ]
@@ -8817,222 +8582,266 @@ const LESSONS_CONTENT = [
     color: '#ef4444',
     gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
     border: 'rgba(239,68,68,0.3)',
-    readTime: '14 min read',
+    readTime: '24 min read',
     sections: [
       {
         type: 'hook',
-        title: '⚡ Every Circuit Needs Protection',
-        body: `Every electrical circuit has a potential failure mode: too much current. Overcurrent destroys insulation, melts conductors, starts fires, and kills people.\n\nThe overcurrent protection device (OCPD) — whether a fuse or circuit breaker — is the last line of defense. It monitors current, and when current exceeds its rating for a sufficient time, it interrupts the circuit.\n\nBut protection isn't the only job in a control system. Someone also has to initiate, stop, and direct the flow of current to the loads. That's the job of pilot devices — the pushbuttons, switches, and sensors that give humans and machines control over electrical systems.`
+        title: 'Every Circuit Needs a Guardian',
+        body: `Two things must always be true of an electrical circuit: it must be controllable, and it must be protected. Without control, you cannot turn it on or off, direct it, or sequence it. Without protection, a fault anywhere in the system becomes a catastrophe — insulation burns, conductors melt, fires start, and people die.\n\nPilot devices provide control without carrying the full load current. Overcurrent devices provide protection by interrupting the circuit when current rises beyond safe limits.\n\nTogether, they are the fundamental safety infrastructure of every electrical installation. Every pushbutton you press, every fuse you change, every breaker you reset — these are the devices this module is about.`
       },
       {
         type: 'concept',
-        title: '🔘 Pilot Devices: Control Without Power',
-        body: `A pilot device is a control component that controls a circuit but doesn't carry the main load current. The name comes from "pilot," meaning guide or direct.\n\nKey pilot devices you'll work with:\n\n• Pushbuttons: momentary (springs back) or maintained (stays in place). NO types start things; NC types stop things. Color code: green/black = start, red = stop.\n\n• Selector switches: 2 or 3 position, maintained. For mode selection (Hand/Off/Auto, Local/Remote).\n\n• Limit switches: mechanically actuated by equipment position. Used to detect "door open," "conveyor at end of travel," "cylinder fully extended." Can be NO or NC, maintained or momentary.\n\n• Float switches: actuated by liquid level. Used to control pumps and sump systems.\n\n• Pressure switches: actuated by fluid or air pressure. Compressor control, hydraulic systems.\n\n• Pilot lights: indicate status (motor running, fault condition, power present). Wired in parallel with the load they're indicating.`
+        title: 'Start and Stop Buttons: The Basic Control Interface',
+        body: `The most fundamental pilot devices in motor control are the start and stop pushbuttons:\n\n• Start button: a normally open (NO) momentary pushbutton. In its rest state, no current flows through it. When pressed, it closes momentarily, allowing current to flow to the contactor coil. When released, the spring returns it to open. The motor keeps running because the seal-in (holding) contacts maintain the circuit.\n\n• Stop button: a normally closed (NC) momentary pushbutton. In its rest state, current flows through it continuously (completing the control circuit). When pressed, it opens, interrupting current to the contactor coil, which de-energizes the contactor and stops the motor. When released, it springs back to closed.\n\n• Basic stop/start circuit: Start NO is in parallel with the M1 holding contacts (seal-in). Stop NC is in series with the entire circuit. OL (overload relay) NC contacts are in series. Any series break stops the motor. Either parallel path (Start button OR M1 seal-in) can establish the circuit.`,
+        formula: 'Stop buttons: NC, wired in SERIES — any stop can break the circuit\nStart buttons: NO, wired in PARALLEL with seal-in — any start can complete the circuit'
+      },
+      {
+        type: 'concept',
+        title: 'Multiple Control Stations',
+        body: `Many industrial machines require control from more than one location — a local panel on the machine and a remote operator station, for example. The wiring rule is universal:\n\n• Multiple stop buttons: always connected in SERIES with each other. This means any one stop button can break the circuit and stop the motor, regardless of where the operator is. This is a fail-safe arrangement — more stops means more ways to stop.\n\n• Multiple start buttons: always connected in PARALLEL with each other and with the seal-in contacts. Any one start button can complete the circuit and start the motor.\n\nThis series/parallel arrangement is the same regardless of how many stations are added. Two stops in series, three stops in series, five stops in series — the rule never changes. Adding more stops never reduces safety. Adding more starts never prevents stopping.\n\nFor safety interlocks between machines: use an NC auxiliary contact from one machine's contactor in series with the other machine's coil circuit. If machine A is running, its NC contact opens, preventing machine B from starting.`
+      },
+      {
+        type: 'concept',
+        title: 'Maintained vs Momentary Contact Pilot Devices',
+        body: `Pilot devices are classified by whether their contacts stay in the operated position after the actuating force is removed:\n\n• Momentary contact devices: contacts return to their normal position when the actuating force is removed. Spring-return is built in. Examples: standard pushbuttons, joystick controllers with return springs. Used where you want a one-time signal to start a control sequence.\n\n• Maintained contact devices: contacts stay in the operated (changed) position after the actuating force is removed, and stay there until operated again in the opposite direction. Examples: toggle switches, selector switches (key-operated or standard rotary), latching pushbuttons, mushroom-head emergency stops with a twist-to-release feature.\n\nUsed where: selector switches maintain the selected mode (Hand/Off/Auto). A key switch maintains lockout. An emergency stop maintained NC ensures the machine cannot restart without deliberate operator action (twist to reset).\n\nTwo-wire control (maintained contact): the maintained contact directly energizes the contactor coil. If power fails and returns, the motor restarts automatically because the contact is still closed. Use only where automatic restart is safe and intended.`
+      },
+      {
+        type: 'concept',
+        title: 'Automatic Pilot Devices: Sensors',
+        body: `Automatic pilot devices detect physical conditions and convert them to contact operations without human action. They extend the control system into the physical process:\n\n• Pressure switches: use a bellows, diaphragm, or piston actuator to convert fluid or air pressure into contact movement. Can be single-stage (one setpoint) or dual-stage (two setpoints for alarm and shutdown). Used in air compressors to cycle the motor between two pressure setpoints, to signal a clogged filter, prove exhaust fan flow, or detect a broken fan belt.\n\n• Float switches: detect liquid levels. Lever type: a float on a lever arm operates contacts as liquid rises and falls. Tethered bulb type: the switch is inside the float and connected by a cable; as the liquid level changes the float position, it changes state. Used in sump pumps, tank level control, and process vessels.\n\n• Limit switches: require physical contact to operate. The actuator (lever, roller, plunger, or rod) is moved by a cam, product, or machine part. Used to detect end-of-travel, door position, product presence, or cylinder position.`
+      },
+      {
+        type: 'concept',
+        title: 'Proximity and Photoelectric Switches',
+        body: `Non-contact sensing eliminates mechanical wear and allows sensing in contaminated or inaccessible environments:\n\n• Magnetic proximity switches: detect the presence of a magnetic field. Used in security systems and door/window sensors. Very simple — a magnet on the moving part, switch on the stationary part.\n\n• Inductive proximity switches: generate a high-frequency magnetic field from a coil in the sensor face. When a ferrous metal target enters the field, eddy currents are induced in the target, loading the oscillator circuit. This change triggers the output. Used only for metallic targets. Classic application: traffic light loop detectors embedded in pavement.\n\n• Capacitive proximity switches: use an electrostatic field rather than magnetic. Can detect any material — metal, plastic, wood, liquid, granules — even through non-metallic container walls. Used to detect liquid levels in tanks without opening the vessel, granular material in bins, and targets in contaminated environments.\n\n• Photoelectric sensors: use a light beam (visible or infrared, often modulated to reject ambient light) for detection. Three configurations: through-beam (transmitter and receiver separate, object interrupts beam), retroreflective (transmitter and receiver in same housing, beam reflects off a reflector), diffuse (detects light reflected from the target itself). Used in garage door safety systems, conveyor product detection, part counting.`
+      },
+      {
+        type: 'concept',
+        title: 'Temperature Sensors',
+        body: `Temperature measurement and switching devices appear in control circuits for process control, motor protection, and equipment monitoring:\n\n• Bimetallic devices: two bonded metals with different coefficients of thermal expansion. When heated, the strip bends toward the lower-expansion metal. At a setpoint temperature, the bending is enough to make or break contacts. Simple, inexpensive, self-powered. Used in thermostats and overload relays.\n\n• Thermocouples: two dissimilar metals joined at one end generate a small voltage (Seebeck effect) proportional to the temperature difference between the hot junction and the reference junction. Nonlinear output. Used for high-temperature measurement and as flame detectors (confirming pilot light presence in burner systems).\n\n• RTDs (Resistance Temperature Detectors): a precision resistor (usually platinum) whose resistance increases linearly with temperature. The most accurate temperature sensor for industrial control. Positive temperature coefficient. Used in motor protection and precise process control.\n\n• Thermistors: semiconductor devices with a large, nonlinear change in resistance with temperature. Negative temperature coefficient (resistance drops as temperature rises). Very sensitive to small temperature changes. Used in motor winding protection (embedded in the stator winding).\n\n• Infrared (non-contact) sensors: measure the thermal radiation emitted by objects. No contact required. Excellent for measuring temperature of moving objects, electrical conductors, or in environments where a physical sensor would be contaminated or damaged.`
+      },
+      {
+        type: 'concept',
+        title: 'Overcurrent: Short Circuits vs Overloads',
+        body: `Not all overcurrent is the same. The type of overcurrent determines which protection device must respond:\n\n• Short circuits: occur when a live (ungrounded) conductor contacts another conductor, a ground, or bonded conductive equipment. The fault path has very low resistance. Current rises to thousands or tens of thousands of amperes — far above normal operating current. This enormous current can damage conductors and equipment in milliseconds. Short circuit protection must respond in milliseconds.\n\n• Overloads: the motor or load draws current moderately above its normal rating. A motor in an overload condition might draw 150% or 200% of full-load amps. This causes heat to build up in the motor windings over time — seconds to minutes. Overload protection must respond on a time-delay basis (to allow motor inrush) but must trip before the motor overheats.\n\nNo single protection device handles both perfectly — which is why motor circuits use both a short-circuit overcurrent device (fuse or breaker, sized for fault current) and a separate overload relay (sized for the motor\'s thermal characteristics).`
+      },
+      {
+        type: 'concept',
+        title: 'Overcurrent Device Ratings',
+        body: `Every overcurrent device has two fundamental ratings that must both be respected:\n\n• Continuous current rating: the maximum current the device can carry continuously without opening. This is selected based on conductor ampacity from CEC Table 13. A 30A fuse or breaker protects a conductor rated for 30A at the applicable temperature.\n\n• Interrupting rating (AIC — Amperes Interrupting Capacity): the maximum fault current the device can safely interrupt without failing. This is not about how much current it normally carries — it is about how much fault current it can shut off without being destroyed.\n\nIf available fault current exceeds the device\'s interrupting rating, the device may explode or sustain an arc instead of clearing the fault. This is a life-safety issue. Available fault current at any point in a system depends on:\n• The kVA rating of the supply transformer (larger = more energy)\n• The secondary voltage (higher voltage = more current capability)\n• The percent impedance (%Z or %IZ) of the transformer (lower %Z = higher fault current)\n• The impedance of the conductors between the transformer and the device (longer conductors = more impedance = lower fault current)`,
+        formula: 'Available fault current decreases with distance from source\nFault current ≈ transformer secondary voltage ÷ (system impedance)\nHigher kVA, lower %Z transformer = higher available fault current'
+      },
+      {
+        type: 'concept',
+        title: 'Fuse Types: Single-Element and Dual-Element',
+        body: `Fuses are the simplest overcurrent protection devices — a calibrated metal element that melts when current exceeds its rating, permanently interrupting the circuit.\n\n• Non-time-delay fuses (single-element): contain a single fuse link that melts when current exceeds the rating. Very fast response — can clear high short circuits in less than 1/4 of an electrical cycle (less than 4 milliseconds at 60 Hz). This makes them current-limiting: they interrupt so fast that the fault current never reaches its prospective peak. Excellent for short-circuit protection, but they will blow on motor inrush currents. Must be oversized for motor circuits, which reduces their protection effectiveness.\n\n• Time-delay fuses (dual-element): contain two separate elements: a thermal cut-out element (a solder-held connector) for overload protection, and a fast-acting fuse link for short-circuit protection. The solder element melts slowly under sustained overload current — it mimics the inverse-time heating of the protected conductor. The fast-acting link responds to short circuits with the same speed as a single-element fuse. This dual response allows the time-delay fuse to be sized close to the motor FLA, providing both motor overload protection AND short-circuit protection in a single fuse.`,
+        formula: 'Dual-element fuse: thermal element (overload, slow) + fuse link (short circuit, fast)\nCEC motor circuit fuse sizing: time-delay up to 175% of FLA; non-time-delay up to 300% of FLA'
+      },
+      {
+        type: 'concept',
+        title: 'Instantaneous-Trip and Inverse-Time Circuit Breakers',
+        body: `Circuit breakers perform the same function as fuses but can be reset rather than replaced. Two types are critical for industrial motor control:\n\n• Instantaneous-trip (magnetic-only) circuit breakers: contain only an electromagnetic trip element. A solenoid responds to the high magnetic field created by short-circuit current and trips the breaker almost instantly (within one cycle). These breakers do NOT provide overload protection — they respond only to short-circuit currents well above normal. Used with separate overload relays in motor control. Sometimes called motor circuit protectors (MCP).\n\n• Inverse-time circuit breakers (thermal-magnetic): the most common type. A bimetallic strip provides time-delay overload protection (strip bends with heat over time, eventually touching a tripper bar). An electromagnetic element provides fast trip on high fault currents. Trip-free mechanism: the breaker WILL trip even if the operating handle is held in the ON position. This prevents an operator from overriding protective tripping.\n\nThe inverse-time characteristic means: the greater the overcurrent, the faster the breaker trips. Small overloads take many seconds. Large overloads trip in seconds. Short circuits trip nearly instantaneously. This inverse response matches the thermal behavior of conductors.`
       },
       {
         type: 'keypoint',
-        title: '🟢 Color Codes and Standards',
-        body: `Pilot device colors are standardized by NEMA ICS and the CEC:\n\n• Red: Stop, emergency stop, power off. NC pushbutton.\n• Green or Black: Start, run, power on. NO pushbutton.\n• Yellow: Caution, abnormal condition.\n• Blue: Mandatory action (lockout).\n• White/Grey: no specific function.\n\nPilot lights follow similar conventions:\n• Red = machine running or dangerous condition present\n• Green = safe condition, machine stopped, power available\n• Amber = abnormal condition, attention needed\n\nKnowing color codes lets you read an unfamiliar control panel quickly. A green lit light with a red lit light simultaneously? Something's wrong — those shouldn't both be on if they represent opposite states.`
-      },
-      {
-        type: 'concept',
-        title: '⚡ Fuses: Simple, Fast, Sacrificial',
-        body: `A fuse is the simplest overcurrent protection device: a piece of calibrated metal that melts at a specific current, breaking the circuit. One-shot device — once blown, it must be replaced.\n\nFuse characteristics that matter:\n\n• Current rating: the continuous current the fuse handles without opening. Size to 100-125% of load.\n\n• Voltage rating: maximum voltage the fuse can safely interrupt. A 250V fuse on a 600V circuit is dangerous — the arc won't extinguish.\n\n• Interrupting rating: the maximum fault current the fuse can safely clear. A fuse rated 10 kAIC on a bus capable of 50 kA fault current WILL explode violently.\n\n• Current-limiting: fast-acting fuses (Class CC, J, RK1, RK5, L) limit the peak let-through current by clearing in less than a half-cycle. This protects equipment from the destructive energy of high fault currents.\n\n• Time-delay (dual-element): have a thermal delay element that ignores brief motor inrush (5-7× FLA) while still protecting against sustained overloads. Essential for motor circuits.`,
-        formula: 'Motor circuit fuse sizing (CEC Rule 28-200):\nTime-delay fuses: up to 175% of motor FLA\nNon-time-delay: up to 300% of motor FLA (but must not exceed 600% for short-circuit protection)'
-      },
-      {
-        type: 'concept',
-        title: '🔌 Circuit Breakers: Resettable Protection',
-        body: `A circuit breaker performs the same overcurrent protection function as a fuse, but mechanically trips rather than melting — it can be reset after a fault is cleared.\n\nThermal-magnetic circuit breaker (most common):\n• Bimetallic strip: provides time-delay overload protection. As overcurrent heats the strip, it bends and trips the mechanism. Simulates thermal damage to the protected conductor.\n• Magnetic (electromagnetic) trip: a solenoid that trips the breaker almost instantaneously on very high fault currents. Protects against short circuits.\n\nElectronic trip breakers (LSIG):\n• Long-time (L): overload protection with inverse time-current curve\n• Short-time (S): short-time delay for selective coordination\n• Instantaneous (I): immediate trip for high-level faults\n• Ground fault (G): ground fault protection at adjustable threshold\n\nGFCI (Ground Fault Circuit Interrupter): detects as little as 5mA of ground fault current and trips in <1/40 second. Protects people from electrocution on 15/20A branch circuits. Required by CEC near water.\n\nGFP (Ground Fault Protection of Equipment): detects ground faults typically in the 150mA-1200mA range. Protects equipment from arcing ground faults on large systems. Required on 1000A+ services per CEC.`
+        title: 'Fault Current Factors',
+        body: `The available fault current at any point in a system is critical for selecting overcurrent devices with adequate interrupting ratings. Four factors control it:\n\n• kVA rating of the transformer: a larger transformer can supply more fault current. A 1000 kVA transformer can supply roughly ten times more fault current than a 100 kVA transformer at the same voltage.\n\n• Secondary voltage of the transformer: fault current is proportional to voltage. A 600V system has higher available fault current than a 208V system from the same transformer.\n\n• Percent impedance (%Z or %IZ) of the transformer: this is the percentage of rated voltage that must be applied to the primary to drive rated current through a shorted secondary. Lower %Z = less internal opposition = higher available fault current. Typical distribution transformers have %Z of 2-5%. A 2% transformer supplies twice the fault current of a 4% transformer of the same size.\n\n• Distance from the source: longer conductors between the transformer and the fault point add impedance. Fault current decreases as the fault point moves further from the source. A fault at the main panel is much more severe than a fault at the end of a 200m branch circuit.`,
+        formula: 'Available fault current (approx) = kVA × 1000 ÷ (%Z ÷ 100) ÷ (√3 × V_secondary)\nLower %Z, higher kVA, shorter distance = higher fault current = higher AIC requirement'
       },
       {
         type: 'real-world',
-        title: '🔗 Selective Coordination: The Art of Only Tripping What Needs to Trip',
-        body: `In a properly coordinated system, a fault on a branch circuit should trip only the branch circuit breaker — not the feeder breaker, not the main breaker. Otherwise a small fault in one room takes down the whole building.\n\nAchieving coordination means sizing and selecting breakers so each upstream device has a significantly slower (or higher threshold) trip characteristic than the downstream device. Engineers use time-current curves to verify coordination.\n\nFor electricians: never "upsize" a breaker to stop nuisance tripping. If a 20A breaker keeps tripping, the LOAD is drawing more than 20A — fix the load, or investigate the fault. Upsizing the breaker destroys the protection the system was designed to provide.`
+        title: 'Sizing Overcurrent Protection for Motor Circuits',
+        body: `Motor circuits require a specific sizing approach because motors have high starting inrush currents (5-7× FLA) that would trip a normally sized device on every start:\n\nBranch circuit overcurrent protection (CEC Rule 28-200): sized to allow motor starting:\n• Time-delay (dual-element) fuses: up to 175% of motor FLA\n• Non-time-delay fuses: up to 300% of motor FLA\n• Inverse-time circuit breakers: up to 250% of motor FLA\n• Motor circuit protectors (instantaneous only): up to 1300% of motor FLA, within settings\n\nMotor overload protection (CEC Rule 28-304): the OL relay protects the motor windings:\n• Sized at approximately 100-125% of motor FLA depending on service factor and temperature rating\n• For motors with service factor ≥ 1.15 or temperature rise ≤ 40°C: maximum 125% FLA\n• For all other motors: maximum 115% FLA\n\nThe branch circuit OCPD protects the conductors against short circuits. The overload relay protects the motor against thermal damage. Both are required — they serve different functions at different current levels.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'A fuse is rated 600V, 30A, with an interrupting rating of 10 kAIC. The available fault current is 15 kA. Can this fuse be used?', a: 'NO. The interrupting rating (10 kAIC) is less than the available fault current (15 kA). The fuse would explode violently and fail to safely clear the fault.' },
-          { q: 'What is the difference between GFCI and GFP?', a: 'GFCI detects very small ground faults (5mA) to protect people. GFP detects larger ground faults (150mA+) to protect equipment from arcing damage. Both interrupt the circuit, but they serve different purposes at different current thresholds.' },
-          { q: 'A time-delay fuse for a motor is used instead of a fast-acting fuse. Why?', a: 'Motors draw 5-7× their full-load current during starting. A fast-acting fuse would blow on every motor start. A time-delay fuse rides through brief inrush current while still protecting against sustained overloads and short circuits.' }
+          { q: 'A stop button is NC. If the control wire to a stop button is cut (open circuit), what happens to the motor?', a: 'The motor stops. A cut wire in the NC stop button circuit creates an open circuit — the same effect as pressing the stop button. This is the fail-safe nature of NC stop buttons: any wiring failure in the stop circuit causes the motor to stop rather than run uncontrolled.' },
+          { q: 'Why must a fuse\'s interrupting rating (AIC) exceed the available fault current at the installation point?', a: 'If fault current exceeds the fuse\'s interrupting rating, the fuse element melts but the fuse body cannot extinguish the arc. The housing may rupture violently, spraying molten metal. The fault current continues to flow. The device fails to protect the circuit and poses a severe arc blast hazard.' },
+          { q: 'A dual-element time-delay fuse has two elements. Describe what each element does.', a: 'Thermal (solder) element: provides overload protection with inverse-time response. Solder melts slowly under sustained overload, mimicking the thermal damage curve of the conductor. Fast-acting fuse link: provides short-circuit protection, responding in less than a half-cycle to high fault currents. Together, one fuse handles both overload and short-circuit protection.' },
+          { q: 'An inductive proximity switch is used to detect aluminum targets. Will it work?', a: 'An inductive proximity switch detects ferrous metals through eddy currents induced by a magnetic field. Aluminum is non-ferrous but IS conductive — it will have eddy currents induced in it. However, inductive sensors are generally much less sensitive to non-ferrous metals like aluminum and copper compared to steel. Sensing distance is significantly reduced. A capacitive proximity switch would be more reliable for aluminum detection.' },
+          { q: 'Why are motor overload relays and branch circuit fuses or breakers both required for a motor circuit?', a: 'They protect different things at different current levels. The branch circuit OCPD (fuse or breaker) is sized at 150-300% of FLA to allow motor starting inrush — it protects conductors against short circuits but would not trip on a sustained motor overload (which might be only 150% of FLA). The overload relay is sized at 100-125% of FLA to protect the motor windings from thermal damage at moderate overcurrents. Without both, either the motor or the conductors would be unprotected.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'The CEC requires overcurrent protection to be sized based on the conductor ampacity, not the load. If you have a 12 AWG conductor (rated 20A in NMD90), you cannot install a 30A breaker even if the load only draws 15A. The breaker protects the wire, not the load.',
-          'Fuse classes use size rejection features to prevent installing the wrong fuse. A Class J fuse physically cannot fit in a Class H fuseholder. Never force a fuse into a holder it wasn\'t designed for, and never bridge a fuse with wire.',
-          'When a fuse blows, the fuse is doing its job. Find and fix the fault before replacing the fuse. Putting in a new fuse without clearing the fault means the new fuse will blow too — or worse, if you installed a higher-rated fuse to "fix" the problem, now the conductor is unprotected and it may be the wire that fails next time.'
+          'The CEC requires overcurrent protection to be sized based on conductor ampacity, not load current. A 12 AWG conductor rated 20A must be protected by a maximum 20A OCPD, even if the load only draws 10A. The OCPD protects the wire, not the load.',
+          'Never upsize a fuse or breaker to stop nuisance tripping. If a 20A breaker keeps tripping, the load is drawing more than 20A — or there is a fault. Investigate the cause. Upsizing the OCPD removes protection from the conductors and increases fire risk.',
+          'When you replace a blown fuse, ALWAYS find out why it blew before installing the new one. A fuse that blew is doing exactly its job. Installing a new fuse into an uncorrected fault means the new fuse will blow immediately — or if you install the wrong (higher) rating, the fault current will flow until the conductors fail.',
+          'Available fault current at the main panel of a commercial building is often 30,000-65,000A. Most standard breakers and Class H fuses are only rated 10,000A AIC. Always verify that the interrupting rating of installed devices matches the available fault current — this is checked during arc flash studies.',
+          'The trip-free mechanism on a circuit breaker is a safety feature. Never hold a breaker handle in the ON position if it wants to trip. If a breaker trips back immediately when reset, there is still a fault — isolate the circuit and investigate before resetting again.'
         ]
       },
       {
         type: 'objectives',
-        title: 'Module Objectives',
+        title: 'Module 23 Objectives',
         objectives: [
-          'Define "pilot device" and explain its role in separating the control circuit from the power circuit.',
-          'Identify the types of pilot devices: pushbuttons, selector switches, limit switches, float switches, pressure switches, flow switches, proximity switches, and pilot lights.',
-          'Describe the difference between normally open (NO) and normally closed (NC) pilot device contacts and their normal state.',
-          'Identify NEMA/IEC color coding standards for pushbuttons and pilot lights.',
-          'Describe the difference between momentary-contact and maintained-contact pushbuttons and give an application for each.',
-          'Identify the electrical and mechanical requirements for emergency stop (E-stop) devices.',
-          'Explain why multiple STOP pushbuttons are wired in series and multiple START pushbuttons are wired in parallel.',
-          'Identify the sensing principles of automatic pilot devices: limit switches (mechanical), float switches (level), pressure switches (pressure), flow switches (fluid flow), inductive proximity (metallic targets), capacitive proximity (any material), and photoelectric (light beam).',
-          'Describe the purpose of pilot lights and identify standard color codes for pilot light indication.',
-          'Define overcurrent and identify the two main categories: overload and short circuit.',
-          'Describe the construction and operating principle of a fuse and explain what causes it to open.',
-          'Identify the difference between non-time-delay and time-delay (dual-element) fuses.',
-          'Describe the purpose of the thermal element and the fast-acting element in a dual-element fuse.',
-          'Define "current-limiting fuse" and describe how it reduces I²t energy let-through during a fault.',
-          'Identify the common fuse classes (H, CC, J, RK1, RK5, T, L) and explain the purpose of physical rejection features.',
-          'Explain why a fuse must be rated at or above the circuit voltage and describe the consequence of installing an under-rated fuse.',
-          'Define interrupting rating (AIC) and explain why it must exceed the available fault current at the installation point.',
-          'Describe the construction and operation of a thermal-magnetic circuit breaker, identifying the role of both the thermal and magnetic trip elements.',
-          'Explain the inverse-time trip characteristic and describe why it is suitable for protecting conductors.',
-          'Define the instantaneous trip function and identify the fault conditions that activate it.',
-          'Define "trip-free" design and explain why it is an important safety feature.',
-          'Define GFCI, state the trip current threshold (5mA), and identify locations where the CEC requires GFCI protection.',
-          'Define GFP (Ground Fault Protection of Equipment), state its typical trip range, and explain how it differs from GFCI in purpose and threshold.',
-          'State the CEC requirements for sizing motor branch circuit overcurrent protection and motor overload protection.',
-          'Define selective coordination and explain its importance in minimizing system disruption during a fault.',
-          'Explain why upsizing an overcurrent device to prevent nuisance tripping is dangerous and what the correct approach is.',
-          'Identify the CEC requirement for a motor disconnect and describe its location and function.'
+          'Describe the function and wiring of a start button (NO momentary) and stop button (NC momentary) in a basic motor control circuit.',
+          'Explain why stop buttons are wired in series and start buttons in parallel when multiple control stations are used.',
+          'Describe the seal-in (holding contact) circuit and explain how it maintains the contactor coil energized after the start button is released.',
+          'Distinguish between momentary contact and maintained contact pilot devices and identify an application for each.',
+          'Identify automatic pilot devices: pressure switches, float switches (lever and tethered types), and limit switches, and describe the sensing principle of each.',
+          'Identify non-contact sensing devices: magnetic proximity, inductive proximity, capacitive proximity, and photoelectric sensors, and describe the detection principle of each.',
+          'Identify temperature sensing devices: bimetallic, thermocouple, RTD, thermistor, infrared, and describe the operating principle and typical application of each.',
+          'Define overcurrent and distinguish between short circuits (high current, milliseconds) and overloads (moderate current, seconds to minutes).',
+          'Define continuous current rating and interrupting rating (AIC) of an overcurrent device and explain why both must be specified correctly.',
+          'Identify the four factors that affect available fault current: transformer kVA, secondary voltage, percent impedance, and conductor distance.',
+          'Describe single-element (non-time-delay) fuses and explain their speed of response and limitations for motor circuits.',
+          'Describe dual-element (time-delay) fuses, identifying the thermal element (overload) and fuse link (short circuit) and how each responds.',
+          'Describe the current-limiting action of fast-acting fuses and explain why this reduces let-through energy to downstream equipment.',
+          'Describe instantaneous-trip (magnetic-only) circuit breakers and explain why they require a separate overload relay.',
+          'Describe the construction and operation of an inverse-time (thermal-magnetic) circuit breaker, identifying the thermal element, magnetic element, and trip-free mechanism.',
+          'Apply CEC sizing rules for motor branch circuit overcurrent protection (175% FLA for time-delay fuses, 250% for breakers) and motor overload protection (125% FLA).',
+          'Explain the consequence of installing an overcurrent device with an interrupting rating below the available fault current.'
         ],
         questions: [
-          { q: 'What is the key function of a pilot device in a motor control circuit?', a: 'A pilot device controls the operation of a power circuit without carrying the full load current — it operates in the lower-voltage control circuit and signals contactors or starters to energize or de-energize the motor.' },
-          { q: 'Stop buttons are wired in series and start buttons in parallel. Why?', a: 'Series stops: any one station can break the circuit and stop the motor (fail-safe). Parallel starts: any one station can energize the coil to start the motor (convenience). This arrangement is universal in motor control.' },
-          { q: 'What is the difference between a Class J and a Class H fuse?', a: 'Class J is current-limiting (clears in <½ cycle), rated 200,000A AIC, with rejection features. Class H (glass tube) is NOT current-limiting, typically rated only 10,000A AIC, and can be replaced with any cylindrical fuse. Class J provides vastly superior fault protection.' },
-          { q: 'Why must a fuse\'s voltage rating meet or exceed the circuit voltage?', a: 'After the fuse element melts, an arc forms across the gap. The fuse must be able to extinguish this arc. A fuse rated below circuit voltage cannot reliably extinguish the arc — the housing may rupture and the fault current continues to flow.' },
-          { q: 'A GFP device trips at 300mA. A GFCI trips at 5mA. Why are both used instead of just GFCI everywhere?', a: 'GFCI at 5mA would nuisance-trip on the normal leakage currents of large commercial/industrial systems. GFP at 150mA–1200mA detects only genuine arcing ground faults on large conductors without nuisance tripping, while GFCI is used on branch circuits for personnel protection.' }
+          { q: 'A motor control panel has two remote stop stations (NC) and two start stations (NO). Describe the correct wiring arrangement.', a: 'Both NC stop buttons wired in series with each other and in series with the coil circuit — any one stop button can break the circuit and stop the motor. Both NO start buttons wired in parallel with each other and with the M1 seal-in contacts — any one start button can complete the circuit path to the coil.' },
+          { q: 'A 30A, 600V non-time-delay fuse is installed in a panel where available fault current is 42,000A. The fuse has an interrupting rating of 10,000A. What is the danger and what is the correct solution?', a: 'The fault current (42 kA) far exceeds the fuse interrupting rating (10 kA). Under a short circuit, the fuse will not clear the fault safely — the housing will rupture with explosive force, creating an arc blast and fire hazard. The correct solution: replace with a fuse rated for at least 42,000A AIC — such as a Class J (200 kAIC) or Class RK1 (200 kAIC) time-delay fuse.' },
+          { q: 'What is the maximum time-delay fuse size for a motor with an FLA of 24A? What is the maximum non-time-delay fuse size?', a: 'Time-delay: 24 × 1.75 = 42A → use the next standard size up, 45A. Non-time-delay: 24 × 3.00 = 72A → use the next standard size up, 80A (or check if 72A is a standard size). Note: the non-time-delay fuse must be sized much larger to ride through starting inrush, which significantly reduces its overload protection capability.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will identify pilot devices and overcurrent protection devices used in industrial motor control circuits, and correctly size overcurrent protection for conductors and motors.',
+        outcome: 'The student will identify pilot devices and overcurrent protection devices used in industrial motor control, describe their operating principles and ratings, and correctly select overcurrent protection for conductors and motor circuits.',
         questions: [
-          { q: 'A motor control panel has a red mushroom-head button, a green momentary button, an amber selector switch, and a green pilot light. Identify each device\'s likely function.', a: 'Red mushroom-head = Emergency Stop (maintained, hardwired). Green momentary = Start pushbutton (NO, momentary). Amber selector = Mode/caution function (e.g., Hand-Off-Auto or speed select). Green pilot light = Motor running or power available indicator.' },
-          { q: 'A 30A, 600V, Class H fuse is installed in a panel where the available fault current is 25,000A. The fuse is rated 10,000A interrupting capacity. Describe the risk and the correct solution.', a: 'The fuse\'s interrupting rating (10 kAIC) is far below the available fault current (25 kA). Under a short circuit, the fuse will rupture violently and fail to clear the fault. The correct solution is to replace it with a fuse rated for at least 25 kAIC — such as Class J (200 kAIC) or Class RK1 (200 kAIC).' },
-          { q: 'Describe a scenario where a time-delay fuse is required instead of a non-time-delay fuse, and explain the consequence of using the wrong type.', a: 'A motor circuit drawing 20A FLA with 5-7× starting inrush (100-140A for ~3 seconds). A non-time-delay fuse sized for 20A continuous current would blow on every start due to the inrush. It must be oversized to ~300% (60A), which severely reduces short-circuit protection. A time-delay fuse sized at 125-175% of FLA (25-35A) rides through the inrush while providing superior fault protection.' },
-          { q: 'A 20A circuit breaker trips repeatedly on a circuit feeding an electric heater. The electrician replaces it with a 30A breaker to "fix" the problem. Explain what is wrong with this and what the correct approach should be.', a: 'Wrong approach: the 12 AWG wiring on a typical 20A circuit is only rated for 20A. A 30A breaker will allow 30A to flow through conductors rated for 20A, causing overheating, insulation breakdown, and potentially a fire. Correct approach: measure the actual current draw of the heater. If it exceeds 20A, the heater is oversized for the circuit — either replace the heater or upgrade the circuit (wiring and breaker together) to the appropriate ampacity.' }
+          { q: 'A motor with FLA of 18A is installed on a branch circuit. Select the correct time-delay fuse size for branch circuit protection and the correct overload relay setting. Explain your reasoning.', a: 'Branch circuit fuse (CEC 28-200): 18A × 1.75 = 31.5A. Next standard size: 35A time-delay fuse. This allows the motor to start (riding through ~90A inrush for a few seconds) while protecting conductors against faults. Overload relay (CEC 28-304): if the motor has SF ≥ 1.15 or temperature rise ≤ 40°C, set at maximum 125% of FLA = 18 × 1.25 = 22.5A. For standard motors: 18 × 1.15 = 20.7A maximum. Set the OL relay as close to FLA as possible without causing nuisance tripping on normal starts.' },
+          { q: 'A thermocouple is used to confirm that a pilot light flame is present in a gas burner system. A technician suggests replacing it with an RTD for better accuracy. Is this a good idea? Explain.', a: 'Not appropriate. Thermocouples generate their own voltage (the Seebeck effect) without requiring an external power supply to the sensor. This makes them suitable as self-powered flame detectors — if the flame is present, the thermocouple generates sufficient voltage to hold open a gas valve or safety relay. An RTD is a passive resistance device that requires an external current source to measure its resistance change — it cannot generate a safety signal by itself without a signal conditioner. Additionally, RTDs are typically more fragile than thermocouples and have lower maximum temperature ratings. The thermocouple is the correct technology for flame detection.' }
         ]
       }
     ]
-  }
-  ,{
+  },
+  {
     id: 'm24',
     title: 'Drawing & Diagram Conversion',
     icon: '📋',
     subtitle: 'Reading the Language Every Electrician Must Speak',
     color: '#ec4899',
-    gradient: 'linear-gradient(135deg,rgba(236,72,153,0.12),rgba(139,92,246,0.06))',
+    gradient: 'linear-gradient(135deg,rgba(236,72,153,0.12),rgba(219,39,119,0.06))',
     border: 'rgba(236,72,153,0.3)',
-    readTime: '13 min read',
+    readTime: '18 min read',
     sections: [
       {
         type: 'hook',
-        title: '⚡ The Drawing Is the Circuit',
-        body: `Before a single wire is pulled, before a single conduit is bent, the electrician reads the drawing.\n\nThe drawing tells you what to build. And every drawing speaks a specific language — a language of symbols, conventions, and diagram types that took over a century to standardize across the entire electrical industry.\n\nMiss one wire on the wiring diagram? The light doesn't work. Misread a contact symbol on the schematic? The motor won't start — or worse, won't stop. Mistake a 14/2 cable run for a 14/3 on a blueprint? You'll be back in the wall.\n\nThis module is about reading that language fluently.`
+        title: 'The Drawing Is the Circuit',
+        body: `Before a single wire is pulled, before a single conduit is bent, the electrician reads the drawing.\n\nEvery electrical installation exists twice: once on paper (or screen), and once in the real world. The drawing is the authoritative description of the circuit. Miss one wire on the wiring diagram and the light does not work. Misread a contact symbol on the schematic and the motor will not start — or will not stop. Mistake the conductor count on a blueprint and you will be back in the wall.\n\nThis module is about reading that language fluently. Electrical diagrams are not decoration — they are the specification, the instruction, and the troubleshooting tool, all in one.`
       },
       {
         type: 'story',
-        title: '🏗 Three Ways to Describe the Same Circuit',
-        body: `Imagine you need to explain a simple switch-light circuit to three different people.\n\nTo a project manager, you draw boxes: [Panel] → [Switch] → [Light]. Simple. Clean. Shows the logic without any messy details.\n\nTo the apprentice who's pulling wire, you draw a wiring diagram: which wire goes to which terminal, what colour is which, where the wire nut is, and which cable carries how many conductors.\n\nTo the troubleshooter who shows up at 2 AM when the light doesn't work, you hand them a schematic: L1 on the left rail, N on the right, SW1 contact in the rung, lamp symbol at the end. They trace continuity from left to right in 10 seconds and find the problem.\n\nSame circuit. Three completely different drawings. Each one is exactly right for its purpose — and you need to be able to work with all three.`
+        title: 'Three Ways to Describe the Same Circuit',
+        body: `Imagine explaining a simple motor control circuit to three different people.\n\nTo the project manager who needs to understand what the system does: you draw a block diagram — boxes labeled Control Panel, Start/Stop Station, Motor Starter, and Motor, connected by arrows. Clean, logical, no details.\n\nTo the apprentice who is pulling the wire: you draw a wiring diagram — every wire shown with its colour, every terminal labeled, every splice shown with a wire nut. Physical and complete.\n\nTo the electrician who arrives at 2 AM when the motor will not run: you hand them a ladder schematic — L1 on the left, N/L2 on the right, contacts in series and parallel across rungs, coil on the right side of the rung. They trace the circuit in 30 seconds and find the open NC overload contact.\n\nSame circuit. Three diagrams. Each one perfectly suited to its purpose.`
       },
       {
         type: 'concept',
-        title: '📦 Block Diagrams: The Big Picture',
-        body: `A block diagram is the simplest of the three. It uses labeled rectangles (blocks) connected by arrows to show the functional flow of a circuit.\n\nEach block represents one function:\n• [Power Source] → [Switch] → [Load]\n• [Control Source] → [Pushbutton] → [Relay Coil]\n• [L1/L2/L3] → [Main Contacts] → [OL Heaters] → [Motor]\n\nBlock diagrams tell you:\n✓ What components are in the circuit\n✓ What order they appear in\n✓ Which is the control path and which is the power path\n\nBlock diagrams do NOT tell you:\n✗ Wire colours\n✗ Cable types or sizes\n✗ Physical routing\n✗ Terminal connections\n✗ Whether contacts are NO or NC\n\nUse block diagrams for planning, documentation, and quick communication. They are often the first step in circuit design.`
+        title: 'Types of Electrical Diagrams',
+        body: `Six standard diagram types are used in the electrical industry, each showing different aspects of the same system:\n\n• Pictorial diagrams: show the actual physical appearance of devices and conductors as they would look in real life. Useful for very simple circuits and consumer explanations, but impractical for complex systems.\n\n• Wiring diagrams: show physical connections and layout of all conductors and devices. Every wire is shown with its correct colour and every terminal is identified. Used for installation and maintenance.\n\n• Schematic diagrams: show electrical function without regard to physical location. Devices may be far apart on the drawing even if they are in the same enclosure. Components are shown as standard symbols connected by lines. Used for understanding circuit operation.\n\n• Ladder (line) diagrams: a specialized schematic format for control circuits. Power rails run vertically on left and right, rungs of contacts and coils connect them horizontally. Traces current paths easily from top to bottom, left to right.\n\n• Three-line diagrams: show three-phase power circuits with all three phases represented as separate lines. Shows main disconnect, fuses or breakers, contactors, overloads, and motors in a format that makes the power flow obvious.\n\n• Single-line (one-line) diagrams: a simplified overview of an entire electrical system, with three-phase systems shown as a single line. Used for system planning and distribution network documentation.`
       },
       {
         type: 'keypoint',
-        title: '🧵 Wiring Diagrams: What the Apprentice Uses',
-        body: `A wiring diagram shows how the circuit is actually built — wire by wire, terminal by terminal.\n\nEvery conductor is shown with its correct colour. Every splice shows a wire nut. Every device shows all its terminals and what connects where. The physical layout of boxes often approximates the actual installation.\n\nCanadian conductor colour code:\n• Black = hot (ungrounded) conductor\n• White = neutral (grounded) conductor\n• Red = second hot in a multi-wire circuit (14/3 or 12/3 cable)\n• Green or bare = equipment grounding conductor (EGC)\n\nSwitch loops (switch legs): In older wiring, the cable from a light box to a switch box carries the hot in the black wire and returns the switched hot in the white wire. The white wire must be re-identified with black tape or paint at both ends — it is acting as a hot conductor, not a neutral.\n\nCounting conductors: each wire in a cable counts. 14/2 has 2 insulated conductors (black + white) plus a bare EGC. 14/3 has 3 insulated conductors (black + red + white) plus a bare EGC. The number after the slash tells you how many insulated conductors.`
+        title: 'Ladder Diagrams: Structure and Reading Rules',
+        body: `The ladder diagram is the universal language of industrial control circuit documentation and troubleshooting. You must be able to read it without hesitation.\n\nStructure:\n• Left vertical rail: L1 (hot side, control supply)\n• Right vertical rail: L2 or N (neutral or second hot, control supply return)\n• Horizontal rungs: connect the two rails; each rung is one control function\n• Reading direction: left to right, top to bottom\n• Contacts (inputs): always on the LEFT portion of each rung\n• Loads/coils (outputs): always on the RIGHT side of each rung, adjacent to the right rail\n\nCurrent flow logic: trace from L1 through contacts to the coil at N/L2. If ALL series contacts in the path are closed, the coil energizes. If ANY series contact is open, the coil de-energizes.\n\nParallel contacts: if two contacts are connected in parallel (both paths connecting the same two points), either one can allow current to flow — this is OR logic.\n\nSeries contacts: all must be closed for current to pass — this is AND logic.`,
+        formula: 'Series contacts: ALL must be closed (AND logic) → coil energizes\nParallel contacts: ANY ONE may be closed (OR logic) → path is complete\nContacts: LEFT side of rung | Coils: RIGHT side of rung'
       },
       {
         type: 'concept',
-        title: '🪜 Schematic (Ladder) Diagrams: The Troubleshooter\'s Map',
-        body: `The schematic diagram is drawn in ladder format and is the universal language of motor control troubleshooting.\n\nStructure:\n• Two vertical rails: L1 (hot, left) and N/L2 (neutral or second hot, right)\n• Horizontal rungs connect the two rails\n• Each rung is a complete circuit path from L1 through contacts to a load at N/L2\n\nContact symbols:\n• NO contact: two short vertical lines (open gap) — must close for current to flow\n• NC contact: two short vertical lines with a diagonal slash — must NOT open for current to flow\n\nOutput symbols:\n• Coil: letter in parentheses or a circle — (M), (CR), (T)\n• Lamp: circle with X inside\n• Motor: circle with M\n\nReading rule: trace from L1, through each contact in series, to the output at N/L2. If ALL series contacts are closed, the output energizes. Contacts in parallel = OR logic (either one provides a path).\n\nThe most important convention: CONTACTS are on the LEFT side of the rung. OUTPUTS (coils, loads) are on the RIGHT side. Always.`,
-        formula: 'Series contacts: ALL must be closed (AND logic)\nParallel contacts: ANY ONE can close (OR logic)\nA coil energizes when current reaches it from L1 to N/L2'
-      },
-      {
-        type: 'keypoint',
-        title: '🔢 Counting Wires — The Core Skill',
-        body: `When you look at a block diagram and need to know what cable to buy, you count the conductors required between each pair of locations.\n\nBasic switch-light:\n• Panel → Switch box: 2 conductors (hot + neutral) → 14/2\n• Switch box → Light box: 2 conductors (switched hot + neutral) → 14/2\n\n3-way switch circuit:\n• Panel → SW1 box: 2 conductors → 14/2\n• SW1 box → SW2 box: 3 conductors (traveler A + traveler B + neutral) → 14/3\n• SW2 box → Light box: 2 conductors → 14/2\n\n3-wire motor control push button station:\n• 3 conductors to the button station (control hot, junction point, neutral return)\n\nMotor power circuit:\n• 3 conductors from starter to motor (T1, T2, T3)\n\nOn blueprints, slash marks on a circuit line tell you the same thing:\n// = 2 conductors (14/2)\n/// = 3 conductors (14/3)\n//// = 4 conductors\n\nA home run arrow on a floor plan shows which panel the circuit returns to.`
+        title: 'Standard Schematic Symbols',
+        body: `Standard symbols allow anyone trained in the system to read a diagram from any source. Key symbols for control circuits:\n\n• NO contact: two short vertical lines with an open gap between them. Requires the contact to CLOSE for current to flow.\n\n• NC contact: two short vertical lines with a diagonal slash through the gap. Contact is CLOSED normally; the slash indicates the operating condition (contacts open when operated).\n\n• Coil: a circle with the device letter inside, or a rectangle (IEC style). The letter identifies which device it is: M1 = motor contactor 1, CR1 = control relay 1, T1 = timer relay 1.\n\n• Push button NO: a horizontal line with an upward arrow through it and a gap — shows the button actuates the contact upward to close.\n\n• Push button NC: same with diagonal slash indicating normally closed.\n\n• Timer contacts (TDOE): NO or NC symbol with a small semicircle on the contact line indicating time-delayed operation on energization.\n\n• Timer contacts (TDOD): similar symbol with semicircle indicating time-delayed operation on de-energization.\n\n• Overload contacts: NC contact with a horizontal line below it (resembling an overload heater symbol).\n\n• Fuse: a small rectangle or S-curve in the conductor line.\n\n• Circuit breaker: a small rectangle with an angled line (trip indicator).`
       },
       {
         type: 'concept',
-        title: '🔄 Converting Between Diagram Types',
-        body: `Block → Wiring Diagram:\n1. Identify each block and select the physical device (single-pole switch, relay, motor)\n2. Draw each device's enclosure with all terminals\n3. Connect terminals with conductors using correct colour codes\n4. Show all wire nuts for splices\n5. Label cable types (14/2 NMD90, etc.)\n\nWiring → Schematic:\n1. Identify all loads (coils, motors, lamps) — these become your output symbols on the right rail\n2. Identify all contacts and switches — these become contact symbols on the left side of rungs\n3. Trace current paths in the wiring diagram → replicate as rungs\n4. Series connections in wiring become contacts in series in the rung\n5. Parallel connections become contacts in parallel\n6. Draw dashed lines connecting a coil symbol to all contacts operated by that coil\n\nSchematic → Wiring:\n1. Identify each rung and trace what it energizes\n2. For each component, draw its physical enclosure\n3. Connect terminals per the schematic, adding correct wire colours\n4. Combine circuits sharing the same box into one drawing\n\nThis back-and-forth conversion is what happens every time an electrician plans and then builds a control circuit.`
+        title: 'NEMA vs IEC Symbols',
+        body: `North American electrical drawings traditionally use NEMA symbols. International and OEM equipment increasingly uses IEC symbols (IEC 60617 standard). You will encounter both:\n\nKey differences:\n• Coil: NEMA = circle with letter. IEC = rectangle.\n• Contacts: NEMA = vertical line representation. IEC = horizontal line representation with different contact conventions.\n• Switches: NEMA and IEC show different switch configurations differently.\n• Relays: NEMA draws all contacts of a relay beside the coil or with dashed lines. IEC draws the coil in one location and contacts wherever they appear in the circuit, linked by reference number only.\n\nPractical impact: when working on imported or OEM equipment, verify which symbol standard the drawing uses before tracing circuits. An IEC diagram will look unfamiliar to someone trained only on NEMA drawings. Most modern apprenticeship programs teach both.`,
+        formula: 'NEMA: traditional North American symbols\nIEC 60617: international standard, used on much industrial/OEM equipment\nAlways check which standard applies before tracing an unfamiliar diagram'
+      },
+      {
+        type: 'concept',
+        title: 'Converting from Wiring Diagram to Schematic',
+        body: `This conversion is a fundamental skill — you will need to go from "how it is wired" to "what it does electrically."\n\nStep-by-step process:\n1. Identify all loads (coils, motors, lamps) in the wiring diagram. Each becomes an output symbol on the right side of a rung in the schematic.\n2. Identify all contacts and switches. Each becomes a contact symbol on the left portion of rungs.\n3. Trace each current path in the wiring diagram from the hot supply through contacts to each load. Reproduce this path as a rung in the ladder.\n4. Contacts wired in series in the physical wiring = contact symbols in series on the rung.\n5. Contacts wired in parallel in the physical wiring = contact symbols in parallel on the rung.\n6. Draw a dashed line from each coil symbol to all contact symbols that are operated by that coil. This shows which contacts change state when the coil energizes.\n7. Add wire numbers or terminal references to connect the schematic back to the physical wiring.`
+      },
+      {
+        type: 'concept',
+        title: 'Converting from Schematic to Wiring Diagram',
+        body: `Going from "what it does" to "how to wire it" is what you do when building a panel from a schematic design:\n\nStep-by-step process:\n1. Identify all physical devices referenced in the schematic. Create a device list (contactor M1, relay CR1, timer T1, etc.).\n2. For each device, draw its physical enclosure with all terminals labeled.\n3. Trace each rung of the schematic. Each connection in the rung becomes a wire between physical terminals.\n4. Assign wire numbers: all terminals connected to the same conductor have the same wire number.\n5. Identify conductor colours using applicable code (CEC for Canadian installations): hot conductors in control circuits are typically red; neutral is white; grounding conductors are green or bare.\n6. Show the physical routing of wires — within the panel to terminal blocks, through conduit to external devices.\n7. Devices sharing the same physical enclosure are shown in the same box on the wiring diagram.`
+      },
+      {
+        type: 'concept',
+        title: 'Reading Three-Line and Single-Line Diagrams',
+        body: `Beyond control circuits, electricians must also read power distribution diagrams:\n\n• Three-line diagrams: the three phases are shown as three separate horizontal or vertical lines. Main disconnect, fusing, contactors, overload heaters, and motors are shown in three-line format. This makes it clear which phase each component connects to. Particularly important for understanding phase balancing, three-phase motor connections (wye vs. delta), and identifying which phase is fused for motor protection.\n\n• Single-line (one-line) diagrams: the entire three-phase system is represented as a single line. Each component is shown as a symbol on that line. Buses, transformers, breakers, feeder circuits, and panel boards are all indicated. The one-line is used for system-level understanding — which feeder feeds which panel, where the main disconnect is, what the transformer ratings are, and how fault current flows.\n\nAs an electrician, you will use one-line diagrams to understand the system hierarchy before working on any part of it, and three-line diagrams when working on three-phase power circuits.`
+      },
+      {
+        type: 'concept',
+        title: 'CAD and Software Tools for Electrical Drawings',
+        body: `Modern electrical drawings are produced and modified using computer-aided design (CAD) software rather than hand drafting. As an electrician, you may need to use or mark up these files:\n\n• AutoCAD Electrical: the industry standard for detailed electrical schematics and panel layouts. Produces ladder diagrams, wiring diagrams, panel layouts, and parts lists automatically from the schematic database. Changes to one drawing update cross-references automatically.\n\n• EPLAN Electric P8: widely used in industrial OEM and automation environments, particularly with European and IEC-based equipment. Sophisticated cross-reference and automatic wire numbering.\n\n• SolidWorks Electrical / SOLIDWORKS: used by machine builders for integration of electrical and mechanical documentation in one system.\n\n• PDF markup tools: on many job sites, electricians mark up printed or PDF drawings directly using tablets, PDF annotation software (Bluebeam Revu is common in construction), or simply pen and red pencil for field markups.\n\nAs an apprentice, you are not expected to produce CAD drawings, but you should be able to read and mark up drawing files, understand revision clouds (indicating what changed on a drawing), and know how to request updated drawings through the site engineer or supervisor.`
       },
       {
         type: 'real-world',
-        title: '🛠 The 3-Wire Control Circuit — Reading the Ladder',
-        body: `The 3-wire motor starter is the most common control circuit in industrial electrical work, and you need to read it cold.\n\nControl rung (trace from left to right):\nL1 → [OL NC contact] → [Stop NC] → junction point → [Start NO] → [M coil] → N/L2\n                                              ↕ (parallel)\n                                         [M aux NO seal-in]\n\nHow to read it:\n• OL NC: if the overload trips, this contact opens, killing the coil — motor stops\n• Stop NC: pressing Stop opens this contact — motor stops\n• Junction: current can reach the coil through either the Start NO or the M seal-in\n• Start NO: momentarily closes when Start is pressed — energizes M coil\n• M seal-in: closes when M energizes — holds the circuit after Start is released\n• M coil: energizes to close all M contacts\n\nPower rungs (3-phase):\nL1 → [M contact] → [OL heater 1] → T1 → Motor\nL2 → [M contact] → [OL heater 2] → T2 → Motor\nL3 → [M contact] → [OL heater 3] → T3 → Motor\n\nThe dashed line from the M coil to all M contacts shows: when M coil energizes, ALL M contacts change state simultaneously.`
+        title: 'As-Built Drawings: The Critical Record',
+        body: `The drawings produced during design are called construction drawings or issued-for-construction (IFC) drawings. After the job is built, changes are always made — a conduit routed differently due to a conflict, a junction box relocated, an extra device added in the field.\n\nAs-built drawings (also called record drawings) document what was actually installed, not what was originally designed. They are created by marking up the construction drawings with all field changes, then updating the CAD files to match.\n\nWhy as-builts matter:\n• Future maintenance depends on knowing where conductors actually run.\n• Troubleshooting becomes extremely difficult if the drawing does not match the installation.\n• Future renovations or additions need to know actual wire sizes, panel assignments, and routing.\n• Code requires that documentation match the installation for certain systems.\n\nOn the job: when you make a field change, mark it on your copy of the drawing immediately. Use a red pen (red-line). Note the date, your initials, and what changed. These markups become the as-built record. Losing this information costs future workers hours of tracing and testing.`
+      },
+      {
+        type: 'concept',
+        title: 'Marking Up Drawings on the Job',
+        body: `Reading, marking up, and updating drawings is a daily part of life on a construction or maintenance job site. Key skills:\n\n• Reading floor plans: circuit lines show conductor routing with slash marks indicating conductor count. Home run arrows show which panel and circuit number each circuit feeds. Outlet symbols, fixture symbols, and switch symbols all have standard conventions.\n\n• Revision clouds: a bubble or cloud shape drawn around any area of a drawing that has been changed since the last revision. The revision number and date are noted in the title block. Always check the revision level of a drawing before using it.\n\n• Cross-references: in large ladder diagrams, a coil might be on sheet 5 while some of its contacts are on sheet 8. Cross-reference numbers (in parentheses beside the coil or contact) point you to the other location. Always follow cross-references when tracing control circuits in large systems.\n\n• Wire numbers: each conductor segment in a control circuit has a unique number. All terminals connected by the same continuous conductor share the same number. Wire numbers are how electricians trace conductors through terminal blocks, cable trays, and conduit without disconnecting anything.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'A block diagram shows 3 slash marks on the cable run between two switch boxes. What cable type is needed?', a: '14/3 NMD90 — 3 slash marks = 3 conductors. The circuit is a 3-way switch and the two traveler wires plus neutral must run in the same cable between the two switch locations.' },
-          { q: 'In a ladder diagram, where are contacts placed relative to the coil?', a: 'Contacts (inputs/conditions) are always on the LEFT side of the rung. Coils and loads (outputs) are always on the RIGHT side, closest to the neutral rail. Current flows left to right through closed contacts to energize the output.' },
-          { q: 'What does a diagonal line through a contact symbol on a schematic mean?', a: 'It is a Normally Closed (NC) contact — the contacts are CLOSED when no power is applied to the coil. They OPEN when the coil is energized. NC contacts are used for stop buttons and overload contacts.' }
+          { q: 'In a ladder diagram, you see two NC contact symbols in series before a motor contactor coil. One is labeled OL and one is labeled STOP. Describe what each one does and what happens if either opens.', a: 'OL (NC) = overload relay contact. Normally closed, opens if the overload relay trips due to sustained overcurrent. STOP (NC) = stop pushbutton contact. Normally closed, opens when the stop button is pressed. Either one opening in series breaks the current path to the M1 coil, de-energizing the contactor and stopping the motor. Both must be closed for the motor to run.' },
+          { q: 'A drawing shows three slash marks on a circuit line between two switch boxes. What cable is required and why?', a: 'Three conductors are required between the boxes: 14/3 NMD90 (three insulated conductors plus bare EGC). Three slash marks = three current-carrying conductors. This is typical of a 3-way switch circuit where traveler A, traveler B, and neutral must all run in the same cable between the two switch locations.' },
+          { q: 'What is the purpose of as-built drawings and what is your responsibility as a field electrician regarding them?', a: 'As-built drawings record what was actually installed, not what was originally designed. Field changes made during construction must be marked on drawings immediately using red pen (red-lining) with the date and initials. These markups are later used to update the CAD files. Accurate as-builts are essential for future maintenance, troubleshooting, and renovations.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'When counting conductors on a block diagram, draw a line between each pair of adjacent boxes and ask: "How many electrical connections must cross this line?" That number is your conductor count. Each connection needs its own conductor.',
-          'The white wire in a switch loop MUST be re-identified as a hot conductor — typically with a wrap of black electrical tape at both ends. If you see a white wire at a single-pole switch terminal (not at a wire nut), it is a switch leg return and it should be marked. Leaving it white is a code violation and creates a hazard for the next person who works there.',
-          'When troubleshooting from a ladder diagram: cover the right side with your finger, look at only the contacts in the rung, and ask "Can current get through here right now?" If yes, the coil should be energized. If the coil is NOT energized, you found the rung. Now test each contact in that rung until you find the one that won\'t close.'
+          'When troubleshooting from a ladder diagram, cover the output (coil) side with your finger and focus only on the contacts in the rung. Ask yourself: "Can current get through every series contact right now?" If one contact is open and should be closed, that is your fault. Test continuity across each suspect contact in sequence.',
+          'Cross-references are your navigation system in a large drawing set. Never assume you have seen the entire circuit from one sheet. Follow every cross-reference to its other location before concluding the circuit does not have the feature you are looking for.',
+          'When making field changes, never erase from the original drawing. Add a revision cloud in red, note what changed, and sign and date your markup. Erasing original drawing information makes the drawing history unreadable and can create safety issues if the original design intent is lost.',
+          'NEMA and IEC drawings look different even for identical circuits. Before tracing a circuit on an unfamiliar piece of equipment, check the drawing title block or legend for the symbol standard. A 5-minute check prevents 30 minutes of confused tracing.'
         ]
       },
       {
         type: 'objectives',
-        title: 'Module Objectives',
+        title: 'Module 24 Objectives',
         objectives: [
-          'Define the three types of electrical diagrams: block diagram, wiring diagram, and schematic (ladder) diagram.',
-          'State the purpose of each diagram type and identify which is used for planning, which for wiring, and which for troubleshooting.',
-          'Read a block diagram and identify the logical sequence of components in a circuit.',
-          'Determine the number of conductors required in each cable run by analyzing a block diagram.',
-          'Identify the Canadian conductor colour code: black (hot), white (neutral), red (second hot), green/bare (EGC).',
-          'Explain the purpose of re-identifying a white conductor in a switch loop and describe how it is done.',
-          'Describe the difference between 14/2 and 14/3 NMD90 cable and explain when each is required.',
-          'Identify the structural elements of a ladder (schematic) diagram: L1 rail, N/L2 rail, rungs, contacts, and coils.',
-          'Distinguish between NO (normally open) and NC (normally closed) contact symbols on a schematic.',
-          'State the rule for placing contacts and loads on a ladder rung: contacts on the left, outputs on the right.',
-          'Trace a circuit path through a ladder rung and determine whether an output is energized given a set of contact states.',
-          'Identify the purpose of each element in a 3-wire motor control schematic: Stop NC, Start NO, M seal-in, M coil, OL NC contacts.',
-          'Explain how the seal-in (M auxiliary) contact allows the motor to run after the Start button is released.',
-          'Explain how the Stop NC contact and OL NC contact each stop the motor.',
-          'Convert a simple block diagram to a wiring diagram by adding conductor colours, cable types, and terminal connections.',
-          'Convert a wiring diagram to a schematic by extracting control rungs and power rungs in ladder format.',
-          'Read slash marks on a blueprint floor plan circuit line and determine the corresponding cable type.',
-          'Identify the schematic symbols for: NO contact, NC contact, relay/contactor coil, lamp, motor, fuse, push button NO/NC.'
+          'Identify and describe six types of electrical diagrams: pictorial, wiring, schematic, ladder, three-line, and single-line, and state the primary purpose of each.',
+          'Describe the structure of a ladder diagram: left power rail (L1), right power rail (N/L2), rungs, contacts on the left, and loads/coils on the right.',
+          'State the reading rule for ladder diagrams: left to right, top to bottom; contacts before coils; series = AND; parallel = OR.',
+          'Identify standard NEMA schematic symbols for: NO contact, NC contact, relay coil, push button NO, push button NC, TDOE timed contacts, TDOD timed contacts, overload contacts, fuse, and circuit breaker.',
+          'Identify key differences between NEMA and IEC schematic symbols and explain why recognizing both standards is important.',
+          'Convert a wiring diagram to a schematic (ladder) diagram using the step-by-step process: identify loads, identify contacts, trace current paths, draw rungs, add cross-references.',
+          'Convert a schematic (ladder) diagram to a wiring diagram: assign terminal numbers, add conductor colours, show physical routing.',
+          'Read a three-line diagram and identify main disconnect, fusing, contactors, overload heaters, and motor connections.',
+          'Read a single-line (one-line) diagram and identify the system hierarchy: source, transformer, main distribution, feeders, panelboards, and branch circuits.',
+          'Describe the purpose of as-built drawings and explain the electrician\'s responsibility for maintaining accurate field markup records.',
+          'Describe CAD tools used in the electrical industry (AutoCAD Electrical, EPLAN) and identify common PDF markup tools used in field applications.',
+          'Read revision clouds and title block revision tables on a drawing and determine whether the drawing is current.',
+          'Use cross-references in a large drawing set to follow a control circuit from coil to all associated contacts across multiple drawing sheets.',
+          'Interpret wire numbers on a drawing and use them to trace conductors through terminal blocks without disconnecting wiring.'
         ],
         questions: [
-          { q: 'Why does a 3-way switch circuit require 14/3 cable between the two switches, while 14/2 is used for the rest of the circuit?', a: 'Between the two 3-way switches, three conductors are required: traveler A (black), traveler B (red), and neutral (white). 14/3 cable carries these three conductors plus the bare EGC. The source-to-SW1 and SW2-to-light runs only need 2 conductors each (hot + neutral or switched hot + neutral), so 14/2 is sufficient.' },
-          { q: 'In a 3-wire motor control circuit, what would happen if the M seal-in contact failed to close after the Start button was pressed?', a: 'The motor would run only while the Start button is held down. The instant the Start button is released, the control circuit would open (since the seal-in path was never established) and the coil would de-energize, stopping the motor. The seal-in contact is what provides "memory" to keep the motor running after momentary Start is released.' },
-          { q: 'On a schematic, you see a contact symbol with a diagonal slash near the Stop pushbutton. Is this contact normally open or normally closed? What does pressing Stop do to it?', a: 'The diagonal slash indicates an NC (normally closed) contact. In its normal state (with no one pressing Stop), this contact is CLOSED, allowing current to flow through the control rung to the coil. Pressing Stop opens this NC contact, breaking the control circuit, de-energizing the coil, and stopping the motor.' }
+          { q: 'Convert this verbal circuit description to a ladder rung: "Control relay CR1 coil is energized when limit switch LS1 (NO) AND pressure switch PS1 (NC) are both satisfied, OR when the manual override selector SW1 (NO) is in the Manual position."', a: 'Rung structure: L1 → [LS1 NO]—[PS1 NC] → in parallel with [SW1 NO] → [CR1 coil] → N. The series combination of LS1 and PS1 represents the automatic path (both must be satisfied — AND logic). SW1 in parallel with that series combination represents the manual override path (OR logic — either the automatic conditions OR the manual switch can energize CR1).' },
+          { q: 'Why does a schematic diagram not show the physical location of components, and why is this an advantage for troubleshooting?', a: 'A schematic shows electrical connections and logic, not physical layout. This is an advantage because the troubleshooter can trace the electrical circuit path without needing to know where each device physically is in the building. The diagram shows only what matters for circuit operation: which contacts are in series, which are in parallel, and what coils they control. Physical location is irrelevant to electrical function.' },
+          { q: 'You are given a wiring diagram where the stop pushbutton is connected between terminals 1 and 2 of a terminal block, and a cross-reference note says "see sheet 6 rung 15." What does this tell you?', a: 'The cross-reference means that the stop pushbutton contact also appears on sheet 6, rung 15 of the ladder diagram. The schematic representation of this physical device is located there. You should go to sheet 6 rung 15 to see the full control circuit that this stop button is part of, including all other contacts in the same rung and the coil that is controlled.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will read, interpret, and convert between block diagrams, wiring diagrams, and schematic (ladder) diagrams for residential and motor control circuits, and will correctly count conductors from diagram information.',
+        outcome: 'The student will read, interpret, and convert between electrical diagram types, apply standard schematic symbols, and use drawing documentation skills including as-built markups and cross-reference tracing.',
         questions: [
-          { q: 'You are given a block diagram: [Panel] → [3-Way SW1] → [3-Way SW2] → [Light Fixture]. List the three cable runs required, the cable type for each, and the conductor count for each run.', a: 'Run 1: Panel to SW1 box — 14/2 NMD90 — 2 conductors (black hot, white neutral). Run 2: SW1 box to SW2 box — 14/3 NMD90 — 3 conductors (black traveler, red traveler, white neutral). Run 3: SW2 box to Light box — 14/2 NMD90 — 2 conductors (black switched hot, white neutral). Total: 3 cable runs, 7 conductors (plus EGCs in each cable).' },
-          { q: 'Convert the following description to a ladder schematic rung: "A relay coil (CR1) is controlled by a normally open pushbutton (PB1). A normally closed limit switch (LS1) is in series before the pushbutton. A CR1 auxiliary contact is in parallel with PB1."', a: 'L1 rail → [LS1 NC contact] → junction → [PB1 NO contact] → [CR1 coil] → N rail. In parallel with PB1: [CR1 NO auxiliary contact] connected between the junction and the point after PB1. The NC slash on LS1 and NO gap on PB1 and CR1 aux must be correctly drawn.' },
-          { q: 'On a wiring diagram you see a white wire connected to a single-pole switch terminal. Is this correct? What must be done?', a: 'This is a switch loop — the white conductor is returning the switched hot from the switch back to the light box. It is being used as an ungrounded (hot) conductor, not a neutral. The CEC requires the white wire to be re-identified at both ends (at the switch terminal and at the splice in the light box) with black electrical tape or black paint to indicate it is being used as a hot conductor. Leaving it white is a violation and creates a hazard.' }
+          { q: 'You are handed a one-line diagram of a building\'s electrical system. Describe the information you would extract from it before beginning any work on the system.', a: 'From a one-line diagram: identify the source (utility connection, transformer ratings, primary and secondary voltages), the main disconnect location and rating, available fault current (if annotated), the main distribution panel and bus rating, feeder circuits to sub-panels (conductor sizes, breaker ratings), sub-panel identifications and their feeder sources, and which loads are on which feeders. This tells you the system hierarchy, where to isolate power for any given part of the system, the relative fault current levels at each point, and how to work safely with the system energized or de-energized.' },
+          { q: 'During a retrofit project, you add an emergency stop button to an existing motor control panel that only has a single stop station. Describe the wiring change, how you would update the drawing, and what documentation you would create.', a: 'Wiring change: locate the existing STOP NC pushbutton in the control circuit. Wire the new emergency stop NC contacts in series with the existing stop button (add terminals in series). The two NC contacts in series mean either one can stop the motor. Drawing update: mark up the existing wiring diagram and ladder schematic in red to show the added E-stop button, its terminal connections, the new wire numbers, and the conductor routing. Add a revision cloud around the changed area, note the date and initials. Update the device list to include the new E-stop. Submit the red-line markup to the engineer of record or site supervisor for formal drawing revision. Retain your copy of the markup as a record.' }
         ]
       }
     ]
   }
 ];
-
 const Lessons = {
   activeLesson: null,
   _ttsActive: false,
@@ -9323,11 +9132,17 @@ const Lessons = {
           <div style="margin-top:14px;font-size:0.82rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</div>
         </div>
         ${sectionHtml}
-        <div style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.25);border-radius:14px;padding:24px;margin-bottom:24px;">
+        <div style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.25);border-radius:14px;padding:24px;margin-bottom:16px;">
           <h3 style="margin:0 0 8px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">🤖 AI Practice Quiz</h3>
           <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 14px;">Generate fresh exam-style questions based on this lesson.</p>
           <button onclick="Lessons._aiQuiz('${lessonId}')" id="ai-quiz-btn" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;">⚡ Generate 5 Questions</button>
           <div id="ai-quiz-result" style="margin-top:16px;"></div>
+        </div>
+        <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);border-radius:14px;padding:24px;margin-bottom:24px;">
+          <h3 style="margin:0 0 8px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">🃏 AI Flashcard Generator</h3>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 14px;">Instantly create 10 study flashcards from this lesson and add them to your deck.</p>
+          <button onclick="Lessons._aiGenerateFlashcards('${lessonId}')" id="ai-fc-btn" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;">🃏 Generate Flashcards</button>
+          <div id="ai-fc-result" style="margin-top:16px;"></div>
         </div>
         <div style="text-align:center;padding:16px 0 16px;">
           <button onclick="Lessons._back()" style="background:${lesson.color};color:#000;font-weight:700;border:none;padding:14px 32px;border-radius:10px;cursor:pointer;font-size:1rem;">
@@ -9515,6 +9330,74 @@ const Lessons = {
     } catch(e) {
       result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
       if (btn) { btn.textContent = '⚡ Generate 5 Questions'; btn.disabled = false; }
+    }
+  },
+
+  async _aiGenerateFlashcards(lessonId) {
+    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    if (!lesson) return;
+    const btn = document.getElementById('ai-fc-btn');
+    const result = document.getElementById('ai-fc-result');
+    if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
+    const content = lesson.sections.map(s => s.title + (s.body ? ': ' + s.body.substring(0, 300) : '')).join('\n').substring(0, 2500);
+    const prompt = `You are SparkStudy, creating flashcards for Alberta electrical apprentices studying "${lesson.title}". Generate exactly 10 high-quality flashcard pairs based on the lesson content below. Format EXACTLY like this (one pair per line, separated by |):\n\nQ: [question] | A: [concise answer]\n\nMake questions test real understanding, not just definitions. Focus on numbers, formulas, procedures, and "what happens when" scenarios.\n\nLesson content:\n${content}`;
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      const text = data.answer || '';
+      const lines = text.split('\n').filter(l => l.includes(' | ') && l.startsWith('Q:'));
+      if (lines.length === 0) {
+        if (result) result.innerHTML = '<p style="color:var(--danger);">Could not parse flashcards — try again.</p>';
+        if (btn) { btn.textContent = '🃏 Generate Flashcards'; btn.disabled = false; }
+        return;
+      }
+      // Add to flashcard state
+      const state = Storage.get();
+      let added = 0;
+      lines.forEach(line => {
+        const [qPart, aPart] = line.split(' | ');
+        const q = (qPart || '').replace(/^Q:\s*/,'').trim();
+        const a = (aPart || '').replace(/^A:\s*/,'').trim();
+        if (!q || !a) return;
+        const id = 'ai_' + lessonId + '_' + Math.random().toString(36).substr(2, 8);
+        if (!state.flashcards) state.flashcards = {};
+        state.flashcards[id] = { q, a, topic: lessonId, correct: 0, incorrect: 0, easeFactor: 2.5, interval: 1, due: new Date().toISOString().split('T')[0] };
+        added++;
+      });
+      Storage.set(state);
+      if (result) result.innerHTML = `<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:0.88rem;color:#a7f3d0;">✓ Added ${added} flashcards to your deck! Go to Flashcards to study them.</div>`;
+      if (btn) { btn.textContent = '✓ Added to Deck'; btn.disabled = true; }
+    } catch(e) {
+      if (result) result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
+      if (btn) { btn.textContent = '🃏 Generate Flashcards'; btn.disabled = false; }
+    }
+  },
+
+  async _aiStudyPlan(btn) {
+    const state = Storage.get();
+    const daysLeft = ClassSchedule.getDaysUntilExam(state);
+    const mastery = getOverallMastery(state);
+    const dueCards = SM2.getDueCards(state).length;
+    const streak = state.sessions.streak || 0;
+    const planBtn = btn || document.getElementById('ai-plan-btn');
+    const result = document.getElementById('ai-plan-result');
+    if (planBtn) { planBtn.textContent = '⏳ Building your plan...'; planBtn.disabled = true; }
+    const prompt = `You are SparkStudy AI coach for an Alberta 2nd-period electrical apprentice. Create a practical, specific study plan based on their current stats:\n- Overall mastery: ${mastery}%\n- Days until exam: ${daysLeft !== null ? daysLeft + ' days' : 'unknown'}\n- Flashcards due today: ${dueCards}\n- Current study streak: ${streak} days\n- Available Period 2 modules: Relays & Contactors, Timers & Smart Relays, Pilot & Overcurrent Devices, Drawing & Diagram Conversion\n\nWrite a focused 5-7 day study plan. Be specific about which modules to study each day and how long. Keep it practical and motivating. Format with bold day headers and bullet points. Under 250 words.`;
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      const text = (data.answer || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+      if (result) result.innerHTML = `<div style="padding:16px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.25);border-radius:10px;font-size:0.88rem;line-height:1.65;color:var(--text-secondary);">${text}</div>`;
+      if (planBtn) { planBtn.textContent = '🔄 Regenerate Plan'; planBtn.disabled = false; }
+    } catch(e) {
+      if (result) result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
+      if (planBtn) { planBtn.textContent = '🤖 Build My Study Plan'; planBtn.disabled = false; }
     }
   },
 };
