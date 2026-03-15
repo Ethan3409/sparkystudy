@@ -38,6 +38,8 @@ app.use(cors({
   origin: [
     FRONTEND_URL,
     'https://ethan3409.github.io',
+    'https://sparkystudy.com',
+    'https://www.sparkystudy.com',
     'http://localhost:3000',
     'http://127.0.0.1:5500'
   ]
