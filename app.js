@@ -739,7 +739,7 @@ const Auth = {
     if (errEl) errEl.style.display = 'none';
 
     // Create Stripe checkout session
-    const BACKEND = 'https://web-production-a1f63.up.railway.app';
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
     try {
       const res = await fetch(`${BACKEND}/api/create-checkout-session`, {
         method: 'POST',
@@ -2134,7 +2134,7 @@ const Flashcards = {
     resultEl.style.display = 'block';
     resultEl.textContent = 'Loading explanation...';
     try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: `An electrical apprentice got this flashcard wrong. Briefly explain why the correct answer is right, in plain English. Keep it under 80 words, practical, no fluff.\n\nQuestion: ${question}\nCorrect answer: ${answer}`, history: [] })
       });
@@ -3025,7 +3025,7 @@ const Notes = {
     const text = html.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0, 6000);
     showToast('⚡ Generating AI quiz…', 'info');
     try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -9696,7 +9696,7 @@ const Lessons = {
     const bodyText = s.body || '';
     const prompt = `You are SparkStudy, an AI tutor for Alberta electrical apprentices. Explain this concept simply and practically, as if talking to a tradesperson, not an academic. Use plain English, short sentences, and a real-world analogy if it helps. Keep it under 120 words.\n\nConcept: "${s.title}"\n\n${bodyText.substring(0, 800)}`;
     try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: prompt, history: [] })
       });
@@ -9717,7 +9717,7 @@ const Lessons = {
     const content = lesson.sections.map(s => s.title + (s.body ? ': ' + s.body.substring(0, 200) : '')).join('\n').substring(0, 2000);
     const prompt = `You are an exam question writer for Alberta electrical apprentices. Based on this lesson content, write exactly 5 multiple-choice exam questions. Format each question EXACTLY like this:\n\nQ: [question]\nA) [option]\nB) [option]\nC) [option]\nD) [option]\nANSWER: [letter] — [brief explanation]\n\nLesson: ${lesson.title}\n\n${content}`;
     try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: prompt, history: [] })
       });
@@ -9807,7 +9807,7 @@ const Lessons = {
     const content = lesson.sections.map(s => s.title + (s.body ? ': ' + s.body.substring(0, 300) : '')).join('\n').substring(0, 2500);
     const prompt = `You are SparkStudy, creating flashcards for Alberta electrical apprentices studying "${lesson.title}". Generate exactly 10 high-quality flashcard pairs based on the lesson content below. Format EXACTLY like this (one pair per line, separated by |):\n\nQ: [question] | A: [concise answer]\n\nMake questions test real understanding, not just definitions. Focus on numbers, formulas, procedures, and "what happens when" scenarios.\n\nLesson content:\n${content}`;
     try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: prompt, history: [] })
       });
@@ -9854,7 +9854,7 @@ const Lessons = {
     if (result) result.innerHTML = '';
     const prompt = `You are SparkStudy AI coach for an Alberta Period ${period} electrical apprentice. Create a practical, specific study plan based on:\n- Overall mastery: ${mastery}%\n- Days until exam: ${daysLeft !== null ? daysLeft + ' days' : 'not set — assume 30 days'}\n- Flashcards due today: ${dueCards}\n- Study streak: ${streak} days\n\nWrite a focused 7-day study plan. Be specific: which topics each day, how long, which activity (flashcards/quiz/lessons/review). Keep it motivating and practical. Format with **Day 1:** headers and bullet points. Under 300 words.`;
     try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: prompt, history: [] })
       });
@@ -12378,7 +12378,7 @@ const StudyPlan = {
     const todayStr   = new Date().toISOString().split('T')[0];
     const prompt = `You are a study plan generator for Alberta electrical apprentices.\nStudent:\n- Period: ${state.user.period}\n- Days until exam: ${daysLeft}\n- Overall mastery: ${getOverallMastery(state)}%\n- Weakest topics: ${weakTopics.map(t=>`${t.name} (${t.mastery}%)`).join(', ')}\n- Streak: ${state.sessions.streak} days\n\nGenerate a day-by-day study plan for the next ${planDays} days starting ${todayStr}.\nReturn ONLY a JSON array, no explanation:\n[{"day":1,"date":"${todayStr}","topic":"AC Theory","minutes":30,"type":"flashcards","note":"Focus on sine waves"},...]\nAllowed types: flashcards, quiz, review, exam-prep. Keep it practical.`;
     try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: prompt, history: [] })
