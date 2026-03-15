@@ -33,9 +33,11 @@ const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ethan3409.github.io/sparkystudy';
 
 // CORS — allow only your frontend
+// Browsers send Origin as scheme+host only (no path), so we allow the root domain too
 app.use(cors({
   origin: [
     FRONTEND_URL,
+    'https://ethan3409.github.io',
     'http://localhost:3000',
     'http://127.0.0.1:5500'
   ]
