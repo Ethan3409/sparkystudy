@@ -1764,6 +1764,10 @@ const Flashcards = {
           <button class="btn rate-good" onclick="Flashcards.rate(4)">&#10003; Good</button>
           <button class="btn rate-easy" onclick="Flashcards.rate(5)">&#128171; Easy</button>
         </div>
+        <div style="text-align:center;margin-top:12px;">
+          <button onclick="Flashcards._aiCoach(this, ${JSON.stringify(card.q)}, ${JSON.stringify(card.a)})" style="margin-top:8px;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);color:#f97316;padding:7px 14px;border-radius:7px;font-size:0.8rem;font-weight:600;cursor:pointer;">🤖 Why was I wrong?</button>
+          <div class="ai-coach-result" style="display:none;margin-top:10px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:12px;font-size:0.85rem;line-height:1.6;text-align:left;"></div>
+        </div>
       ` : `
         <div class="fc-tap-hint">Tap the card or press Space to flip</div>
       `}
@@ -1867,7 +1871,27 @@ const Flashcards = {
         </div>
       </div>
     `;
-  }
+  },
+
+  async _aiCoach(btn, question, answer) {
+    const resultEl = btn.nextElementSibling;
+    if (!resultEl) return;
+    btn.textContent = '⏳ Thinking...'; btn.disabled = true;
+    resultEl.style.display = 'block';
+    resultEl.textContent = 'Loading explanation...';
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: `An electrical apprentice got this flashcard wrong. Briefly explain why the correct answer is right, in plain English. Keep it under 80 words, practical, no fluff.\n\nQuestion: ${question}\nCorrect answer: ${answer}`, history: [] })
+      });
+      const data = await res.json();
+      resultEl.textContent = data.answer || 'No response.';
+      btn.style.display = 'none';
+    } catch(e) {
+      resultEl.textContent = 'Connection error.';
+      btn.textContent = '🤖 Why was I wrong?'; btn.disabled = false;
+    }
+  },
 };
 
 // Keyboard shortcut for flashcards
@@ -9193,7 +9217,7 @@ const Lessons = {
     const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
     if (!lesson) { this.activeLesson = null; return; }
 
-    const sectionHtml = lesson.sections.map(s => this._renderSection(s, lesson.color)).join('');
+    const sectionHtml = lesson.sections.map((s, idx) => this._renderSection(s, lesson.color, idx)).join('');
 
     container.innerHTML = `
       <div style="padding:16px 0;">
@@ -9212,7 +9236,13 @@ const Lessons = {
           <div style="margin-top:14px;font-size:0.82rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</div>
         </div>
         ${sectionHtml}
-        <div style="text-align:center;padding:32px 0 16px;">
+        <div style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.25);border-radius:14px;padding:24px;margin-bottom:24px;">
+          <h3 style="margin:0 0 8px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">🤖 AI Practice Quiz</h3>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 14px;">Generate fresh exam-style questions based on this lesson.</p>
+          <button onclick="Lessons._aiQuiz('${lessonId}')" id="ai-quiz-btn" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;">⚡ Generate 5 Questions</button>
+          <div id="ai-quiz-result" style="margin-top:16px;"></div>
+        </div>
+        <div style="text-align:center;padding:16px 0 16px;">
           <button onclick="Lessons._back()" style="background:${lesson.color};color:#000;font-weight:700;border:none;padding:14px 32px;border-radius:10px;cursor:pointer;font-size:1rem;">
             &#x2190; Back to Lessons
           </button>
@@ -9221,7 +9251,7 @@ const Lessons = {
     `;
   },
 
-  _renderSection(s, accentColor) {
+  _renderSection(s, accentColor, idx = 0) {
     // Special full-width renderers for objectives and outcome
     if (s.type === 'objectives') {
       const objList = s.objectives.map((o, i) =>
@@ -9326,8 +9356,79 @@ const Lessons = {
       <div style="background:${style.bg};border:1px solid ${style.border};border-radius:14px;padding:24px;margin-bottom:18px;">
         <h3 style="font-size:1.05rem;margin:0 0 14px;display:flex;align-items:center;gap:8px;">${s.title}</h3>
         ${inner}
+        <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button onclick="Lessons._aiExplain(${idx})" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);color:#f97316;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;">⚡ AI Explain This</button>
+        </div>
+        <div id="ai-explain-${idx}" style="display:none;margin-top:12px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:14px;font-size:0.88rem;line-height:1.65;color:var(--text-primary);"></div>
       </div>`;
-  }
+
+  },
+
+  async _aiExplain(idx) {
+    const lesson = LESSONS_CONTENT.find(l => l.id === this.activeLesson);
+    if (!lesson || !lesson.sections[idx]) return;
+    const s = lesson.sections[idx];
+    const box = document.getElementById('ai-explain-' + idx);
+    const btn = box?.previousElementSibling?.querySelector('button');
+    if (!box) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; if (btn) btn.textContent = '⚡ AI Explain This'; return; }
+    box.style.display = 'block';
+    box.innerHTML = '<span style="color:var(--text-muted);">⏳ Thinking...</span>';
+    if (btn) btn.textContent = '⚡ Hide Explanation';
+    const bodyText = s.body || '';
+    const prompt = `You are SparkStudy, an AI tutor for Alberta electrical apprentices. Explain this concept simply and practically, as if talking to a tradesperson, not an academic. Use plain English, short sentences, and a real-world analogy if it helps. Keep it under 120 words.\n\nConcept: "${s.title}"\n\n${bodyText.substring(0, 800)}`;
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      box.innerHTML = (data.answer || 'No response.').replace(/\n/g, '<br>');
+    } catch(e) {
+      box.innerHTML = 'Connection error — try again.';
+    }
+  },
+
+  async _aiQuiz(lessonId) {
+    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    if (!lesson) return;
+    const btn = document.getElementById('ai-quiz-btn');
+    const result = document.getElementById('ai-quiz-result');
+    if (!result) return;
+    if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
+    const content = lesson.sections.map(s => s.title + (s.body ? ': ' + s.body.substring(0, 200) : '')).join('\n').substring(0, 2000);
+    const prompt = `You are an exam question writer for Alberta electrical apprentices. Based on this lesson content, write exactly 5 multiple-choice exam questions. Format each question EXACTLY like this:\n\nQ: [question]\nA) [option]\nB) [option]\nC) [option]\nD) [option]\nANSWER: [letter] — [brief explanation]\n\nLesson: ${lesson.title}\n\n${content}`;
+    try {
+      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      const text = data.answer || '';
+      // Parse and render questions
+      const questions = text.split(/\nQ:|\nQ\./).filter(q => q.trim());
+      if (questions.length === 0) { result.innerHTML = '<p style="color:var(--text-muted);">' + text.replace(/\n/g, '<br>') + '</p>'; }
+      else {
+        result.innerHTML = questions.map((q, i) => {
+          const lines = q.trim().split('\n');
+          const qText = lines[0].trim();
+          const options = lines.filter(l => /^[A-D]\)/.test(l.trim()));
+          const answerLine = lines.find(l => l.startsWith('ANSWER:'));
+          return `<div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:16px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">Q${i+1}: ${qText}</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+              ${options.map(o => `<div style="padding:7px 12px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:0.85rem;">${o.trim()}</div>`).join('')}
+            </div>
+            ${answerLine ? `<details><summary style="font-size:0.82rem;color:#a78bfa;font-weight:600;cursor:pointer;">Reveal Answer</summary><div style="margin-top:8px;padding:10px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:0.85rem;color:#a7f3d0;">${answerLine.replace('ANSWER:','').trim()}</div></details>` : ''}
+          </div>`;
+        }).join('');
+      }
+      if (btn) { btn.textContent = '🔄 Regenerate'; btn.disabled = false; }
+    } catch(e) {
+      result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
+      if (btn) { btn.textContent = '⚡ Generate 5 Questions'; btn.disabled = false; }
+    }
+  },
 };
 
 // ===== SETTINGS MODULE =====
