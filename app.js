@@ -9026,11 +9026,16 @@ const Lessons = {
         headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: text.substring(0, 5000),
-          model_id: 'eleven_monolingual_v1',
+          model_id: 'eleven_turbo_v2_5',
           voice_settings: { stability: 0.55, similarity_boost: 0.80 }
         })
       });
-      if (!res.ok) return false;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.color = '#58a6ff'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.background = 'rgba(88,166,255,0.1)'; }
+        alert('ElevenLabs error: ' + (err.detail?.message || err.detail || res.status));
+        return false;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       this._elAudio = new Audio(url);
@@ -9044,7 +9049,11 @@ const Lessons = {
       this._ttsActive = true;
       if (btn) { btn.textContent = '⏹ Stop'; btn.style.color = '#10b981'; btn.style.borderColor = 'rgba(16,185,129,0.3)'; btn.style.background = 'rgba(16,185,129,0.1)'; }
       return true;
-    } catch(e) { return false; }
+    } catch(e) {
+      if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.color = '#58a6ff'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.background = 'rgba(88,166,255,0.1)'; }
+      alert('ElevenLabs connection error: ' + e.message);
+      return false;
+    }
   },
 
   _getBestVoice() {
