@@ -13173,7 +13173,8 @@ const MathPractice = {
         if (state) {
           state.mathSettings = state.mathSettings || {};
           state.mathSettings.enabledCategories = catList;
-          Storage.save(state);
+          Storage.set(state);
+          FireDB.saveUser(state);
         }
         this.currentCategory = catList[0];
       }
@@ -13619,16 +13620,19 @@ const MathPractice = {
   },
 
   _chipClick(id, event) {
-    // Left-click → select this module and generate a problem.
-    // If the module was disabled, re-enable it so it joins the random rotation too.
+    // Left-click → select this category and generate a problem (single render)
     const state = Storage.get();
     if (state && state.mathSettings && state.mathSettings.enabledCategories && !state.mathSettings.enabledCategories.includes(id)) {
       state.mathSettings.enabledCategories.push(id);
       Storage.set(state);
       FireDB.saveUser(state);
     }
-    this.selectCategory(id);
-    this.generateProblem();
+    this.currentCategory = id;
+    this.showingSolution = false;
+    // Generate problem and render once (not twice)
+    const gen = this['_gen_' + id.replace(/-/g,'_')];
+    if (gen) this.currentProblem = gen.call(this);
+    this.render(Storage.get());
   },
 
   selectCategory(id) {
