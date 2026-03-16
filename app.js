@@ -2875,14 +2875,41 @@ const Notes = {
     return list.map(t => ({ ...t, has: !!localStorage.getItem(this._storageKey(userId, t.id)) }));
   },
 
+  // Migrate old topic notes into new 4-category system (runs once per user)
+  _migrateOldNotes(userId) {
+    const migKey = 'sparky_notes_migrated_' + userId;
+    if (localStorage.getItem(migKey)) return; // already migrated
+
+    // Map old topic IDs to new categories
+    const mapping = {
+      'safety': 'general', 'code-cec': 'code', 'exam-prep': 'general', 'formulas': 'theory',
+      'p1-ac-fund': 'theory', 'p1-ind-cap': 'theory', 'p1-ac-circuits': 'theory', 'p1-general': 'general',
+      'p2-relays': 'theory', 'p2-timers': 'theory', 'p2-pilot': 'theory', 'p2-diagrams': 'theory', 'p2-general': 'general',
+      'p3-motors': 'theory', 'p3-pf': 'theory', 'p3-xfmr': 'theory', 'p3-dist': 'theory', 'p3-wiring': 'theory', 'p3-general': 'general',
+      'p4-commercial': 'theory', 'p4-industrial': 'theory', 'p4-plc': 'theory', 'p4-power': 'theory', 'p4-service': 'theory', 'p4-general': 'general',
+    };
+    let moved = 0;
+    Object.entries(mapping).forEach(([oldId, newId]) => {
+      const oldKey = 'sparky_notes_' + userId + '_' + oldId;
+      const content = localStorage.getItem(oldKey);
+      if (content && content.replace(/<[^>]*>/g, '').trim().length > 5) {
+        const newKey = 'sparky_notes_' + userId + '_' + newId;
+        const existing = localStorage.getItem(newKey) || '';
+        const label = '<div style="font-size:0.7rem;color:var(--text-muted);margin:8px 0 4px;border-top:1px solid var(--border);padding-top:6px;">From: ' + oldId + '</div>';
+        localStorage.setItem(newKey, existing + (existing ? label : '') + content);
+        moved++;
+      }
+    });
+    localStorage.setItem(migKey, Date.now().toString());
+    if (moved > 0) showToast(`Migrated ${moved} old note${moved !== 1 ? 's' : ''} to new categories.`, 'success');
+  },
+
   render(state) {
     const container = document.getElementById('notesContent');
     if (!container || !state) return;
     const userId = state.user.id;
-    // Default period to user's period on first load
-    if (this._currentPeriod === 0 && state.user.period) {
-      // keep general (0) as default, that's fine
-    }
+    // Migrate old notes on first render
+    this._migrateOldNotes(userId);
     if (this.mode === 'quiz') { this._renderQuiz(container, userId); return; }
     if (this.mode === 'study') { this._renderStudy(container, userId); return; }
     if (this.mode === 'community') { this._renderCommunity(container, state); return; }
