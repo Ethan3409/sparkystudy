@@ -843,7 +843,7 @@ const Auth = {
       return showErr('That name is already taken — please use a different name.');
     }
 
-    if (btn) { btn.textContent = '⏳ Creating account...'; btn.disabled = true; }
+    if (btn) { btn.classList.add('btn-loading'); btn.disabled = true; }
     if (errEl) errEl.style.display = 'none';
 
     // Create account locally — trial starts after diagnostic
@@ -856,9 +856,11 @@ const Auth = {
     App.navigate('diagnostic');
   },
   async login() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPassword').value;
+    const email = document.getElementById('loginEmail')?.value?.trim();
+    const pass = document.getElementById('loginPassword')?.value;
+    const loginBtn = document.getElementById('loginBtn');
     if (!email || !pass) return showToast('Please enter email and password', 'error');
+    if (loginBtn) { loginBtn.classList.add('btn-loading'); loginBtn.disabled = true; }
 
     // Owner ANALYTICS-ONLY login — goes straight to analytics dashboard
     if (email === OWNER_ANALYTICS_LOGIN.email && pass === OWNER_ANALYTICS_LOGIN.password) {
