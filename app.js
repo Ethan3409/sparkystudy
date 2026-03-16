@@ -3069,6 +3069,63 @@ const Notes = {
             ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
           </div>
 
+          <!-- Formulas reference dropdown -->
+          <details class="notes-no-print" style="background:rgba(139,92,246,0.04);border-top:1px solid rgba(139,92,246,0.1);">
+            <summary style="padding:8px 14px;font-size:0.75rem;font-weight:700;color:#8b5cf6;cursor:pointer;user-select:none;">
+              📐 Formulas & Quick Reference (click to expand)
+            </summary>
+            <div style="padding:8px 14px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:0.78rem;">
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⚡ Ohm's Law & Power</div>
+                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
+                  V = I × R<br>I = V / R<br>R = V / I<br>P = V × I<br>P = I² × R<br>P = V² / R
+                </div>
+                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('V = IR')" style="font-size:0.7rem;">+V=IR</button>
+                <button class="char-btn" onclick="Notes._insertChar('P = VI')" style="font-size:0.7rem;">+P=VI</button></div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">🌊 Reactance</div>
+                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
+                  XL = 2πfL<br>XC = 1 / (2πfC)<br>Z = √(R² + X²)<br>Z = √(R² + (XL−XC)²)
+                </div>
+                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('XL = 2πfL')" style="font-size:0.7rem;">+XL</button>
+                <button class="char-btn" onclick="Notes._insertChar('XC = 1/(2πfC)')" style="font-size:0.7rem;">+XC</button>
+                <button class="char-btn" onclick="Notes._insertChar('Z = √(R² + X²)')" style="font-size:0.7rem;">+Z</button></div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">📈 AC Values</div>
+                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
+                  Vrms = Vp × 0.707<br>Vp = Vrms × 1.414<br>Vavg = Vp × 0.637<br>f = 1/T<br>f = (P × N) / 120
+                </div>
+                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('f = pn/120')" style="font-size:0.7rem;">+freq</button>
+                <button class="char-btn" onclick="Notes._insertChar('Vrms = Vp × 0.707')" style="font-size:0.7rem;">+Vrms</button></div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⏱️ Time Constants</div>
+                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
+                  T(RL) = L / R<br>T(RC) = R × C<br>1T = 63.2%<br>5T = 99.3% (full)
+                </div>
+                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('T = L/R')" style="font-size:0.7rem;">+T(RL)</button>
+                <button class="char-btn" onclick="Notes._insertChar('T = RC')" style="font-size:0.7rem;">+T(RC)</button></div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">🔁 Transformers</div>
+                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
+                  V1/V2 = N1/N2<br>V1/V2 = I2/I1<br>Turns ratio = Np/Ns<br>VA = V × I
+                </div>
+                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('V₁/V₂ = N₁/N₂')" style="font-size:0.7rem;">+turns</button></div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">🔺 Three-Phase</div>
+                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
+                  VL = √3 × Vp (wye)<br>IL = √3 × Ip (delta)<br>P = √3 × VL × IL × PF<br>PF = cos θ
+                </div>
+                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('VL = √3 × Vφ')" style="font-size:0.7rem;">+VL</button>
+                <button class="char-btn" onclick="Notes._insertChar('PF = cos θ')" style="font-size:0.7rem;">+PF</button></div>
+              </div>
+            </div>
+          </details>
+
           <!-- Editor -->
           <div id="notesEditorWrap" class="notes-print-area" style="background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;">
             <div id="notesEditor" class="notes-editor"
@@ -13013,6 +13070,31 @@ const MathPractice = {
   attempts: 0,
   showingSolution: false,
   showingConfig: false,
+  _moduleFilter: 'all',
+
+  _filterModule(modId) {
+    this._moduleFilter = modId;
+    if (modId !== 'all' && typeof MODULES !== 'undefined') {
+      const mod = MODULES.find(m => m.id === modId);
+      if (mod && mod.topics.length > 0) {
+        // Enable only topics in this module, switch to first one
+        const state = Storage.get();
+        if (state) {
+          state.mathSettings = state.mathSettings || {};
+          state.mathSettings.enabledCategories = mod.topics.filter(t => this.categories.find(c => c.id === t));
+          Storage.save(state);
+        }
+        const firstTopic = mod.topics.find(t => this.categories.find(c => c.id === t));
+        if (firstTopic) this.currentCategory = firstTopic;
+      }
+    } else {
+      // All topics — enable everything
+      this._setAll(true);
+      return;
+    }
+    this.generateProblem();
+    this.render(Storage.get());
+  },
 
   categories: [
     { id:'ohms-law',       name:"Ohm's Law",          icon:'⚡', period:1, formula:'V = IR' },
@@ -13264,18 +13346,43 @@ const MathPractice = {
         <p style="color:var(--text-secondary);font-size:0.85rem;">Formulas are always shown. Pick only the modules you need.</p>
       </div>
 
-      <!-- Module selector — always visible, chip-style toggles -->
+      <!-- Module filter -->
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <span style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);">
-            MODULES — <span style="color:var(--accent);">${enabledCount} active</span>
+            FILTER BY MODULE
           </span>
           <div style="display:flex;gap:6px;">
-            <button onclick="MathPractice._setAll(true)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All on</button>
-            <button onclick="MathPractice._setAll(false)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All off</button>
+            <button onclick="MathPractice._setAll(true)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All Topics</button>
             <button onclick="MathPractice.generateProblem(true)" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 12px;">🎲 Random</button>
           </div>
         </div>
+
+        <!-- Module buttons -->
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+          <button onclick="MathPractice._filterModule('all')"
+            style="padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:${!this._moduleFilter || this._moduleFilter==='all' ? '700' : '500'};
+              border:2px solid ${!this._moduleFilter || this._moduleFilter==='all' ? 'var(--accent)' : 'var(--border)'};
+              background:${!this._moduleFilter || this._moduleFilter==='all' ? 'var(--accent-soft)' : 'var(--bg-secondary)'};
+              color:${!this._moduleFilter || this._moduleFilter==='all' ? 'var(--accent)' : 'var(--text-primary)'};
+              cursor:pointer;transition:var(--transition);">
+            📚 All Topics
+          </button>
+          ${(typeof MODULES !== 'undefined' ? MODULES : []).filter(m => m.hasContent && m.topics.some(t => this.categories.find(c => c.id === t || c.id === t.replace(/-/g,'')))).map(m => {
+            const isActive = this._moduleFilter === m.id;
+            return `<button onclick="MathPractice._filterModule('${m.id}')"
+              style="padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:${isActive?'700':'500'};
+                border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};
+                background:${isActive ? 'var(--accent-soft)' : 'var(--bg-secondary)'};
+                color:${isActive ? 'var(--accent)' : 'var(--text-primary)'};
+                cursor:pointer;transition:var(--transition);white-space:nowrap;">
+              📖 M${m.num}. ${m.name}
+            </button>`;
+          }).join('')}
+        </div>
+
+        <!-- Topic chips within selected module -->
+        <div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">TOPICS</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           ${this.categories.map(c => {
             const isEnabled = !enabledCats || enabledCats.includes(c.id);
@@ -13283,6 +13390,12 @@ const MathPractice = {
             const s = mathStats[c.id] || { attempts:0, correct:0 };
             const acc = s.attempts > 0 ? Math.round(s.correct/s.attempts*100) : null;
             const accDot = acc === null ? '' : acc >= 80 ? ' 🟢' : acc >= 50 ? ' 🟡' : ' 🔴';
+            // If module filter is active, dim topics not in that module
+            let inModule = true;
+            if (this._moduleFilter && this._moduleFilter !== 'all' && typeof MODULES !== 'undefined') {
+              const mod = MODULES.find(m => m.id === this._moduleFilter);
+              inModule = mod ? mod.topics.includes(c.id) : true;
+            }
             return `<button onclick="MathPractice._chipClick('${c.id}', event)"
               data-chipid="${c.id}"
               title="${isEnabled ? 'Click to practice · Right-click to toggle on/off' : 'Disabled — click to enable & practice'}"
@@ -13290,13 +13403,13 @@ const MathPractice = {
                 border:2px solid ${isActive ? 'var(--accent)' : isEnabled ? 'var(--border)' : 'transparent'};
                 background:${isActive ? 'var(--accent-soft)' : isEnabled ? 'var(--bg-secondary)' : 'rgba(0,0,0,0.3)'};
                 color:${isActive ? 'var(--accent)' : isEnabled ? 'var(--text-primary)' : 'var(--text-muted)'};
-                opacity:${isEnabled?'1':'0.5'};cursor:pointer;transition:var(--transition);white-space:nowrap;">
+                opacity:${inModule ? (isEnabled?'1':'0.5') : '0.25'};cursor:pointer;transition:var(--transition);white-space:nowrap;">
               ${c.icon} ${c.name}${accDot}
             </button>`;
           }).join('')}
         </div>
         <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;">
-          Tap a module to practice it. <strong>Long-press</strong> or <strong>right-click</strong> a chip to enable/disable it from the random rotation.
+          Select a module above to focus on its math topics, or tap any topic chip to practice it.
         </p>
       </div>
 
