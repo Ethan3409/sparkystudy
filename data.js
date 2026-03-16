@@ -388,7 +388,7 @@ const FLASHCARD_BANK = [
   // Period 2 — Relays & Contactors
   { id:'fc111', topic:'relays-contactors', q:"What does NO stand for on a relay?", a:"Normally Open — contacts are open when the coil is de-energized, and close when energized" },
   { id:'fc112', topic:'relays-contactors', q:"What does NC stand for on a relay?", a:"Normally Closed — contacts are closed when the coil is de-energized, and open when energized" },
-  { id:'fc113', topic:'relays-contactors', q:"What is a contactor?", a:"A heavy-duty electromagnetic switch designed to handle high current loads (motors, lighting, heating). Similar to a relay but rated for power circuits." },
+
   { id:'fc114', topic:'relays-contactors', q:"What are holding (seal-in) contacts?", a:"Auxiliary NO contacts wired in parallel with the start button to maintain the circuit after the momentary start button is released" },
   { id:'fc115', topic:'relays-contactors', q:"What causes contact chatter?", a:"Insufficient coil voltage — the coil cannot fully pull in the armature, causing contacts to rapidly open and close" },
   { id:'fc116', topic:'relays-contactors', q:"What is an interlock in a reversing starter?", a:"A mechanical or electrical device that prevents both forward and reverse contactors from energizing simultaneously, preventing a short circuit" },
@@ -525,7 +525,7 @@ const EXAM_BANK = [
   {id:'e26',topic:'cec-basics',q:"The CEC is updated on what cycle?",opts:["Every year","Every 2 years","Every 3 years","Every 5 years"],correct:2,exp:"The CEC is published on a 3-year cycle"},
   {id:'e27',topic:'cec-basics',q:"Section 30 of the CEC covers:",opts:["Hazardous locations","Installation of lighting","Wiring methods","Motors"],correct:0,exp:"Section 30 covers installation requirements for hazardous locations"},
   {id:'e28',topic:'grounding-basics',q:"The minimum size of a grounding electrode conductor for a 100A service is:",opts:["14 AWG","10 AWG","6 AWG","4 AWG"],correct:2,exp:"Per CEC Table 10, 6 AWG copper is the minimum for 100A service"},
-  {id:'e29',topic:'grounding-basics',q:"A ground rod must be driven to a minimum depth of:",opts:["1.5m","2.0m","2.5m","3.0m"],correct:3,exp:"CEC requires ground rods to be minimum 3m (10 ft) in length and fully driven"},
+
   {id:'e30',topic:'grounding-basics',q:"The bonding conductor in NMD90 cable is:",opts:["Red wire","White wire","Bare copper wire","Black wire"],correct:2,exp:"The bare copper conductor in NMD is the bonding/ground wire"},
 
   // Period 2 — 50 questions
@@ -1147,7 +1147,7 @@ const EXAM_BANK = [
   {id:'e910',topic:'ac-theory',q:"What is the relationship between RMS and peak value?",opts:["RMS = Peak × 2","RMS = Peak / √2","RMS = Peak × √2","RMS = Peak / 2"],correct:1,exp:"Vrms = Vpeak / √2 = Vpeak × 0.707"},
   {id:'e911',topic:'ac-theory',q:"A 2-pole generator must rotate at what speed to produce 60 Hz?",opts:["1800 RPM","3600 RPM","1200 RPM","900 RPM"],correct:1,exp:"N = 120f/P = 120×60/2 = 3600 RPM"},
   {id:'e912',topic:'ac-theory',q:"The peak-to-peak voltage of a 120V RMS signal is approximately:",opts:["170V","240V","340V","480V"],correct:2,exp:"Vp-p = 2 × Vpeak = 2 × (120 × 1.414) = 2 × 169.7 = 339.4V ≈ 340V"},
-  {id:'e913',topic:'ac-theory',q:"In a purely inductive AC circuit, current:",opts:["Leads voltage by 90°","Lags voltage by 90°","Is in phase with voltage","Leads voltage by 45°"],correct:1,exp:"In a purely inductive circuit, current lags voltage by 90°. Remember: ELI — voltage (E) leads current (I) in an inductor (L)."},
+
   {id:'e914',topic:'ac-theory',q:"In a purely capacitive AC circuit, current:",opts:["Lags voltage by 90°","Is in phase with voltage","Leads voltage by 90°","Lags voltage by 45°"],correct:2,exp:"In a purely capacitive circuit, current leads voltage by 90°. Remember: ICE — current (I) leads voltage (E) in a capacitor (C)."},
   {id:'e915',topic:'ac-theory',q:"An 8-pole generator producing 60 Hz operates at:",opts:["450 RPM","900 RPM","1800 RPM","3600 RPM"],correct:1,exp:"N = 120f/P = 120×60/8 = 900 RPM"},
   {id:'e916',topic:'ac-theory',q:"The instantaneous voltage at 30° of a sine wave with a peak of 170V is:",opts:["85V","147V","170V","120V"],correct:0,exp:"v = Vpeak × sin(30°) = 170 × 0.5 = 85V"},
@@ -1178,7 +1178,7 @@ const EXAM_BANK = [
   {id:'e939',topic:'ohms-law',q:"A circuit has two 100Ω resistors in parallel. The total resistance is:",opts:["200Ω","100Ω","50Ω","25Ω"],correct:2,exp:"Rt = R/n = 100/2 = 50Ω (equal resistors in parallel)"},
 
   // --- Wiring Methods (15 questions) ---
-  {id:'e940',topic:'wiring-methods',q:"EMT stands for:",opts:["Electrical Metal Tubing","Enclosed Metal Tray","Emergency Main Terminal","Exterior Metal Trunk"],correct:0,exp:"EMT = Electrical Metal Tubing — a thin-walled, unthreaded steel conduit."},
+
   {id:'e941',topic:'wiring-methods',q:"What type of connector is used to join EMT to a box?",opts:["Threaded coupling","Set-screw or compression connector","Soldered fitting","Welded joint"],correct:1,exp:"EMT uses set-screw or compression connectors and couplings since it is not threaded."},
   {id:'e942',topic:'wiring-methods',q:"Rigid metal conduit (RMC) is joined using:",opts:["Set-screw connectors","Compression fittings only","Threaded couplings","Push-fit connectors"],correct:2,exp:"RMC has threaded ends and is joined with threaded couplings, similar to plumbing pipe."},
   {id:'e943',topic:'wiring-methods',q:"The maximum number of 90° bends between pull points in a conduit run is:",opts:["2","3","4 (total of 360°)","No limit"],correct:2,exp:"CEC limits conduit runs to a maximum of 360° total bending (four 90° bends) between pull points."},
@@ -1195,24 +1195,24 @@ const EXAM_BANK = [
   {id:'e954',topic:'wiring-methods',q:"What is the minimum cover depth for direct-buried RW90 cable under a driveway?",opts:["150mm (6\")","450mm (18\")","600mm (24\") minimum per CEC Table 53","900mm (36\")"],correct:2,exp:"CEC Table 53 specifies minimum burial depths. Under driveways, direct-buried cable typically requires 600mm (24\") minimum cover."},
 
   // --- CEC Basics (15 questions) ---
-  {id:'e955',topic:'cec-basics',q:"The Canadian Electrical Code is published by:",opts:["Electrical Safety Authority","CSA Group (Canadian Standards Association)","NRC (National Research Council)","Provincial governments"],correct:1,exp:"The CEC (CSA C22.1) is published by CSA Group. Provinces adopt it as their electrical safety standard, sometimes with amendments."},
+
   {id:'e956',topic:'cec-basics',q:"CEC Section 0 deals with:",opts:["Wiring methods","Object, scope, and definitions","Motor installations","Grounding"],correct:1,exp:"Section 0 covers the object, scope, and definitions used throughout the CEC."},
-  {id:'e957',topic:'cec-basics',q:"CEC Section 10 covers:",opts:["Grounding and bonding","Wiring methods","Motors","Conductor ampacity and selection"],correct:0,exp:"Section 10 addresses grounding and bonding requirements for electrical installations."},
+
   {id:'e958',topic:'cec-basics',q:"The CEC requires that all electrical work be performed by:",opts:["Anyone with basic training","A qualified person as defined by the code","Only master electricians","Only electrical engineers"],correct:1,exp:"CEC Section 2 defines 'qualified person' — someone with the training and experience to recognize and avoid hazards."},
-  {id:'e959',topic:'cec-basics',q:"CEC Table 2 provides:",opts:["Motor FLC values","Ampacity of copper conductors based on insulation rating and installation method","Demand factors","Conduit fill percentages"],correct:1,exp:"CEC Table 2 is the primary ampacity table for copper conductors, organized by insulation type and number of conductors."},
+
   {id:'e960',topic:'cec-basics',q:"CEC Table 4 provides:",opts:["Ampacity of aluminum conductors","Motor overload sizes","Conduit fill areas","Conductor ampacity derating factors"],correct:0,exp:"CEC Table 4 provides ampacity ratings for aluminum conductors based on insulation type and installation conditions."},
   {id:'e961',topic:'cec-basics',q:"The minimum size copper conductor permitted for branch circuit wiring in the CEC is:",opts:["#18 AWG","#16 AWG","#14 AWG","#12 AWG"],correct:2,exp:"CEC Rule 12-102 specifies #14 AWG as the minimum copper conductor size for branch circuit wiring."},
   {id:'e962',topic:'cec-basics',q:"CEC Section 26 covers:",opts:["Installation of electrical equipment — receptacles, switches, lighting","Grounding","Motor circuits","Hazardous locations"],correct:0,exp:"Section 26 covers installation of electrical equipment including receptacles, luminaires, switches, and other devices."},
   {id:'e963',topic:'cec-basics',q:"A 'bonding conductor' per the CEC is:",opts:["The same as a neutral","A conductor that provides a reliable conductive path between metal parts to ensure electrical continuity","A conductor that carries load current","An insulated phase conductor"],correct:1,exp:"Bonding ensures all metal parts are electrically connected so fault current has a low-impedance return path to trip overcurrent devices."},
   {id:'e964',topic:'cec-basics',q:"CEC Rule 14-100 requires overcurrent protection to be provided:",opts:["Only at the panel","At the point where a conductor receives its supply — typically at the beginning of a circuit","At the load end only","Only for motors"],correct:1,exp:"Overcurrent devices must be placed at the point where a conductor receives its supply to protect the entire length of the conductor."},
   {id:'e965',topic:'cec-basics',q:"Per CEC Section 12, the maximum conduit fill for 3 or more conductors is:",opts:["25%","40%","53%","60%"],correct:1,exp:"CEC Rule 12-910: with 3 or more conductors, conduit fill is limited to 40% of the internal cross-sectional area."},
-  {id:'e966',topic:'cec-basics',q:"CEC Section 28 covers:",opts:["Residential wiring","Motors and generators","Hazardous locations","Wiring methods"],correct:1,exp:"CEC Section 28 covers the installation of motors, generators, and associated equipment."},
+
   {id:'e967',topic:'cec-basics',q:"The CEC defines a 'branch circuit' as:",opts:["The circuit from the utility transformer to the meter","The portion of the wiring between the final overcurrent device and the outlet(s)","The main service conductors","A circuit feeding another panel"],correct:1,exp:"A branch circuit extends from the final overcurrent device (breaker/fuse) protecting the circuit to the outlet(s) it supplies."},
   {id:'e968',topic:'cec-basics',q:"CEC Rule 4-004 addresses:",opts:["Conductor colour identification","Minimum conductor sizes","Conductor insulation temperature ratings and ampacity","Box fill calculations"],correct:2,exp:"Rule 4-004 covers the selection of conductors based on insulation temperature ratings and ampacity requirements."},
   {id:'e969',topic:'cec-basics',q:"Per CEC Rule 4-024, the identified (neutral) conductor must be:",opts:["Always red","White or natural grey for sizes up to #6 AWG","Any colour","Black with white stripe"],correct:1,exp:"CEC Rule 4-024 requires the neutral conductor to be white or natural grey for #6 AWG and smaller, or identified with white markings for larger sizes."},
 
   // --- Tools (10 questions) ---
-  {id:'e970',topic:'tools',q:"A megohmmeter (megger) is used to measure:",opts:["Voltage","Current","Insulation resistance (in megohms)","Power factor"],correct:2,exp:"A megger applies a high DC voltage (250V–1000V+) and measures insulation resistance in megohms to detect insulation breakdown."},
+
   {id:'e971',topic:'tools',q:"A clamp-on ammeter works on the principle of:",opts:["Ohm's law","Electromagnetic induction — it measures the magnetic field around a conductor","Direct contact with the conductor","Capacitive coupling"],correct:1,exp:"A clamp-on ammeter uses a magnetic core that senses the magnetic field around a current-carrying conductor via electromagnetic induction."},
   {id:'e972',topic:'tools',q:"The proper tool for cutting EMT conduit is:",opts:["Hacksaw or tube cutter","Bolt cutters","Tin snips","Pipe threader"],correct:0,exp:"EMT is cut with a hacksaw or tube cutter. After cutting, the inside must be reamed to remove burrs that could damage conductor insulation."},
   {id:'e973',topic:'tools',q:"A fish tape is used for:",opts:["Taping wire splices","Pulling conductors through conduit or wall cavities","Measuring wire gauge","Labelling circuits"],correct:1,exp:"A fish tape is a flat steel or fiberglass tape pushed through conduit or walls, then used to pull conductors back through."},
