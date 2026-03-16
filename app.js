@@ -13132,20 +13132,50 @@ const MathPractice = {
   showingConfig: false,
   _moduleFilter: 'all',
 
+  // Maps module exam topics to math practice category IDs
+  _moduleToMathMap: {
+    'ac-theory': ['ac-basics', 'reactance', 'impedance'],
+    'inductors-capacitors': ['reactance', 'impedance', 'ac-basics'],
+    'power-factor': ['power-factor'],
+    'motors': ['motors'],
+    'motor-controls': ['motors'],
+    'relays-contactors': [], // no math for these
+    'timers-smart': [],
+    'pilot-overcurrent': [],
+    'drawing-diagrams': [],
+    'transformers': ['transformers'],
+    'three-phase': ['three-phase'],
+    'ohms-law': ['ohms-law'],
+    'series-circuits': ['series', 'series-parallel'],
+    'parallel-circuits': ['parallel', 'series-parallel'],
+    'conductors': ['ohms-law', 'power'],
+  },
+
   _filterModule(modId) {
     this._moduleFilter = modId;
     if (modId !== 'all' && typeof MODULES !== 'undefined') {
       const mod = MODULES.find(m => m.id === modId);
       if (mod && mod.topics.length > 0) {
-        // Enable only topics in this module, switch to first one
+        // Map module topics to math practice categories
+        const mathCats = new Set();
+        mod.topics.forEach(t => {
+          const mapped = this._moduleToMathMap[t] || [];
+          mapped.forEach(c => mathCats.add(c));
+          // Also try direct match
+          if (this.categories.find(c => c.id === t)) mathCats.add(t);
+        });
+        const catList = [...mathCats];
+        if (catList.length === 0) {
+          showToast('This module has no math practice problems yet.', 'info');
+          return;
+        }
         const state = Storage.get();
         if (state) {
           state.mathSettings = state.mathSettings || {};
-          state.mathSettings.enabledCategories = mod.topics.filter(t => this.categories.find(c => c.id === t));
+          state.mathSettings.enabledCategories = catList;
           Storage.save(state);
         }
-        const firstTopic = mod.topics.find(t => this.categories.find(c => c.id === t));
-        if (firstTopic) this.currentCategory = firstTopic;
+        this.currentCategory = catList[0];
       }
     } else {
       // All topics — enable everything
@@ -13428,7 +13458,7 @@ const MathPractice = {
               cursor:pointer;transition:var(--transition);">
             📚 All Topics
           </button>
-          ${(typeof MODULES !== 'undefined' ? MODULES : []).filter(m => m.hasContent && m.topics.some(t => this.categories.find(c => c.id === t || c.id === t.replace(/-/g,'')))).map(m => {
+          ${(typeof MODULES !== 'undefined' ? MODULES : []).filter(m => m.hasContent && m.topics.some(t => (this._moduleToMathMap[t] || []).length > 0 || this.categories.find(c => c.id === t))).map(m => {
             const isActive = this._moduleFilter === m.id;
             return `<button onclick="MathPractice._filterModule('${m.id}')"
               style="padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:${isActive?'700':'500'};
@@ -13454,7 +13484,11 @@ const MathPractice = {
             let inModule = true;
             if (this._moduleFilter && this._moduleFilter !== 'all' && typeof MODULES !== 'undefined') {
               const mod = MODULES.find(m => m.id === this._moduleFilter);
-              inModule = mod ? mod.topics.includes(c.id) : true;
+              if (mod) {
+                const mathCats = new Set();
+                mod.topics.forEach(t => { (this._moduleToMathMap[t] || []).forEach(mc => mathCats.add(mc)); if (this.categories.find(cc => cc.id === t)) mathCats.add(t); });
+                inModule = mathCats.has(c.id);
+              }
             }
             return `<button onclick="MathPractice._chipClick('${c.id}', event)"
               data-chipid="${c.id}"
