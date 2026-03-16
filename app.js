@@ -2887,7 +2887,7 @@ const Notes = {
   _communityNotes: [],
   _communityLoading: false,
 
-  // Special characters for electrical trade
+  // Special characters for electrical trade — top row (always visible)
   CHARS: [
     { label:'Ω', tip:'Ohm' }, { label:'μ', tip:'Micro' }, { label:'°', tip:'Degree' },
     { label:'∠', tip:'Angle' }, { label:'Δ', tip:'Delta' }, { label:'φ', tip:'Phi (phase)' },
@@ -2898,6 +2898,42 @@ const Notes = {
     { label:'→', tip:'Arrow' }, { label:'↑', tip:'Up' }, { label:'↓', tip:'Down' },
     { label:'✓', tip:'Check' }, { label:'✗', tip:'Cross' }, { label:'⚡', tip:'Lightning' },
     { label:'½', tip:'Half' }, { label:'¼', tip:'Quarter' }, { label:'¾', tip:'3/4' },
+  ],
+  // Extended characters — shown in dropdown
+  CHARS_EXT: [
+    { group: 'Greek Letters', chars: [
+      { label:'α', tip:'Alpha' }, { label:'β', tip:'Beta' }, { label:'γ', tip:'Gamma' },
+      { label:'δ', tip:'Delta (lower)' }, { label:'ε', tip:'Epsilon' }, { label:'θ', tip:'Theta' },
+      { label:'λ', tip:'Lambda' }, { label:'ρ', tip:'Rho (resistivity)' }, { label:'σ', tip:'Sigma' },
+      { label:'τ', tip:'Tau (time constant)' }, { label:'ω', tip:'Omega (angular)' },
+      { label:'Φ', tip:'Phi (flux)' }, { label:'Ψ', tip:'Psi' }, { label:'η', tip:'Eta (efficiency)' },
+    ]},
+    { group: 'Subscripts & Superscripts', chars: [
+      { label:'₀', tip:'Sub 0' }, { label:'₁', tip:'Sub 1' }, { label:'₂', tip:'Sub 2' },
+      { label:'₃', tip:'Sub 3' }, { label:'ₚ', tip:'Sub p (primary)' }, { label:'ₛ', tip:'Sub s (secondary)' },
+      { label:'ₜ', tip:'Sub t (total)' }, { label:'ₙ', tip:'Sub n' },
+      { label:'⁰', tip:'Super 0' }, { label:'¹', tip:'Super 1' }, { label:'⁴', tip:'Super 4' },
+      { label:'⁵', tip:'Super 5' }, { label:'⁶', tip:'Super 6' }, { label:'⁻', tip:'Super minus' },
+    ]},
+    { group: 'Math & Electrical', chars: [
+      { label:'∝', tip:'Proportional to' }, { label:'≈', tip:'Approximately' }, { label:'≡', tip:'Identical to' },
+      { label:'∴', tip:'Therefore' }, { label:'∵', tip:'Because' }, { label:'⊥', tip:'Perpendicular' },
+      { label:'∥', tip:'Parallel' }, { label:'⌀', tip:'Diameter' }, { label:'℃', tip:'Celsius' },
+      { label:'⅓', tip:'One third' }, { label:'⅔', tip:'Two thirds' }, { label:'⅕', tip:'One fifth' },
+      { label:'‰', tip:'Per mille' }, { label:'†', tip:'Dagger' },
+    ]},
+    { group: 'Formulas (click to insert)', chars: [
+      { label:'V = IR', tip:'Ohms Law' }, { label:'P = VI', tip:'Power' },
+      { label:'P = I²R', tip:'Power (current)' }, { label:'P = V²/R', tip:'Power (voltage)' },
+      { label:'XL = 2πfL', tip:'Inductive reactance' }, { label:'XC = 1/(2πfC)', tip:'Capacitive reactance' },
+      { label:'Z = √(R²+X²)', tip:'Impedance' }, { label:'f = pn/120', tip:'Frequency' },
+      { label:'Vrms = Vp×0.707', tip:'RMS voltage' }, { label:'Vp = Vrms×1.414', tip:'Peak voltage' },
+      { label:'T = L/R', tip:'RL time constant' }, { label:'T = RC', tip:'RC time constant' },
+      { label:'V₁/V₂ = N₁/N₂', tip:'Turns ratio' }, { label:'PF = cos θ', tip:'Power factor' },
+      { label:'VL = √3×Vφ', tip:'Line voltage (wye)' }, { label:'IL = √3×Iφ', tip:'Line current (delta)' },
+      { label:'Ns = 120f/P', tip:'Synchronous speed' }, { label:'Q = CV', tip:'Charge' },
+      { label:'Q = It', tip:'Charge (current)' }, { label:'e = ΔI/Δt × L', tip:'Inductive kick' },
+    ]},
   ],
 
   // Simple 4-category note system — same for all periods
@@ -3068,64 +3104,19 @@ const Notes = {
           <div class="notes-char-bar notes-no-print">
             <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);font-weight:700;align-self:center;white-space:nowrap;margin-right:4px;">Quick Insert:</span>
             ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
+            <button class="char-btn" onclick="Notes._toggleExtChars()" title="More characters & formulas" style="background:rgba(139,92,246,0.15);color:#8b5cf6;font-weight:700;font-size:0.75rem;">▼ More</button>
           </div>
-
-          <!-- Formulas reference dropdown -->
-          <details class="notes-no-print" style="background:rgba(139,92,246,0.04);border-top:1px solid rgba(139,92,246,0.1);">
-            <summary style="padding:8px 14px;font-size:0.75rem;font-weight:700;color:#8b5cf6;cursor:pointer;user-select:none;">
-              📐 Formulas & Quick Reference (click to expand)
-            </summary>
-            <div style="padding:8px 14px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:0.78rem;">
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⚡ Ohm's Law & Power</div>
-                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
-                  V = I × R<br>I = V / R<br>R = V / I<br>P = V × I<br>P = I² × R<br>P = V² / R
+          <!-- Extended characters dropdown (hidden by default) -->
+          <div id="notesExtChars" class="notes-no-print" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-top:none;padding:10px 14px;">
+            ${this.CHARS_EXT.map(g => `
+              <div style="margin-bottom:10px;">
+                <div style="font-size:0.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${g.group}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                  ${g.chars.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label.replace(/'/g, "\\'")}')" title="${c.tip}">${c.label}</button>`).join('')}
                 </div>
-                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('V = IR')" style="font-size:0.7rem;">+V=IR</button>
-                <button class="char-btn" onclick="Notes._insertChar('P = VI')" style="font-size:0.7rem;">+P=VI</button></div>
               </div>
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">🌊 Reactance</div>
-                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
-                  XL = 2πfL<br>XC = 1 / (2πfC)<br>Z = √(R² + X²)<br>Z = √(R² + (XL−XC)²)
-                </div>
-                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('XL = 2πfL')" style="font-size:0.7rem;">+XL</button>
-                <button class="char-btn" onclick="Notes._insertChar('XC = 1/(2πfC)')" style="font-size:0.7rem;">+XC</button>
-                <button class="char-btn" onclick="Notes._insertChar('Z = √(R² + X²)')" style="font-size:0.7rem;">+Z</button></div>
-              </div>
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">📈 AC Values</div>
-                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
-                  Vrms = Vp × 0.707<br>Vp = Vrms × 1.414<br>Vavg = Vp × 0.637<br>f = 1/T<br>f = (P × N) / 120
-                </div>
-                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('f = pn/120')" style="font-size:0.7rem;">+freq</button>
-                <button class="char-btn" onclick="Notes._insertChar('Vrms = Vp × 0.707')" style="font-size:0.7rem;">+Vrms</button></div>
-              </div>
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⏱️ Time Constants</div>
-                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
-                  T(RL) = L / R<br>T(RC) = R × C<br>1T = 63.2%<br>5T = 99.3% (full)
-                </div>
-                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('T = L/R')" style="font-size:0.7rem;">+T(RL)</button>
-                <button class="char-btn" onclick="Notes._insertChar('T = RC')" style="font-size:0.7rem;">+T(RC)</button></div>
-              </div>
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">🔁 Transformers</div>
-                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
-                  V1/V2 = N1/N2<br>V1/V2 = I2/I1<br>Turns ratio = Np/Ns<br>VA = V × I
-                </div>
-                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('V₁/V₂ = N₁/N₂')" style="font-size:0.7rem;">+turns</button></div>
-              </div>
-              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;">
-                <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">🔺 Three-Phase</div>
-                <div style="font-family:monospace;line-height:1.8;color:var(--text-secondary);">
-                  VL = √3 × Vp (wye)<br>IL = √3 × Ip (delta)<br>P = √3 × VL × IL × PF<br>PF = cos θ
-                </div>
-                <div style="margin-top:6px;"><button class="char-btn" onclick="Notes._insertChar('VL = √3 × Vφ')" style="font-size:0.7rem;">+VL</button>
-                <button class="char-btn" onclick="Notes._insertChar('PF = cos θ')" style="font-size:0.7rem;">+PF</button></div>
-              </div>
-            </div>
-          </details>
+            `).join('')}
+          </div>
 
           <!-- Editor -->
           <div id="notesEditorWrap" class="notes-print-area" style="background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;">
@@ -3331,6 +3322,12 @@ const Notes = {
     document.execCommand('hiliteColor', false, 'rgba(245,158,11,0.3)');
     document.execCommand('bold', false, null);
     showToast('Key term marked — it\'ll appear in your auto-quiz!', 'success');
+  },
+
+  _toggleExtChars() {
+    const el = document.getElementById('notesExtChars');
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
   },
 
   _insertChar(char) {
