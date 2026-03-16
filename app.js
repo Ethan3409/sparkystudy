@@ -3795,39 +3795,40 @@ const Notes = {
       return;
     }
 
-    const text = editor.innerHTML.replace(/<[^>]*>/g, '\n').replace(/\s+/g, ' ').trim();
-    if (text.length < 50) {
+    // Split notes into chunks by line breaks, <hr>, or <br><br>
+    const html = editor.innerHTML;
+    // Split on <hr>, double <br>, or block-level elements to get chunks
+    const chunks = html
+      .split(/<hr[^>]*>|<br\s*\/?>\s*<br\s*\/?>|<\/(?:p|div|h[1-6]|li|ul|ol)>/gi)
+      .map(c => c.replace(/<[^>]*>/g, '').trim())
+      .filter(c => c.length > 10);
+
+    if (chunks.length === 0) {
       showToast('Not enough content to organize.', 'info');
       return;
     }
 
-    // Get available topics for the user's period
-    const state = Storage.get();
-    const period = state ? state.user.period : 2;
-    const topics = this.TOPICS_LIST.filter(t => t.period === 0 || t.period === period);
-    const topicNames = topics.map(t => t.id + ': ' + t.name).join('\n');
-
-    showToast('🗂️ Organizing notes with AI... This may take a moment.', 'info');
+    showToast(`🗂️ Classifying ${chunks.length} note chunks... This may take a moment.`, 'info');
 
     try {
       const BACKEND = 'https://sparkystudy-production.up.railway.app';
+      // Send all chunks to AI for CLASSIFICATION ONLY — we keep the original text
+      const numbered = chunks.map((c, i) => `[${i}] ${c.slice(0, 200)}`).join('\n');
       const res = await fetch(BACKEND + '/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: `Sort these notes into 4 categories: theory, lab, code, general.
+          question: `Classify each numbered note into exactly one category. Categories:
+- theory (electrical theory, formulas, concepts, physics, module content, calculations)
+- lab (hands-on work, lab procedures, practical exercises, measurements)
+- code (CEC code rules, regulations, code references, standards)
+- general (personal notes, reminders, anything else)
 
-Rules:
-- theory = electrical theory, formulas, concepts, module content
-- lab = hands-on work, lab procedures, practical exercises
-- code = CEC code rules, regulations, code references
-- general = anything that doesn't fit the above
+Return ONLY a JSON array of category strings in order, one per note. Example: ["theory","lab","theory","code","general"]
+No markdown, no explanation, no other text.
 
-CRITICAL: Return ONLY a valid JSON array. No markdown, no code blocks, no explanation, no text before or after. Format:
-[{"topic_id":"theory","content":"note text here"},{"topic_id":"lab","content":"other text"}]
-
-Notes to sort:
-${text.slice(0, 6000)}`,
+Notes to classify:
+${numbered.slice(0, 7000)}`,
           history: [],
           systemContext: ''
         })
@@ -3836,52 +3837,77 @@ ${text.slice(0, 6000)}`,
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      // Parse the AI response — extract JSON array
-      let organized;
+      // Parse classifications
+      let classifications;
       try {
         let raw = data.answer || '';
-        // Strip markdown code blocks if present
         raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
-        // Find the first complete JSON array (non-greedy)
         const arrStart = raw.indexOf('[');
-        if (arrStart === -1) throw new Error('No JSON array found');
-        // Find matching closing bracket
+        if (arrStart === -1) throw new Error('No array found');
         let depth = 0, arrEnd = -1;
         for (let ci = arrStart; ci < raw.length; ci++) {
           if (raw[ci] === '[') depth++;
           if (raw[ci] === ']') { depth--; if (depth === 0) { arrEnd = ci; break; } }
         }
-        if (arrEnd === -1) throw new Error('Incomplete JSON array');
-        organized = JSON.parse(raw.substring(arrStart, arrEnd + 1));
+        if (arrEnd === -1) throw new Error('Incomplete array');
+        classifications = JSON.parse(raw.substring(arrStart, arrEnd + 1));
       } catch(e) {
-        console.error('Organize parse error:', e, data.answer);
-        showToast('AI couldn\'t organize the notes. Try again.', 'error');
+        console.error('Classify parse error:', e, data.answer);
+        showToast('AI couldn\'t classify the notes. Try again.', 'error');
         return;
       }
 
-      if (!Array.isArray(organized) || organized.length === 0) {
-        showToast('No categories detected. Notes unchanged.', 'info');
+      if (!Array.isArray(classifications) || classifications.length === 0) {
+        showToast('Classification failed. Notes unchanged.', 'info');
         return;
       }
 
-      // Save organized content to each topic
-      let movedCount = 0;
-      organized.forEach(item => {
-        if (!item.topic_id || !item.content || item.content.trim().length < 5) return;
-        const key = this._storageKey(userId, item.topic_id);
-        const existing = localStorage.getItem(key) || '';
-        const newContent = item.content.replace(/\n/g, '<br>');
-        localStorage.setItem(key, existing ? existing + '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">🗂️ Auto-organized</div>' + newContent : newContent);
-        movedCount++;
+      // Now split the ORIGINAL HTML into chunks and move each to its classified category
+      const htmlChunks = html
+        .split(/(<hr[^>]*>|<br\s*\/?>\s*<br\s*\/?>)/gi)
+        .filter(c => c.replace(/<[^>]*>/g, '').trim().length > 10);
+
+      const validCats = new Set(['theory', 'lab', 'code', 'general']);
+      const buckets = { theory: [], lab: [], code: [], general: [] };
+      const state = Storage.get();
+
+      htmlChunks.forEach((chunk, i) => {
+        const cat = (classifications[i] || 'general').toLowerCase().trim();
+        const target = validCats.has(cat) ? cat : 'general';
+        // Don't move chunks that are already in the right category
+        if (target !== this.currentTopic) {
+          buckets[target].push(chunk);
+        }
       });
 
-      // Clear the current editor since content has been distributed
-      editor.innerHTML = '';
+      // Save each bucket to its topic
+      let movedCount = 0;
+      const remaining = []; // chunks that stay in current topic
+      htmlChunks.forEach((chunk, i) => {
+        const cat = (classifications[i] || 'general').toLowerCase().trim();
+        const target = validCats.has(cat) ? cat : 'general';
+        if (target === this.currentTopic) {
+          remaining.push(chunk);
+        }
+      });
+
+      for (const [cat, catChunks] of Object.entries(buckets)) {
+        if (catChunks.length === 0) continue;
+        const key = this._storageKey(userId, cat);
+        const existing = localStorage.getItem(key) || '';
+        const newContent = catChunks.join('<br><br>');
+        localStorage.setItem(key, existing
+          ? existing + '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">🗂️ Auto-organized from ' + (this.currentTopic || 'notes') + '</div>' + newContent
+          : newContent);
+        movedCount += catChunks.length;
+      }
+
+      // Keep only the chunks that belong in the current topic
+      editor.innerHTML = remaining.join('<br><br>');
       this._onInput(userId);
       syncAIContext(state);
 
-      showToast(`🗂️ Notes organized into ${movedCount} topic${movedCount !== 1 ? 's' : ''}! Check the sidebar.`, 'success');
-      // Re-render to show updated topic indicators
+      showToast(`🗂️ Moved ${movedCount} chunk${movedCount !== 1 ? 's' : ''} to the right topics! ${remaining.length} stayed here.`, 'success');
       this.render(Storage.get());
     } catch(err) {
       console.error('Organize error:', err);
