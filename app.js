@@ -10739,7 +10739,10 @@ const Lessons = {
                 <span style="font-size:0.78rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</span>
                 <span style="font-size:0.8rem;font-weight:600;color:${lesson.color};">Start &#x2192;</span>
               </div>
-              ${lesson.uploaded ? `<button onclick="event.stopPropagation();Lessons._deleteUploaded('${lesson.id}','${state.user.id}')" style="position:absolute;bottom:12px;right:12px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;opacity:0.5;" title="Delete this module">🗑️</button>` : ''}
+              ${lesson.uploaded ? `<div style="position:absolute;bottom:8px;right:8px;display:flex;gap:4px;">
+                <button onclick="event.stopPropagation();Lessons._renameUploaded('${lesson.id}','${state.user.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;opacity:0.6;padding:2px 4px;" title="Rename">✏️</button>
+                <button onclick="event.stopPropagation();Lessons._deleteUploaded('${lesson.id}','${state.user.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;opacity:0.5;padding:2px 4px;" title="Delete">🗑️</button>
+              </div>` : ''}
             </div>
           `).join('')}
         </div>
@@ -10785,6 +10788,24 @@ const Lessons = {
       }
     }
     this.render(Storage.get());
+  },
+
+  _renameUploaded(lessonId, userId) {
+    const moduleKey = 'sparky_module_' + userId;
+    const modules = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    const mod = modules.find(m => m.id === lessonId);
+    if (!mod) return;
+    const newName = prompt('Rename this module:', mod.title);
+    if (!newName || !newName.trim() || newName.trim() === mod.title) return;
+    mod.title = newName.trim();
+    localStorage.setItem(moduleKey, JSON.stringify(modules));
+    showToast('Module renamed!', 'success');
+    if (this.activeLesson === lessonId) {
+      const container = document.getElementById('lessonsContent');
+      if (container) this._renderLesson(lessonId, container);
+    } else {
+      this.render(Storage.get());
+    }
   },
 
   _deleteUploaded(lessonId, userId) {
