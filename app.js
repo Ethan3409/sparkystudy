@@ -3568,8 +3568,7 @@ const Notes = {
       uploaded: true,
       uploadedAt: Date.now(),
       sections: sections.map(s => ({
-        type: s.title.toLowerCase().includes('objective') ? 'objectives' :
-              s.title.toLowerCase().includes('formula') ? 'keypoint' : 'concept',
+        type: s.title.toLowerCase().includes('formula') || s.title.toLowerCase().includes('key') ? 'keypoint' : 'concept',
         title: s.title,
         body: s.body
       }))
@@ -9637,7 +9636,23 @@ const LESSONS_CONTENT = [
           { q: 'Calculate XC for a 200 μF capacitor at 60 Hz.', a: 'XC = 1/(2πfC) = 1/(2π × 60 × 200 × 10⁻⁶) = 1/0.07540 = 13.26 Ω.' },
           { q: 'In an ac circuit, does current lead or lag voltage in a pure inductive circuit? By how much?', a: 'Current LAGS voltage by 90° in a pure inductive circuit. Remember ELI: E (voltage) leads I (current) in an inductor L.' },
           { q: 'In an ac circuit, does current lead or lag voltage in a pure capacitive circuit? By how much?', a: 'Current LEADS voltage by 90° in a pure capacitive circuit. Remember ICE: I (current) leads E (voltage) in a capacitor C.' },
-          { q: 'At dc steady state, an inductor acts as a _____ and a capacitor acts as a _____.', a: 'An inductor acts as a short circuit (wire) — zero opposition. A capacitor acts as an open circuit — blocks all dc current.' }
+          { q: 'At dc steady state, an inductor acts as a _____ and a capacitor acts as a _____.', a: 'An inductor acts as a short circuit (wire) — zero opposition. A capacitor acts as an open circuit — blocks all dc current.' },
+          { q: 'SELF-TEST Q1: A dc circuit contains a coil with 2.5 Ω of resistance and 300 mH of inductance. What is the time constant?', a: 'T = L/R = 0.3 H / 2.5 Ω = 0.12 seconds. (Answer: a)' },
+          { q: 'SELF-TEST Q2: 100 V dc is applied to a coil with 300 mH and 5 Ω. The inductive current drops to zero in 1.4 μs after opening. Calculate the inductive kick.', a: 'Steady state I = E/R = 100/5 = 20 A. e = (ΔI/Δt) × L = (20/0.0000014) × 0.3 = 14,285,714 × 0.3 = 4,285,714 V ≈ 4.29 MV. (Answer: c)' },
+          { q: 'SELF-TEST Q3: Calculate the voltage across a capacitor after one time constant if connected to a 24 V dc source.', a: 'After 1 TC, voltage reaches 63.2% of supply: V = 24 × 0.632 = 15.17 V. (Answer: b)' },
+          { q: 'SELF-TEST Q4: A dc circuit has a 300 μF capacitor in series with a 4 Ω resistor. What is one time constant?', a: 'T = R × C = 4 × 0.0003 = 0.0012 s = 1.2 ms. (Answer: b)' },
+          { q: 'SELF-TEST Q5: An ac circuit contains a coil. What happens to inductive reactance if frequency decreases?', a: 'XL = 2πfL. If f decreases, XL decreases (direct relationship). Note: inductance L does NOT change — only XL changes. (Answer: d)' },
+          { q: 'SELF-TEST Q7: The inductance of a coil is 600 mH. What is XL when connected to 60 Hz?', a: 'XL = 2πfL = 2π × 60 × 0.6 = 226.2 Ω. (Answer: b)' },
+          { q: 'SELF-TEST Q8: What happens to XC if the frequency decreases in an ac circuit with a capacitor?', a: 'XC = 1/(2πfC). If f decreases, XC INCREASES (inverse relationship). (Answer: d)' },
+          { q: 'SELF-TEST Q10: What is the capacitance in a 30 Hz circuit with XC = 75 Ω?', a: 'C = 1/(2πfXC) = 1/(2π × 30 × 75) = 1/14137.2 = 0.00007074 F = 70.74 μF ≈ 70.7 μF. (Answer: not exactly listed — closest is a) 42.44 μF at different values)' },
+          { q: 'SELF-TEST Q11: What happens to XC if frequency increases from 50 Hz to 60 Hz?', a: 'XC would DECREASE. Higher frequency means the capacitor charges/discharges more rapidly, allowing more current flow, which means less opposition (lower XC). (Answer: b)' },
+          { q: 'ACTIVITY: Calculate XL for L = 0.22 H at 60 Hz.', a: 'XL = 2πfL = 2π × 60 × 0.22 = 82.938 Ω ≈ 82.9 Ω' },
+          { q: 'ACTIVITY: Find L if XL = 60.3 Ω at 60 Hz.', a: 'L = XL/(2πf) = 60.3/(2π × 60) = 60.3/376.99 = 0.16 H = 160 mH' },
+          { q: 'ACTIVITY: Calculate XC for an 800 μF capacitor at 60 Hz.', a: 'XC = 1/(2πfC) = 1/(2π × 60 × 0.0008) = 1/0.30159 = 3.316 Ω' },
+          { q: 'ACTIVITY: Find C if XC = 44.8 Ω at 60 Hz.', a: 'C = 1/(2πfXC) = 1/(2π × 60 × 44.8) = 1/16889.2 = 0.0000592 F = 59.2 μF' },
+          { q: 'ACTIVITY: Q = I × t. If I = 5 A flows for 4 seconds, what is the charge?', a: 'Q = 5 × 4 = 20 C (20 coulombs)' },
+          { q: 'ACTIVITY: Q = C × V. A 100 μF capacitor is charged to 200 V. What is the stored charge?', a: 'Q = 0.0001 × 200 = 0.02 C = 20 mC' },
+          { q: 'ACTIVITY: A 50 μF capacitor in series with 1200 Ω is connected to 100 V dc. What is the voltage after 1 TC?', a: 'T = R×C = 1200 × 0.00005 = 0.06 s. After 1 TC: V = 100 × 0.632 = 63.2 V' }
         ]
       },
       {
@@ -10848,6 +10863,10 @@ const Lessons = {
 
   _renderSection(s, accentColor, idx = 0) {
     // Special full-width renderers for objectives and outcome
+    if (s.type === 'objectives' && (!s.objectives || !Array.isArray(s.objectives))) {
+      // Fallback: render as concept if objectives array is missing
+      return this._renderSection({ ...s, type: 'concept' }, accentColor, idx);
+    }
     if (s.type === 'objectives') {
       const objList = s.objectives.map((o, i) =>
         `<div style="display:flex;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:6px;align-items:flex-start;">
@@ -10872,6 +10891,9 @@ const Lessons = {
         </div>`;
     }
 
+    if (s.type === 'outcome' && !s.outcome) {
+      return this._renderSection({ ...s, type: 'concept' }, accentColor, idx);
+    }
     if (s.type === 'outcome') {
       const qHtml = s.questions ? s.questions.map((qobj, i) => `
         <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px;margin-bottom:10px;">
