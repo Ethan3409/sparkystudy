@@ -594,7 +594,7 @@
 <script>
 function sparkyLogout(){localStorage.removeItem('sparty_auth');window.location.href='../login.html';}
 document.addEventListener('DOMContentLoaded',function(){
-    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');
+    try{var a=JSON.parse(localStorage.getItem('sparty_auth')||'{}');}catch(e){}
 });
 </script>
 

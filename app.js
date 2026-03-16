@@ -11193,13 +11193,12 @@ const Lessons = {
     this._elSectionOffsets = offsets;
     const btn = document.getElementById('lessons-read-btn');
     if (btn) { btn.textContent = '⏳ Loading...'; btn.style.color = '#f59e0b'; btn.style.borderColor = 'rgba(245,158,11,0.4)'; btn.style.background = 'rgba(245,158,11,0.08)'; }
-    const apiKey = 'sk_a12bbd22810bcf3f97ab287a173d0095a6342fd658cbe756';
-    const voiceId = 'FOSKkhOXCEGmWEXxIIpp';
     try {
-      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      const BACKEND = 'https://sparkystudy-production.up.railway.app';
+      const res = await fetch(`${BACKEND}/api/tts`, {
         method: 'POST',
-        headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.substring(0, 5000), model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.55, similarity_boost: 0.80 } })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.substring(0, 5000) })
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
