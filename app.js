@@ -9301,7 +9301,7 @@ const LESSONS_CONTENT = [
     id: 'm11', period: 2,
     title: 'Fundamentals of Alternating Current',
     icon: '〰️',
-    subtitle: 'Sine Waves, Frequency, and AC Generation',
+    subtitle: 'ILM 030201a — Sine Waves, Frequency, Poles, and AC Calculations',
     color: '#8b5cf6',
     gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
     border: 'rgba(139,92,246,0.3)',
