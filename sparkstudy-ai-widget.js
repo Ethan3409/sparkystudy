@@ -397,7 +397,7 @@
           if (window.pdfjsLib) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const maxPages = Math.min(pdf.numPages, 20);
+            const maxPages = Math.min(pdf.numPages, 60);
             for (let i = 1; i <= maxPages; i++) {
               filePreviewEl.textContent = `🔍 OCR: page ${i}/${maxPages}...`;
               const page = await pdf.getPage(i);

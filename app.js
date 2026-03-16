@@ -1007,16 +1007,15 @@ function syncAIContext(state) {
       if (text.length > 20) notes.push('=== ' + topic + ' ===\n' + text);
     }
   }
-  // Also include any uploaded module content stored under sparky_upload_<uid>_*
+  // Also include uploaded module text stored under sparky_modtext_<uid>_*
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('sparky_upload_' + uid + '_')) {
-      const topic = key.replace('sparky_upload_' + uid + '_', '');
+    if (key && key.startsWith('sparky_modtext_' + uid + '_')) {
       const text = (localStorage.getItem(key) || '').trim();
-      if (text.length > 20) notes.push('=== [Uploaded] ' + topic + ' ===\n' + text);
+      if (text.length > 20) notes.push('=== [Module] ===\n' + text);
     }
   }
-  window._sparkStudyCtx = notes.join('\n\n').slice(0, 12000);
+  window._sparkStudyCtx = notes.join('\n\n').slice(0, 20000);
 }
 
 const App = {
@@ -3512,15 +3511,70 @@ const Notes = {
     }
   },
 
-  // Module content: save locally only, NEVER to cloud
+  // Module content: save as a user lesson in localStorage, NEVER to cloud
   async _saveAsModule(text, fname, userId, editor) {
-    if (editor) {
-      const heading = `<h2>📕 ${fname.replace(/\.[^.]+$/, '')}</h2>`;
-      const formatted = text.replace(/\n/g, '<br>');
-      editor.innerHTML += (editor.innerHTML.trim() ? '<hr>' : '') + heading + formatted;
-      this._onInput(userId);
+    const title = fname.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ').trim();
+    const moduleId = 'uploaded_' + Date.now().toString(36);
+    const state = Storage.get();
+    const period = state ? state.user.period : 2;
+
+    // Split text into sections by double newlines or headings
+    const rawSections = text.split(/\n{2,}/).filter(s => s.trim().length > 20);
+    const sections = [];
+    let currentSection = { title: 'Introduction', body: '' };
+
+    for (const block of rawSections) {
+      const trimmed = block.trim();
+      // Detect headings: short lines (< 80 chars) that look like titles
+      const lines = trimmed.split('\n');
+      if (lines.length === 1 && lines[0].length < 80 && !lines[0].endsWith('.') && /^[A-Z]/.test(lines[0])) {
+        if (currentSection.body.trim()) {
+          sections.push({ ...currentSection });
+        }
+        currentSection = { title: lines[0].trim(), body: '' };
+      } else {
+        currentSection.body += (currentSection.body ? '\n\n' : '') + trimmed;
+      }
     }
-    showToast('📕 Module saved locally (private — not shared)', 'info');
+    if (currentSection.body.trim()) sections.push(currentSection);
+
+    // If no sections detected, create one big section
+    if (sections.length === 0) {
+      sections.push({ title: title, body: text.trim() });
+    }
+
+    // Build lesson object
+    const lesson = {
+      id: moduleId,
+      period: period,
+      title: title,
+      icon: '📕',
+      subtitle: 'Uploaded module · ' + sections.length + ' sections · ' + Math.round(text.length / 5) + ' words',
+      color: '#f59e0b',
+      gradient: 'linear-gradient(135deg,rgba(245,158,11,0.1),rgba(217,119,6,0.05))',
+      border: 'rgba(245,158,11,0.3)',
+      readTime: sections.length + ' sections',
+      uploaded: true,
+      uploadedAt: Date.now(),
+      sections: sections.map(s => ({
+        type: s.title.toLowerCase().includes('objective') ? 'objectives' :
+              s.title.toLowerCase().includes('formula') ? 'keypoint' : 'concept',
+        title: s.title,
+        body: s.body
+      }))
+    };
+
+    // Save module content to localStorage (separate from notes, NEVER to cloud)
+    const moduleKey = 'sparky_module_' + userId;
+    const existing = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    existing.push(lesson);
+    localStorage.setItem(moduleKey, JSON.stringify(existing));
+
+    // Also save raw text for AI context
+    localStorage.setItem('sparky_modtext_' + userId + '_' + moduleId, text.slice(0, 30000));
+
+    showToast('📕 Module saved as lesson! Find it in the Lessons page.', 'success');
+    syncAIContext(Storage.get());
   },
 
   // Show modal asking user to choose Notes vs Module
@@ -3661,7 +3715,7 @@ const Notes = {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
-      const maxPages = Math.min(pdf.numPages, 30); // cap at 30 pages
+      const maxPages = pdf.numPages; // process all pages
 
       for (let i = 1; i <= maxPages; i++) {
         showToast(`OCR: page ${i}/${maxPages}...`, 'info');
@@ -10205,8 +10259,22 @@ const Lessons = {
   _elSpeedRate: 1.0,
   _ttsPaused: false,
 
+  // Find a lesson by ID — searches both built-in and uploaded modules
+  _findLesson(lessonId) {
+    const builtin = this._findLesson(lessonId);
+    if (builtin) return builtin;
+    // Search uploaded modules
+    const state = Storage.get();
+    if (!state) return null;
+    const moduleKey = 'sparky_module_' + state.user.id;
+    try {
+      const uploaded = JSON.parse(localStorage.getItem(moduleKey) || '[]');
+      return uploaded.find(m => m.id === lessonId) || null;
+    } catch(e) { return null; }
+  },
+
   _buildReadText(fromIdx) {
-    const lesson = LESSONS_CONTENT.find(l => l.id === this.activeLesson);
+    const lesson = this._findLesson(this.activeLesson);
     if (!lesson) return { text: '', offsets: [] };
     let text = '';
     const offsets = [];
@@ -10383,7 +10451,7 @@ const Lessons = {
   },
 
   _getLessonText(lessonId) {
-    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    const lesson = this._findLesson(lessonId);
     if (!lesson) return '';
     let text = lesson.title + '. ' + lesson.subtitle + '. ';
     for (const s of lesson.sections) {
@@ -10424,43 +10492,124 @@ const Lessons = {
   },
 
   _renderIndex(container, state) {
-    if (!state.user.isOwner) {
-      container.innerHTML = `
-        <div style="padding:60px 24px;text-align:center;">
-          <div style="font-size:3rem;margin-bottom:16px;">📚</div>
-          <h2 style="font-size:1.4rem;margin-bottom:8px;">Lessons Coming Soon</h2>
-          <p style="color:var(--text-secondary);font-size:0.95rem;max-width:400px;margin:0 auto;">Written lesson modules are being developed and will be available in a future update.</p>
-        </div>
-      `;
-      return;
-    }
-    const lessons = LESSONS_CONTENT.filter(l => l.period === 2);
+    const period = state.user.period;
+    // Get user's uploaded modules from localStorage
+    const moduleKey = 'sparky_module_' + state.user.id;
+    const uploadedModules = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    const userModules = uploadedModules.filter(m => m.period === period);
+
+    // Built-in lessons for owner only
+    const builtInLessons = state.user.isOwner ? LESSONS_CONTENT.filter(l => l.period === period && !l.comingSoon) : [];
+    const allLessons = [...userModules, ...builtInLessons];
+
     container.innerHTML = `
       <div style="padding:24px 0 8px;">
         <h1 style="font-size:2rem;margin-bottom:6px;">&#x1F4DA; Lessons</h1>
-        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">Deep-dive lessons for Period 2 — real explanations, real-world examples, and the kind of context that makes everything click.</p>
+        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">
+          ${allLessons.length > 0
+            ? `Your Period ${period} modules and lessons — study, review, and quiz yourself.`
+            : `Upload your textbook modules to create interactive lessons.`}
+        </p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-top:24px;">
-        ${lessons.map(lesson => `
-          <div onclick="Lessons._open('${lesson.id}')" style="cursor:pointer;background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:24px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;"
-            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'"
-            onmouseout="this.style.transform='';this.style.boxShadow=''">
-            <div style="font-size:2.5rem;margin-bottom:10px;">${lesson.icon}</div>
-            <h2 style="font-size:1.15rem;margin:0 0 4px;color:${lesson.color};">${lesson.title}</h2>
-            <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 16px;line-height:1.4;">${lesson.subtitle}</p>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-size:0.78rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</span>
-              <span style="font-size:0.8rem;font-weight:600;color:${lesson.color};">Start &#x2192;</span>
+
+      ${allLessons.length === 0 ? `
+        <div style="text-align:center;padding:48px 24px;">
+          <div style="font-size:3.5rem;margin-bottom:16px;">📕</div>
+          <h2 style="font-size:1.3rem;margin-bottom:10px;">No modules uploaded yet</h2>
+          <p style="color:var(--text-secondary);font-size:0.95rem;max-width:460px;margin:0 auto 24px;line-height:1.6;">
+            Upload your textbook PDFs or photos to create interactive lessons.
+            The AI will organize the content into sections you can study, quiz yourself on, and have read aloud.
+          </p>
+          <label class="btn btn-primary btn-lg" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:14px 28px;font-size:1rem;">
+            📄 Upload a Module
+            <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Lessons._uploadModule(event,'${state.user.id}')">
+          </label>
+          <div style="margin-top:14px;font-size:0.78rem;color:var(--text-muted);">🔒 Modules are private — stored on your device only, never shared.</div>
+        </div>
+      ` : `
+        <div style="display:flex;align-items:center;gap:12px;margin:16px 0 20px;">
+          <label class="btn btn-primary btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            📄 Upload Module
+            <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Lessons._uploadModule(event,'${state.user.id}')">
+          </label>
+          <span style="font-size:0.78rem;color:var(--text-muted);">🔒 Private — never shared</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+          ${allLessons.map(lesson => `
+            <div onclick="Lessons._open('${lesson.id}')" style="cursor:pointer;background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:24px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;"
+              onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'"
+              onmouseout="this.style.transform='';this.style.boxShadow=''">
+              ${lesson.uploaded ? '<div style="position:absolute;top:12px;right:12px;font-size:0.65rem;background:rgba(245,158,11,0.15);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">UPLOADED</div>' : ''}
+              <div style="font-size:2.5rem;margin-bottom:10px;">${lesson.icon}</div>
+              <h2 style="font-size:1.15rem;margin:0 0 4px;color:${lesson.color};">${lesson.title}</h2>
+              <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 16px;line-height:1.4;">${lesson.subtitle}</p>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:0.78rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</span>
+                <span style="font-size:0.8rem;font-weight:600;color:${lesson.color};">Start &#x2192;</span>
+              </div>
+              ${lesson.uploaded ? `<button onclick="event.stopPropagation();Lessons._deleteUploaded('${lesson.id}','${state.user.id}')" style="position:absolute;bottom:12px;right:12px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;opacity:0.5;" title="Delete this module">🗑️</button>` : ''}
             </div>
-          </div>
-        `).join('')}
-      </div>
+          `).join('')}
+        </div>
+      `}
     `;
+  },
+
+  // Upload module directly from Lessons page
+  async _uploadModule(event, userId) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    event.target.value = '';
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
+
+    for (const file of files) {
+      const fname = file.name || 'module';
+      showToast(`Processing ${fname}...`, 'info');
+      try {
+        let text = '';
+        if (file.type === 'application/pdf') {
+          text = await Notes._extractPdfText(file);
+          if (text.trim().length < 50) {
+            showToast(`📄 ${fname} is scanned — running OCR...`, 'info');
+            text = await Notes._ocrPdf(file, BACKEND);
+          }
+        } else if (file.type.startsWith('image/')) {
+          const base64 = await Notes._fileToBase64(file);
+          const res = await fetch(BACKEND + '/api/extract-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64, mimeType: file.type })
+          });
+          const data = await res.json();
+          text = data.text || '';
+        } else {
+          text = await file.text();
+        }
+        if (text.trim().length > 20) {
+          await Notes._saveAsModule(text, fname, userId, null);
+        }
+      } catch(err) {
+        showToast(`Failed: ${err.message}`, 'error');
+      }
+    }
+    this.render(Storage.get());
+  },
+
+  _deleteUploaded(lessonId, userId) {
+    if (!confirm('Delete this uploaded module? This cannot be undone.')) return;
+    const moduleKey = 'sparky_module_' + userId;
+    const modules = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    const filtered = modules.filter(m => m.id !== lessonId);
+    localStorage.setItem(moduleKey, JSON.stringify(filtered));
+    localStorage.removeItem('sparky_modtext_' + userId + '_' + lessonId);
+    showToast('Module deleted.', 'info');
+    this.activeLesson = null;
+    this.render(Storage.get());
   },
 
   _open(lessonId) {
     const state = Storage.get();
-    if (!state || !state.user.isOwner) return;
+    if (!state) return;
     this.activeLesson = lessonId;
     const container = document.getElementById('lessonsContent');
     if (container) this._renderLesson(lessonId, container);
@@ -10477,7 +10626,7 @@ const Lessons = {
   },
 
   _renderLesson(lessonId, container) {
-    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    const lesson = this._findLesson(lessonId);
     if (!lesson) { this.activeLesson = null; return; }
 
     const sectionHtml = lesson.sections.map((s, idx) => this._renderSection(s, lesson.color, idx)).join('');
@@ -10635,7 +10784,7 @@ const Lessons = {
   },
 
   async _aiExplain(idx) {
-    const lesson = LESSONS_CONTENT.find(l => l.id === this.activeLesson);
+    const lesson = this._findLesson(this.activeLesson);
     if (!lesson || !lesson.sections[idx]) return;
     const s = lesson.sections[idx];
     const box = document.getElementById('ai-explain-' + idx);
@@ -10660,7 +10809,7 @@ const Lessons = {
   },
 
   async _aiQuiz(lessonId) {
-    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    const lesson = this._findLesson(lessonId);
     if (!lesson) return;
     const btn = document.getElementById('ai-quiz-btn');
     const result = document.getElementById('ai-quiz-result');
@@ -10751,7 +10900,7 @@ const Lessons = {
   },
 
   async _aiGenerateFlashcards(lessonId) {
-    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
+    const lesson = this._findLesson(lessonId);
     if (!lesson) return;
     const btn = document.getElementById('ai-fc-btn');
     const result = document.getElementById('ai-fc-result');
