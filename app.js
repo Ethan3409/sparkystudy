@@ -924,6 +924,12 @@ const Auth = {
     else App.navigate('dashboard');
     // Check for owner replies after a short delay (let page render first)
     setTimeout(() => checkOwnerReplies(state.user.id), 1500);
+    // Periodically check for new replies every 60 seconds
+    if (window._replyCheckInterval) clearInterval(window._replyCheckInterval);
+    window._replyCheckInterval = setInterval(() => {
+      const s = Storage.get();
+      if (s && s.user && !s.user.isOwner) checkOwnerReplies(s.user.id);
+    }, 60000);
   },
   logout() {
     this.isOwnerAnalytics = false;
