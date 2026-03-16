@@ -187,6 +187,28 @@ Respond with ONLY valid JSON: {"type":"module" or "notes","confidence":0.0-1.0,"
   }
 });
 
+// ── POST /api/detect-title ───────────────────────────────────────────────────
+// Detects the title of a module/textbook from its first page text content.
+app.post('/api/detect-title', async (req, res) => {
+  if (!anthropic) return res.status(503).json({ error: 'AI not configured.' });
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: 'Missing text' });
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 100,
+      system: 'You detect the title of educational textbooks/modules. The title page typically has a format like: publisher info, then "ELECTRICIAN", then the actual title in large text, then edition info. Return ONLY valid JSON: {"title":"The Detected Title"}. If you cannot detect a title, return {"title":""}.',
+      messages: [{ role: 'user', content: text.slice(0, 2000) }]
+    });
+    const raw = response.content[0].text.trim();
+    const json = JSON.parse(raw);
+    res.json(json);
+  } catch (err) {
+    res.json({ title: '' });
+  }
+});
+
 // ── POST /api/create-checkout-session ───────────────────────────────────────
 // Creates a Stripe Checkout Session and returns the URL to redirect the user.
 app.post('/api/create-checkout-session', async (req, res) => {
