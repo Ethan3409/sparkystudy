@@ -988,9 +988,12 @@ input[type="radio"]:checked::after {
 
   /* Notes page - single column on mobile */
   .notes-layout { grid-template-columns: 1fr !important; gap: 10px !important; }
-  .notes-sidebar { position: static !important; border-radius: 12px; padding: 10px; }
-  /* Sidebar items become horizontal scrolling row */
-  .notes-sidebar-item { display: inline-block; padding: 8px 12px; font-size: 0.8rem; margin-bottom: 0; margin-right: 4px; }
+  .notes-sidebar { position: static !important; border-radius: 12px; padding: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .notes-sidebar > div[style*="font-size:0.65rem"] { display: none; } /* hide "My Notes" label */
+  .notes-sidebar > div[style*="height:1px"] { display: none; } /* hide divider */
+  .notes-sidebar > button { flex: 1; min-width: 120px; }
+  /* Sidebar items become horizontal row */
+  .notes-sidebar-item { display: inline-flex; align-items: center; gap: 4px; padding: 8px 12px; font-size: 0.8rem; margin-bottom: 0; border-radius: 8px; flex-shrink: 0; }
   /* Notes toolbar wraps better */
   .notes-toolbar { gap: 2px; }
   .ntb { padding: 6px 6px; font-size: 0.75rem; }
@@ -1000,14 +1003,43 @@ input[type="radio"]:checked::after {
   .char-btn { padding: 6px 8px; font-size: 0.82rem; flex-shrink: 0; }
   /* Notes editor - smaller padding */
   .notes-editor { padding: 14px; min-height: 250px; font-size: 0.9rem; }
-  /* Notes action buttons */
+  /* Notes action buttons - wrap and size better */
   #notesContent .btn-sm { min-height: 36px; padding: 6px 10px; font-size: 0.75rem; }
+  #notesContent div[style*="display:flex"][style*="gap:6px"] { gap: 4px !important; }
 
-  /* Lessons page mobile - notes panel goes below content */
+  /* Lessons page mobile */
   #lessonsContent div[style*="grid-template-columns:1fr 320px"] {
     grid-template-columns: 1fr !important;
   }
   #lessonNotesPanel { position: static !important; max-height: 400px !important; }
+  /* Lesson section buttons wrap on mobile */
+  #lessonsContent div[style*="display:flex"][style*="gap:10px"][style*="flex-wrap"] { gap: 6px !important; }
+  #lessonsContent button[style*="font-size:0.78rem"] { font-size: 0.72rem !important; padding: 5px 8px !important; }
+  /* Lesson header */
+  #lessonsContent h1 { font-size: 1.4rem !important; }
+  #lessonsContent div[style*="padding:32px"] { padding: 20px !important; }
+  /* Lesson cards grid */
+  #lessonsContent div[style*="grid-template-columns: repeat"] { grid-template-columns: 1fr !important; }
+
+  /* Exam builder on mobile */
+  #examsContent div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+
+  /* Math practice on mobile */
+  #mathContent div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+
+  /* Dashboard cards on mobile */
+  #dashContent div[style*="grid-template-columns: repeat(2"] { grid-template-columns: 1fr !important; }
+  #dashContent div[style*="grid-template-columns: repeat(3"] { grid-template-columns: 1fr !important; }
+
+  /* General inline grid overrides */
+  div[style*="grid-template-columns: repeat(2, 1fr)"] { grid-template-columns: 1fr !important; }
+  div[style*="grid-template-columns: repeat(3, 1fr)"] { grid-template-columns: 1fr !important; }
+  div[style*="grid-template-columns: repeat(4, 1fr)"] { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Upload prompt banner */
+  #notesContent div[style*="border:2px dashed"] { padding: 16px !important; }
+  #notesContent div[style*="border:2px dashed"] h3 { font-size: 1rem !important; }
+  #notesContent div[style*="border:2px dashed"] button { width: 100%; }
 
   /* Form inputs - prevent iOS zoom */
   input, select, textarea { font-size: 16px !important; }
