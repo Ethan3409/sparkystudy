@@ -2887,6 +2887,7 @@ const Notes = {
   currentTopic: 'general',
   _currentPeriod: 0,  // always 0 now (no period filtering)
   _focusMode: false,
+  _currentPage: 1,
   mode: 'edit',   // 'edit' | 'quiz' | 'study' | 'community'
   quizCards: [],
   quizIdx: 0,
@@ -3043,7 +3044,7 @@ const Notes = {
     const userId = state.user.id;
     const userPeriod = state.user.period || 2;
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
-    const savedHtml = this._load(userId, this.currentTopic);
+    const savedHtml = this._loadPage(userId, this.currentTopic, this._currentPage);
     const topics = this._allNoteIds(userId, this._currentPeriod);
     const sharingEnabled = (state.user.subscription || {}).notesSharing !== false;
 
@@ -3066,9 +3067,9 @@ const Notes = {
 
         <!-- Main editor pane -->
         <div>
-          <!-- Header -->
+          <!-- Header (non-sticky top bar) -->
           <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:1.4rem;">${topic.icon}</span>
                 <div>
@@ -3089,7 +3090,10 @@ const Notes = {
                 <button class="btn btn-secondary btn-sm" onclick="Notes._toggleFocus()" title="Full page focus mode" style="padding:6px 10px;" id="notesFocusBtn">${this._focusMode ? '⬜ Exit Focus' : '⬛ Focus Mode'}</button>
               </div>
             </div>
-            <!-- Formatting toolbar -->
+          </div>
+
+          <!-- Sticky formatting toolbar — follows scroll -->
+          <div class="notes-no-print" style="position:sticky;top:60px;z-index:50;background:var(--bg-card);border:1px solid var(--border);border-top:none;padding:8px 16px;backdrop-filter:blur(12px);">
             <div class="notes-toolbar">
               <button class="ntb" onclick="Notes._fmt('bold')" title="Bold"><b>B</b></button>
               <button class="ntb" onclick="Notes._fmt('italic')" title="Italic"><i>I</i></button>
@@ -3105,6 +3109,11 @@ const Notes = {
               <div class="ntb-sep"></div>
               <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">✕ Format</button>
               <button class="ntb" onclick="Notes._highlight()" title="Highlight (marks as quiz term)" style="background:rgba(245,158,11,0.15);color:var(--accent);">★ Key Term</button>
+              <div class="ntb-sep"></div>
+              <span style="font-size:0.68rem;color:var(--text-muted);margin-left:auto;" id="notesPageInfo">Page ${(this._currentPage||1)} of ${this._getPageCount(userId, this.currentTopic)}</span>
+              <button class="ntb" onclick="Notes._prevPage('${userId}')" title="Previous page" ${(this._currentPage||1)<=1?'disabled style="opacity:0.3;pointer-events:none;"':''}>◀</button>
+              <button class="ntb" onclick="Notes._nextPage('${userId}')" title="Next page">▶</button>
+              <button class="ntb" onclick="Notes._addPage('${userId}')" title="Add new page" style="color:var(--accent);font-weight:700;">+ Page</button>
             </div>
           </div>
 
@@ -3190,10 +3199,11 @@ const Notes = {
   },
 
   _switchTopic(topicId, userId) {
-    // Save current before switching
+    // Save current page before switching
     const editor = document.getElementById('notesEditor');
-    if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
     this.currentTopic = topicId;
+    this._currentPage = 1; // reset to page 1 on topic switch
     this.mode = 'edit';
     const state = Storage.get();
     this.render(state);
@@ -3365,6 +3375,66 @@ const Notes = {
     }
   },
 
+  // Page system — each topic can have multiple pages stored as topic_p1, topic_p2, etc.
+  _pageKey(userId, topicId, page) {
+    if (page === 1) return this._storageKey(userId, topicId); // page 1 = original key (backwards compatible)
+    return `sparky_notes_${userId}_${topicId}_p${page}`;
+  },
+
+  _getPageCount(userId, topicId) {
+    let count = 1;
+    // Check if page 1 has content
+    while (localStorage.getItem(this._pageKey(userId, topicId, count + 1)) !== null) {
+      count++;
+    }
+    // Also check the stored page count
+    const stored = parseInt(localStorage.getItem(`sparky_notes_pagecount_${userId}_${topicId}`) || '0');
+    return Math.max(count, stored, 1);
+  },
+
+  _loadPage(userId, topicId, page) {
+    return localStorage.getItem(this._pageKey(userId, topicId, page)) || '';
+  },
+
+  _savePage(userId, topicId, page, html) {
+    localStorage.setItem(this._pageKey(userId, topicId, page), html);
+    // Update page count if needed
+    const countKey = `sparky_notes_pagecount_${userId}_${topicId}`;
+    const current = parseInt(localStorage.getItem(countKey) || '1');
+    if (page > current) localStorage.setItem(countKey, page.toString());
+  },
+
+  _prevPage(userId) {
+    if (this._currentPage <= 1) return;
+    // Save current page first
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+    this._currentPage--;
+    this.render(Storage.get());
+  },
+
+  _nextPage(userId) {
+    const maxPage = this._getPageCount(userId, this.currentTopic);
+    if (this._currentPage >= maxPage) return;
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+    this._currentPage++;
+    this.render(Storage.get());
+  },
+
+  _addPage(userId) {
+    // Save current page
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+    // Create new page
+    const newPage = this._getPageCount(userId, this.currentTopic) + 1;
+    localStorage.setItem(`sparky_notes_pagecount_${userId}_${this.currentTopic}`, newPage.toString());
+    this._savePage(userId, this.currentTopic, newPage, '');
+    this._currentPage = newPage;
+    this.render(Storage.get());
+    showToast(`Page ${newPage} created!`, 'success');
+  },
+
   _toggleExtChars() {
     const el = document.getElementById('notesExtChars');
     if (!el) return;
@@ -3394,10 +3464,12 @@ const Notes = {
   _onInput(userId) {
     const editor = document.getElementById('notesEditor');
     if (!editor) return;
-    // Debounced auto-save
+    // Debounced auto-save — saves to current page
     clearTimeout(this._saveTimer);
     this._saveTimer = setTimeout(() => {
-      this._save(userId, this.currentTopic, editor.innerHTML);
+      this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+      // Also keep the _save for backwards compat (page 1 = main key)
+      if (this._currentPage === 1) this._save(userId, this.currentTopic, editor.innerHTML);
       const status = document.getElementById('notesStatus');
       if (status) { status.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
     }, 800);
@@ -13288,6 +13360,13 @@ const MathPractice = {
     { id:'transformers',   name:'Transformers',        icon:'🔁', period:2, formula:'V1/V2 = N1/N2 = I2/I1' },
     { id:'motors',         name:'Motor Speed & Slip',  icon:'⚙️', period:2, formula:'Ns=120f/P, slip=(Ns-Nr)/Ns' },
     { id:'three-phase',    name:'Three-Phase',         icon:'🔺', period:2, formula:'VL=√3×Vp (wye), IL=√3×Ip (delta)' },
+    { id:'voltage-drop',   name:'Voltage Drop',        icon:'📉', period:1, formula:'Vd = 2×I×R×L / 1000' },
+    { id:'wire-sizing',    name:'Wire Sizing & Ampacity', icon:'🔌', period:1, formula:'CEC Table 2, 4, D3' },
+    { id:'conduit-fill',   name:'Conduit Fill',        icon:'🔩', period:1, formula:'Fill% = ΣA_wires / A_conduit' },
+    { id:'demand-load',    name:'Demand Load Calcs',   icon:'🏠', period:1, formula:'CEC Rule 8-200' },
+    { id:'motor-calcs',    name:'Motor FLC & Protection', icon:'🏭', period:2, formula:'OL=125%FLC, Branch=250%FLC' },
+    { id:'time-constants', name:'Time Constants (RL/RC)', icon:'⏱️', period:2, formula:'T=L/R, T=RC, 5T=steady state' },
+    { id:'energy-cost',    name:'Energy & Cost',       icon:'💰', period:1, formula:'kWh = P×t/1000, Cost = kWh×rate' },
   ],
 
   // Maps each math category to its actual lesson/study content.
@@ -13498,6 +13577,74 @@ const MathPractice = {
     if(type===3){ const IL=this._r(10,50,5); return {q:`In a <strong>delta (Δ)</strong> system, the line current is <strong>${IL}A</strong>. What is the phase current?`,a:this._round(IL/Math.sqrt(3)),unit:'A',hint:'Ip = IL ÷ √3 in delta',formula:'Ip = IL / √3'}; }
     if(type===4){ const VL=this._r(208,600,100),IL=this._r(5,30,5),pf=this._round(this._r(75,95)/100,2); return {q:`A 3-phase load: VL=<strong>${VL}V</strong>, IL=<strong>${IL}A</strong>, PF=<strong>${pf}</strong>. What is the total power?`,a:this._round(Math.sqrt(3)*VL*IL*pf),unit:'W',hint:'P = √3 × VL × IL × PF',formula:'P = √3 × VL × IL × PF'}; }
     const VL=this._r(208,600,100),IL=this._r(5,30,5); return {q:`A 3-phase load: VL=<strong>${VL}V</strong>, IL=<strong>${IL}A</strong>. What is the apparent power?`,a:this._round(Math.sqrt(3)*VL*IL),unit:'VA',hint:'S = √3 × VL × IL',formula:'S = √3 × VL × IL'};
+  },
+
+  _gen_voltage_drop() {
+    const type=this._r(0,4);
+    // Common wire resistances per 1000m (approximate for copper)
+    const awg = [{size:'14',r:8.29},{size:'12',r:5.21},{size:'10',r:3.28},{size:'8',r:2.06},{size:'6',r:1.30},{size:'4',r:0.815},{size:'3',r:0.646},{size:'2',r:0.513},{size:'1',r:0.407}];
+    const wire = awg[this._r(0,awg.length-1)];
+    if(type===0){ const I=this._r(5,40,5),L=this._r(10,100,10); const Vd=this._round(2*I*wire.r*L/1000); return {q:`A #<strong>${wire.size} AWG</strong> copper wire carries <strong>${I}A</strong> over <strong>${L}m</strong> one-way. Resistance is <strong>${wire.r}Ω/km</strong>. What is the voltage drop?`,a:Vd,unit:'V',hint:'Vd = 2 × I × R × L / 1000 (×2 for round trip)',formula:'Vd = 2 × I × R/km × L/1000'}; }
+    if(type===1){ const V=this._r(120,240,120),I=this._r(10,30,5),L=this._r(20,80,10); const Vd=2*I*wire.r*L/1000; const pct=this._round(Vd/V*100,1); return {q:`A <strong>${V}V</strong> circuit uses #<strong>${wire.size} AWG</strong> (<strong>${wire.r}Ω/km</strong>), draws <strong>${I}A</strong>, run is <strong>${L}m</strong>. What is the voltage drop percentage?`,a:pct,unit:'%',hint:'Find Vd first, then %Vd = Vd/Vsource × 100',formula:'%Vd = (Vd / V) × 100'}; }
+    if(type===2){ const P=this._r(500,5000,500),V=this._r(120,240,120); const I=this._round(P/V); return {q:`A <strong>${P}W</strong> load runs on <strong>${V}V</strong>. What current does it draw?`,a:I,unit:'A',hint:'I = P / V',formula:'I = P / V'}; }
+    if(type===3){ const V=this._r(120,240,120),Vd=this._r(2,8,1); const pct=this._round(Vd/V*100,1); return {q:`A <strong>${V}V</strong> circuit has a <strong>${Vd}V</strong> drop. What percentage is this?`,a:pct,unit:'%',hint:'%Vd = Vd / V × 100. CEC recommends max 3% for branch, 5% total.',formula:'%Vd = (Vd / V) × 100'}; }
+    const V=this._r(120,240,120),maxPct=3,I=this._r(10,30,5); const maxVd=V*maxPct/100; const maxL=this._round(maxVd*1000/(2*I*wire.r)); return {q:`Max <strong>${maxPct}%</strong> drop on <strong>${V}V</strong>, #<strong>${wire.size} AWG</strong> (<strong>${wire.r}Ω/km</strong>), <strong>${I}A</strong>. What is the maximum one-way run length?`,a:maxL,unit:'m',hint:'Rearrange: L = (Vd × 1000) / (2 × I × R/km)',formula:'L = Vd×1000 / (2×I×R/km)'};
+  },
+
+  _gen_wire_sizing() {
+    const type=this._r(0,3);
+    // CEC Table 2 ampacities (copper, 75°C, in raceway)
+    const table = [{awg:'14',amp:15},{awg:'12',amp:20},{awg:'10',amp:30},{awg:'8',amp:40},{awg:'6',amp:55},{awg:'4',amp:70},{awg:'3',amp:85},{awg:'2',amp:95},{awg:'1',amp:110},{awg:'1/0',amp:125},{awg:'2/0',amp:145},{awg:'3/0',amp:165},{awg:'4/0',amp:195}];
+    if(type===0){ const idx=this._r(0,table.length-1); const w=table[idx]; return {q:`What is the ampacity of #<strong>${w.awg} AWG</strong> copper conductor at 75°C in raceway? (CEC Table 2)`,a:w.amp,unit:'A',hint:'Memorize common sizes: 14=15A, 12=20A, 10=30A, 8=40A, 6=55A',formula:'CEC Table 2'}; }
+    if(type===1){ const P=this._r(1000,8000,500),V=this._r(120,240,120); const I=this._round(P/V); return {q:`A <strong>${P}W</strong> load on <strong>${V}V</strong> draws <strong>${I}A</strong>. What is the minimum wire size? (CEC Table 2, copper 75°C)`,a:table.find(w=>w.amp>=I)?.awg || '14',unit:'AWG',hint:'Find current first (I=P/V), then pick the wire with ampacity ≥ that current',formula:'I = P/V, then CEC Table 2'}; }
+    if(type===2){ const idx=this._r(0,table.length-1); const w=table[idx]; const contLoad=this._round(w.amp*0.8); return {q:`#<strong>${w.awg} AWG</strong> has <strong>${w.amp}A</strong> ampacity. What is its continuous load rating? (80% rule)`,a:contLoad,unit:'A',hint:'Continuous load = 80% of ampacity',formula:'Continuous = Ampacity × 0.80'}; }
+    const numWires=this._r(4,9); const factor=[1,1,1,1,0.8,0.8,0.7,0.7,0.7,0.7][numWires]||0.5; const idx=this._r(2,8); const w=table[idx]; const derated=this._round(w.amp*factor); return {q:`#<strong>${w.awg} AWG</strong> (<strong>${w.amp}A</strong> base) with <strong>${numWires} current-carrying conductors</strong> in raceway. Derating factor is <strong>${factor}</strong>. What is the derated ampacity?`,a:derated,unit:'A',hint:'Derated ampacity = base ampacity × derating factor',formula:'Amp_derated = Amp_base × factor'};
+  },
+
+  _gen_conduit_fill() {
+    const type=this._r(0,2);
+    // Common wire areas (mm²) and conduit areas
+    const wireAreas = [{awg:'14',area:8.97},{awg:'12',area:11.68},{awg:'10',area:16.77},{awg:'8',area:30.19},{awg:'6',area:42.41}];
+    const conduits = [{size:'1/2"',area:163},{size:'3/4"',area:285},{size:'1"',area:478},{size:'1-1/4"',area:725},{size:'1-1/2"',area:988},{size:'2"',area:1598}];
+    if(type===0){ const w=wireAreas[this._r(0,wireAreas.length-1)]; const n=this._r(2,6); const totalArea=this._round(w.area*n); const c=conduits.find(c=>c.area*0.4>=totalArea)||conduits[conduits.length-1]; const fillPct=this._round(totalArea/c.area*100,1); return {q:`<strong>${n}</strong> #<strong>${w.awg} AWG</strong> wires (each <strong>${w.area}mm²</strong>) in a <strong>${c.size}</strong> conduit (<strong>${c.area}mm²</strong>). What is the fill percentage?`,a:fillPct,unit:'%',hint:'Fill% = (n × wire area) / conduit area × 100',formula:'Fill% = ΣA_wires / A_conduit × 100'}; }
+    if(type===1){ const w=wireAreas[this._r(0,3)]; const maxFill=0.4; const c=conduits[this._r(2,conduits.length-1)]; const maxWires=Math.floor(c.area*maxFill/w.area); return {q:`How many #<strong>${w.awg} AWG</strong> wires (<strong>${w.area}mm²</strong> each) fit in a <strong>${c.size}</strong> conduit (<strong>${c.area}mm²</strong>) at 40% fill?`,a:maxWires,unit:'wires',hint:'Max wires = floor(conduit area × 0.40 / wire area)',formula:'N = floor(A_conduit × 0.40 / A_wire)'}; }
+    const w=wireAreas[this._r(0,wireAreas.length-1)]; const n=this._r(3,8); const totalArea=w.area*n; const minConduitArea=totalArea/0.4; const c=conduits.find(c2=>c2.area>=minConduitArea)||conduits[conduits.length-1]; return {q:`You need to pull <strong>${n}</strong> #<strong>${w.awg} AWG</strong> wires (<strong>${w.area}mm²</strong> each). Minimum conduit area needed at 40% fill?`,a:this._round(totalArea/0.4),unit:'mm²',hint:'Min conduit area = total wire area / 0.40',formula:'A_conduit = ΣA_wires / 0.40'};
+  },
+
+  _gen_demand_load() {
+    const type=this._r(0,3);
+    if(type===0){ const area=this._r(80,250,10); const watts=area*33; return {q:`A house has <strong>${area}m²</strong> of living space. At <strong>33W/m²</strong> (CEC basic lighting load), what is the basic demand?`,a:watts,unit:'W',hint:'Basic load = area × 33 W/m²',formula:'Basic = area × 33 W/m²'}; }
+    if(type===1){ const area=this._r(100,200,10); const basic=area*33; const first=Math.min(basic,5000)*1.0; const rest=Math.max(basic-5000,0)*0.25; const demand=this._round(first+rest); return {q:`A <strong>${area}m²</strong> house: basic load = <strong>${basic}W</strong>. Apply CEC demand: first 5000W at 100%, remainder at 25%. What is the demand load?`,a:demand,unit:'W',hint:'First 5000W at 100% + remaining at 25%',formula:'Demand = 5000 + (total-5000)×0.25'}; }
+    if(type===2){ const P=this._r(3000,15000,500),V=240; return {q:`A service has <strong>${P}W</strong> demand load at <strong>${V}V</strong> single-phase. What is the service amperage?`,a:this._round(P/V),unit:'A',hint:'I = P / V',formula:'I = P / V'}; }
+    const ranges=[{kW:6,demand:6},{kW:8,demand:8},{kW:10,demand:8},{kW:12,demand:8}]; const r=ranges[this._r(0,3)]; return {q:`A <strong>${r.kW}kW</strong> electric range. Per CEC Table 62, the demand is <strong>${r.demand}kW</strong>. Convert to watts.`,a:r.demand*1000,unit:'W',hint:'1 kW = 1000 W',formula:'W = kW × 1000'};
+  },
+
+  _gen_motor_calcs() {
+    const type=this._r(0,4);
+    if(type===0){ const FLC=this._r(5,50,5); const OL=this._round(FLC*1.25); return {q:`A motor has FLC of <strong>${FLC}A</strong>. What is the maximum overload protection setting? (125% rule)`,a:OL,unit:'A',hint:'Max OL = FLC × 1.25',formula:'OL = FLC × 125%'}; }
+    if(type===1){ const FLC=this._r(5,50,5); const branch=this._round(FLC*2.5); return {q:`A motor has FLC of <strong>${FLC}A</strong>. What is the maximum branch circuit fuse size? (250% rule)`,a:branch,unit:'A',hint:'Max fuse = FLC × 2.50',formula:'Fuse ≤ FLC × 250%'}; }
+    if(type===2){ const HP=this._r(1,25,1); const V=this._r(1,2)===1?240:480; const FLC_table={240:{1:4.2,2:6.8,3:9.6,5:15.2,7.5:22,10:28,15:42,20:54,25:68},480:{1:2.1,2:3.4,3:4.8,5:7.6,7.5:11,10:14,15:21,20:27,25:34}}; const hps=[1,2,3,5,7.5,10,15,20,25]; const closest=hps.reduce((a,b)=>Math.abs(b-HP)<Math.abs(a-HP)?b:a); const flc=FLC_table[V]?.[closest]||10; return {q:`A <strong>${closest}HP</strong> 3-phase motor at <strong>${V}V</strong> has FLC of <strong>${flc}A</strong> (CEC Table 44). What is the 125% overload setting?`,a:this._round(flc*1.25),unit:'A',hint:'OL = FLC × 1.25',formula:'OL = FLC × 125%'}; }
+    if(type===3){ const FLC1=this._r(10,30,5),FLC2=this._r(5,20,5); const largest=Math.max(FLC1,FLC2); const feeder=this._round(largest*2.5+Math.min(FLC1,FLC2)); return {q:`Two motors: FLC1=<strong>${FLC1}A</strong>, FLC2=<strong>${FLC2}A</strong>. Feeder protection = 250% of largest + sum of others. What size?`,a:feeder,unit:'A',hint:'Feeder = 250% × largest FLC + sum of remaining FLCs',formula:'Feeder = 2.5×FLC_largest + ΣFLC_others'}; }
+    const V=this._r(120,480,120),I=this._r(5,30,5),eff=this._round(this._r(80,95)/100,2); const HP=this._round(V*I*eff/746,1); return {q:`A motor draws <strong>${I}A</strong> at <strong>${V}V</strong> with <strong>${eff}</strong> efficiency. What is its horsepower? (746W = 1HP)`,a:HP,unit:'HP',hint:'HP = (V × I × efficiency) / 746',formula:'HP = (V × I × η) / 746'};
+  },
+
+  _gen_time_constants() {
+    const type=this._r(0,5);
+    if(type===0){ const L=this._r(50,500,50),R=this._r(10,200,10); const T=this._round(L/R,3); return {q:`An RL circuit: L=<strong>${L}mH</strong>, R=<strong>${R}Ω</strong>. What is one time constant?`,a:this._round((L/1000)/R*1000,3),unit:'ms',hint:'T = L/R (convert mH to H, result in seconds, then to ms)',formula:'T = L / R'}; }
+    if(type===1){ const R=this._r(1000,50000,1000),C=this._r(10,500,10); const T=this._round(R*(C/1000000)*1000,2); return {q:`An RC circuit: R=<strong>${R}Ω</strong>, C=<strong>${C}μF</strong>. What is one time constant?`,a:T,unit:'ms',hint:'T = R × C (convert μF to F, result in seconds, then to ms)',formula:'T = R × C'}; }
+    if(type===2){ const L=this._r(100,500,100),R=this._r(20,100,10); const T=(L/1000)/R; const total=this._round(T*5*1000,2); return {q:`RL circuit: L=<strong>${L}mH</strong>, R=<strong>${R}Ω</strong>. How long to reach steady state? (5 time constants)`,a:total,unit:'ms',hint:'Total = 5 × T = 5 × (L/R)',formula:'Total = 5 × (L/R)'}; }
+    if(type===3){ const Imax=this._r(2,10,1); const I1T=this._round(Imax*0.632,2); return {q:`An RL circuit has max current of <strong>${Imax}A</strong>. What is the current after 1 time constant? (63.2% rule)`,a:I1T,unit:'A',hint:'After 1T, current reaches 63.2% of maximum',formula:'I(1T) = Imax × 0.632'}; }
+    if(type===4){ const Imax=this._r(2,10,1); const I3T=this._round(Imax*0.950,2); return {q:`Max current = <strong>${Imax}A</strong>. What is the current after 3 time constants? (95.0%)`,a:I3T,unit:'A',hint:'After 3T = 95.0% of max',formula:'I(3T) = Imax × 0.950'}; }
+    const Istart=this._r(4,12,2),R=this._r(50,500,50),L=this._r(100,500,100); const dI=Istart,dt=(L/1000)/R; const eKick=this._round(dI/dt*L/1000); return {q:`An RL circuit: <strong>${Istart}A</strong> steady state, L=<strong>${L}mH</strong>, R=<strong>${R}Ω</strong>. If the switch opens in one time constant, what is the inductive kick voltage?`,a:eKick,unit:'V',hint:'e = L × (ΔI/Δt) = L × (I / T) where T = L/R',formula:'e = L × ΔI/Δt'};
+  },
+
+  _gen_energy_cost() {
+    const type=this._r(0,4);
+    if(type===0){ const P=this._r(500,3000,500),t=this._r(2,12,1); const kWh=this._round(P*t/1000); return {q:`A <strong>${P}W</strong> heater runs for <strong>${t} hours</strong>. How many kWh does it use?`,a:kWh,unit:'kWh',hint:'kWh = watts × hours / 1000',formula:'kWh = P × t / 1000'}; }
+    if(type===1){ const P=this._r(500,3000,500),t=this._r(4,10,1),rate=this._round(this._r(8,18)/100,2); const kWh=P*t/1000; const cost=this._round(kWh*rate); return {q:`A <strong>${P}W</strong> appliance runs <strong>${t}hrs/day</strong> at <strong>$${rate}/kWh</strong>. What is the daily cost?`,a:cost,unit:'$',hint:'Cost = (P × t / 1000) × rate',formula:'Cost = kWh × rate'}; }
+    if(type===2){ const P=this._r(1000,5000,500),t=this._r(4,8,1),days=30,rate=this._round(this._r(8,15)/100,2); const kWh=P*t*days/1000; const cost=this._round(kWh*rate); return {q:`<strong>${P}W</strong> load, <strong>${t}hrs/day</strong>, <strong>${days} days</strong>, <strong>$${rate}/kWh</strong>. Monthly cost?`,a:cost,unit:'$',hint:'kWh = P × hrs × days / 1000, then × rate',formula:'Cost = (P×t×days/1000) × rate'}; }
+    if(type===3){ const V=this._r(120,240,120),I=this._r(5,20,5),t=this._r(2,8,1); const P=V*I; const kWh=this._round(P*t/1000); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong> for <strong>${t} hours</strong>. Energy consumed?`,a:kWh,unit:'kWh',hint:'P = V×I first, then kWh = P×t/1000',formula:'kWh = V×I×t / 1000'}; }
+    const kWh=this._r(500,2000,100),rate=this._round(this._r(8,15)/100,2); return {q:`A monthly bill shows <strong>${kWh} kWh</strong> at <strong>$${rate}/kWh</strong>. What is the energy charge?`,a:this._round(kWh*rate),unit:'$',hint:'Cost = kWh × rate per kWh',formula:'Cost = kWh × rate'};
   },
 
   checkAnswer() {
