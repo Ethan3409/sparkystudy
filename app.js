@@ -2877,9 +2877,6 @@ const Notes = {
 
   // Migrate old topic notes into new 4-category system
   _migrateOldNotes(userId) {
-    const migKey = 'sparky_notes_migrated_v2_' + userId;
-    if (localStorage.getItem(migKey)) return; // already migrated v2
-
     // Map ALL old topic IDs to new categories
     const mapping = {
       'safety': 'general', 'code-cec': 'code', 'exam-prep': 'general', 'formulas': 'theory',
@@ -2887,26 +2884,47 @@ const Notes = {
       'p2-relays': 'theory', 'p2-timers': 'theory', 'p2-pilot': 'theory', 'p2-diagrams': 'theory', 'p2-general': 'general',
       'p3-motors': 'theory', 'p3-pf': 'theory', 'p3-xfmr': 'theory', 'p3-dist': 'theory', 'p3-wiring': 'theory', 'p3-general': 'general',
       'p4-commercial': 'theory', 'p4-industrial': 'theory', 'p4-plc': 'theory', 'p4-power': 'theory', 'p4-service': 'theory', 'p4-general': 'general',
+      // Handle any uploaded module content that accidentally went to notes
+      'General Notes': 'general', 'Safety': 'general', 'CEC Code': 'code', 'Exam Prep': 'general', 'Formulas & Calcs': 'theory',
     };
-    let moved = 0;
-    // Also scan ALL localStorage keys for any sparky_notes that don't match current topics
+
     const currentIds = new Set(this.TOPICS_LIST.map(t => t.id));
+    let moved = 0;
+    const alreadyMerged = new Set(JSON.parse(localStorage.getItem('sparky_notes_merged_keys_' + userId) || '[]'));
+
+    // Scan ALL localStorage keys for any sparky_notes that don't match current 4 topics
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key || !key.startsWith('sparky_notes_' + userId + '_')) continue;
+      // Skip timestamp keys
+      if (key.includes('_ts_') || key.includes('_migrated_') || key.includes('_merged_') || key.includes('_community_')) continue;
       const topicId = key.replace('sparky_notes_' + userId + '_', '');
-      if (currentIds.has(topicId)) continue; // already a valid topic
+      if (currentIds.has(topicId)) continue; // already a valid current topic
+      if (alreadyMerged.has(key)) continue; // already merged this key before
       const content = localStorage.getItem(key);
       if (!content || content.replace(/<[^>]*>/g, '').trim().length < 5) continue;
-      const targetId = mapping[topicId] || 'general';
+
+      // Determine target category
+      let targetId = mapping[topicId] || 'general';
+      // Auto-detect: if content looks like theory/formulas, put in theory
+      const textLower = content.replace(/<[^>]*>/g, '').toLowerCase();
+      if (textLower.includes('formula') || textLower.includes('equation') || textLower.includes('calculate')) targetId = 'theory';
+      if (textLower.includes('lab') || textLower.includes('experiment') || textLower.includes('hands-on')) targetId = 'lab';
+      if (textLower.includes('code rule') || textLower.includes('cec') || textLower.includes('regulation')) targetId = 'code';
+
       const newKey = 'sparky_notes_' + userId + '_' + targetId;
       const existing = localStorage.getItem(newKey) || '';
-      const label = '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">From: ' + topicId + '</div>';
+      const label = '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">📋 Restored from: ' + topicId + '</div>';
       localStorage.setItem(newKey, existing + label + content);
+      // Track that we merged this key so we don't duplicate on next load
+      alreadyMerged.add(key);
       moved++;
     }
-    localStorage.setItem(migKey, Date.now().toString());
-    if (moved > 0) showToast(`Found and restored ${moved} note${moved !== 1 ? 's' : ''} from old topics!`, 'success');
+
+    if (moved > 0) {
+      localStorage.setItem('sparky_notes_merged_keys_' + userId, JSON.stringify([...alreadyMerged]));
+      showToast(`Restored ${moved} note${moved !== 1 ? 's' : ''} from old topics!`, 'success');
+    }
   },
 
   render(state) {
@@ -2930,9 +2948,9 @@ const Notes = {
     const sharingEnabled = (state.user.subscription || {}).notesSharing !== false;
 
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:200px 1fr;gap:20px;min-height:calc(100vh - 120px);">
+      <div class="notes-layout">
         <!-- Sidebar -->
-        <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:14px;height:fit-content;position:sticky;top:80px;">
+        <div class="notes-sidebar notes-no-print">
           <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;padding:0 4px;margin-bottom:10px;">My Notes</div>
           ${topics.map(t => `
             <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">

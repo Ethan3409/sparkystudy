@@ -986,6 +986,29 @@ input[type="radio"]:checked::after {
     grid-template-columns: 1fr !important;
   }
 
+  /* Notes page - single column on mobile */
+  .notes-layout { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .notes-sidebar { position: static !important; border-radius: 12px; padding: 10px; }
+  /* Sidebar items become horizontal scrolling row */
+  .notes-sidebar-item { display: inline-block; padding: 8px 12px; font-size: 0.8rem; margin-bottom: 0; margin-right: 4px; }
+  /* Notes toolbar wraps better */
+  .notes-toolbar { gap: 2px; }
+  .ntb { padding: 6px 6px; font-size: 0.75rem; }
+  .ntb-sep { margin: 0 2px; }
+  /* Character bar - scroll horizontally instead of wrapping */
+  .notes-char-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 8px 10px; }
+  .char-btn { padding: 6px 8px; font-size: 0.82rem; flex-shrink: 0; }
+  /* Notes editor - smaller padding */
+  .notes-editor { padding: 14px; min-height: 250px; font-size: 0.9rem; }
+  /* Notes action buttons */
+  #notesContent .btn-sm { min-height: 36px; padding: 6px 10px; font-size: 0.75rem; }
+
+  /* Lessons page mobile - notes panel goes below content */
+  #lessonsContent div[style*="grid-template-columns:1fr 320px"] {
+    grid-template-columns: 1fr !important;
+  }
+  #lessonNotesPanel { position: static !important; max-height: 400px !important; }
+
   /* Form inputs - prevent iOS zoom */
   input, select, textarea { font-size: 16px !important; }
 
@@ -1009,6 +1032,15 @@ input[type="radio"]:checked::after {
   .nav-brand { font-size: 1.1rem; }
   .nav-brand svg { width: 22px; height: 22px; }
   .app-container { padding-bottom: 76px; }
+}
+
+/* ===== NOTES LAYOUT ===== */
+.notes-layout {
+  display: grid; grid-template-columns: 200px 1fr; gap: 20px; min-height: calc(100vh - 120px);
+}
+.notes-sidebar {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 14px; height: fit-content; position: sticky; top: 80px;
 }
 
 /* ===== NOTES EDITOR STYLES ===== */
