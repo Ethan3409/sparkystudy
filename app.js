@@ -11235,24 +11235,9 @@ const Lessons = {
           </button>
         </div>
 
-        <!-- Notes panel (collapsible) -->
-        <div id="lessonNotesPanel" style="display:${this._notesOpen ? 'block' : 'none'};margin-bottom:20px;">
-          <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:14px;overflow:hidden;">
-            <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04));padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(245,158,11,0.2);">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:1.1rem;">📝</span>
-                <span style="font-weight:700;font-size:0.88rem;color:var(--accent);">Notes — ${lesson.title}</span>
-              </div>
-              <span id="lessonNotesSaved" style="font-size:0.72rem;color:var(--text-muted);">Auto-saved</span>
-            </div>
-            <div id="lessonNotesEditor" contenteditable="true" spellcheck="true"
-              style="min-height:150px;max-height:400px;overflow-y:auto;padding:16px;font-size:0.9rem;line-height:1.7;color:var(--text-primary);outline:none;"
-              data-placeholder="Type your notes here while studying this lesson..."
-              oninput="Lessons._saveNotes('${lessonId}','${userId}')"
-            >${savedNotes}</div>
-          </div>
-        </div>
-
+        <!-- Side-by-side layout: lesson content + sticky notes panel -->
+        <div style="display:${this._notesOpen ? 'grid' : 'block'};grid-template-columns:${this._notesOpen ? '1fr 320px' : '1fr'};gap:20px;align-items:start;">
+        <div>
         <div style="background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:32px;margin-bottom:28px;">
           <div style="font-size:3rem;margin-bottom:12px;">${lesson.icon}</div>
           <h1 style="font-size:1.9rem;margin:0 0 6px;color:${lesson.color};">${lesson.title}</h1>
@@ -11277,6 +11262,28 @@ const Lessons = {
             &#x2190; Back to Lessons
           </button>
         </div>
+        </div><!-- end lesson column -->
+
+        ${this._notesOpen ? `
+        <!-- Sticky notes sidebar -->
+        <div id="lessonNotesPanel" style="position:sticky;top:80px;height:fit-content;max-height:calc(100vh - 100px);">
+          <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 100px);">
+            <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04));padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(245,158,11,0.2);flex-shrink:0;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:0.95rem;">📝</span>
+                <span style="font-weight:700;font-size:0.8rem;color:var(--accent);">My Notes</span>
+              </div>
+              <span id="lessonNotesSaved" style="font-size:0.68rem;color:var(--text-muted);">Auto-saved</span>
+            </div>
+            <div id="lessonNotesEditor" contenteditable="true" spellcheck="true"
+              style="flex:1;overflow-y:auto;padding:14px;font-size:0.85rem;line-height:1.7;color:var(--text-primary);outline:none;min-height:300px;"
+              data-placeholder="Type notes as you read..."
+              oninput="Lessons._saveNotes('${lessonId}','${userId}')"
+            >${savedNotes}</div>
+          </div>
+        </div>` : ''}
+
+        </div><!-- end grid wrapper -->
       </div>
     `;
   },
