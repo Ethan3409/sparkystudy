@@ -11320,7 +11320,13 @@ const Settings = {
           </h3>
           <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;">Your support conversations and replies from the SparkStudy team.</p>
           <div id="supportHistory"></div>
-          <script>Settings._refreshSupportHistory('${state.user.id}');</script>
+          <script>(async function(){
+            if (FireDB.ready) {
+              const cloud = await FireDB.getMessagesForUser('${state.user.id}').catch(()=>null);
+              if (cloud) SupportMessages.mergeCloud(cloud);
+            }
+            Settings._refreshSupportHistory('${state.user.id}');
+          })();</script>
         </div>
 
         <!-- Contact / Send New Message -->
