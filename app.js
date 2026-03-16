@@ -9449,49 +9449,110 @@ const LESSONS_CONTENT = [
     id: 'm12', period: 2,
     title: 'Properties of Inductors and Capacitors',
     icon: '🔋',
-    subtitle: 'Inductance, Capacitance, and Energy Storage',
+    subtitle: 'Physical Properties, Construction, and Energy Storage — ILM Module 030201b',
     color: '#8b5cf6',
     gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
     border: 'rgba(139,92,246,0.3)',
-    readTime: '22 min read',
+    readTime: '35 min read',
     sections: [
       {
         type: 'hook',
-        title: 'The Two Energy Storage Devices',
-        body: 'Inductors store energy in magnetic fields. Capacitors store energy in electric fields. Together, they are responsible for the behaviour that makes ac circuits fundamentally different from dc circuits — reactance, phase shift, power factor, and resonance.\n\nThis module covers the physical properties and electrical characteristics of inductors and capacitors before you apply them in ac circuits.'
+        title: 'Why Properties Matter',
+        body: 'Before you can work with inductors and capacitors in circuits, you need to understand what they are physically, how they\'re built, and what determines their values. This module covers the construction, properties, ratings, and types of both components.\n\nObjectives:\n1. Describe the properties of inductors including self-inductance, mutual inductance, and the factors that determine inductance value.\n2. Describe the properties of capacitors including capacitance, dielectric properties, and the factors that determine capacitance value.\n3. Identify common inductor and capacitor types and their applications.\n4. Understand series and parallel combinations of inductors and capacitors.\n5. Calculate energy stored in inductors and capacitors.'
       },
       {
         type: 'concept',
-        title: 'Inductance — Self-Inductance',
-        body: 'Self-inductance is the property of a coil that opposes any change in current through it by inducing a counter-emf (cemf). The unit of inductance is the henry (H).\n\nFactors affecting inductance:\n• Number of turns (N) — more turns = more inductance (proportional to N²)\n• Core material — iron core greatly increases inductance vs air core\n• Cross-sectional area of core — larger area = more inductance\n• Length of coil — shorter coil = more inductance\n\nMutual inductance occurs when changing current in one coil induces voltage in a nearby coil — this is the principle behind transformers.',
-        formula: 'L = (N² × μ × A) / l\nWhere: N = turns, μ = permeability, A = area, l = length'
+        title: 'What Is Inductance?',
+        body: 'Inductance is the property of a conductor or coil that opposes any CHANGE in current flowing through it. When current through a coil changes, the changing magnetic field induces a voltage (counter-emf or cemf) that opposes the change — this is Lenz\'s Law.\n\nThe unit of inductance is the henry (H), named after Joseph Henry. One henry is the inductance that produces one volt of cemf when the current changes at a rate of one ampere per second.\n\nSelf-inductance: A single coil inducing voltage in itself due to its own changing current. Every coil has self-inductance, even a straight wire has a tiny amount.\n\nMutual inductance: When changing current in one coil (the primary) induces a voltage in a nearby coil (the secondary). This is the operating principle of transformers. Mutual inductance depends on how much of the primary\'s magnetic flux links (cuts through) the secondary coil — called the coefficient of coupling (k).\n\n• k = 1.0: perfect coupling (all flux links both coils) — iron-core transformers approach this\n• k = 0: no coupling — coils too far apart or shielded\n• Air-core coils: typically k = 0.01 to 0.3',
+        formula: 'cemf = -L × (ΔI/Δt)\nWhere: L = inductance (H), ΔI/Δt = rate of current change (A/s)'
       },
       {
         type: 'keypoint',
-        title: 'RL Time Constant',
-        body: 'In a dc circuit with an inductor, current does not rise instantly. The inductor opposes the change via cemf.\n\nTime Constant: T = L / R (henries / ohms = seconds)\nFull charge ≈ 5 time constants. Each TC, current changes by 63.2% of the remaining difference.\n\nExample: L = 0.16 H, R = 4 Ω → T = 0.04 s; full current at 5 × 0.04 = 0.2 s\nSteady-state current: I = E/R (Ohm\'s law — cemf = 0 at steady state)\n\nOpening an inductive circuit produces dangerous voltage spikes (inductive kick):\ne = (ΔI / Δt) × L\nAlways use a discharge resistor or snubber to protect against inductive kick.',
-        formula: 'T = L / R\nFull charge/discharge = 5 × T\nInductive kick: e = L × (ΔI / Δt)'
+        title: 'Factors Affecting Inductance',
+        body: 'Four physical factors determine the inductance of a coil:\n\n1. Number of turns (N): Inductance is proportional to N². Doubling the turns QUADRUPLES the inductance because both the number of flux-producing turns and the number of flux-linking turns double.\n\n2. Core permeability (μ): The core material\'s ability to support magnetic flux. Air has μ = 1 (reference). Soft iron can have μ = 1,000 to 8,000. An iron core dramatically increases inductance compared to an air core.\n\n3. Cross-sectional area (A): Larger core area = more flux = more inductance. Direct relationship.\n\n4. Length of coil (l): Longer coil = flux spread over greater distance = less inductance. Inverse relationship — a shorter, fatter coil has more inductance than a long, thin one.\n\nThese four factors combine in the inductance formula. Changes in any one factor proportionally affect the inductance value.',
+        formula: 'L = (N² × μ × A) / l\n\nWhere:\n• L = inductance in henries (H)\n• N = number of turns\n• μ = permeability of core (H/m)\n• A = cross-sectional area of core (m²)\n• l = length of coil (m)\n\nPractical units: millihenry (mH = 10⁻³ H), microhenry (μH = 10⁻⁶ H)'
       },
       {
         type: 'concept',
-        title: 'Capacitance — Electric Field Storage',
-        body: 'Capacitance is the ability to store electric charge between two plates separated by an insulating dielectric.\n\nFactors affecting capacitance:\n• Plate area — larger plates = more capacitance (direct)\n• Distance between plates — closer = more capacitance (inverse)\n• Dielectric material — higher dielectric constant = more capacitance\n\nElectric charge: Q = C × V (farads × volts = coulombs)\nAlso: Q = I × t (amperes × seconds = coulombs)\n\nPractical units: microfarad (μF = 10⁻⁶ F), nanofarad (nF = 10⁻⁹ F), picofarad (pF = 10⁻¹² F)',
-        formula: 'C = (ε × A) / d\nQ = C × V\nQ = I × t'
+        title: 'Types of Inductors',
+        body: 'Inductors are classified by their core material and construction:\n\nAir-core inductors:\n• No magnetic core — coil wound on non-magnetic form (plastic, ceramic)\n• Low inductance values (μH range)\n• Used at high frequencies: radio, communications, tuning circuits\n• Advantage: no core saturation, no core losses\n• Symbol: simple coil without core lines\n\nIron-core inductors:\n• Laminated silicon steel core (thin sheets insulated from each other to reduce eddy currents)\n• High inductance values (mH to H range)\n• Used at power frequencies (50/60 Hz): transformers, chokes, ballasts, motor windings\n• Can saturate at high currents — core cannot support more flux\n• Symbol: coil with parallel lines representing laminated core\n\nFerrite-core inductors:\n• Ferrite is a ceramic magnetic material (iron oxide compounds)\n• Used at medium to high frequencies (kHz to MHz range)\n• Higher permeability than air but lower losses than iron at high frequencies\n• Common in switching power supplies, EMI filters, RF circuits\n\nVariable inductors:\n• Inductance adjusted by moving a core slug in or out of the coil\n• Used for tuning and calibration\n• Symbol: coil with arrow through it\n\nToroidal inductors:\n• Donut-shaped core (toroid) — magnetic flux is almost entirely contained within the core\n• Very low stray magnetic field — does not interfere with nearby components\n• Higher inductance per turn than straight cores'
       },
       {
         type: 'keypoint',
-        title: 'RC Time Constant',
-        body: 'In a dc circuit with a capacitor, voltage does not change instantly. The capacitor charges through the resistor.\n\nTime Constant: T = R × C (ohms × farads = seconds)\nFull charge/discharge ≈ 5 time constants. Each TC, voltage changes by 63.2% of the remaining difference.\n\nExample: R = 200 Ω, C = 15 μF → T = 200 × 0.000015 = 0.003 s (3 ms); full charge = 15 ms\n\nSafety: Charged capacitors can deliver lethal shocks even after power is removed. Always discharge capacitors with a discharge resistor before working on equipment. Never short-circuit capacitor terminals. Electrolytic capacitors can explode if connected with reverse polarity.',
-        formula: 'T = R × C\nEnergy stored: W = ½CV²\n\nSeries: 1/CT = 1/C1 + 1/C2\nParallel: CT = C1 + C2'
+        title: 'Inductors in Series and Parallel',
+        body: 'When inductors are connected with NO mutual coupling (spaced far apart or shielded):\n\nSeries: Total inductance is the SUM (same rule as resistors in series)\nLT = L1 + L2 + L3 + ...\n\nExample: 0.1 H + 0.2 H + 0.15 H = 0.45 H total\n\nParallel: Total inductance is calculated like parallel resistors\n1/LT = 1/L1 + 1/L2 + 1/L3 + ...\nFor two inductors: LT = (L1 × L2) / (L1 + L2)\n\nExample: 0.3 H and 0.6 H in parallel:\nLT = (0.3 × 0.6) / (0.3 + 0.6) = 0.18 / 0.9 = 0.2 H\n\nIMPORTANT: If inductors are close enough for mutual inductance, the total depends on whether fields aid or oppose. Aiding: LT = L1 + L2 + 2M. Opposing: LT = L1 + L2 - 2M. Where M = mutual inductance.\n\nEnergy stored in an inductor:\nW = ½LI²\nExample: L = 0.5 H, I = 3 A → W = 0.5 × 0.5 × 9 = 2.25 joules',
+        formula: 'Series: LT = L1 + L2 + L3\nParallel: 1/LT = 1/L1 + 1/L2 + 1/L3\nTwo in parallel: LT = (L1 × L2) / (L1 + L2)\nEnergy: W = ½LI²'
+      },
+      {
+        type: 'concept',
+        title: 'What Is Capacitance?',
+        body: 'Capacitance is the ability of a device to store electric charge. A capacitor is constructed from two conducting plates (electrodes) separated by an insulating material (dielectric).\n\nHow a capacitor stores charge:\n1. When voltage is applied, electrons are pushed onto the negative plate and pulled off the positive plate\n2. The dielectric between the plates prevents electrons from crossing directly\n3. An electric field is established between the plates\n4. The capacitor is "charged" when the voltage across its plates equals the supply voltage\n5. When the voltage source is removed, the charge remains stored — the capacitor holds its voltage\n\nThe unit of capacitance is the farad (F), named after Michael Faraday. One farad stores one coulomb of charge at one volt. The farad is an extremely large unit — practical capacitors are measured in:\n• Microfarads: μF = 10⁻⁶ F (most common in power circuits)\n• Nanofarads: nF = 10⁻⁹ F\n• Picofarads: pF = 10⁻¹² F (used in electronics and RF)\n\nElectric charge: Q = C × V (charge in coulombs = capacitance × voltage)\nAlternatively: Q = I × t (charge = current × time)',
+        formula: 'Q = C × V (coulombs = farads × volts)\nQ = I × t (coulombs = amperes × seconds)\n\nExample: How much charge is stored in a 50 μF capacitor charged to 22 V?\nQ = C × V = 0.00005 × 22 = 0.0011 C = 1.1 mC'
+      },
+      {
+        type: 'keypoint',
+        title: 'Factors Affecting Capacitance',
+        body: 'Three physical factors determine the capacitance of a capacitor:\n\n1. Plate area (A): Larger plates = more surface for charge = more capacitance. Direct relationship. Doubling the plate area doubles the capacitance.\n\n2. Distance between plates (d): Closer plates = stronger electric field = more capacitance. INVERSE relationship. Halving the distance doubles the capacitance. However, closer plates also reduce the maximum voltage the capacitor can withstand (dielectric breakdown).\n\n3. Dielectric material (ε): Different insulating materials have different abilities to support an electric field. This is measured by the dielectric constant (also called relative permittivity, εr):\n• Vacuum: εr = 1.0 (reference)\n• Air: εr = 1.0006 (essentially 1)\n• Paper: εr = 2.0–4.0\n• Mylar (polyester): εr = 3.0\n• Mica: εr = 5.0–7.0\n• Ceramic: εr = 20–15,000 (varies widely by formulation)\n• Electrolytic oxide: εr = 8–10 with extremely thin layer → very high capacitance\n\nHigher dielectric constant = more capacitance for the same plate area and spacing.',
+        formula: 'C = (ε₀ × εr × A) / d\n\nWhere:\n• C = capacitance (F)\n• ε₀ = permittivity of free space (8.854 × 10⁻¹² F/m)\n• εr = relative permittivity (dielectric constant)\n• A = plate area (m²)\n• d = distance between plates (m)'
+      },
+      {
+        type: 'concept',
+        title: 'Types of Capacitors',
+        body: 'Capacitors are classified by their dielectric material:\n\nElectrolytic capacitors (aluminum or tantalum):\n• POLARIZED — must observe correct polarity or they can explode\n• Very high capacitance values: 1 μF to 100,000 μF\n• The dielectric is an extremely thin oxide layer formed electrochemically\n• Used in: power supply filtering, smoothing, energy storage, motor start circuits\n• Limitations: polarity-sensitive, limited life, higher ESR, temperature-sensitive\n• DANGER: reverse polarity or exceeding voltage rating can cause violent failure\n\nCeramic capacitors:\n• Non-polarized — can be connected either way\n• Values: 1 pF to several μF\n• Very stable, low losses, small size\n• Used in: high-frequency bypassing, timing, coupling, decoupling\n\nFilm capacitors (polyester, polypropylene, polycarbonate):\n• Non-polarized, excellent stability and reliability\n• Values: 100 pF to several μF\n• Used in: timing circuits, coupling, AC motor run capacitors, power factor correction\n• Very long life — can last decades\n\nMica capacitors:\n• Very stable, very low losses\n• Values: 1 pF to 10 nF\n• Used in: precision RF circuits, high-frequency applications\n\nVariable capacitors:\n• Adjustable plates that can be moved to change the overlapping area\n• Used in: tuning circuits, calibration\n\nCapacitor ratings — every capacitor has:\n• Capacitance value (μF, nF, or pF)\n• Voltage rating (WVDC — Working Voltage DC, the maximum safe continuous voltage)\n• Temperature rating (operating range)\n• Tolerance (±% of stated value)\n• Polarity marking (electrolytic only)'
+      },
+      {
+        type: 'keypoint',
+        title: 'Capacitors in Series and Parallel',
+        body: 'IMPORTANT: Capacitors combine OPPOSITE to resistors!\n\nParallel: Total capacitance is the SUM (like resistors in series)\nCT = C1 + C2 + C3 + ...\nWhy: Connecting capacitors in parallel effectively increases the total plate area.\n\nExample: 10 μF + 22 μF + 47 μF = 79 μF total\n\nSeries: Total capacitance is calculated like parallel resistors\n1/CT = 1/C1 + 1/C2 + 1/C3 + ...\nFor two capacitors: CT = (C1 × C2) / (C1 + C2)\nWhy: Connecting in series effectively increases the distance between plates.\n\nExample: 10 μF and 22 μF in series:\nCT = (10 × 22) / (10 + 22) = 220 / 32 = 6.875 μF\n\nSeries connection advantage: The voltage rating of the combination is the SUM of individual ratings. Two 250 V capacitors in series can withstand 500 V (but total capacitance decreases).\n\nEnergy stored in a capacitor:\nW = ½CV²\nExample: C = 100 μF, V = 400 V → W = 0.5 × 0.0001 × 160000 = 8 joules\n\nThis stored energy is why capacitors are dangerous — 8 joules at 400 V can be lethal.',
+        formula: 'Parallel: CT = C1 + C2 + C3\nSeries: 1/CT = 1/C1 + 1/C2 + 1/C3\nTwo in series: CT = (C1 × C2) / (C1 + C2)\nEnergy: W = ½CV²'
+      },
+      {
+        type: 'concept',
+        title: 'Safety with Inductors and Capacitors',
+        body: 'Inductors — inductive kick hazard:\n• When current through an inductor is suddenly interrupted (switch opened, breaker trips), the collapsing magnetic field induces an extremely high voltage spike\n• This "inductive kick" can be thousands or even millions of volts\n• It can damage insulation, destroy semiconductor components, cause dangerous arcs, and injure personnel\n• Protection methods: discharge resistor in parallel with the coil, snubber circuit (RC network), flyback diode (for dc circuits), varistor/MOV\n• Example: L = 0.2 H, I = 4 A, switch opens in 0.4 μs → e = (4/0.0000004) × 0.2 = 2,000,000 V (2 MV!)\n• With a 100 Ω discharge resistor: Vi = 4 × 100 = 400 V (manageable)\n\nCapacitors — stored energy hazard:\n• Capacitors hold their charge after power is removed — they are essentially batteries\n• Large capacitors in motor drives, power supplies, and power factor correction banks can store lethal amounts of energy\n• ALWAYS verify zero voltage with a voltmeter before touching capacitor terminals\n• Use a discharge resistor (bleed resistor) — NEVER short-circuit the terminals (this causes an explosive discharge)\n• Electrolytic capacitors: connecting with reverse polarity can cause violent rupture\n• Capacitors rated above their voltage can fail with internal arcing, heating, and potential explosion\n• Many industrial capacitors have built-in discharge resistors — but ALWAYS verify with a meter'
+      },
+      {
+        type: 'protip',
+        title: 'Pro Tips',
+        tips: [
+          'Inductance is proportional to N² — doubling the turns gives FOUR times the inductance. This is why even a small change in winding count matters.',
+          'When troubleshooting a motor that won\'t start, a shorted turn in the stator winding reduces the inductance and changes the impedance — drawing excessive current. This is why motor current testing is so diagnostic.',
+          'Capacitors in series have LOWER total capacitance than the smallest individual capacitor — the opposite of what many students expect. Think of it as increasing the effective plate spacing.',
+          'The energy stored in a capacitor increases with the SQUARE of the voltage. A capacitor at 480 V stores 16 times more energy than the same capacitor at 120 V. This is why high-voltage capacitors are so much more dangerous.',
+          'When you see a large motor contactor with a small RC "snubber" network across the coil terminals, that\'s protecting against inductive kick when the coil de-energizes.',
+          'Electrolytic capacitors have a limited lifespan (typically 2,000-10,000 hours at rated temperature). They dry out over time. If a piece of equipment has been sitting unused for years, the electrolytics may need to be reformed (slowly brought up to voltage) before full operation.'
+        ]
       },
       {
         type: 'quiz',
         title: 'Quick Check',
         questions: [
-          { q: 'An inductor of 0.3 H is in series with a 6 Ω resistor. What is the time constant?', a: 'T = L/R = 0.3/6 = 0.05 seconds (50 ms)' },
-          { q: 'A 50 μF capacitor is charged to 200 V. What is the stored charge?', a: 'Q = CV = 0.00005 × 200 = 0.01 C = 10 mC' },
-          { q: 'How many time constants for full charge of a capacitor?', a: '5 time constants (to reach 99.3% of final value)' },
-          { q: 'What happens when you open an inductive circuit suddenly?', a: 'The collapsing magnetic field induces a very high voltage spike (inductive kick) that can damage equipment or create dangerous arcs.' }
+          { q: 'An inductor has 200 turns and inductance of 0.4 H. If the turns are doubled to 400, what is the new inductance?', a: 'Inductance is proportional to N². Doubling turns: (400/200)² = 4× → 0.4 H × 4 = 1.6 H' },
+          { q: 'Three capacitors of 10 μF, 20 μF, and 30 μF are connected in parallel. What is the total capacitance?', a: 'Parallel capacitors add: CT = 10 + 20 + 30 = 60 μF' },
+          { q: 'The same three capacitors (10, 20, 30 μF) are connected in series. What is the total?', a: '1/CT = 1/10 + 1/20 + 1/30 = 6/60 + 3/60 + 2/60 = 11/60. CT = 60/11 = 5.45 μF' },
+          { q: 'A coil has L = 0.5 H and carries 6 A of steady current. How much energy is stored?', a: 'W = ½LI² = 0.5 × 0.5 × 36 = 9 joules' },
+          { q: 'A 220 μF capacitor is charged to 350 V. How much energy is stored? Is this dangerous?', a: 'W = ½CV² = 0.5 × 0.00022 × 122500 = 13.475 joules. YES — this is potentially lethal. Energy above about 1 joule at voltages above 50 V can cause serious injury or death.' },
+          { q: 'Why does an iron-core inductor have much higher inductance than an air-core inductor with the same number of turns?', a: 'Iron has much higher permeability (μ) than air — typically 1,000 to 8,000 times higher. Since L is directly proportional to μ, an iron core increases inductance by the same factor.' },
+          { q: 'A capacitor is rated 100 μF, 250 WVDC. You apply 300 V across it. What happens?', a: 'The voltage exceeds the capacitor\'s rating. The dielectric breaks down — an internal arc forms through the insulating material. This can cause the capacitor to overheat, vent gas, or explode. Never exceed the WVDC rating.' },
+          { q: 'An inductive circuit has L = 0.2 H and carries 4 A when a switch opens in 0.4 μs. Calculate the induced voltage. What can protect against this?', a: 'e = L × (ΔI/Δt) = 0.2 × (4/0.0000004) = 2,000,000 V = 2 MV. A discharge resistor in parallel with the coil (e.g., 100 Ω) would limit the voltage to Vi = I × R = 4 × 100 = 400 V.' }
+        ]
+      },
+      {
+        type: 'objectives',
+        title: 'Module Objectives',
+        objectives: [
+          'Define self-inductance and explain how a coil opposes changes in current through counter-emf (Lenz\'s Law).',
+          'Identify the four factors that determine inductance: number of turns (N²), core permeability (μ), cross-sectional area (A), and coil length (l).',
+          'Define mutual inductance and explain the coefficient of coupling (k) between coils.',
+          'Identify common inductor types: air-core, iron-core (laminated), ferrite-core, variable, and toroidal.',
+          'Calculate total inductance for series and parallel combinations (with no mutual coupling).',
+          'Define capacitance and explain how a capacitor stores electric charge in an electric field.',
+          'Identify the three factors that determine capacitance: plate area (A), plate spacing (d), and dielectric constant (εr).',
+          'Identify common capacitor types: electrolytic, ceramic, film, mica, and variable — and their applications.',
+          'Calculate total capacitance for series (reciprocal sum) and parallel (direct sum) combinations.',
+          'Calculate energy stored in inductors (W = ½LI²) and capacitors (W = ½CV²).',
+          'Describe safety hazards: inductive kick voltage spikes and stored charge in capacitors.',
+          'Identify protection methods: discharge resistors for inductors, bleed resistors for capacitors.'
         ]
       }
     ]
