@@ -13367,6 +13367,14 @@ const MathPractice = {
     { id:'motor-calcs',    name:'Motor FLC & Protection', icon:'🏭', period:2, formula:'OL=125%FLC, Branch=250%FLC' },
     { id:'time-constants', name:'Time Constants (RL/RC)', icon:'⏱️', period:2, formula:'T=L/R, T=RC, 5T=steady state' },
     { id:'energy-cost',    name:'Energy & Cost',       icon:'💰', period:1, formula:'kWh = P×t/1000, Cost = kWh×rate' },
+    { id:'resonance',      name:'Resonance & Q Factor', icon:'🎯', period:2, formula:'fr = 1/(2π√LC), Q = XL/R' },
+    { id:'pf-correction',  name:'PF Correction',       icon:'📐', period:2, formula:'Qc = P×(tanθ1−tanθ2)' },
+    { id:'xfmr-eff',       name:'Transformer Efficiency', icon:'🔄', period:2, formula:'η = Pout/Pin × 100, %Reg' },
+    { id:'motor-torque',   name:'Motor Torque & Efficiency', icon:'💪', period:2, formula:'T = P×5252/RPM, η = Pout/Pin' },
+    { id:'magnetics',      name:'Magnetic Circuits',   icon:'🧲', period:2, formula:'Φ = mmf/ℛ, B = Φ/A' },
+    { id:'lc-calcs',       name:'L & C Calculations',  icon:'🔋', period:2, formula:'L series/parallel, C series/parallel' },
+    { id:'wye-delta',      name:'Wye-Delta Conversion', icon:'🔺', period:2, formula:'RΔ = 3×RY, RY = RΔ/3' },
+    { id:'ac-dividers',    name:'AC Voltage & Current Dividers', icon:'⚖️', period:2, formula:'V1 = VT×Z1/ZT' },
   ],
 
   // Maps each math category to its actual lesson/study content.
@@ -13645,6 +13653,78 @@ const MathPractice = {
     if(type===2){ const P=this._r(1000,5000,500),t=this._r(4,8,1),days=30,rate=this._round(this._r(8,15)/100,2); const kWh=P*t*days/1000; const cost=this._round(kWh*rate); return {q:`<strong>${P}W</strong> load, <strong>${t}hrs/day</strong>, <strong>${days} days</strong>, <strong>$${rate}/kWh</strong>. Monthly cost?`,a:cost,unit:'$',hint:'kWh = P × hrs × days / 1000, then × rate',formula:'Cost = (P×t×days/1000) × rate'}; }
     if(type===3){ const V=this._r(120,240,120),I=this._r(5,20,5),t=this._r(2,8,1); const P=V*I; const kWh=this._round(P*t/1000); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong> for <strong>${t} hours</strong>. Energy consumed?`,a:kWh,unit:'kWh',hint:'P = V×I first, then kWh = P×t/1000',formula:'kWh = V×I×t / 1000'}; }
     const kWh=this._r(500,2000,100),rate=this._round(this._r(8,15)/100,2); return {q:`A monthly bill shows <strong>${kWh} kWh</strong> at <strong>$${rate}/kWh</strong>. What is the energy charge?`,a:this._round(kWh*rate),unit:'$',hint:'Cost = kWh × rate per kWh',formula:'Cost = kWh × rate'};
+  },
+
+  _gen_resonance() {
+    const type=this._r(0,5);
+    if(type===0){ const L=this._r(10,500,10),C=this._r(10,500,10); const fr=1/(2*Math.PI*Math.sqrt((L/1000)*(C/1000000))); return {q:`L=<strong>${L}mH</strong>, C=<strong>${C}μF</strong>. What is the resonant frequency?`,a:this._round(fr,1),unit:'Hz',hint:'fr = 1 / (2π√(LC)) — convert units first',formula:'fr = 1 / (2π√LC)'}; }
+    if(type===1){ const R=this._r(5,50,5),XL=this._r(50,300,10); const Q=this._round(XL/R,1); return {q:`At resonance: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>. What is the Q factor?`,a:Q,unit:'',hint:'Q = XL / R (at resonance XL = XC)',formula:'Q = XL / R'}; }
+    if(type===2){ const R=this._r(5,30,5),XL=this._r(100,500,50); const Q=XL/R; const fr=this._r(50,200,10); const BW=this._round(fr/Q,1); return {q:`fr=<strong>${fr}Hz</strong>, Q=<strong>${this._round(Q,1)}</strong>. What is the bandwidth?`,a:BW,unit:'Hz',hint:'BW = fr / Q',formula:'BW = fr / Q'}; }
+    if(type===3){ const R=this._r(5,30,5),L=this._r(50,300,50),C=this._r(10,200,10); const XL=2*Math.PI*60*(L/1000); const XC=1/(2*Math.PI*60*(C/1000000)); const Z=Math.sqrt(R*R+(XL-XC)*(XL-XC)); return {q:`Series RLC at 60Hz: R=<strong>${R}Ω</strong>, L=<strong>${L}mH</strong>, C=<strong>${C}μF</strong>. What is the impedance?`,a:this._round(Z),unit:'Ω',hint:'Find XL and XC at 60Hz, net X = XL-XC, then Z = √(R²+X²)',formula:'Z = √(R² + (XL-XC)²)'}; }
+    if(type===4){ const V=this._r(100,240,10),R=this._r(5,20,5),Q=this._r(5,20,1); const VL=V*Q; return {q:`At resonance: source=<strong>${V}V</strong>, R=<strong>${R}Ω</strong>, Q=<strong>${Q}</strong>. What is the voltage across the inductor?`,a:this._round(VL),unit:'V',hint:'VL = V × Q (voltage magnification at resonance)',formula:'VL = VS × Q'}; }
+    const fr=this._r(50,500,10),L=this._r(10,200,10); const C=1/(Math.pow(2*Math.PI*fr,2)*(L/1000))*1000000; return {q:`Resonant freq=<strong>${fr}Hz</strong>, L=<strong>${L}mH</strong>. What capacitance is needed for resonance?`,a:this._round(C,1),unit:'μF',hint:'Rearrange fr = 1/(2π√LC) to solve for C',formula:'C = 1 / ((2πfr)² × L)'};
+  },
+
+  _gen_pf_correction() {
+    const type=this._r(0,4);
+    if(type===0){ const P=this._r(5,50,5)*1000,pf1=this._round(this._r(65,80)/100,2),pf2=this._round(this._r(90,98)/100,2); const theta1=Math.acos(pf1),theta2=Math.acos(pf2); const Qc=this._round(P*(Math.tan(theta1)-Math.tan(theta2))); return {q:`A <strong>${P/1000}kW</strong> load at PF=<strong>${pf1}</strong> needs correction to PF=<strong>${pf2}</strong>. What reactive power (kVAR) of capacitors needed?`,a:this._round(Qc/1000,1),unit:'kVAR',hint:'Qc = P × (tan θ₁ − tan θ₂)',formula:'Qc = P × (tanθ₁ − tanθ₂)'}; }
+    if(type===1){ const S=this._r(10,100,5),pf=this._round(this._r(70,90)/100,2); const P=this._round(S*pf,1); const Q=this._round(S*Math.sin(Math.acos(pf)),1); return {q:`Apparent power=<strong>${S}kVA</strong>, PF=<strong>${pf}</strong>. What is the reactive power?`,a:Q,unit:'kVAR',hint:'Q = S × sin(θ) where θ = arccos(PF)',formula:'Q = S × sin(arccos PF)'}; }
+    if(type===2){ const P=this._r(5,40,5),Q=this._r(5,30,5); const S=this._round(Math.sqrt(P*P+Q*Q),1); return {q:`True power=<strong>${P}kW</strong>, reactive power=<strong>${Q}kVAR</strong>. What is the apparent power?`,a:S,unit:'kVA',hint:'S = √(P² + Q²)',formula:'S = √(P² + Q²)'}; }
+    if(type===3){ const P=this._r(5,30,5),Q=this._r(5,25,5); const pf=this._round(P/Math.sqrt(P*P+Q*Q),3); return {q:`P=<strong>${P}kW</strong>, Q=<strong>${Q}kVAR</strong>. What is the power factor?`,a:pf,unit:'',hint:'PF = P / S where S = √(P²+Q²)',formula:'PF = P / √(P²+Q²)'}; }
+    const V=this._r(240,600,120),Qc=this._r(5,30,5)*1000,f=60; const C=this._round(Qc/(2*Math.PI*f*V*V)*1000000,1); return {q:`Need <strong>${Qc/1000}kVAR</strong> correction at <strong>${V}V</strong>, <strong>60Hz</strong>. What capacitance is required?`,a:C,unit:'μF',hint:'C = Qc / (2πfV²)',formula:'C = Qc / (2πfV²)'};
+  },
+
+  _gen_xfmr_eff() {
+    const type=this._r(0,4);
+    if(type===0){ const Pout=this._r(5,50,5)*1000,Ploss=this._r(200,2000,100); const Pin=Pout+Ploss; const eff=this._round(Pout/Pin*100,1); return {q:`Transformer output=<strong>${Pout/1000}kW</strong>, total losses=<strong>${Ploss}W</strong>. What is the efficiency?`,a:eff,unit:'%',hint:'η = Pout / Pin × 100, where Pin = Pout + losses',formula:'η = Pout / (Pout + losses) × 100'}; }
+    if(type===1){ const V1=this._r(240,4800,240),V2=this._r(120,240,120),I2=this._r(5,40,5),eff=this._r(92,98); const Pout=V2*I2; const Pin=this._round(Pout/(eff/100)); const I1=this._round(Pin/V1,2); return {q:`Transformer: <strong>${V1}V</strong> primary, <strong>${V2}V/${I2}A</strong> secondary, <strong>${eff}%</strong> efficient. What is the primary current?`,a:I1,unit:'A',hint:'Pout = V2×I2, Pin = Pout/η, I1 = Pin/V1',formula:'I1 = (V2×I2) / (η × V1)'}; }
+    if(type===2){ const VNL=this._r(120,480,12),VFL=this._r(110,470,10); const reg=this._round((VNL-VFL)/VFL*100,1); return {q:`No-load voltage=<strong>${VNL}V</strong>, full-load voltage=<strong>${VFL}V</strong>. What is the voltage regulation?`,a:reg,unit:'%',hint:'%Reg = (VNL − VFL) / VFL × 100',formula:'%Reg = (VNL−VFL)/VFL × 100'}; }
+    if(type===3){ const Pcu=this._r(100,1000,100),Pcore=this._r(50,500,50); const totalLoss=Pcu+Pcore; return {q:`Copper losses=<strong>${Pcu}W</strong>, core losses=<strong>${Pcore}W</strong>. What are the total transformer losses?`,a:totalLoss,unit:'W',hint:'Total = copper + core losses',formula:'Ploss = Pcu + Pcore'}; }
+    const kVA=this._r(5,100,5),pf=this._round(this._r(75,95)/100,2),eff=this._r(93,98); const Pout=kVA*1000*pf; const Pin=this._round(Pout/(eff/100)); return {q:`A <strong>${kVA}kVA</strong> transformer at PF=<strong>${pf}</strong>, <strong>${eff}%</strong> efficient. What is the input power?`,a:this._round(Pin),unit:'W',hint:'Pout = kVA × PF × 1000, Pin = Pout / η',formula:'Pin = (kVA×PF×1000) / η'};
+  },
+
+  _gen_motor_torque() {
+    const type=this._r(0,4);
+    if(type===0){ const HP=this._r(1,25,1),RPM=this._r(900,3600,300); const T=this._round(HP*5252/RPM,1); return {q:`A <strong>${HP}HP</strong> motor runs at <strong>${RPM}RPM</strong>. What is the torque?`,a:T,unit:'lb-ft',hint:'T = HP × 5252 / RPM',formula:'T = HP × 5252 / RPM'}; }
+    if(type===1){ const Pout=this._r(1,20,1)*746,Pin=this._r(1,25,1)*746+this._r(50,300,50); const eff=this._round(Pout/Pin*100,1); return {q:`Motor input=<strong>${this._round(Pin)}W</strong>, output=<strong>${this._round(Pout)}W</strong>. What is the efficiency?`,a:eff,unit:'%',hint:'η = Pout / Pin × 100',formula:'η = Pout / Pin × 100'}; }
+    if(type===2){ const HP=this._r(1,15,1); const W=this._round(HP*746); return {q:`Convert <strong>${HP} HP</strong> to watts.`,a:W,unit:'W',hint:'1 HP = 746 watts',formula:'W = HP × 746'}; }
+    if(type===3){ const W=this._r(1000,15000,500); const HP=this._round(W/746,1); return {q:`Convert <strong>${W}W</strong> to horsepower.`,a:HP,unit:'HP',hint:'HP = watts / 746',formula:'HP = W / 746'}; }
+    const T=this._r(5,50,5),RPM=this._r(900,3600,300); const HP=this._round(T*RPM/5252,1); return {q:`Torque=<strong>${T} lb-ft</strong> at <strong>${RPM}RPM</strong>. What is the horsepower?`,a:HP,unit:'HP',hint:'HP = T × RPM / 5252',formula:'HP = T × RPM / 5252'};
+  },
+
+  _gen_magnetics() {
+    const type=this._r(0,4);
+    if(type===0){ const N=this._r(100,1000,100),I=this._r(1,10,1); const mmf=N*I; return {q:`A coil has <strong>${N} turns</strong> carrying <strong>${I}A</strong>. What is the magnetomotive force (mmf)?`,a:mmf,unit:'At',hint:'mmf = N × I (ampere-turns)',formula:'mmf = N × I'}; }
+    if(type===1){ const Phi=this._r(1,10,1),A=this._r(10,100,10); const B=this._round(Phi/A*1000,2); return {q:`Magnetic flux=<strong>${Phi}mWb</strong> through area=<strong>${A}cm²</strong>. What is the flux density? (Give in mT)`,a:this._round((Phi/1000)/(A/10000)*1000,1),unit:'mT',hint:'B = Φ/A (convert units: mWb→Wb, cm²→m²)',formula:'B = Φ / A'}; }
+    if(type===2){ const mmf=this._r(100,2000,100),R=this._r(50,500,50); const Phi=this._round(mmf/R*1000,2); return {q:`mmf=<strong>${mmf}At</strong>, reluctance=<strong>${R} × 10³ At/Wb</strong>. What is the flux? (in mWb)`,a:this._round(mmf/(R*1000)*1000,2),unit:'mWb',hint:'Φ = mmf / ℛ',formula:'Φ = mmf / ℛ'}; }
+    if(type===3){ const N=this._r(200,800,100),I=this._r(2,8,1),l=this._r(10,40,5); const H=this._round(N*I/(l/100)); return {q:`Coil: <strong>${N} turns</strong>, <strong>${I}A</strong>, magnetic path=<strong>${l}cm</strong>. What is the field intensity?`,a:H,unit:'At/m',hint:'H = N×I / l (convert cm to m)',formula:'H = NI / l'}; }
+    const B=this._r(5,20,1),l=this._r(10,50,10),A=this._r(5,25,5); return {q:`A conductor of <strong>${l}cm</strong> moves at <strong>${B}m/s</strong> through a <strong>${A}mT</strong> field. What EMF is induced?`,a:this._round((A/1000)*(B)*(l/100)*1000,2),unit:'mV',hint:'e = B × l × v',formula:'e = Blv'};
+  },
+
+  _gen_lc_calcs() {
+    const type=this._r(0,5);
+    if(type===0){ const L1=this._r(10,200,10),L2=this._r(10,200,10); return {q:`Two inductors in series (no mutual coupling): L1=<strong>${L1}mH</strong>, L2=<strong>${L2}mH</strong>. Total inductance?`,a:L1+L2,unit:'mH',hint:'Series inductors add: LT = L1 + L2',formula:'LT = L1 + L2'}; }
+    if(type===1){ const L1=this._r(20,200,10),L2=this._r(20,200,10); const LT=this._round((L1*L2)/(L1+L2),1); return {q:`Two inductors in parallel: L1=<strong>${L1}mH</strong>, L2=<strong>${L2}mH</strong>. Total inductance?`,a:LT,unit:'mH',hint:'Parallel: LT = (L1×L2)/(L1+L2)',formula:'LT = (L1×L2)/(L1+L2)'}; }
+    if(type===2){ const C1=this._r(10,200,10),C2=this._r(10,200,10); return {q:`Two capacitors in parallel: C1=<strong>${C1}μF</strong>, C2=<strong>${C2}μF</strong>. Total capacitance?`,a:C1+C2,unit:'μF',hint:'Parallel capacitors add: CT = C1 + C2',formula:'CT = C1 + C2'}; }
+    if(type===3){ const C1=this._r(20,200,10),C2=this._r(20,200,10); const CT=this._round((C1*C2)/(C1+C2),1); return {q:`Two capacitors in series: C1=<strong>${C1}μF</strong>, C2=<strong>${C2}μF</strong>. Total capacitance?`,a:CT,unit:'μF',hint:'Series: CT = (C1×C2)/(C1+C2)',formula:'CT = (C1×C2)/(C1+C2)'}; }
+    if(type===4){ const V=this._r(12,120,12),C=this._r(10,500,10); const Q=this._round(V*(C/1000000)*1000000,1); return {q:`A <strong>${C}μF</strong> capacitor charged to <strong>${V}V</strong>. What charge is stored?`,a:Q,unit:'μC',hint:'Q = C × V (in base units, then convert)',formula:'Q = CV'}; }
+    const C=this._r(10,500,10),V=this._r(12,240,12); const E=this._round(0.5*(C/1000000)*V*V*1000,2); return {q:`Energy stored in a <strong>${C}μF</strong> capacitor at <strong>${V}V</strong>?`,a:E,unit:'mJ',hint:'E = ½CV² (convert μF to F, result in J, then to mJ)',formula:'E = ½CV²'};
+  },
+
+  _gen_wye_delta() {
+    const type=this._r(0,3);
+    if(type===0){ const RY=this._r(5,50,5); const RD=RY*3; return {q:`Three equal resistors in wye: each <strong>${RY}Ω</strong>. Convert to delta. What is each delta resistor?`,a:RD,unit:'Ω',hint:'For equal resistors: RΔ = 3 × RY',formula:'RΔ = 3 × RY'}; }
+    if(type===1){ const RD=this._r(15,150,15); const RY=RD/3; return {q:`Three equal resistors in delta: each <strong>${RD}Ω</strong>. Convert to wye. What is each wye resistor?`,a:this._round(RY),unit:'Ω',hint:'For equal resistors: RY = RΔ / 3',formula:'RY = RΔ / 3'}; }
+    if(type===2){ const ZY=this._r(5,40,5); const ZD=ZY*3; const VL=this._r(208,600,100); const IL_Y=this._round(VL/(Math.sqrt(3)*ZY),1); return {q:`Wye load: Z=<strong>${ZY}Ω</strong>/phase, VL=<strong>${VL}V</strong>. What is the line current?`,a:IL_Y,unit:'A',hint:'IL = VL / (√3 × ZY) in a wye load',formula:'IL = VL / (√3 × ZY)'}; }
+    const ZD=this._r(15,120,15); const VL=this._r(208,600,100); const Ip=this._round(VL/ZD,1); const IL=this._round(Ip*Math.sqrt(3),1); return {q:`Delta load: Z=<strong>${ZD}Ω</strong>/phase, VL=<strong>${VL}V</strong>. What is the line current?`,a:IL,unit:'A',hint:'Ip = VL/ZΔ, then IL = Ip × √3',formula:'IL = (VL/ZΔ) × √3'};
+  },
+
+  _gen_ac_dividers() {
+    const type=this._r(0,3);
+    if(type===0){ const R1=this._r(10,80,10),R2=this._r(10,80,10),VT=this._r(100,240,10); const V1=this._round(VT*R1/(R1+R2)); return {q:`Series circuit: R1=<strong>${R1}Ω</strong>, R2=<strong>${R2}Ω</strong>, source=<strong>${VT}V</strong>. Voltage across R1?`,a:V1,unit:'V',hint:'V1 = VT × R1/(R1+R2)',formula:'V1 = VT × R1 / (R1+R2)'}; }
+    if(type===1){ const R=this._r(10,50,10),XL=this._r(10,80,10),VT=this._r(100,240,10); const Z=Math.sqrt(R*R+XL*XL); const I=VT/Z; const VR=this._round(I*R); return {q:`Series RL: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, VT=<strong>${VT}V</strong>. What is VR?`,a:VR,unit:'V',hint:'Z = √(R²+XL²), I = VT/Z, VR = I×R',formula:'VR = VT × R/Z'}; }
+    if(type===2){ const R1=this._r(10,50,10),R2=this._r(10,50,10),IT=this._r(5,20,5); const I1=this._round(IT*R2/(R1+R2)); return {q:`Parallel branches: R1=<strong>${R1}Ω</strong>, R2=<strong>${R2}Ω</strong>, total current=<strong>${IT}A</strong>. Current through R1?`,a:I1,unit:'A',hint:'I1 = IT × R2/(R1+R2) — current divider uses opposite resistor',formula:'I1 = IT × R2/(R1+R2)'}; }
+    const XL=this._r(20,100,10),XC=this._r(20,100,10),VT=this._r(100,240,10); const Xnet=Math.abs(XL-XC); const I=this._round(VT/Xnet,1); return {q:`Series LC (no resistance): XL=<strong>${XL}Ω</strong>, XC=<strong>${XC}Ω</strong>, source=<strong>${VT}V</strong>. What is the current?`,a:I,unit:'A',hint:'Xnet = |XL - XC|, I = V / Xnet',formula:'I = V / |XL − XC|'};
   },
 
   checkAnswer() {
