@@ -9285,39 +9285,156 @@ const Review = {
 // ===== LESSONS MODULE =====
 
 const LESSONS_CONTENT = [
-  // ── Period 1 ──────────────────────────────────────────────────────────────
+  // ── Period 2 — AC Circuit Properties ─────────────────────────────────────
   {
-    id: 'm11', period: 1, comingSoon: true,
+    id: 'm11', period: 2,
     title: 'Fundamentals of Alternating Current',
     icon: '〰️',
-    subtitle: 'Sine waves, frequency, and AC generation basics',
+    subtitle: 'Sine Waves, Frequency, and AC Generation',
     color: '#8b5cf6',
     gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
     border: 'rgba(139,92,246,0.3)',
-    readTime: 'Coming Soon',
-    sections: [{ type:'hook', title:'Coming Soon', body:'This lesson is being prepared. Check back soon!' }]
+    readTime: '20 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Why AC Matters',
+        body: 'Alternating current (ac) circuits are the backbone of electrical energy distribution. Most of your work as an electrician involves ac circuits. In second period training, you build on first-period resistive circuit knowledge to understand the fundamental properties that make ac unique — sine waves, frequency, phase, and RMS values.\n\nThis module covers the generation of alternating current, the sine wave, the relationship between poles and frequency, and how to calculate peak, instantaneous, and RMS values.'
+      },
+      {
+        type: 'concept',
+        title: 'Generation of Alternating Current',
+        body: 'An electromotive force (emf) is generated when there is relative motion between a conductor and a magnetic field. The amount of emf depends on three factors:\n\n• The density of the magnetic flux\n• The length of conductor within the magnetic field\n• The rate at which the conductor cuts lines of magnetic force\n\nA conductor moving parallel to lines of force cuts nothing — zero emf. A conductor cutting directly across at 90° generates maximum emf.\n\nA conductor travelling at constant speed on a circular path in a magnetic field cuts the lines of force at a constantly changing rate. Therefore, the induced voltage is constantly changing, varying according to the angle at which the conductor cuts across the lines of force.'
+      },
+      {
+        type: 'concept',
+        title: 'The Sine Wave',
+        body: 'Although conductor velocity is constant in a generator:\n• The angle at which flux lines are cut constantly changes\n• The number of lines cut per second continuously changes\n• The instantaneous value of induced voltage continuously changes\n\nPeak emf (Emax) is generated when the conductor cuts at 90° — this happens at two points: 90° and 270° on the circular path.\n\nAs a conductor loop rotates, it passes alternate north and south poles. One pair of poles = two alternations = one electrical cycle.\n\n0°–180° (positive alternation): positive emf values\n180°–360° (negative alternation): negative emf values\n\nPlotting both on a voltage/time graph produces a sine wave — called alternating current because it alternates direction with each half-cycle.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Frequency and Magnetic Poles',
+        body: 'The number of electrical cycles completed per second is the frequency (f), measured in hertz (Hz). The time for one complete cycle is the period (T).\n\nThe relationship between poles, speed, and frequency:\n\n• Two-pole machine: 1 revolution = 1 cycle. At 60 rev/s = 60 Hz.\n• Four-pole machine: 1 revolution = 2 cycles. At 30 rev/s = 60 Hz.\n• Eight-pole machine: 1 revolution = 4 cycles. At 15 rev/s = 60 Hz.\n\nIn any alternator, 360 electrical degrees are produced when a conductor passes two opposite poles.',
+        formula: 'f = (p × n) / 120\nWhere: p = number of poles, n = speed in r/min\n\nExamples:\n• 4-pole at 1800 r/min → f = (4 × 1800) / 120 = 60 Hz\n• 2-pole at 50 Hz → n = (50 × 120) / 2 = 3000 r/min\n• 400 Hz at 1200 r/min → p = (400 × 120) / 1200 = 40 poles'
+      },
+      {
+        type: 'concept',
+        title: 'Peak and Instantaneous Values',
+        body: 'Peak (maximum) emf occurs when the conductor cuts at 90° — at positions 90° (positive peak) and 270° (negative peak).\n\nSymbols: Vm, Em, Emax, or Epeak.\nPeak-to-peak (Vp-p) spans both positive and negative peaks.\n\nThe instantaneous value at any angle is calculated using:\ne = Emax × sin(angle)\n\nExamples (Emax = 10 V):\n• At 20°: e = 10 × sin 20° = 3.42 V\n• At 90°: e = 10 × sin 90° = 10 V (peak)\n• At 110°: e = 10 × sin 110° = 9.4 V\n• At 210°: e = 10 × sin 210° = −5 V'
+      },
+      {
+        type: 'keypoint',
+        title: 'Effective (RMS) Values',
+        body: 'The effective value of ac — also called RMS (Root Mean Square) — is the value that produces the same heating effect as an equivalent dc voltage or current. AC meters read RMS values. When symbols have no subscripts (E, V, I), they represent RMS values.\n\nConversion formulas:\n• Peak from RMS: Emax = E × √2 (or E / 0.707)\n• RMS from Peak: E = Emax × 0.707 (or Emax / √2)\n\nExamples:\n• 120 V RMS → Emax = 120 × 1.414 = 169.7 V\n• 169.7 V peak → E = 169.7 × 0.707 = 120 V RMS\n• Peak 679 V → E = 679 × 0.707 = 480 V RMS\n• Voltmeter reads 120 V at 20°: Emax = 169.7 V → e = 169.7 × sin 20° = 58 V',
+        formula: 'Emax = ERMS × √2 ≈ ERMS × 1.414\nERMS = Emax × 0.707 ≈ Emax / √2'
+      },
+      {
+        type: 'quiz',
+        title: 'Quick Check',
+        questions: [
+          { q: 'A 6-pole generator rotates at 1200 r/min. What is the output frequency?', a: 'f = (6 × 1200) / 120 = 60 Hz' },
+          { q: 'A household outlet measures 120 V RMS. What is the peak voltage?', a: 'Emax = 120 × 1.414 = 169.7 V peak' },
+          { q: 'At what two angles does the peak emf occur in one cycle?', a: '90° (positive peak) and 270° (negative peak)' },
+          { q: 'A sine wave has a peak of 340 V. What is the instantaneous voltage at 45°?', a: 'e = 340 × sin 45° = 340 × 0.707 = 240.4 V' }
+        ]
+      }
+    ]
   },
   {
-    id: 'm12', period: 1, comingSoon: true,
+    id: 'm12', period: 2,
     title: 'Properties of Inductors and Capacitors',
     icon: '🔋',
-    subtitle: 'Reactance, impedance, and energy storage in AC circuits',
+    subtitle: 'Inductance, Capacitance, and Energy Storage',
     color: '#8b5cf6',
     gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
     border: 'rgba(139,92,246,0.3)',
-    readTime: 'Coming Soon',
-    sections: [{ type:'hook', title:'Coming Soon', body:'This lesson is being prepared. Check back soon!' }]
+    readTime: '22 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: 'The Two Energy Storage Devices',
+        body: 'Inductors store energy in magnetic fields. Capacitors store energy in electric fields. Together, they are responsible for the behaviour that makes ac circuits fundamentally different from dc circuits — reactance, phase shift, power factor, and resonance.\n\nThis module covers the physical properties and electrical characteristics of inductors and capacitors before you apply them in ac circuits.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductance — Self-Inductance',
+        body: 'Self-inductance is the property of a coil that opposes any change in current through it by inducing a counter-emf (cemf). The unit of inductance is the henry (H).\n\nFactors affecting inductance:\n• Number of turns (N) — more turns = more inductance (proportional to N²)\n• Core material — iron core greatly increases inductance vs air core\n• Cross-sectional area of core — larger area = more inductance\n• Length of coil — shorter coil = more inductance\n\nMutual inductance occurs when changing current in one coil induces voltage in a nearby coil — this is the principle behind transformers.',
+        formula: 'L = (N² × μ × A) / l\nWhere: N = turns, μ = permeability, A = area, l = length'
+      },
+      {
+        type: 'keypoint',
+        title: 'RL Time Constant',
+        body: 'In a dc circuit with an inductor, current does not rise instantly. The inductor opposes the change via cemf.\n\nTime Constant: T = L / R (henries / ohms = seconds)\nFull charge ≈ 5 time constants. Each TC, current changes by 63.2% of the remaining difference.\n\nExample: L = 0.16 H, R = 4 Ω → T = 0.04 s; full current at 5 × 0.04 = 0.2 s\nSteady-state current: I = E/R (Ohm\'s law — cemf = 0 at steady state)\n\nOpening an inductive circuit produces dangerous voltage spikes (inductive kick):\ne = (ΔI / Δt) × L\nAlways use a discharge resistor or snubber to protect against inductive kick.',
+        formula: 'T = L / R\nFull charge/discharge = 5 × T\nInductive kick: e = L × (ΔI / Δt)'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitance — Electric Field Storage',
+        body: 'Capacitance is the ability to store electric charge between two plates separated by an insulating dielectric.\n\nFactors affecting capacitance:\n• Plate area — larger plates = more capacitance (direct)\n• Distance between plates — closer = more capacitance (inverse)\n• Dielectric material — higher dielectric constant = more capacitance\n\nElectric charge: Q = C × V (farads × volts = coulombs)\nAlso: Q = I × t (amperes × seconds = coulombs)\n\nPractical units: microfarad (μF = 10⁻⁶ F), nanofarad (nF = 10⁻⁹ F), picofarad (pF = 10⁻¹² F)',
+        formula: 'C = (ε × A) / d\nQ = C × V\nQ = I × t'
+      },
+      {
+        type: 'keypoint',
+        title: 'RC Time Constant',
+        body: 'In a dc circuit with a capacitor, voltage does not change instantly. The capacitor charges through the resistor.\n\nTime Constant: T = R × C (ohms × farads = seconds)\nFull charge/discharge ≈ 5 time constants. Each TC, voltage changes by 63.2% of the remaining difference.\n\nExample: R = 200 Ω, C = 15 μF → T = 200 × 0.000015 = 0.003 s (3 ms); full charge = 15 ms\n\nSafety: Charged capacitors can deliver lethal shocks even after power is removed. Always discharge capacitors with a discharge resistor before working on equipment. Never short-circuit capacitor terminals. Electrolytic capacitors can explode if connected with reverse polarity.',
+        formula: 'T = R × C\nEnergy stored: W = ½CV²\n\nSeries: 1/CT = 1/C1 + 1/C2\nParallel: CT = C1 + C2'
+      },
+      {
+        type: 'quiz',
+        title: 'Quick Check',
+        questions: [
+          { q: 'An inductor of 0.3 H is in series with a 6 Ω resistor. What is the time constant?', a: 'T = L/R = 0.3/6 = 0.05 seconds (50 ms)' },
+          { q: 'A 50 μF capacitor is charged to 200 V. What is the stored charge?', a: 'Q = CV = 0.00005 × 200 = 0.01 C = 10 mC' },
+          { q: 'How many time constants for full charge of a capacitor?', a: '5 time constants (to reach 99.3% of final value)' },
+          { q: 'What happens when you open an inductive circuit suddenly?', a: 'The collapsing magnetic field induces a very high voltage spike (inductive kick) that can damage equipment or create dangerous arcs.' }
+        ]
+      }
+    ]
   },
   {
-    id: 'm13', period: 1, comingSoon: true,
-    title: 'Inductors and Capacitors in Circuits',
+    id: 'm13', period: 2,
+    title: 'Inductors and Capacitors in AC Circuits',
     icon: '⚡',
-    subtitle: 'Series and parallel RLC circuits, resonance, and power factor',
+    subtitle: 'Reactance, Phase Relationships, and AC Calculations',
     color: '#8b5cf6',
     gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
     border: 'rgba(139,92,246,0.3)',
-    readTime: 'Coming Soon',
-    sections: [{ type:'hook', title:'Coming Soon', body:'This lesson is being prepared. Check back soon!' }]
+    readTime: '25 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: 'AC Changes Everything',
+        body: 'In dc circuits, inductors are just wire and capacitors are just open circuits (at steady state). In ac circuits, they create reactance — opposition to current flow that depends on frequency. This reactance causes current and voltage to shift out of phase, which is the foundation of power factor, impedance, and ac circuit analysis.\n\nObjectives:\n1. Describe inductive reactance and its effect on ac circuits.\n2. Describe capacitive reactance and its effect on ac circuits.\n3. Calculate XL and XC.\n4. Understand phase relationships between voltage and current.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductive Reactance (XL)',
+        body: 'In ac circuits, current is continuously changing. An inductor opposes this change via counter-emf — this opposition is called inductive reactance (XL), measured in ohms.\n\nXL exists ONLY in ac circuits. In dc, once current reaches steady state, there is no change and therefore no opposition.\n\nRelationships:\n• Higher inductance → higher cemf → higher XL (direct)\n• Higher frequency → faster current change → higher XL (direct)\n\nIn a purely inductive circuit, current LAGS voltage by 90°.\n• When current is changing fastest (crossing zero), cemf is maximum\n• When current is at its peak (zero rate of change), cemf is zero\n\nMemory aid: ELI — voltage (E) leads current (I) in an inductor (L).',
+        formula: 'XL = 2πfL\nWhere: f = frequency (Hz), L = inductance (H)\n\nExamples:\n• 0.3 H at 60 Hz → XL = 2π × 60 × 0.3 = 113 Ω\n• 450 mH at 100 Hz → XL = 2π × 100 × 0.45 = 282.7 Ω'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitive Reactance (XC)',
+        body: 'In ac circuits, the constantly changing voltage causes a capacitor to continually charge and discharge, creating capacitive reactance (XC), measured in ohms.\n\nXC exists ONLY in ac circuits. In dc, once the capacitor is fully charged, current stops.\n\nRelationships (both INVERSE):\n• Higher capacitance → more electron flow → LOWER XC\n• Higher frequency → faster charge/discharge → LOWER XC\n\nIn a purely capacitive circuit, current LEADS voltage by 90°.\n• When voltage starts rising, current is immediately high (charging the capacitor)\n• By the time voltage peaks, current has dropped to zero\n\nMemory aid: ICE — current (I) leads voltage (E) in a capacitor (C).',
+        formula: 'XC = 1 / (2πfC)\nWhere: f = frequency (Hz), C = capacitance (F)\n\nExamples:\n• 500 μF at 60 Hz → XC = 1/(2π × 60 × 0.0005) = 5.31 Ω\n• 800 μF at 60 Hz → XC = 1/(2π × 60 × 0.0008) = 3.32 Ω'
+      },
+      {
+        type: 'keypoint',
+        title: 'Phase Relationships Summary',
+        body: 'The phase relationship between voltage and current depends on the circuit components:\n\n• Pure resistance (R only): V and I are IN PHASE (0° shift)\n• Pure inductance (L only): V LEADS I by 90° (ELI)\n• Pure capacitance (C only): I LEADS V by 90° (ICE)\n• RL circuit: V leads I by some angle between 0° and 90°\n• RC circuit: I leads V by some angle between 0° and 90°\n• RLC circuit: depends on whether XL > XC (inductive) or XC > XL (capacitive)\n\nPhasor diagrams show these relationships visually:\n• Inductive current (IL): drawn 90° clockwise (lagging) from voltage\n• Capacitive current (IC): drawn 90° counterclockwise (leading) from voltage\n\nRemember ELI the ICE man!'
+      },
+      {
+        type: 'quiz',
+        title: 'Quick Check',
+        questions: [
+          { q: 'Calculate XL for a 0.22 H inductor at 60 Hz.', a: 'XL = 2π × 60 × 0.22 = 82.9 Ω' },
+          { q: 'In a purely inductive circuit, does current lead or lag voltage?', a: 'Current LAGS voltage by 90° (ELI — voltage leads current in an inductor)' },
+          { q: 'What happens to XC if you double the frequency?', a: 'XC is halved. XC = 1/(2πfC) — frequency is in the denominator, so doubling f halves XC.' },
+          { q: 'A circuit has XL = 100 Ω and XC = 60 Ω. Is the circuit inductive or capacitive?', a: 'Inductive, because XL > XC. The net reactance is inductive (100 - 60 = 40 Ω inductive), so current lags voltage.' },
+          { q: 'What does "ELI the ICE man" help you remember?', a: 'ELI: in an inductor (L), voltage (E) leads current (I). ICE: in a capacitor (C), current (I) leads voltage (E).' }
+        ]
+      }
+    ]
   },
   // ── Period 2 ──────────────────────────────────────────────────────────────
   {
@@ -10499,7 +10616,7 @@ const Lessons = {
     const userModules = uploadedModules.filter(m => m.period === period);
 
     // Built-in lessons for owner only
-    const builtInLessons = state.user.isOwner ? LESSONS_CONTENT.filter(l => l.period === period && !l.comingSoon) : [];
+    const builtInLessons = LESSONS_CONTENT.filter(l => l.period === period && !l.comingSoon);
     const allLessons = [...userModules, ...builtInLessons];
 
     container.innerHTML = `
