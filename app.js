@@ -756,20 +756,22 @@ const Auth = {
     });
   },
   appliedPromo: null,
-  checkPromo() {
-    const code = document.getElementById('signupPromo').value.trim();
-    const el = document.getElementById('promoResult');
-    if (!code) { el.innerHTML = ''; this.appliedPromo = null; return; }
+  applySignupPromo() {
+    const input = document.getElementById('signupPromo');
+    const el = document.getElementById('signupPromoMsg');
+    const code = (input?.value || '').trim().toUpperCase();
+    if (!code) { if (el) el.innerHTML = ''; this.appliedPromo = null; return; }
     const promo = PromoCodes.validate(code);
     if (promo) {
       this.appliedPromo = promo;
       const desc = promo.type === 'percent' ? promo.value + '% off' : promo.type === 'flat' ? '$' + promo.value + ' off' : promo.type === 'trial_extend' ? '+' + promo.value + ' extra trial days' : promo.type === 'free' ? 'Free access!' : promo.value;
-      el.innerHTML = '<span style="color:#22c55e;">&#x2705; ' + desc + ' &mdash; Code applied!</span>';
+      if (el) el.innerHTML = '<span style="color:#22c55e;">&#x2705; ' + desc + ' &mdash; Code applied!</span>';
     } else {
       this.appliedPromo = null;
-      el.innerHTML = '<span style="color:#ef4444;">&#x274C; Invalid or expired code</span>';
+      if (el) el.innerHTML = '<span style="color:#ef4444;">&#x274C; Invalid or expired code</span>';
     }
   },
+  checkPromo() { this.applySignupPromo(); },
   async signup() {
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
@@ -799,36 +801,17 @@ const Auth = {
       return showErr('That name is already taken — please use a different name.');
     }
 
-    // Store pending signup data so payment-success.html can create the account
-    const pending = { name, email, password: pass, period: this.selectedPeriod };
-    localStorage.setItem('sparkstudy_pending_signup', JSON.stringify(pending));
-
-    if (btn) { btn.textContent = '⏳ Redirecting to checkout...'; btn.disabled = true; }
+    if (btn) { btn.textContent = '⏳ Creating account...'; btn.disabled = true; }
     if (errEl) errEl.style.display = 'none';
 
-    // Create Stripe checkout session
-    const BACKEND = 'https://sparkystudy-production.up.railway.app';
-    try {
-      const res = await fetch(`${BACKEND}/api/create-checkout-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, period: this.selectedPeriod })
-      });
-      const contentType = res.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Payment service is temporarily unavailable. Please try again in a moment.');
-      }
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || 'Could not create checkout session');
-      }
-    } catch (e) {
-      if (btn) { btn.textContent = '⚡ Start Free Trial & Add Card'; btn.disabled = false; }
-      showErr(e.message);
-      localStorage.removeItem('sparkstudy_pending_signup');
+    // Create account locally — trial starts after diagnostic
+    const state = Storage.createDefault(name, email, pass, this.selectedPeriod, false);
+    // Persist promo to carry through to checkout after diagnostic
+    if (this.appliedPromo) {
+      state._pendingPromo = this.appliedPromo;
+      Storage.set(state);
     }
+    App.navigate('diagnostic');
   },
   async login() {
     const email = document.getElementById('loginEmail').value.trim();
@@ -995,7 +978,16 @@ function syncAIContext(state) {
       if (text.length > 20) notes.push('=== ' + topic + ' ===\n' + text);
     }
   }
-  window._sparkStudyCtx = notes.join('\n\n').slice(0, 8000);
+  // Also include any uploaded module content stored under sparky_upload_<uid>_*
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('sparky_upload_' + uid + '_')) {
+      const topic = key.replace('sparky_upload_' + uid + '_', '');
+      const text = (localStorage.getItem(key) || '').trim();
+      if (text.length > 20) notes.push('=== [Uploaded] ' + topic + ' ===\n' + text);
+    }
+  }
+  window._sparkStudyCtx = notes.join('\n\n').slice(0, 12000);
 }
 
 const App = {
@@ -1092,7 +1084,7 @@ const App = {
       case 'tools': Tools.cleanup(); Tools.render(state); break;
       case 'analytics': Analytics.render(state); break;
       case 'review': Review.render(state); break;
-      case 'settings': Settings.render(state); break;
+      case 'settings': Settings.render(state); if (state && !state.user.isOwner) SupportMessages.markRepliesRead(state.user.id); break;
       case 'group': GroupProgress.render(state); break;
       case 'owner': OwnerDashboard.render(); break;
       case 'lessons': Lessons.render(state); break;
@@ -1602,7 +1594,7 @@ const Diagnostic = {
         </div>
         <div id="planPromoMsg" style="font-size:0.78rem;margin-top:5px;min-height:18px;"></div>
       </div>
-      <button onclick="Diagnostic.confirmPlan()" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:16px;">Start My ${trial}-Day Free Trial &#8594;</button>
+      <button id="diagConfirmPlanBtn" onclick="Diagnostic.confirmPlan()" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:16px;">Start My ${trial}-Day Free Trial &#8594;</button>
       <p style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:10px;line-height:1.5;">No payment required today. By starting your trial you agree to be billed $${price}/year after ${trial} days unless you cancel. You can cancel at any time from Settings.</p>
     </div>`;
   },
@@ -1628,12 +1620,39 @@ const Diagnostic = {
     if (msg) { msg.textContent = result.message; msg.style.color = result.success ? 'var(--success)' : 'var(--danger)'; }
   },
 
-  confirmPlan() {
+  async confirmPlan() {
     const state = Storage.get();
     if (!state) return;
-    state.user.period = this._selectedYear || state.user.period || 1;
+    const year = this._selectedYear || state.user.period || 1;
+    state.user.period = year;
     Storage.set(state);
-    App.navigate('dashboard');
+
+    const btn = document.getElementById('diagConfirmPlanBtn');
+    if (btn) { btn.textContent = '⏳ Redirecting to checkout...'; btn.disabled = true; }
+
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
+    const promoCode = (document.getElementById('planPromoInput')?.value || '').trim().toUpperCase()
+      || (state._pendingPromo?.code) || '';
+    try {
+      const res = await fetch(`${BACKEND}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.user.email, period: year, promo: promoCode || undefined })
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Payment service is temporarily unavailable. Please try again in a moment.');
+      }
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Could not create checkout session');
+      }
+    } catch (e) {
+      if (btn) { btn.textContent = `Start My ${PRICING.elite.trialDays}-Day Free Trial \u2192`; btn.disabled = false; }
+      showToast(e.message, 'error');
+    }
   },
 };
 
@@ -2844,9 +2863,9 @@ const Notes = {
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms and review">📖 Study Mode</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuizAI('${userId}')" title="AI-powered quiz from your notes">⚡ Make Quiz</button>
-                <label class="btn btn-secondary btn-sm" title="Upload module pages for OCR text extraction" style="cursor:pointer;margin:0;">
-                  📷 Upload Pages
-                  <input type="file" accept="image/*" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
+                <label class="btn btn-secondary btn-sm" title="Upload PDF or photos of module pages" style="cursor:pointer;margin:0;">
+                  📄 Upload PDF / Photos
+                  <input type="file" accept="image/*,.pdf" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
                 </label>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print clean notes">🖨️ Print</button>
               </div>
@@ -2907,12 +2926,12 @@ const Notes = {
               <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px;color:var(--accent);">Add your module content here</div>
               <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
                 The AI study tools (quiz generator, flashcard creator, AI tutor) all work from <strong>your notes</strong>.
-                Paste or type your module content, or use <strong>📷 Upload Pages</strong> above to photograph your textbook pages.
+                Upload a <strong>PDF</strong>, take a <strong>📷 photo</strong> of your textbook pages, or type/paste your module content directly.
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent);color:#000;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;">
-                  📷 Upload Module Pages
-                  <input type="file" accept="image/*" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
+                  📄 Upload PDF / Photos
+                  <input type="file" accept="image/*,.pdf" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
                 </label>
                 <button onclick="document.getElementById('notesEditor').focus()" style="padding:8px 16px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;font-size:0.85rem;color:var(--text-primary);cursor:pointer;">✏️ Type Notes</button>
               </div>
@@ -3172,9 +3191,135 @@ const Notes = {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
     const editor = document.getElementById('notesEditor');
-    const status = document.getElementById('notesStatus');
-    showToast('📷 Photo OCR coming soon — for now, paste your module text directly into the editor.', 'info');
     event.target.value = '';
+
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
+    let totalExtracted = 0;
+    const total = files.length;
+
+    showToast(`Processing ${total} file${total > 1 ? 's' : ''}...`, 'info');
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fname = file.name || 'upload';
+      try {
+        let extractedText = '';
+
+        if (file.type === 'application/pdf') {
+          // Try PDF.js first (works for text-based PDFs)
+          extractedText = await this._extractPdfText(file);
+          if (extractedText.trim().length < 50) {
+            // PDF is probably scanned images — convert pages to images and OCR via backend
+            showToast(`📄 ${fname} is scanned — running OCR (this may take a moment)...`, 'info');
+            extractedText = await this._ocrPdf(file, BACKEND);
+          }
+        } else if (file.type.startsWith('image/')) {
+          // Image — send to backend for OCR
+          showToast(`📷 Extracting text from ${fname}...`, 'info');
+          const base64 = await this._fileToBase64(file);
+          const res = await fetch(BACKEND + '/api/extract-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64, mimeType: file.type })
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          extractedText = data.text || '';
+        } else {
+          // Plain text file
+          extractedText = await file.text();
+        }
+
+        if (extractedText.trim().length > 10 && editor) {
+          const heading = `<h2>${fname.replace(/\.[^.]+$/, '')}</h2>`;
+          const formatted = extractedText.replace(/\n/g, '<br>');
+          editor.innerHTML += (editor.innerHTML.trim() ? '<hr>' : '') + heading + formatted;
+          this._onInput(userId);
+          totalExtracted++;
+        }
+      } catch (err) {
+        console.error('Upload error for', fname, err);
+        showToast(`Failed to process ${fname}: ${err.message}`, 'error');
+      }
+    }
+
+    if (totalExtracted > 0) {
+      showToast(`${totalExtracted} file${totalExtracted > 1 ? 's' : ''} added to your notes!`, 'success');
+      syncAIContext(Storage.get());
+      // Remove the empty-notes upload prompt banner if it exists
+      const banner = editor?.parentElement?.parentElement?.querySelector('[style*="Add your module content"]');
+      if (banner) banner.closest('div[style*="linear-gradient"]')?.remove();
+    }
+  },
+
+  async _extractPdfText(file) {
+    // Use PDF.js to extract text from a text-based PDF
+    if (!window.pdfjsLib) return '';
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        if (pageText.trim()) fullText += pageText + '\n\n';
+      }
+      return fullText;
+    } catch (e) {
+      console.warn('PDF.js extraction failed:', e.message);
+      return '';
+    }
+  },
+
+  async _ocrPdf(file, backendUrl) {
+    // For scanned PDFs: render each page to a canvas, then send as image to backend OCR
+    if (!window.pdfjsLib) {
+      showToast('PDF processing not available — try uploading images instead.', 'error');
+      return '';
+    }
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      const maxPages = Math.min(pdf.numPages, 30); // cap at 30 pages
+
+      for (let i = 1; i <= maxPages; i++) {
+        showToast(`OCR: page ${i}/${maxPages}...`, 'info');
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        // Convert canvas to base64
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const base64 = dataUrl.split(',')[1];
+
+        const res = await fetch(backendUrl + '/api/extract-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64, mimeType: 'image/jpeg' })
+        });
+        const data = await res.json();
+        if (data.text) fullText += data.text + '\n\n';
+      }
+      return fullText;
+    } catch (e) {
+      console.error('PDF OCR failed:', e.message);
+      return '';
+    }
+  },
+
+  _fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   },
 
   _renderQuiz(container, userId) {
@@ -9350,6 +9495,325 @@ const LESSONS_CONTENT = [
     border: 'rgba(239,68,68,0.3)',
     readTime: 'Coming Soon',
     sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
+  },
+  // ── Owner-only raw module content (OCR extracted from ILM textbooks) ────────
+  {
+    id: 'm1_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Fundamentals of Alternating Current',
+    icon: '〰️',
+    subtitle: 'Second Period - Alternating Current (AC) Circuit Properties',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '26 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Alternating current (ac) circuits are widely used as the means of distribution for electric energy. Most electrician work involves ac circuits. In second period training, you will learn about additional ac circuit properties crucial to understanding electrical theory and the electrician trade.\n\nThis module discusses the generation of an alternating current and shows how a sine wave is generated. It describes the relationship between output frequency, poles, and rotational speed. Finally, it explains effective (RMS) voltage and sine wave calculations.\n\nObjectives:\n1. Describe the generation of an ac sine wave.\n2. Determine the output frequency of an ac generator.\n3. Calculate standard ac sine wave values.'
+      },
+      {
+        type: 'concept',
+        title: 'Generation of Alternating Current',
+        body: 'Relative motion means that either the conductor is moving past a stationary magnetic field, or a magnetic field is moving past a stationary conductor. When there is relative motion between a conductor and magnetic flux, an electromotive force (emf) is developed. The amount of emf depends on:\n- The density of the magnetic flux\n- The length of conductor within the magnetic field\n- The rate at which the conductor cuts the lines of magnetic force\n\nA conductor moving parallel to lines of force produces zero emf. Cutting directly across at 90° produces maximum emf.\n\nA conductor travelling at constant speed on a circular path cuts the lines of force at a constantly changing rate — so the induced voltage is constantly changing, varying according to the angle of cutting.'
+      },
+      {
+        type: 'concept',
+        title: 'Sine Wave Development',
+        body: 'Although conductor velocity is constant:\n- The angle at which flux lines are cut constantly changes\n- Lines cut per second continuously changes\n- Instantaneous induced voltage continuously changes\n\nPeak emf (Emax) is generated at 90° and 270° (when the conductor cuts at right angles). As a conductor loop rotates, it passes alternate north and south poles. One pair of poles = two alternations = one electrical cycle.\n\n0°–180° (positive alternation): positive emf values\n180°–360° (negative alternation): negative emf values\n\nPlotting both on a voltage/time graph produces a sine wave — called alternating current (ac) because it alternates direction.'
+      },
+      {
+        type: 'concept',
+        title: 'Frequency and Magnetic Poles',
+        body: 'The number of electrical cycles completed per second is the frequency (f), measured in hertz (Hz). The time for one cycle is the period.\n\nTwo-pole machine: 1 rev = 1 cycle (360 electrical degrees).\nFour-pole machine: 1 rev = 2 cycles (720 electrical degrees); 30 rev/s = 60 Hz.\nEight-pole machine: 1 rev = 4 cycles; only 15 rev/s needed for 60 Hz.\n\nIn any alternator, 360 electrical degrees are produced when a conductor passes by two opposite poles.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating Frequency',
+        body: 'Formula (using individual poles from nameplate):\nf = (p × n) / 120\n\nWhere: p = number of individual poles, n = rotational speed (r/min)\nDenominator is 120 because conductors must pass 2 poles per cycle, and 60 s/min.\n\nExamples:\n• 4-pole at 1800 r/min → f = (4 × 1800) / 120 = 60 Hz\n• 2-pole, 50 Hz → n = (50 × 120) / 2 = 3000 r/min\n• 400 Hz at 1200 r/min → p = (400 × 120) / 1200 = 40 poles'
+      },
+      {
+        type: 'concept',
+        title: 'Sine Wave Values — Peak and Instantaneous',
+        body: 'Peak (maximum) emf occurs when conductor cuts at 90° — at 90° (positive) and 270° (negative).\nSymbols: Vm, Em, Emax, or Epeak. Peak-to-peak spans both polarities.\n\nInstantaneous value formula:\ne = Emax × sin(angle)\n\nExamples (Emax = 10 V):\n• At 20°: e = 10 × sin 20° = 3.42 V\n• At 110°: e = 10 × sin 110° = 9.4 V\n• At 210°: e = 10 × sin 210° = −5 V'
+      },
+      {
+        type: 'keypoint',
+        title: 'Effective (RMS) Values',
+        body: 'The effective (RMS) value of ac produces the same heating effect as equivalent dc. AC meters indicate RMS values. Symbols without subscripts (E, V, I) = RMS.\n\nPeak from RMS: Emax = E × √2  (or E / 0.707)\nRMS from Peak: E = Emax × 0.707  (or Emax / √2)\n\nExamples:\n• 120 V RMS → Emax = 120 × 1.414 = 169.7 V\n• 169.7 V peak → E = 169.7 × 0.707 = 120 V\n• Peak 679 V → E = 679 × 0.707 = 480 V\n• Voltmeter reads 120 V; at 20°: Emax = 169.7 V → e = 169.7 × sin 20° = 58 V'
+      }
+    ]
+  },
+  {
+    id: 'm3_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Inductors and Capacitors in Circuits',
+    icon: '🔋',
+    subtitle: 'Second Period - Alternating Current (AC) Circuit Properties',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '42 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Inductors and capacitors are used in a variety of applications that an electrician will encounter. It is important to understand the effect these devices have in both ac and dc circuits.\n\nObjectives:\n1. Describe the effects of an inductor in a dc circuit.\n2. Describe the effects of a capacitor in a dc circuit.\n3. Describe the effects of an inductor in an ac circuit.\n4. Describe the characteristics of an ac inductive circuit.\n5. Calculate inductance and inductive reactance.\n6. Describe the effects of a capacitor in an ac circuit.\n7. Describe the characteristics of an ac capacitive circuit.\n8. Calculate capacitance and capacitive reactance.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductors in DC Circuits — RL Time Constant',
+        body: 'In a purely resistive circuit, current rises instantly. In an inductive circuit, current rises at a rate determined by inductance — opposing change via counter-electromotive force (cemf).\n\nTime Constant (T): Time for a circuit value to change by 63.2%.\nFormula: T = L / R  (L in henries, R in ohms → T in seconds)\nFull charge ≈ 5 time constants.\n\nExample: L = 0.16 H, R = 4 Ω → T = 0.04 s; full current at 0.2 s\nTC progression (steady state = 6 A): TC1=3.79 A, TC2=5.19 A, TC3=5.70 A, TC4=5.89 A, TC5=5.96 A\n\nHigher L → longer time constant. Higher R → lower steady current, shorter time.\nSteady-state current: I = E/R (Ohm\'s law — cemf = 0 at steady state).'
+      },
+      {
+        type: 'keypoint',
+        title: 'Opening an Inductive Circuit — Inductive Kick',
+        body: 'When an inductive circuit is opened, the collapsing field induces very high voltage:\ne = (ΔI / Δt) × L\n\nExample: L = 0.2 H, I = 4 A, opens in 0.4 μs:\ne = (4 / 0.0000004) × 0.2 = 2,000,000 V\n\nA discharge resistor in parallel with the coil provides a safe path:\n• Without discharge R (500 kΩ air gap): Vi = 4 A × 500,000 = 2 MV\n• With 100 Ω discharge R: Vi = 4 A × 100 = 400 V\n\nAlways protect inductive circuits with a discharge resistor or snubber.'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitors in DC Circuits — Electric Charge',
+        body: 'Capacitance allows a capacitor to store electric charge. In dc, a capacitor charges until Vcapacitor = Vsupply, then current stops.\n\nElectric charge: Q = I × t  (coulombs = amperes × seconds)\nCharge stored: Q = C × V  (farads × volts)\n\nExample: 50 μF charged to 22 V → Q = 0.00005 × 22 = 1.1 mC\n\nCharging: electrons rush onto the negative plate until Vc = E.\nDischarging: electrons flow from negative plate through resistor to positive plate until V = 0.'
+      },
+      {
+        type: 'keypoint',
+        title: 'RC Time Constants',
+        body: 'Formula: T = R × C  (T in seconds, R in ohms, C in farads)\nFull charge/discharge ≈ 5 time constants. Each TC, voltage increases 63.2% of remaining difference.\n\nExample: R = 200 Ω, C = 15 μF → T = 0.003 s (3 ms); full charge = 15 ms\n\nHigher R or C → longer time constant.\n\nKey answers:\n• Q = 5 A × 4 s = 20 C\n• Q = 100 μF × 200 V = 0.02 C\n• 80 μF, 30 Ω: T = 30 × 0.00008 = 2.4 ms; full charge = 12 ms\n• 50 μF, 1200 Ω, 100 V: voltage after 1 TC = 100 × 63.2% = 63.2 V'
+      },
+      {
+        type: 'concept',
+        title: 'Inductive Reactance (XL) in AC Circuits',
+        body: 'In ac circuits, current continually changes and inductance opposes that change — this opposition is called inductive reactance (XL), measured in ohms (Ω).\n\nXL exists ONLY in ac (dc current is constant — no cemf induced).\n\nRelationships:\n• Higher inductance → higher cemf → higher XL (direct)\n• Higher frequency → faster current change → higher XL (direct)\n\nIn a purely inductive ac circuit, current LAGS supply voltage by 90°.\n• When current starts rising (max rate of change), cemf is maximum\n• When current is at peak (zero rate of change), cemf = zero\n\nPhasor diagrams: IL drawn 90° clockwise (lagging) from VS.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating Inductive Reactance',
+        body: 'Formula: XL = 2πfL\nWhere: f = frequency (Hz), L = inductance (H)\n\nExamples:\n• L = 0.3 H, f = 60 Hz → XL = 2 × π × 60 × 0.3 = 113 Ω\n• L = 450 mH, f = 100 Hz → XL = 2 × π × 100 × 0.45 = 282.7 Ω\n• Transposed for L: XL = 65 Ω, f = 50 Hz → L = 65/(2π×50) = 207 mH\n• L = 0.22 H at 60 Hz → XL = 2 × π × 60 × 0.22 = 82.9 Ω'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitive Reactance (XC) in AC Circuits',
+        body: 'In ac circuits, voltage is constantly changing and the capacitor creates capacitive reactance (XC), measured in ohms. XC exists ONLY in ac.\n\nRelationships (both INVERSE):\n• Higher capacitance → more electron flow → LOWER XC\n• Higher frequency → faster charge/discharge → higher flow → LOWER XC\n\nIn a purely capacitive ac circuit, current LEADS voltage by 90°.\n• When supply voltage starts to rise, current is immediately high to charge the capacitor\n• By the time voltage peaks, current has dropped near zero\n\nPhasor: IC drawn 90° counterclockwise (leading) from VC.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating Capacitive Reactance',
+        body: 'Formula: XC = 1 / (2πfC)\nWhere: f = frequency (Hz), C = capacitance (F)\n\nExamples:\n• C = 500 μF, f = 60 Hz → XC = 1/(2π × 60 × 0.0005) = 5.31 Ω\n• XC = 10 Ω, f = 60 Hz → C = 1/(2π × 60 × 10) = 265 μF\n• 800 μF at 60 Hz → XC = 1/(2π × 60 × 0.0008) = 3.32 Ω\n\nSelf-test key answers:\n• 300 mH, 2.5 Ω: T = 0.3/2.5 = 0.12 s\n• Purely inductive: current lags voltage by 90°\n• 600 mH at 60 Hz: XL = 2π × 60 × 0.6 = 226.2 Ω\n• Purely capacitive: current leads voltage by 90°\n• 30 Hz, XC = 75 Ω: C = 1/(2π × 30 × 75) = 70.7 μF'
+      }
+    ]
+  },
+  {
+    id: 'm22_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Timers and Smart Relays',
+    icon: '⏱️',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '18 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Electrical circuits are designed to control a variety of operations. Some require events to occur after a specific time has elapsed. With increasing automation, understanding timing control equipment is essential.\n\nObjectives:\n1. Describe timers and basic timing functions.\n2. Describe smart relays and basic timing functions.\n\nThis module describes different timing devices with emphasis on timing relays, including different timing functions and control circuits. Basic principles of smart relays are also examined.'
+      },
+      {
+        type: 'concept',
+        title: 'Types of Timing Devices',
+        body: 'Three basic types of timing devices:\n\n1. Spring-wound interval timers — wall switch style, timed-on interval. Used for lights, fans, bathroom fans, sauna heaters. Inexpensive, not highly accurate.\n\n2. Mechanical and electronic time switches — mechanical versions use clock motors with adjustable cams. Electronic versions use a clock circuit. Control circuits over 24-hour or 7-day cycles. Used for security lighting, irrigation, parking timers.\n\n3. Timing relays — provide precision and versatility for motor control. Can be pneumatic, fluid dashpot (constant-viscosity oil), or electronic. Modern electronic timing relays have largely replaced older types — more accurate, versatile, smaller, and cost-effective.\n\nNote: NO = normally open; NC = normally closed.'
+      },
+      {
+        type: 'concept',
+        title: 'TDOE — Time Delay on Energization (On-Delay)',
+        body: 'Contacts change state after a specified time measured from when the relay coil is ENERGIZED. When de-energized, contacts return to normal immediately.\n\n• At energization: NO timed contacts stay open (timing to close); NC timed contacts stay closed (timing to open)\n• After timeout: NO closes; NC opens\n• De-energize: contacts return to normal immediately\n\nApplication: Lubrication pump (M1) must run 3 minutes before main motor (M2) can start. TDOE relay with 3-minute delay — NO contact in M2 starter coil circuit stays open until timer times out.'
+      },
+      {
+        type: 'concept',
+        title: 'TDOD — Time Delay on De-Energization (Off-Delay)',
+        body: 'Contacts change state INSTANTLY when coil is energized, but only revert to normal after a specified time following de-energization.\n\n• At energization: NO timed closes immediately; NC timed opens immediately\n• At de-energization: contacts begin timing\n• After timeout: contacts return to normal\n\nApplication: When stop is pressed, Motor 1 stops immediately but Motor 2 continues for 5 minutes.\n\nIMPORTANT: A mandatory emergency stop button must be included in TDOD circuits — it immediately stops ALL motors regardless of timing state.'
+      },
+      {
+        type: 'concept',
+        title: 'Interval, One-Shot, and Repeat Cycle Timing',
+        body: 'Interval Timing: Contacts change state instantly at energization, then revert after a specified time. After timeout, contacts stay normal until coil is de-energized and re-energized. Application: exhaust fan purging a furnace combustion chamber.\n\nOne-Shot Timing: Coil is continuously energized. Contacts only change state when a start signal is received (button, limit switch, pressure switch). After the set time, contacts revert and wait for the next signal. Application: oil-spray pump on a lathe — lubricates for a set period when pressed.\n\nRepeat Cycle Timing: Regular on-and-off cycle until coil is de-energized.\n• Symmetrical: on time = off time\n• Non-symmetrical: different on and off times\nApplication: Air exhaust system providing air changes at specific intervals (e.g., 5 min on, 2 min off).'
+      },
+      {
+        type: 'keypoint',
+        title: 'Multi-Function Timing Relays and Reset Terminals',
+        body: 'Multi-function electronic timing relays provide several functions selectable by a mode switch:\n• A = ON DELAY (TDOE)\n• B/G = INTERVAL\n• C/P/I = OFF DELAY (TDOD)\n• E or K = REPEAT CYCLE\n\nAdvanced functions (manufacturer-dependent): Flasher, Shot on falling edge, Watchdog timer, Triggered on-delay.\n\nReset Terminals: Some relays offer a reset terminal in addition to a start terminal, allowing the timing sequence to be reset before completion. Can be activated by manual or automatic pilot devices.\n\nObjective One Activity key answers:\n• TDOE = Time Delay on Energization\n• TDOD = Time Delay on De-Energization\n• TDOE at energization: NO=open, NC=closed\n• TDOD at energization: NO=closed, NC=open\n• After TDOE timeout: NO=closed, NC=open\n• After TDOD de-energization (still timing): NO=closed, NC=open'
+      },
+      {
+        type: 'concept',
+        title: 'Smart Relays',
+        body: 'Smart relays evolved from PLC technology — combining the simplicity of traditional relays with PLC programmability. Used when full-scale PLCs are unnecessarily complex or expensive.\n\nKey features:\n• Programmable via graphical interfaces (ladder logic or function block diagrams)\n• Multiple inputs/outputs with onboard memory\n• Reprogrammed without rewiring\n• Integrates relay control, timers, counters, and device communication in one unit\n\nSelection considerations: number and voltage of I/O, keypad/display requirements, wireless communication needs.\n\nApplications: Building automation, lighting control, HVAC, small-scale manufacturing, car wash automation, automatic door control, access control, surveillance management.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Smart Relay Functions and Self-Test Answers',
+        body: 'Smart relay timing functions:\n• TDOE: contacts change after set time following input\n• TDOD: contacts change immediately; revert after set time following signal removal\n• One-Shot: contacts cycle each time start terminal receives a signal\n• Repeat Cycle: symmetrical or non-symmetrical on/off cycles\n• Daily/Weekly/Monthly Scheduling: real-time clock-based switching\n• Totalizing Timer with Reset: accumulates operation time then resets\n\nSelf-Test Key Answers:\n1. Spring-wound interval timer (bathroom fan — timed-on, inexpensive)\n2. One-shot (always requires a start signal)\n3. TDOE NO contacts at instant of energization: Open, not yet timing\n4. TDOD NO contacts at instant of energization: Closed, not timing\n5. Interval timer (5 s set, 12 s energized): Coil must de-energize then re-energize to restart timing\n6. Smart relays vs timing relays: Smart relays can be programmed for many timing functions\n7. To delay action after receiving input: On-delay (TDOE) timing'
+      }
+    ]
+  },
+  {
+    id: 'm2_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Properties of Inductors and Capacitors',
+    icon: '🧲',
+    subtitle: 'Second Period - Alternating Current (AC) Circuit Properties',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '20 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Properties of inductors and capacitors are critical to understanding AC circuit behavior. This module covers the physical properties and electrical characteristics of these two fundamental components.\n\nObjectives:\n1. Describe the properties of inductors.\n2. Describe the properties of capacitors.\n3. Understand how inductors and capacitors affect circuit behavior in AC systems.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductance — Self-Inductance and Mutual Inductance',
+        body: 'Self-inductance is the property of a coil that opposes any change in current through it by inducing a counter-emf (cemf). The unit of inductance is the henry (H).\n\nFactors affecting inductance:\n• Number of turns (N) — more turns = more inductance (proportional to N²)\n• Core material — iron core greatly increases inductance vs air core\n• Cross-sectional area of core — larger area = more inductance\n• Length of coil — shorter coil = more inductance\n\nMutual inductance occurs when changing current in one coil induces voltage in a nearby coil. This is the principle behind transformers.\n\nFormula: L = (N² × μ × A) / l\nWhere: N = turns, μ = permeability, A = cross-sectional area, l = length'
+      },
+      {
+        type: 'concept',
+        title: 'Inductor Construction and Types',
+        body: 'Air-core inductors: Used at high frequencies (radio, communications). Low inductance values.\n\nIron-core inductors: Laminated iron cores for power frequencies (50/60 Hz). High inductance values. Used in transformers, motors, generators.\n\nFerrite-core inductors: Used at medium-high frequencies. Ferrite is a ceramic magnetic material.\n\nVariable inductors: Inductance adjusted by moving the core in and out of the coil.\n\nInductor symbols: Air core (simple coil symbol), iron core (coil with parallel lines), variable (coil with arrow).'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitance — Electric Field Storage',
+        body: 'Capacitance is the ability to store electric charge. A capacitor consists of two conducting plates separated by an insulating material (dielectric).\n\nFactors affecting capacitance:\n• Plate area — larger plates = more capacitance (direct)\n• Distance between plates — closer = more capacitance (inverse)\n• Dielectric material — higher dielectric constant = more capacitance\n\nFormula: C = (ε × A) / d\nWhere: ε = permittivity of dielectric, A = plate area, d = plate separation\n\nUnit: farad (F). Practical units: microfarad (μF = 10⁻⁶ F), nanofarad (nF = 10⁻⁹ F), picofarad (pF = 10⁻¹² F)'
+      },
+      {
+        type: 'keypoint',
+        title: 'Capacitor Types and Applications',
+        body: 'Electrolytic capacitors: Polarized, high capacitance (1 μF to thousands of μF). Used in power supplies, filtering. MUST observe polarity.\n\nCeramic capacitors: Non-polarized, small values (pF to μF). Used in high-frequency circuits.\n\nFilm capacitors: Polyester, polypropylene. Good stability. Used in timing, coupling.\n\nVariable capacitors: Adjustable plates. Used in tuning circuits.\n\nCapacitor ratings:\n• Capacitance value (in μF, nF, or pF)\n• Voltage rating (maximum safe voltage — WVDC)\n• Temperature rating\n• Tolerance (±%)\n\nSeries capacitors: 1/CT = 1/C1 + 1/C2 + 1/C3\nParallel capacitors: CT = C1 + C2 + C3'
+      },
+      {
+        type: 'keypoint',
+        title: 'Energy Storage and Safety',
+        body: 'Inductors store energy in magnetic fields: W = ½LI²\nCapacitors store energy in electric fields: W = ½CV²\n\nSafety considerations:\n• Charged capacitors can deliver lethal shocks even after power is removed\n• Always discharge capacitors before working on equipment\n• Use a discharge resistor — never short-circuit capacitor terminals\n• Electrolytic capacitors can explode if connected with reverse polarity or exceeded voltage rating\n• Large inductors produce voltage spikes when circuits are opened (inductive kick)'
+      }
+    ]
+  },
+  {
+    id: 'm5_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Relays and Contactors',
+    icon: '🔌',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '26 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Relays and contactors are essential switching devices in electrical control systems. Understanding their construction, operation, and application is fundamental to the electrician trade.\n\nObjectives:\n1. Describe the construction and operation of relays.\n2. Describe the construction and operation of contactors.\n3. Identify relay and contactor applications in control circuits.'
+      },
+      {
+        type: 'concept',
+        title: 'Electromagnetic Relays — Construction and Operation',
+        body: 'A relay is an electrically operated switch. When current flows through the coil, it creates a magnetic field that attracts the armature, causing contacts to change state.\n\nComponents:\n• Coil (electromagnet) — creates magnetic field when energized\n• Armature — movable magnetic piece attracted by the coil\n• Contacts — NO (normally open) and NC (normally closed)\n• Spring — returns armature to normal position when coil is de-energized\n• Core — concentrates magnetic flux\n\nOperation:\n1. Coil energized → magnetic field pulls armature\n2. NO contacts close, NC contacts open\n3. Coil de-energized → spring returns armature\n4. Contacts return to normal state'
+      },
+      {
+        type: 'concept',
+        title: 'Relay Types and Ratings',
+        body: 'General-purpose relays: Multiple contact arrangements (SPST, SPDT, DPDT, 3PDT). Used in control circuits for switching loads.\n\nControl relays (machine tool relays): Heavy-duty contacts for industrial applications. Replaceable contact cartridges.\n\nLatching relays: Maintain contact position after coil is de-energized. Require a separate reset coil or manual reset.\n\nReed relays: Glass-enclosed contacts operated by external magnetic field. Very fast switching, long life.\n\nRelay ratings:\n• Coil voltage (AC or DC) — must match supply\n• Contact rating — current and voltage capacity\n• Contact configuration — number of poles and throws\n• Pickup voltage — minimum voltage to operate\n• Dropout voltage — voltage at which relay releases'
+      },
+      {
+        type: 'concept',
+        title: 'Contactors — Heavy-Duty Switching',
+        body: 'A contactor is a heavy-duty relay designed for switching power circuits (motors, heaters, lighting).\n\nDifferences from relays:\n• Larger physical size\n• Higher current ratings (up to thousands of amperes)\n• Arc suppression (arc chutes, blow-out coils)\n• Power contacts for load switching\n• Auxiliary contacts for control circuits\n\nContactor construction:\n• Magnetic core (E-frame or U-frame)\n• Operating coil\n• Movable and stationary contacts\n• Arc chutes — extinguish arcs when contacts open under load\n• Shading coils — prevent AC contactor chatter (short-circuited copper rings on pole faces)\n\nNEMA sizes: 00, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 — each size handles higher horsepower ratings.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Motor Starters and Overload Protection',
+        body: 'A motor starter = contactor + overload relay. The contactor switches power to the motor; the overload relay protects against sustained overcurrent.\n\nOverload relay types:\n• Thermal (bimetallic or eutectic alloy/solder pot) — heater element heats up with motor current\n• Electronic — current transformers sense motor current, microprocessor trips\n\nOverload relay classes:\n• Class 10 — trips in 10 seconds at 6× rated current (standard motors)\n• Class 20 — trips in 20 seconds (high-inertia loads)\n• Class 30 — trips in 30 seconds (very high-inertia loads)\n\nTrip indicators: Flag shows when overload has tripped. Manual or automatic reset.\n\nThree-wire control: START (NO momentary) and STOP (NC momentary) buttons with holding contact (seal-in contact) on the starter.'
+      },
+      {
+        type: 'concept',
+        title: 'Control Circuit Diagrams',
+        body: 'Ladder diagrams: Show control circuit logic. Two vertical power rails (L1, L2) with horizontal rungs containing control devices.\n\nReading ladder diagrams:\n• Read left to right, top to bottom\n• Each rung is a complete circuit from L1 to L2\n• Coils/loads on the right side of rungs\n• Control devices (buttons, switches, contacts) on the left\n\nDevice designations:\n• M = motor starter coil\n• CR = control relay\n• OL = overload contact\n• 1M, 2M = auxiliary contacts of starter M\n\nThree-wire control circuit operation:\n1. Press START → current through STOP(NC) → START(NO) → M coil → M energizes\n2. M seal-in contact closes (parallels START button)\n3. Release START → current maintained through seal-in contact\n4. Press STOP → breaks circuit → M de-energizes → all contacts return to normal'
+      }
+    ]
+  },
+  {
+    id: 'm4_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Pilot and Overcurrent Devices',
+    icon: '🛡️',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '30+ pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Pilot devices send signals to control circuits, while overcurrent devices protect circuits and equipment. Understanding these devices is essential for designing and troubleshooting control systems.\n\nObjectives:\n1. Describe pilot devices and their applications.\n2. Describe overcurrent protective devices.\n3. Identify short-circuit and overload characteristics.'
+      },
+      {
+        type: 'concept',
+        title: 'Pilot Devices — Manual and Mechanical',
+        body: 'Pilot devices are input devices that send signals to control circuits. They do NOT carry load current — they control the devices that do.\n\nManual pilot devices:\n• Pushbuttons — momentary (spring return) or maintained. NO, NC, or both.\n• Selector switches — 2-position (ON/OFF) or 3-position (HAND/OFF/AUTO)\n• Drum switches — multi-position, multi-circuit switching\n• Foot switches — hands-free operation\n• Toggle switches — simple ON/OFF control\n\nMechanical pilot devices:\n• Limit switches — actuated by machine motion (lever, roller, plunger)\n• Cam switches — rotary actuator at specific positions\n\nOperator types: lever, roller, wobble stick, fork lever, spring rod, cat whisker.'
+      },
+      {
+        type: 'concept',
+        title: 'Pilot Devices — Sensing Type',
+        body: 'Proximity switches: Detect objects without physical contact.\n• Inductive — detect metals (uses oscillator and Eddy currents)\n• Capacitive — detect metals and non-metals (sense dielectric changes)\n• Photoelectric — use light beams (through-beam, retro-reflective, diffuse)\n• Ultrasonic — use sound waves for distance sensing\n\nPressure switches: Actuated when fluid pressure reaches a setpoint. Used for pump control, safety systems.\n\nTemperature switches (thermostats): Bimetallic element or thermocouple. Opens/closes at specific temperature.\n\nFloat switches: Actuated by liquid level. Used for pump control, tank filling.\n\nFlow switches: Detect fluid flow in pipes. Used for cooling system verification.'
+      },
+      {
+        type: 'concept',
+        title: 'Overcurrent Protection — Fuses',
+        body: 'Overcurrent: any current exceeding the rated current of equipment or conductor.\n\nTwo types of overcurrent:\n• Overload — moderate overcurrent (up to ~6× rated), sustained\n• Short circuit — massive overcurrent (can be 10,000+ amps), must be interrupted instantly\n\nFuses: Simplest overcurrent device. A fusible link melts when current exceeds rating.\n\nFuse classes (CEC/CSA):\n• Class H — standard, 10,000 AIC (ampere interrupting capacity)\n• Class K — high interrupting capacity (50,000-200,000 AIC)\n• Class R — rejection type, 200,000 AIC. Notched to prevent substitution.\n• Class J — current-limiting, 200,000 AIC. Smaller dimensions.\n• Class CC — compact, current-limiting, 200,000 AIC\n• Class T — very compact, current-limiting\n\nDual-element (time-delay) fuses: Allow temporary overloads (motor starting) but still protect against short circuits.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Circuit Breakers and Short-Circuit Characteristics',
+        body: 'Short-circuit characteristics:\n• Electromagnetic responsive elements sense magnetic field increase from sudden overcurrent\n• Magnetic field builds instantly around conductor during short circuit\n• Circuit breaker trips almost instantaneously\n\nInverse-time circuit breakers (thermal-magnetic):\n• Thermal element (bimetallic strip) — handles overloads, trips slowly for moderate overcurrent\n• Magnetic element (electromagnet) — handles short circuits, trips instantly for high overcurrent\n• Most common type in panelboards, commercial buildings, and industrial plants\n\nComponents: handle mechanism, trip mechanism, bimetallic strip, adjusting screw, tripper bar, electromagnet sensing element, spring, movable/stationary contact arms.\n\nGround fault circuit interrupters (GFCI): Detect current imbalance between hot and neutral (as low as 5 mA). Required by CEC for bathroom, kitchen, outdoor receptacles.'
+      }
+    ]
+  },
+  {
+    id: 'm4b_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Pilot and Overcurrent Devices (Part 2)',
+    icon: '⚡',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: 'Continuation',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Continuation — Advanced Overcurrent Topics',
+        body: 'This is the continuation of the Pilot and Overcurrent Devices module, covering additional circuit breaker types, coordination, and advanced protection concepts.'
+      },
+      {
+        type: 'concept',
+        title: 'Molded-Case Circuit Breakers (MCCB)',
+        body: 'MCCBs are the most common circuit breakers in commercial and industrial applications.\n\nFrame sizes: 100A, 225A, 400A, 600A, 800A, 1200A, 2000A, 3000A, 4000A, 6000A\nTrip units can be:\n• Thermal-magnetic (standard)\n• Electronic (adjustable settings)\n• Motor circuit protector (instantaneous only, used with motor starters)\n\nAdjustable trip units allow:\n• Long-time delay (overload)\n• Short-time delay (coordination)\n• Instantaneous (short circuit)\n• Ground fault (optional)\n\nSeries ratings: Downstream breaker can have lower AIC if protected by upstream breaker. Must be listed as a series combination.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Coordination and Selective Protection',
+        body: 'Selective coordination: Only the protective device nearest the fault opens. All upstream devices remain closed.\n\nTime-current curves: Show the relationship between fault current magnitude and trip time. Used to verify coordination.\n\nCoordination rules:\n• Upstream device must be slower than downstream device at all fault levels\n• Fuses: upstream must be at least 2:1 ratio for coordination\n• Breakers: time-current curves must not overlap\n\nArc flash considerations:\n• Higher available fault current = more arc flash energy\n• Faster clearing time = less arc flash energy\n• Current-limiting devices reduce arc flash energy significantly\n• Zone-selective interlocking (ZSI): downstream device signals upstream to delay, improving coordination and reducing arc flash'
+      }
+    ]
   }
 ];
 const Lessons = {
@@ -10099,10 +10563,21 @@ const Settings = {
         </div>
 
 
-        <!-- Contact / Support -->
+        <!-- Messages from Support -->
+        <div id="supportMessagesSection" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
+          <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">
+            &#x1F4EC; My Messages
+            <span id="msgBadge" style="display:none;background:#ef4444;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 7px;border-radius:20px;min-width:18px;text-align:center;"></span>
+          </h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;">Your support conversations and replies from the SparkStudy team.</p>
+          <div id="supportHistory"></div>
+          <script>Settings._refreshSupportHistory('${state.user.id}');</script>
+        </div>
+
+        <!-- Contact / Send New Message -->
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
-          <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F4AC; Contact Support</h3>
-          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;">Have a question, found a bug, or need help with billing? Send us a message and we'll get back to you.</p>
+          <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F4AC; Send a Message</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;">Have a question, found a bug, or need help? Send us a message and we'll get back to you.</p>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <div>
               <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px;">Subject</label>
@@ -10125,8 +10600,6 @@ const Settings = {
             </button>
             <div id="supportResult" style="display:none;"></div>
           </div>
-          <div id="supportHistory"></div>
-          <script>Settings._refreshSupportHistory('${state.user.id}');</script>
           <div style="display:none">
           </div>
           <script>
@@ -10336,28 +10809,44 @@ const Settings = {
     const el = document.getElementById('supportHistory');
     if (!el) return;
     const msgs = SupportMessages.getForUser(userId);
-    if (!msgs.length) { el.innerHTML = ''; return; }
+    const unread = SupportMessages.getUnreadReplies(userId);
+    // Update badge
+    const badge = document.getElementById('msgBadge');
+    if (badge) {
+      if (unread.length > 0) {
+        badge.textContent = unread.length;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+    if (!msgs.length) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:12px 0;">No messages yet. Send one below!</div>';
+      return;
+    }
+    const unreadIds = new Set(unread.map(m => m.id));
     el.innerHTML = `
-      <div style="margin-top:24px;">
-        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Your Messages</h4>
-        ${msgs.map(m => `
-          <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+      <div style="margin-top:8px;">
+        ${msgs.map(m => {
+          const isNew = unreadIds.has(m.id);
+          return `
+          <div style="background:${isNew ? 'rgba(245,158,11,0.06)' : 'var(--bg-input)'};border:1px solid ${isNew ? 'rgba(245,158,11,0.3)' : 'var(--border)'};border-radius:10px;padding:14px 16px;margin-bottom:10px;${isNew ? 'box-shadow:0 0 0 1px rgba(245,158,11,0.15);' : ''}">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
-              <span style="font-size:0.82rem;font-weight:700;">${m.subject}</span>
+              <span style="font-size:0.82rem;font-weight:700;">${isNew ? '🔔 ' : ''}${m.subject}</span>
               <span style="font-size:0.72rem;color:var(--text-muted);">${new Date(m.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</span>
             </div>
             <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:${m.replies&&m.replies.length?'10px':'0'};">${m.message.replace(/</g,'&lt;')}</div>
             ${(m.replies||[]).map(r => `
               <div style="background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;margin-top:8px;">
-                <div style="font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:4px;">Owner · ${new Date(r.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+                <div style="font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:4px;">&#x1F451; SparkStudy Team · ${new Date(r.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
                 <div style="font-size:0.85rem;">${r.message.replace(/</g,'&lt;')}</div>
               </div>
             `).join('')}
             <div style="margin-top:8px;">
-              <span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:${m.status==='replied'?'rgba(16,185,129,0.12)':'rgba(245,158,11,0.1)'};color:${m.status==='replied'?'#10b981':'#f59e0b'};font-weight:600;">${m.status==='replied'?'Replied':'Open'}</span>
+              <span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:${m.status==='replied'?'rgba(16,185,129,0.12)':'rgba(245,158,11,0.1)'};color:${m.status==='replied'?'#10b981':'#f59e0b'};font-weight:600;">${m.status==='replied'?'&#x2705; Replied':'&#x23F3; Awaiting reply'}</span>
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
     `;
   },
@@ -11194,11 +11683,17 @@ function updateMobileDrawer(state, activePage) {
       { page: 'group', icon: '👥', label: 'Group' });
   }
 
+  // Check for unread message replies
+  const unreadMsgCount = state && !state.user.isOwner ? SupportMessages.getUnreadReplies(state.user.id).length : 0;
+
   drawerNav.innerHTML = navItems.map(item => {
     if (item.section) return `<div class="mobile-drawer-section-label">${item.section}</div>`;
     const active = activePage === item.page ? ' active' : '';
+    const dot = item.page === 'settings' && unreadMsgCount > 0
+      ? `<span style="background:#ef4444;color:#fff;font-size:0.6rem;font-weight:800;padding:1px 6px;border-radius:20px;margin-left:auto;">${unreadMsgCount}</span>`
+      : '';
     return `<button class="mobile-drawer-item${active}" onclick="App.navigate('${item.page}');closeMobileDrawer();">
-      <span class="mdi">${item.icon}</span> ${item.label}
+      <span class="mdi">${item.icon}</span> ${item.label}${dot}
     </button>`;
   }).join('');
 }

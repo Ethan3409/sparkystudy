@@ -85,8 +85,8 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   res.json({ received: true });
 });
 
-// JSON body parser for all other routes
-app.use(express.json());
+// JSON body parser for all other routes — increase limit for base64 image uploads
+app.use(express.json({ limit: '20mb' }));
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
@@ -101,7 +101,7 @@ app.post('/api/chat', async (req, res) => {
 
   const hasContext = typeof systemContext === 'string' && systemContext.trim().length > 30;
   const systemPrompt = hasContext
-    ? `You are SparkStudy AI, a study assistant for Alberta electrical apprentices. Answer questions based ONLY on the module/notes content provided below. Stay focused on that content. If the answer is not clearly in the content, say so and suggest the student add more notes.\n\nModule/Notes Content:\n${systemContext.slice(0, 8000)}`
+    ? `You are SparkStudy AI, a study assistant for Alberta electrical apprentices. Answer questions based ONLY on the module/notes content provided below. Stay focused on that content. If the answer is not clearly in the content, say so and suggest the student add more notes.\n\nModule/Notes Content:\n${systemContext.slice(0, 12000)}`
     : `You are SparkStudy AI, a study assistant for Alberta electrical apprentices. No specific module or notes content has been loaded. Answer as helpfully as you can, but always end your response with this exact line:\n\n⚠️ *I can't be fully certain without your module content. For accurate course-specific answers, upload your notes using the 📎 button.*`;
 
   const messages = [
@@ -120,6 +120,39 @@ app.post('/api/chat', async (req, res) => {
   } catch (err) {
     console.error('Chat error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/extract-image ──────────────────────────────────────────────────
+// Accepts a base64 image and uses Claude Vision to extract text (OCR).
+// Used by students uploading photos of textbook pages or handwritten notes.
+app.post('/api/extract-image', async (req, res) => {
+  if (!anthropic) return res.status(503).json({ error: 'AI not configured.' });
+  const { image, mimeType = 'image/jpeg' } = req.body;
+  if (!image) return res.status(400).json({ error: 'Missing image data' });
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mimeType, data: image }
+          },
+          {
+            type: 'text',
+            text: 'Extract ALL text from this image exactly as written. This is a study document or textbook page. Preserve headings, bullet points, formulas, numbered lists, and paragraph structure. If there are diagrams or figures, describe them briefly in brackets like [Figure: description]. Output only the extracted text, nothing else.'
+          }
+        ]
+      }]
+    });
+    res.json({ text: response.content[0].text });
+  } catch (err) {
+    console.error('Image extraction error:', err.message);
+    res.status(500).json({ error: 'Failed to extract text from image: ' + err.message });
   }
 });
 

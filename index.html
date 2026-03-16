@@ -39,6 +39,9 @@
 <!-- Firebase SDK (v8 compat) — loaded async so it never blocks the page -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+<!-- PDF.js for client-side PDF text extraction -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+<script>window.addEventListener('load',function(){if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';});</script>
 </head>
 <body>
 
@@ -400,10 +403,19 @@
         </div>
       </div>
 
+      <!-- Promo code -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="signupPromo" placeholder="Promo code (optional)" style="flex:1;padding:10px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.85rem;text-transform:uppercase;">
+          <button onclick="Auth.applySignupPromo()" style="padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:0.82rem;cursor:pointer;font-weight:600;white-space:nowrap;">Apply</button>
+        </div>
+        <div id="signupPromoMsg" style="font-size:0.78rem;margin-top:5px;min-height:16px;"></div>
+      </div>
+
       <button class="btn btn-primary btn-block btn-lg" id="signupBtn" onclick="Auth.signup()" style="font-size:1rem;padding:14px;">
-        ⚡ Start Free Trial &amp; Add Card
+        Create Account &rarr;
       </button>
-      <p style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-top:10px;">You won't be charged until your 7-day trial ends. Cancel anytime.</p>
+      <p style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-top:10px;">Free to start — you'll choose your plan after the diagnostic.</p>
       <div id="signupError" style="color:#ef4444;font-size:0.85rem;text-align:center;margin-top:8px;display:none;"></div>
       <div class="auth-divider">Already have an account? <a href="#" onclick="App.navigate('login')">Log in</a></div>
     </div>

@@ -331,8 +331,9 @@
   async function handleFile(file) {
     if (!file) return;
     const name = file.name || 'photo';
+
     if (file.type.startsWith('image/')) {
-      // Show image preview in chat and ask AI to describe content
+      // Show image preview and OCR it via backend
       const dataUrl = await new Promise((res, rej) => {
         const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file);
       });
@@ -342,19 +343,117 @@
       messagesEl.appendChild(img);
       scrollToBottom();
       hideSuggestions();
-      pendingFileText = `[User uploaded an image: ${name}. Describe what study material or electrical content you can see, and help them understand it.]`;
-      filePreviewEl.style.display = 'none';
-      await sendRaw(pendingFileText);
-      pendingFileText = '';
+
+      // Extract text from image via backend OCR
+      filePreviewEl.textContent = '🔍 Extracting text from image...';
+      filePreviewEl.style.display = 'block';
+      try {
+        const base64 = dataUrl.split(',')[1];
+        const res = await fetch(API_URL.replace('/api/chat', '/api/extract-image'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64, mimeType: file.type })
+        });
+        const data = await res.json();
+        if (data.text && data.text.length > 20) {
+          // Save extracted text to notes and add to AI context
+          saveExtractedToNotes(name, data.text);
+          pendingFileText = data.text.slice(0, 8000);
+          filePreviewEl.textContent = `✅ Text extracted from ${name} and saved to your notes! Ask a question about it.`;
+        } else {
+          pendingFileText = `[User uploaded an image: ${name}. Describe what you can see and help them understand it.]`;
+          filePreviewEl.style.display = 'none';
+          await sendRaw(pendingFileText);
+          pendingFileText = '';
+          return;
+        }
+      } catch (err) {
+        pendingFileText = `[User uploaded an image: ${name}. Describe what study material you can see.]`;
+        filePreviewEl.style.display = 'none';
+        await sendRaw(pendingFileText);
+        pendingFileText = '';
+        return;
+      }
+    } else if (file.type === 'application/pdf') {
+      // PDF — extract text with PDF.js, fallback to OCR for scanned PDFs
+      filePreviewEl.textContent = '📄 Extracting text from PDF...';
+      filePreviewEl.style.display = 'block';
+      hideSuggestions();
+      try {
+        let text = '';
+        if (window.pdfjsLib) {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(item => item.str).join(' ') + '\n\n';
+          }
+        }
+        if (text.trim().length < 50) {
+          // Scanned PDF — OCR via backend (render pages to images)
+          filePreviewEl.textContent = '🔍 Scanned PDF detected — running OCR...';
+          text = '';
+          if (window.pdfjsLib) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const maxPages = Math.min(pdf.numPages, 20);
+            for (let i = 1; i <= maxPages; i++) {
+              filePreviewEl.textContent = `🔍 OCR: page ${i}/${maxPages}...`;
+              const page = await pdf.getPage(i);
+              const viewport = page.getViewport({ scale: 1.5 });
+              const canvas = document.createElement('canvas');
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              const ctx = canvas.getContext('2d');
+              await page.render({ canvasContext: ctx, viewport }).promise;
+              const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+              const res = await fetch(API_URL.replace('/api/chat', '/api/extract-image'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: b64, mimeType: 'image/jpeg' })
+              });
+              const data = await res.json();
+              if (data.text) text += data.text + '\n\n';
+            }
+          }
+        }
+        if (text.trim().length > 20) {
+          saveExtractedToNotes(name, text);
+          pendingFileText = text.slice(0, 8000);
+          filePreviewEl.textContent = `✅ ${name} extracted and saved to notes! Ask a question about it.`;
+        } else {
+          filePreviewEl.textContent = '⚠️ Could not extract text from this PDF.';
+        }
+      } catch (err) {
+        filePreviewEl.textContent = '⚠️ Error processing PDF: ' + err.message;
+      }
     } else if (file.type === 'text/plain') {
       const text = await file.text();
+      saveExtractedToNotes(name, text);
       pendingFileText = text.slice(0, 8000);
-      filePreviewEl.textContent = `📎 ${name} ready — type a question or just hit send to have me summarize it.`;
+      filePreviewEl.textContent = `📎 ${name} saved to notes — type a question or hit send to summarize.`;
       filePreviewEl.style.display = 'block';
     } else {
-      filePreviewEl.textContent = `⚠️ PDF text extraction coming soon — paste the text directly for now.`;
+      filePreviewEl.textContent = `⚠️ Unsupported file type. Upload images, PDFs, or text files.`;
       filePreviewEl.style.display = 'block';
     }
+  }
+
+  // Save extracted text to user's notes in localStorage
+  function saveExtractedToNotes(filename, text) {
+    try {
+      const state = window.Storage ? Storage.get() : null;
+      if (!state || !state.user) return;
+      const uid = state.user.id;
+      const topic = filename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_ -]/g, '').slice(0, 50);
+      const key = 'sparky_notes_' + uid + '_' + topic;
+      const existing = localStorage.getItem(key) || '';
+      const newContent = text.replace(/\n/g, '<br>');
+      localStorage.setItem(key, existing ? existing + '<hr>' + newContent : newContent);
+      // Refresh AI context
+      if (typeof syncAIContext === 'function') syncAIContext(state);
+    } catch (e) { console.warn('Failed to save to notes:', e); }
   }
 
   panel.querySelector('#ss-file-input').addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value=''; });
