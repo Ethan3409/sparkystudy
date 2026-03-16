@@ -283,7 +283,8 @@ const SupportMessages = {
   }
 };
 
-// Show popup if owner has replied to user's support messages
+// Sync support messages from Firebase and check for unread owner replies.
+// Shows a persistent popup on the dashboard that stays until user dismisses or clicks to view.
 async function checkOwnerReplies(userId) {
   if (!userId) return;
   // Sync from Firebase first so we get the latest replies
@@ -293,38 +294,50 @@ async function checkOwnerReplies(userId) {
   }
   const unread = SupportMessages.getUnreadReplies(userId);
   if (!unread.length) return;
-  SupportMessages.markRepliesRead(userId);
 
-  // Build popup HTML
-  const repliesHtml = unread.map(m => {
-    const latestReply = m.replies[m.replies.length - 1];
-    return `
-      <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
-        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">Re: <strong>${m.subject}</strong></div>
-        <div style="font-size:0.88rem;line-height:1.6;">${latestReply.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
-        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;">From Owner · ${new Date(latestReply.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</div>
-      </div>`;
-  }).join('');
+  // Don't show duplicate popup
+  if (document.getElementById('ownerReplyPopup')) return;
 
-  const modal = document.createElement('div');
-  modal.id = 'supportReplyModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.2s ease;';
-  modal.innerHTML = `
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#d97706);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">&#x1F4AC;</div>
+  // Build reply preview
+  const latestMsg = unread[0];
+  const latestReply = latestMsg.replies[latestMsg.replies.length - 1];
+  const replyPreview = latestReply.message.length > 120
+    ? latestReply.message.substring(0, 120).replace(/</g,'&lt;') + '...'
+    : latestReply.message.replace(/</g,'&lt;');
+  const replyDate = new Date(latestReply.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+  const moreCount = unread.length > 1 ? ` and ${unread.length - 1} more` : '';
+
+  const popup = document.createElement('div');
+  popup.id = 'ownerReplyPopup';
+  popup.style.cssText = 'position:fixed;top:80px;right:20px;z-index:99998;max-width:400px;width:calc(100% - 40px);animation:slideInRight 0.3s ease;';
+  popup.innerHTML = `
+    <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,0.5),0 0 0 1px rgba(245,158,11,0.2);overflow:hidden;cursor:pointer;" onclick="document.getElementById('ownerReplyPopup').remove();App.navigate('settings');">
+      <!-- Close X button — stops propagation so clicking X doesn't navigate -->
+      <button onclick="event.stopPropagation();document.getElementById('ownerReplyPopup').remove();" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:4px 6px;border-radius:6px;z-index:2;transition:color 0.15s,background 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.color='var(--text-muted)';this.style.background='none'">✕</button>
+
+      <!-- Header bar -->
+      <div style="background:linear-gradient(135deg,var(--accent),#d97706);padding:12px 16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.3rem;">💬</span>
         <div>
-          <h3 style="margin:0;font-size:1.05rem;">New Reply from Support</h3>
-          <div style="font-size:0.78rem;color:var(--text-muted);">The SparkStudy team responded to your message</div>
+          <div style="font-weight:800;font-size:0.88rem;color:#000;">New Reply from SparkStudy</div>
+          <div style="font-size:0.72rem;color:rgba(0,0,0,0.6);">${replyDate}${moreCount}</div>
         </div>
       </div>
-      ${repliesHtml}
-      <div style="display:flex;gap:10px;margin-top:16px;">
-        <button onclick="document.getElementById('supportReplyModal').remove();App.navigate('settings');" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--accent),#d97706);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">View in Settings</button>
-        <button onclick="document.getElementById('supportReplyModal').remove();" style="padding:10px 20px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);cursor:pointer;font-size:0.9rem;">Dismiss</button>
+
+      <!-- Message preview -->
+      <div style="padding:14px 16px;">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Re: <strong>${latestMsg.subject}</strong></div>
+        <div style="font-size:0.88rem;line-height:1.6;color:var(--text-primary);">${replyPreview.replace(/\n/g,'<br>')}</div>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--accent);font-weight:600;">Tap to view full message →</div>
       </div>
-    </div>`;
-  document.body.appendChild(modal);
+    </div>
+    <style>
+      @keyframes slideInRight {
+        from { opacity:0; transform:translateX(60px); }
+        to { opacity:1; transform:translateX(0); }
+      }
+    </style>`;
+  document.body.appendChild(popup);
 }
 
 const Storage = {
@@ -1105,14 +1118,14 @@ const App = {
   renderPage(page, state) {
     switch (page) {
       case 'diagnostic': Diagnostic.render(state); break;
-      case 'dashboard': Dashboard.render(state); requestPushPermission(); break;
+      case 'dashboard': Dashboard.render(state); requestPushPermission(); if (state && !state.user.isOwner) setTimeout(() => checkOwnerReplies(state.user.id), 800); break;
       case 'flashcards': Flashcards.render(state); break;
       case 'exams': Exams.render(state); break;
       case 'study-guide': StudyGuide.render(state); break;
       case 'tools': Tools.cleanup(); Tools.render(state); break;
       case 'analytics': Analytics.render(state); break;
       case 'review': Review.render(state); break;
-      case 'settings': Settings.render(state); if (state && !state.user.isOwner) SupportMessages.markRepliesRead(state.user.id); break;
+      case 'settings': Settings.render(state); if (state && !state.user.isOwner) { SupportMessages.markRepliesRead(state.user.id); const popup = document.getElementById('ownerReplyPopup'); if (popup) popup.remove(); } break;
       case 'group': GroupProgress.render(state); break;
       case 'owner': OwnerDashboard.render(); break;
       case 'lessons': Lessons.render(state); break;
