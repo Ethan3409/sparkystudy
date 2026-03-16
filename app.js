@@ -13390,54 +13390,79 @@ const MathPractice = {
   },
 
   _gen_ac_basics() {
-    const type=this._r(0,3);
+    const type=this._r(0,8);
     if(type===0){ const Vp=this._r(100,400,10); return {q:`A sine wave has a peak voltage of <strong>${Vp}V</strong>. What is the RMS voltage?`,a:this._round(Vp*0.7071),unit:'V',hint:'Vrms = Vpeak × 0.7071',formula:'Vrms = Vpeak × 0.7071'}; }
     if(type===1){ const Vr=this._r(100,250,10); return {q:`The RMS voltage of a circuit is <strong>${Vr}V</strong>. What is the peak voltage?`,a:this._round(Vr*1.4142),unit:'V',hint:'Vpeak = Vrms × 1.414',formula:'Vpeak = Vrms × 1.414'}; }
     if(type===2){ const T=this._r(10,100,5); return {q:`A sine wave has a period of <strong>${T}ms</strong>. What is its frequency?`,a:this._round(1000/T,1),unit:'Hz',hint:'f = 1 / T (convert ms to seconds first)',formula:'f = 1/T'}; }
-    const f=this._r(10,120,10); return {q:`A signal has a frequency of <strong>${f}Hz</strong>. What is its period?`,a:this._round(1000/f,2),unit:'ms',hint:'T = 1/f (then convert to ms)',formula:'T = 1/f × 1000ms'};
+    if(type===3){ const f=this._r(10,120,10); return {q:`A signal has a frequency of <strong>${f}Hz</strong>. What is its period?`,a:this._round(1000/f,2),unit:'ms',hint:'T = 1/f (then convert to ms)',formula:'T = 1/f × 1000ms'}; }
+    if(type===4){ const P=this._r(2,12,2); const rpm=this._r(300,3600,300); return {q:`A <strong>${P}-pole</strong> alternator spins at <strong>${rpm} RPM</strong>. What frequency does it produce?`,a:this._round(P*rpm/120),unit:'Hz',hint:'f = (poles × RPM) / 120',formula:'f = pn/120'}; }
+    if(type===5){ const Vp=this._r(100,400,10); return {q:`What is the peak-to-peak voltage of a sine wave with <strong>${Vp}V peak</strong>?`,a:this._round(Vp*2),unit:'V',hint:'Vpp = 2 × Vpeak',formula:'Vpp = 2 × Vpeak'}; }
+    if(type===6){ const Vrms=this._r(100,277,1); const angle=this._r(1,5)*30; return {q:`The RMS voltage is <strong>${Vrms}V</strong>. What is the instantaneous voltage at <strong>${angle}°</strong>?`,a:this._round(Vrms*1.4142*Math.sin(angle*Math.PI/180)),unit:'V',hint:'v = Vpeak × sin(θ). First find Vpeak from Vrms.',formula:'v = Vpeak × sin(θ)'}; }
+    if(type===7){ const Vrms=this._r(100,250,10); return {q:`What is the average value of a <strong>${Vrms}V RMS</strong> full-wave rectified sine wave?`,a:this._round(Vrms*1.4142*0.6366),unit:'V',hint:'Vavg = 0.637 × Vpeak. First find Vpeak.',formula:'Vavg = 0.637 × Vpeak'}; }
+    const P=this._r(2,12,2); const f=this._r(25,60,5); return {q:`What RPM must a <strong>${P}-pole</strong> alternator spin to produce <strong>${f}Hz</strong>?`,a:this._round(120*f/P),unit:'RPM',hint:'RPM = 120f / P',formula:'n = 120f/P'};
   },
 
   _gen_reactance() {
-    const type=this._r(0,1);
+    const type=this._r(0,5);
     if(type===0){ const f=this._r(30,120,10),L=this._r(10,500,10); return {q:`An inductor of <strong>${L}mH</strong> is connected to a <strong>${f}Hz</strong> supply. What is its inductive reactance?`,a:this._round(2*Math.PI*f*(L/1000)),unit:'Ω',hint:'XL = 2π × f × L (convert mH to H)',formula:'XL = 2πfL'}; }
-    const f=this._r(30,120,10),C=this._r(10,500,10); return {q:`A capacitor of <strong>${C}μF</strong> is connected to a <strong>${f}Hz</strong> supply. What is its capacitive reactance?`,a:this._round(1/(2*Math.PI*f*(C/1000000))),unit:'Ω',hint:'XC = 1 ÷ (2π × f × C) (convert μF to F)',formula:'XC = 1/(2πfC)'};
+    if(type===1){ const f=this._r(30,120,10),C=this._r(10,500,10); return {q:`A capacitor of <strong>${C}μF</strong> is connected to a <strong>${f}Hz</strong> supply. What is its capacitive reactance?`,a:this._round(1/(2*Math.PI*f*(C/1000000))),unit:'Ω',hint:'XC = 1 ÷ (2π × f × C) (convert μF to F)',formula:'XC = 1/(2πfC)'}; }
+    if(type===2){ const XL=this._r(10,200,10),f=60; return {q:`An inductor has <strong>${XL}Ω</strong> reactance at <strong>${f}Hz</strong>. What is its inductance?`,a:this._round(XL/(2*Math.PI*f)*1000),unit:'mH',hint:'L = XL / (2πf), then convert H to mH',formula:'L = XL / (2πf)'}; }
+    if(type===3){ const XC=this._r(10,200,10),f=60; return {q:`A capacitor has <strong>${XC}Ω</strong> reactance at <strong>${f}Hz</strong>. What is its capacitance?`,a:this._round(1/(2*Math.PI*f*XC)*1000000),unit:'μF',hint:'C = 1 / (2πfXC), then convert F to μF',formula:'C = 1 / (2πfXC)'}; }
+    if(type===4){ const L=this._r(50,500,50),f1=50,f2=60; const XL1=this._round(2*Math.PI*f1*(L/1000)); return {q:`A <strong>${L}mH</strong> inductor has <strong>${XL1}Ω</strong> reactance at <strong>${f1}Hz</strong>. What is its reactance at <strong>${f2}Hz</strong>?`,a:this._round(2*Math.PI*f2*(L/1000)),unit:'Ω',hint:'XL is directly proportional to frequency. Calculate XL = 2πfL at the new frequency.',formula:'XL = 2πfL'}; }
+    const V=this._r(100,240,10),XL=this._r(10,100,10); return {q:`An AC source of <strong>${V}V</strong> is connected to a pure inductor with <strong>XL=${XL}Ω</strong>. What current flows?`,a:this._round(V/XL),unit:'A',hint:'I = V / XL (pure inductor, no resistance)',formula:'I = V / XL'};
   },
 
   _gen_impedance() {
-    const type=this._r(0,1);
+    const type=this._r(0,7);
     const R=this._r(10,100,10);
     if(type===0){ const XL=this._r(10,150,10); return {q:`A series RL circuit has R=<strong>${R}Ω</strong> and XL=<strong>${XL}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XL*XL)),unit:'Ω',hint:'Z = √(R² + XL²)',formula:'Z = √(R² + X²)'}; }
-    const XC=this._r(10,150,10); return {q:`A series RC circuit has R=<strong>${R}Ω</strong> and XC=<strong>${XC}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XC*XC)),unit:'Ω',hint:'Z = √(R² + XC²)',formula:'Z = √(R² + X²)'};
+    if(type===1){ const XC=this._r(10,150,10); return {q:`A series RC circuit has R=<strong>${R}Ω</strong> and XC=<strong>${XC}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XC*XC)),unit:'Ω',hint:'Z = √(R² + XC²)',formula:'Z = √(R² + X²)'}; }
+    if(type===2){ const XL=this._r(40,150,10),XC=this._r(10,100,10); const X=XL-XC; return {q:`A series RLC circuit has R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, XC=<strong>${XC}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+X*X)),unit:'Ω',hint:'Net reactance X = XL - XC, then Z = √(R² + X²)',formula:'Z = √(R² + (XL−XC)²)'}; }
+    if(type===3){ const XL=this._r(20,100,10); const Z=Math.sqrt(R*R+XL*XL); const V=this._r(100,240,10); return {q:`A series RL circuit: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, source=<strong>${V}V</strong>. What is the current?`,a:this._round(V/Math.sqrt(R*R+XL*XL)),unit:'A',hint:'First find Z = √(R²+XL²), then I = V/Z',formula:'I = V / Z'}; }
+    if(type===4){ const Z=this._r(30,150,10),X=this._r(10,Z-5,10); const Rcalc=Math.sqrt(Z*Z-X*X); return {q:`A circuit has Z=<strong>${Z}Ω</strong> and X=<strong>${X}Ω</strong>. What is the resistance?`,a:this._round(Rcalc),unit:'Ω',hint:'R = √(Z² − X²)',formula:'R = √(Z² − X²)'}; }
+    if(type===5){ const XL=this._r(20,80,10); const Z=Math.sqrt(R*R+XL*XL); const V=this._r(100,240,10); const I=V/Z; return {q:`Series RL: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, source=<strong>${V}V</strong>. What is the voltage across R?`,a:this._round(I*R),unit:'V',hint:'Find I = V/Z first, then VR = I × R',formula:'VR = I × R'}; }
+    if(type===6){ const XL=this._r(20,80,10); const Z=Math.sqrt(R*R+XL*XL); const V=this._r(100,240,10); const I=V/Z; return {q:`Series RL: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, source=<strong>${V}V</strong>. What is the voltage across the inductor?`,a:this._round(I*XL),unit:'V',hint:'Find I = V/Z first, then VL = I × XL',formula:'VL = I × XL'}; }
+    const VR=this._r(40,160,10),VL=this._r(30,120,10); return {q:`In a series RL circuit, VR=<strong>${VR}V</strong> and VL=<strong>${VL}V</strong>. What is the total applied voltage?`,a:this._round(Math.sqrt(VR*VR+VL*VL)),unit:'V',hint:'VT = √(VR² + VL²) — voltages are 90° apart',formula:'VT = √(VR² + VL²)'};
   },
 
   _gen_power_factor() {
-    const type=this._r(0,2);
+    const type=this._r(0,6);
     if(type===0){ const pf=this._round(this._r(70,99)/100,2),S=this._r(1000,10000,500); return {q:`A load has an apparent power of <strong>${S}VA</strong> and a power factor of <strong>${pf}</strong>. What is the true power?`,a:this._round(S*pf),unit:'W',hint:'P = S × PF',formula:'P = S × PF'}; }
     if(type===1){ const R=this._r(10,80,10),X=this._r(10,80,10); const Z=Math.sqrt(R*R+X*X); return {q:`A circuit has R=<strong>${R}Ω</strong> and X=<strong>${X}Ω</strong>. What is the power factor?`,a:this._round(R/Z,3),unit:'(decimal)',hint:'PF = R / Z (where Z = √(R²+X²))',formula:'PF = cos θ = R/Z'}; }
-    const V=this._r(120,600,120),I=this._r(5,40,5); return {q:`A circuit has <strong>${V}V</strong> and <strong>${I}A</strong>. What is the apparent power?`,a:this._round(V*I),unit:'VA',hint:'S = V × I',formula:'S = V × I'};
+    if(type===2){ const V=this._r(120,600,120),I=this._r(5,40,5); return {q:`A circuit has <strong>${V}V</strong> and <strong>${I}A</strong>. What is the apparent power?`,a:this._round(V*I),unit:'VA',hint:'S = V × I',formula:'S = V × I'}; }
+    if(type===3){ const V=this._r(120,480,120),I=this._r(5,30,5),pf=this._round(this._r(60,95)/100,2); return {q:`A motor draws <strong>${I}A</strong> at <strong>${V}V</strong> with PF=<strong>${pf}</strong>. What is the true power?`,a:this._round(V*I*pf),unit:'W',hint:'P = V × I × PF',formula:'P = V × I × PF'}; }
+    if(type===4){ const P=this._r(500,5000,500),S=this._r(P+200,8000,500); return {q:`A load has true power <strong>${P}W</strong> and apparent power <strong>${S}VA</strong>. What is the reactive power?`,a:this._round(Math.sqrt(S*S-P*P)),unit:'VARs',hint:'Q = √(S² − P²)',formula:'Q = √(S² − P²)'}; }
+    if(type===5){ const P=this._r(500,5000,500),pf=this._round(this._r(70,95)/100,2); const S=P/pf; return {q:`A load uses <strong>${P}W</strong> true power with PF=<strong>${pf}</strong>. What is the apparent power?`,a:this._round(S),unit:'VA',hint:'S = P / PF',formula:'S = P / PF'}; }
+    const R=this._r(10,60,10),X=this._r(10,60,10); const Z=Math.sqrt(R*R+X*X); const theta=Math.atan(X/R)*180/Math.PI; return {q:`A circuit has R=<strong>${R}Ω</strong> and X=<strong>${X}Ω</strong>. What is the phase angle?`,a:this._round(theta,1),unit:'°',hint:'θ = arctan(X / R)',formula:'θ = arctan(X/R)'};
   },
 
   _gen_transformers() {
-    const type=this._r(0,2);
+    const type=this._r(0,4);
     const N1=this._r(100,2000,100),N2=this._r(50,500,50);
     if(type===0){ const V1=this._r(120,4800,120); return {q:`A transformer has <strong>${N1} primary turns</strong> and <strong>${N2} secondary turns</strong>. Primary voltage is <strong>${V1}V</strong>. What is the secondary voltage?`,a:this._round(V1*N2/N1),unit:'V',hint:'V2 = V1 × (N2/N1)',formula:'V1/V2 = N1/N2'}; }
     if(type===1){ const V1=this._r(240,4800,240),V2=this._r(12,240,12); const ratio=this._round(V1/V2,1); return {q:`A transformer steps down from <strong>${V1}V</strong> to <strong>${V2}V</strong>. What is the turns ratio (N1:N2)?`,a:ratio,unit:':1',hint:'Turns ratio = V1 / V2',formula:'N1/N2 = V1/V2'}; }
-    const V1=this._r(240,4800,240),N1b=this._r(200,2000,200),N2b=this._r(50,500,50),I2=this._r(5,50,5);
-    return {q:`A transformer has turns ratio ${N1b}:${N2b}. If secondary current is <strong>${I2}A</strong>, what is the primary current?`,a:this._round(I2*N2b/N1b),unit:'A',hint:'I1 = I2 × (N2/N1) — primary current is inversely proportional to turns',formula:'I1/I2 = N2/N1'};
+    if(type===2){ const V1=this._r(240,4800,240),N1b=this._r(200,2000,200),N2b=this._r(50,500,50),I2=this._r(5,50,5); return {q:`A transformer has turns ratio ${N1b}:${N2b}. If secondary current is <strong>${I2}A</strong>, what is the primary current?`,a:this._round(I2*N2b/N1b),unit:'A',hint:'I1 = I2 × (N2/N1)',formula:'I1/I2 = N2/N1'}; }
+    if(type===3){ const V1=this._r(240,600,120),V2=this._r(12,120,12),I2=this._r(5,40,5); const P=V2*I2; return {q:`An ideal transformer: primary <strong>${V1}V</strong>, secondary <strong>${V2}V</strong> at <strong>${I2}A</strong>. What is the primary current?`,a:this._round(P/V1),unit:'A',hint:'Power is equal on both sides: V1×I1 = V2×I2',formula:'I1 = (V2×I2) / V1'}; }
+    const V1=this._r(120,600,120),V2=this._r(12,120,12),I2=this._r(5,30,5); return {q:`Transformer: <strong>${V1}V</strong> primary, <strong>${V2}V</strong> secondary, secondary load draws <strong>${I2}A</strong>. What is the secondary power?`,a:this._round(V2*I2),unit:'W',hint:'P = V × I on the secondary side',formula:'P2 = V2 × I2'};
   },
 
   _gen_motors() {
-    const type=this._r(0,1);
+    const type=this._r(0,4);
     if(type===0){ const f=60,P=this._r(2,8,2)*2; return {q:`A <strong>${P}-pole</strong> induction motor operates on <strong>60Hz</strong>. What is its synchronous speed?`,a:this._round(120*f/P),unit:'RPM',hint:'Ns = 120 × f / P',formula:'Ns = 120f / P'}; }
-    const Ns=this._r(600,3600,300),slip=this._r(2,8);
-    const Nr=Math.round(Ns*(1-slip/100));
-    return {q:`A motor has synchronous speed <strong>${Ns}RPM</strong> and runs at <strong>${Nr}RPM</strong>. What is the slip percentage?`,a:slip,unit:'%',hint:'Slip = (Ns - Nr) / Ns × 100',formula:'Slip% = (Ns−Nr)/Ns × 100'};
+    if(type===1){ const Ns=this._r(600,3600,300),slip=this._r(2,8); const Nr=Math.round(Ns*(1-slip/100)); return {q:`A motor has synchronous speed <strong>${Ns}RPM</strong> and runs at <strong>${Nr}RPM</strong>. What is the slip percentage?`,a:slip,unit:'%',hint:'Slip = (Ns - Nr) / Ns × 100',formula:'Slip% = (Ns−Nr)/Ns × 100'}; }
+    if(type===2){ const P=this._r(2,8,2)*2; const Ns=120*60/P; const slip=this._r(2,6); const Nr=Math.round(Ns*(1-slip/100)); return {q:`A <strong>${P}-pole</strong> motor on <strong>60Hz</strong> runs at <strong>${Nr} RPM</strong>. What is the slip?`,a:slip,unit:'%',hint:'Find Ns = 120f/P first, then slip = (Ns-Nr)/Ns × 100',formula:'Slip% = (Ns−Nr)/Ns × 100'}; }
+    if(type===3){ const Ns=this._r(900,3600,300),slip=this._r(3,7); const Nr=Math.round(Ns*(1-slip/100)); return {q:`A motor has <strong>${slip}% slip</strong> and synchronous speed of <strong>${Ns} RPM</strong>. What is the rotor speed?`,a:Nr,unit:'RPM',hint:'Nr = Ns × (1 − slip/100)',formula:'Nr = Ns × (1 − slip%)'}; }
+    const f=60; const RPM=this._r(900,3600,300); const P=Math.round(120*f/RPM); return {q:`A motor runs at synchronous speed <strong>${RPM} RPM</strong> on <strong>60Hz</strong>. How many poles does it have?`,a:P,unit:'poles',hint:'P = 120f / Ns',formula:'P = 120f / Ns'};
   },
 
   _gen_three_phase() {
-    const type=this._r(0,1);
+    const type=this._r(0,5);
     if(type===0){ const Vp=this._r(120,277,1); return {q:`In a <strong>wye (Y)</strong> connected system, the phase voltage is <strong>${Vp}V</strong>. What is the line voltage?`,a:this._round(Vp*Math.sqrt(3)),unit:'V',hint:'VL = Vp × √3 (√3 ≈ 1.732)',formula:'VL = Vp × √3'}; }
-    const VL=this._r(208,600,100); return {q:`In a <strong>wye (Y)</strong> system, the line voltage is <strong>${VL}V</strong>. What is the phase voltage?`,a:this._round(VL/Math.sqrt(3)),unit:'V',hint:'Vp = VL ÷ √3 (√3 ≈ 1.732)',formula:'Vp = VL / √3'};
+    if(type===1){ const VL=this._r(208,600,100); return {q:`In a <strong>wye (Y)</strong> system, the line voltage is <strong>${VL}V</strong>. What is the phase voltage?`,a:this._round(VL/Math.sqrt(3)),unit:'V',hint:'Vp = VL ÷ √3 (√3 ≈ 1.732)',formula:'Vp = VL / √3'}; }
+    if(type===2){ const Ip=this._r(5,30,5); return {q:`In a <strong>delta (Δ)</strong> connected system, the phase current is <strong>${Ip}A</strong>. What is the line current?`,a:this._round(Ip*Math.sqrt(3)),unit:'A',hint:'IL = Ip × √3 in delta',formula:'IL = Ip × √3'}; }
+    if(type===3){ const IL=this._r(10,50,5); return {q:`In a <strong>delta (Δ)</strong> system, the line current is <strong>${IL}A</strong>. What is the phase current?`,a:this._round(IL/Math.sqrt(3)),unit:'A',hint:'Ip = IL ÷ √3 in delta',formula:'Ip = IL / √3'}; }
+    if(type===4){ const VL=this._r(208,600,100),IL=this._r(5,30,5),pf=this._round(this._r(75,95)/100,2); return {q:`A 3-phase load: VL=<strong>${VL}V</strong>, IL=<strong>${IL}A</strong>, PF=<strong>${pf}</strong>. What is the total power?`,a:this._round(Math.sqrt(3)*VL*IL*pf),unit:'W',hint:'P = √3 × VL × IL × PF',formula:'P = √3 × VL × IL × PF'}; }
+    const VL=this._r(208,600,100),IL=this._r(5,30,5); return {q:`A 3-phase load: VL=<strong>${VL}V</strong>, IL=<strong>${IL}A</strong>. What is the apparent power?`,a:this._round(Math.sqrt(3)*VL*IL),unit:'VA',hint:'S = √3 × VL × IL',formula:'S = √3 × VL × IL'};
   },
 
   checkAnswer() {
