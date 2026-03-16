@@ -2821,7 +2821,7 @@ const Exams = {
 
 // ===== NOTES MODULE =====
 const Notes = {
-  currentTopic: 'theory',
+  currentTopic: 'general',
   _currentPeriod: 0,  // always 0 now (no period filtering)
   mode: 'edit',   // 'edit' | 'quiz' | 'study' | 'community'
   quizCards: [],
@@ -2875,12 +2875,12 @@ const Notes = {
     return list.map(t => ({ ...t, has: !!localStorage.getItem(this._storageKey(userId, t.id)) }));
   },
 
-  // Migrate old topic notes into new 4-category system (runs once per user)
+  // Migrate old topic notes into new 4-category system
   _migrateOldNotes(userId) {
-    const migKey = 'sparky_notes_migrated_' + userId;
-    if (localStorage.getItem(migKey)) return; // already migrated
+    const migKey = 'sparky_notes_migrated_v2_' + userId;
+    if (localStorage.getItem(migKey)) return; // already migrated v2
 
-    // Map old topic IDs to new categories
+    // Map ALL old topic IDs to new categories
     const mapping = {
       'safety': 'general', 'code-cec': 'code', 'exam-prep': 'general', 'formulas': 'theory',
       'p1-ac-fund': 'theory', 'p1-ind-cap': 'theory', 'p1-ac-circuits': 'theory', 'p1-general': 'general',
@@ -2889,19 +2889,24 @@ const Notes = {
       'p4-commercial': 'theory', 'p4-industrial': 'theory', 'p4-plc': 'theory', 'p4-power': 'theory', 'p4-service': 'theory', 'p4-general': 'general',
     };
     let moved = 0;
-    Object.entries(mapping).forEach(([oldId, newId]) => {
-      const oldKey = 'sparky_notes_' + userId + '_' + oldId;
-      const content = localStorage.getItem(oldKey);
-      if (content && content.replace(/<[^>]*>/g, '').trim().length > 5) {
-        const newKey = 'sparky_notes_' + userId + '_' + newId;
-        const existing = localStorage.getItem(newKey) || '';
-        const label = '<div style="font-size:0.7rem;color:var(--text-muted);margin:8px 0 4px;border-top:1px solid var(--border);padding-top:6px;">From: ' + oldId + '</div>';
-        localStorage.setItem(newKey, existing + (existing ? label : '') + content);
-        moved++;
-      }
-    });
+    // Also scan ALL localStorage keys for any sparky_notes that don't match current topics
+    const currentIds = new Set(this.TOPICS_LIST.map(t => t.id));
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith('sparky_notes_' + userId + '_')) continue;
+      const topicId = key.replace('sparky_notes_' + userId + '_', '');
+      if (currentIds.has(topicId)) continue; // already a valid topic
+      const content = localStorage.getItem(key);
+      if (!content || content.replace(/<[^>]*>/g, '').trim().length < 5) continue;
+      const targetId = mapping[topicId] || 'general';
+      const newKey = 'sparky_notes_' + userId + '_' + targetId;
+      const existing = localStorage.getItem(newKey) || '';
+      const label = '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">From: ' + topicId + '</div>';
+      localStorage.setItem(newKey, existing + label + content);
+      moved++;
+    }
     localStorage.setItem(migKey, Date.now().toString());
-    if (moved > 0) showToast(`Migrated ${moved} old note${moved !== 1 ? 's' : ''} to new categories.`, 'success');
+    if (moved > 0) showToast(`Found and restored ${moved} note${moved !== 1 ? 's' : ''} from old topics!`, 'success');
   },
 
   render(state) {
@@ -3794,7 +3799,19 @@ const Notes = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: `Sort the following notes into categories. Available categories:\n${topicNames}\n\nFor each piece of content, assign it to the most relevant category. Return ONLY valid JSON: an array of objects like [{"topic_id":"p2-relays","content":"the note text"},{"topic_id":"general","content":"other text"}]. Group related lines together. If content doesn't fit any specific topic, use "general".\n\nNotes to organize:\n${text.slice(0, 6000)}`,
+          question: `Sort these notes into 4 categories: theory, lab, code, general.
+
+Rules:
+- theory = electrical theory, formulas, concepts, module content
+- lab = hands-on work, lab procedures, practical exercises
+- code = CEC code rules, regulations, code references
+- general = anything that doesn't fit the above
+
+Return ONLY a JSON array, no markdown, no code blocks, no explanation. Example format:
+[{"topic_id":"theory","content":"note text here"},{"topic_id":"lab","content":"other text"}]
+
+Notes to sort:
+${text.slice(0, 6000)}`,
           history: [],
           systemContext: ''
         })
@@ -3802,13 +3819,17 @@ const Notes = {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      // Parse the AI response — extract JSON array
+      // Parse the AI response — extract JSON array (handle markdown code blocks)
       let organized;
       try {
-        const jsonMatch = data.answer.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) throw new Error('No JSON found');
+        let raw = data.answer;
+        // Strip markdown code blocks if present
+        raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+        const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error('No JSON array found in response');
         organized = JSON.parse(jsonMatch[0]);
       } catch(e) {
+        console.error('Organize parse error:', e, data.answer);
         showToast('AI couldn\'t organize the notes. Try again.', 'error');
         return;
       }
@@ -11185,16 +11206,11 @@ const Lessons = {
 
   _toggleNotes(lessonId, userId) {
     this._notesOpen = !this._notesOpen;
-    const panel = document.getElementById('lessonNotesPanel');
-    const btn = document.getElementById('lessons-notes-btn');
-    if (panel) panel.style.display = this._notesOpen ? 'block' : 'none';
-    if (btn) {
-      btn.style.background = this._notesOpen ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.06)';
-      btn.style.borderColor = this._notesOpen ? 'var(--accent)' : 'rgba(245,158,11,0.3)';
-      btn.innerHTML = '📝 ' + (this._notesOpen ? 'Hide Notes' : 'My Notes');
-    }
+    // Re-render the lesson to update the grid layout
+    const container = document.getElementById('lessonsContent');
+    if (container) this._renderLesson(lessonId, container);
     if (this._notesOpen) {
-      setTimeout(() => { const ed = document.getElementById('lessonNotesEditor'); if (ed) ed.focus(); }, 100);
+      setTimeout(() => { const ed = document.getElementById('lessonNotesEditor'); if (ed) ed.focus(); }, 150);
     }
   },
 
