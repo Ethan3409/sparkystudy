@@ -11644,6 +11644,7 @@ const Lessons = {
         <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <button onclick="Lessons._aiExplain(${idx})" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);color:#f97316;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">⚡ AI Explain This</button>
           <button onclick="Lessons._elSpeakFrom(${idx})" style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.25);color:#58a6ff;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">▶ Start reading here</button>
+          <button onclick="Lessons._addToNotes(${idx})" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);color:var(--accent);padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">📝 Add to Notes</button>
         </div>
         <div id="ai-explain-${idx}" style="display:none;margin-top:12px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:14px;font-size:0.88rem;line-height:1.65;color:var(--text-primary);"></div>
       </div>`;
@@ -11673,6 +11674,51 @@ const Lessons = {
     } catch(e) {
       box.innerHTML = 'Connection error — try again.';
     }
+  },
+
+  _addToNotes(idx) {
+    const lesson = this._findLesson(this.activeLesson);
+    if (!lesson || !lesson.sections[idx]) return;
+    const s = lesson.sections[idx];
+    const state = Storage.get();
+    if (!state || !state.user) return;
+    const userId = state.user.id;
+
+    // Build clean text from section
+    let text = '<h3>' + s.title + '</h3>\n';
+    if (s.body) text += '<p>' + s.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+    if (s.formula) text += '<pre>' + s.formula + '</pre>';
+    if (s.questions) {
+      s.questions.forEach((q, i) => {
+        text += '<p><b>Q' + (i+1) + ':</b> ' + q.q + '<br><b>A:</b> ' + q.a + '</p>';
+      });
+    }
+    if (s.tips) {
+      s.tips.forEach(t => { text += '<p>' + t + '</p>'; });
+    }
+
+    // Add to Theory notes by default
+    const noteKey = 'sparky_notes_' + userId + '_theory';
+    const existing = localStorage.getItem(noteKey) || '';
+    const separator = existing.trim() ? '<hr style="margin:16px 0;border:1px solid rgba(255,255,255,0.1);">' : '';
+    localStorage.setItem(noteKey, existing + separator + text);
+
+    // Flash the button to confirm
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Added to Theory Notes!';
+    btn.style.background = 'rgba(16,185,129,0.2)';
+    btn.style.borderColor = 'rgba(16,185,129,0.5)';
+    btn.style.color = '#10b981';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.background = 'rgba(245,158,11,0.08)';
+      btn.style.borderColor = 'rgba(245,158,11,0.25)';
+      btn.style.color = 'var(--accent)';
+    }, 2000);
+
+    // Also sync AI context
+    if (typeof syncAIContext === 'function') syncAIContext(state);
   },
 
   async _aiQuiz(lessonId) {
