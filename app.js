@@ -9663,6 +9663,156 @@ const LESSONS_CONTENT = [
     ]
   },
   {
+    id: 'm21', period: 2,
+    title: 'Relays & Contactors',
+    icon: '🔌',
+    subtitle: 'The Brain and Muscle of Industrial Control',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.06))',
+    border: 'rgba(16,185,129,0.3)',
+    readTime: '22 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Small Signal, Big Power',
+        body: `Imagine you want to start a 100-horsepower motor from a control panel across a factory floor. You cannot run conductors carrying 150 amps to a tiny pushbutton at a control station — that would require enormous conductors, create a serious shock hazard, and make every button a potential arc-flash source.\n\nSo instead, you run a low-voltage, low-current control wire to a relay or contactor. A 24V signal energizes a coil, which creates a magnetic field, which pulls in a metal armature, which closes a set of contacts, which completes the circuit carrying full motor power.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. Relays handle the thinking; contactors supply the muscle. Understanding these devices is the foundation of everything else in industrial electrical work.`
+      },
+      {
+        type: 'story',
+        title: 'How a Relay Actually Works',
+        body: `Strip away the plastic shell and every relay or contactor has the same four key parts working together:\n\nThe coil is a conductor wound into many loops around an iron core. When current flows through the coil, the core becomes an electromagnet.\n\nThe core is the stationary iron or steel piece that becomes magnetized when the coil is energized. It is made from laminated sheets of steel insulated from each other — this is critical and covered later.\n\nThe armature is the moveable metal piece. When the coil is energized, the magnetized core attracts the armature and pulls it in. This mechanical movement is what changes the contact positions from normal to operated.\n\nThe armature springs return the armature to its normal (de-energized) position when the coil is de-energized. The contact springs absorb the impact of closing contacts, provide a wiping action to keep contact surfaces clean, and prevent contact bounce.`
+      },
+      {
+        type: 'concept',
+        title: 'Types of Relays: Plug-in, Power, and Industrial',
+        body: `Not all relays are created equal. There are several distinct families, each suited to different applications:\n\n• Plug-in relays (general-purpose): the most common type in control panels. Come in tubular (round pin) and spade pin configurations. Rated for relatively low currents. Sockets allow easy replacement without rewiring. Contacts available as NO, NC, or Form C (changeover).\n\n• Power relays: physically larger, designed for heavier loads than plug-in types but lighter than full contactors. Used for switching moderate industrial loads, heating elements, and lighting circuits.\n\n• Industrial control relays (NEMA/IEC rated): designed specifically for control circuit service in industrial environments. Feature adder decks — additional contact assemblies that can be snapped on to increase the number of available contacts without changing the relay body.\n\n• Low-voltage lighting relays: specialized relays with coils rated below 30V AC or below 60V DC, used in lighting management and low-voltage switching systems such as those found in commercial buildings and ballast switching applications.`
+      },
+      {
+        type: 'concept',
+        title: 'Contactors: Power-Duty Switching',
+        body: `A contactor is an electromagnetically operated switch designed for repetitive switching of power circuit loads. While relays handle control signals, contactors handle the main load current directly.\n\n• Magnetic contactors for motor loads (AC3 duty): designed for the high inrush currents of induction motor starting and the arc suppression requirements of interrupting motor current.\n\n• Magnetic contactors for non-motor loads (AC1 duty): used for resistive and mildly inductive loads such as heaters and lighting banks. Rated differently because there is no inrush and the power factor is higher.\n\n• Non-reversing contactors: single contactor unit for loads that only need to run in one direction. One set of main contacts (typically 3 poles for three-phase) plus auxiliary contacts.\n\n• Reversing contactors: two interlocked contactor units — one for forward, one for reverse. A mechanical interlock physically prevents both contactors from closing simultaneously, which would create a phase-to-phase short circuit. Electrical interlocking via NC auxiliary contacts is also used, and best practice is to use both.`,
+        formula: 'NEMA vs IEC: IEC contactors are smaller for equivalent current ratings due to higher temperature ratings and smaller required creepage distances. IEC must be derated for North American conditions.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Contact Form Designations',
+        body: `Contact configurations are described using standardized Form designations. You will encounter these on specification sheets and data books:\n\n• Form A (SPST-NO): Single-Pole Single-Throw, Normally Open. The most common contact type. Open at rest, closes when coil energizes.\n\n• Form B (SPST-NC): Single-Pole Single-Throw, Normally Closed. Closed at rest, opens when coil energizes. Used in safety and interlock circuits.\n\n• Form C (SPDT): Single-Pole Double-Throw, also called a changeover contact. Has a common terminal, one NO contact, and one NC contact. When coil energizes, common transfers from NC to NO.\n\n• Form X (SPST-NO double-make): a normally open contact that makes in two places simultaneously. Reduces the voltage across each make point and spreads arcing over two surfaces.\n\n• Form Y (SPST-NC double-break): a normally closed contact that breaks in two places simultaneously. Used in higher-voltage applications where single-break would struggle to extinguish the arc.`,
+        formula: 'Form A = SPST-NO | Form B = SPST-NC | Form C = SPDT (changeover) | Form X = double-make NO | Form Y = double-break NC'
+      },
+      {
+        type: 'concept',
+        title: 'Nameplate Information and Terminal Numbering',
+        body: `Every relay and contactor has a nameplate or data label that contains the essential ratings. You must be able to read these before installation:\n\n• Coil voltage rating: the voltage at which the coil is designed to operate (e.g., 120V AC, 24V DC, 240V AC). Operating outside this range causes premature failure.\n\n• Contact voltage rating: the maximum voltage the contacts are rated to switch. Must equal or exceed the circuit voltage.\n\n• Continuous current rating: the maximum current the contacts can carry continuously without overheating. Expressed in amperes.\n\n• Horsepower rating: for motor contactors, the maximum horsepower load at a specified voltage (e.g., 10 HP at 208V, 15 HP at 480V).\n\n• NEMA pilot duty rating: the current available for control circuits from the contacts, expressed in VA at a specific power factor.\n\nTerminal numbering: coil terminals are typically labeled A1 and A2. Main power contacts are labeled 1/2 (L1/T1), 3/4 (L2/T2), 5/6 (L3/T3). Auxiliary contacts are labeled 13/14 (NO), 21/22 (NC), etc. IEC and NEMA may use different schemes — always consult the device wiring diagram.`
+      },
+      {
+        type: 'concept',
+        title: 'Laminations and Shading Coils',
+        body: `Two features of AC contactors and relays exist specifically to deal with problems caused by alternating current:\n\nLaminations: The iron core and armature are not solid blocks of steel. They are built from many thin sheets (laminations) of silicon steel, each sheet insulated from its neighbors by an oxide coating or varnish. This is necessary because a magnetic field changing at 60 Hz would induce eddy currents in a solid iron core — circulating currents that produce heat and reduce efficiency. Laminated construction confines eddy currents to tiny loops within each thin sheet, dramatically reducing losses and heating.\n\nShading coils: A copper ring (shading coil) is installed across a portion of the pole face on the core and armature. Without it, the 60 Hz alternating current would cause the magnetic flux to pass through zero 120 times per second, releasing the armature briefly each time. The result would be a 120 Hz chattering noise and rapid wear. The shading coil creates a phase-shifted flux in the shaded portion of the pole face, so when the main flux is at zero, the shaded flux is still holding the armature in. With both in place, the armature never releases during normal operation.`
+      },
+      {
+        type: 'concept',
+        title: 'Contact Materials and Their Properties',
+        body: `Contact materials are chosen based on the trade-offs between conductivity, durability, resistance to welding, and oxidation behaviour:\n\n• Silver contacts: the most common material for control relays. Silver oxide (which forms on the surface) is electrically conductive, so silver contacts are self-cleaning — the oxide does not increase contact resistance the way copper oxide does. However, silver contacts can weld together under high inrush currents.\n\n• Copper contacts: used in high-current applications. Copper has a hard surface that is more resistant to contact welding than silver. However, copper oxide is non-conductive, so copper contacts are prone to pitting and increased contact resistance if they arc frequently or are used in contaminated environments.\n\n• Cadmium contacts (silver-cadmium oxide): a versatile alloy combining silver's conductivity with cadmium's arc resistance. Does not conduct quite as well as pure silver but handles a wide variety of current and voltage applications. Widely used in industrial contactors.`
+      },
+      {
+        type: 'concept',
+        title: 'Bridge Contacts and Bifurcated Contacts',
+        body: `Standard contacts make and break in one place — a simple bridge. But there are more sophisticated designs for specific applications:\n\n• Bridge contacts: the moving contact bridges across two stationary contacts, making the circuit in two places simultaneously. This creates a double-break action, distributing arcing across two gaps and improving arc extinction.\n\n• Bifurcated bridge contacts: the contact assembly is split into two parallel paths, each with its own bridge. This gives four contact points per pole. Bifurcated contacts split the arc over multiple surfaces, dramatically reducing the energy at any single point. They are used in applications requiring long contact life with frequent switching.\n\nContact life expectancy: all contact life decreases with increasing frequency of operation and with arcing. Arcing occurs when contacts interrupt current — the collapsing magnetic field in inductive loads drives current to arc across the opening gap. Each arc erodes the contact surface slightly. Contactors designed for motor starting must handle this arc repeatedly and still meet their rated life.`
+      },
+      {
+        type: 'concept',
+        title: 'Spring Tension: Critical to Correct Operation',
+        body: `Both armature springs and contact springs have calibrated tension that must be within specification for the relay to operate correctly. This is a critical maintenance concept:\n\n• Armature springs (return springs): when the coil de-energizes, these springs push the armature back to its normal position, restoring all contacts to their normal state. If spring tension is too loose, the armature may not fully return — contacts may remain partially operated. If springs are broken or missing, contacts will not return at all.\n\n• Contact springs: these press the contacts together with sufficient force to ensure low-resistance contact, and also absorb the mechanical shock of the contacts closing (reducing bounce). If contact springs are too loose, contact resistance increases and arcing worsens on opening. If contact springs are too tight, the magnetic force of the coil may not be sufficient to overcome spring tension — the armature cannot pull in fully, causing chattering or failure to operate.\n\nSpring tension is factory-set and generally not field-adjustable. If springs are suspect, replace the relay — do not attempt to bend or adjust them.`
+      },
+      {
+        type: 'keypoint',
+        title: 'Seal-In Voltage and Drop-Out Voltage',
+        body: `Relays and contactors do not have a single "operate voltage" — they have two distinct thresholds that are important to understand:\n\nSeal-in voltage (pull-in voltage): the minimum voltage required to pull the armature fully in and hold it. For AC coils, this is approximately 85% of the rated coil voltage. Example: for a 240V coil, seal-in voltage ≈ 240 × 0.85 = 204V. Below this voltage, the armature may not fully seat.\n\nDrop-out voltage: the voltage at which the magnetic field becomes too weak to hold the armature against the spring force, and the armature releases. This is approximately 50% of rated coil voltage. Example: for a 240V coil, drop-out ≈ 120V.\n\nThe seal-in voltage is always significantly higher than the drop-out voltage. This hysteresis is by design: once sealed in, the air gap between core and armature is very small, and the magnetic reluctance is low — the coil can hold the armature with much less flux than was required to initially pull it in.`,
+        formula: 'Seal-in voltage ≈ 0.85 × rated coil voltage\nDrop-out voltage ≈ 0.50 × rated coil voltage\nExample (240V coil): Seal-in ≈ 204V, Drop-out ≈ 120V'
+      },
+      {
+        type: 'concept',
+        title: 'Inductance Changes During Operation',
+        body: `One of the most important electrical characteristics of relay and contactor coils is how their current draw changes during the pull-in cycle:\n\nBefore the armature seals: there is a large air gap between the core and the armature. A large air gap means high magnetic reluctance, which means low inductance. Low inductance means low inductive reactance (XL = 2πfL), which means the coil presents low impedance to the supply voltage. The result: the coil draws very high current — typically 4 to 10 times the sealed current.\n\nAfter the armature seals: the air gap is eliminated (the armature is in contact with the core). Very small air gap = very low reluctance = very high inductance. High inductance = high inductive reactance = high impedance. The result: coil current drops dramatically to its normal sealed value.\n\nThis is why a contactor that is held open mechanically (or chattering due to low voltage) draws enormous current and will burn out the coil quickly. The coil is only designed for sustained current at the sealed inductance — not the high pull-in current.`,
+        formula: 'Coil current: Inrush = 4-10 × I_sealed\nXL = 2πfL (inductance L increases dramatically when armature seals in)\nBurnt coil = usually held open or chattering — sustained inrush current'
+      },
+      {
+        type: 'keypoint',
+        title: 'Effects of Incorrect Coil Voltage',
+        body: `Operating a relay or contactor coil at the wrong voltage causes predictable and serious failures. Knowing these helps with troubleshooting:\n\nVoltage too high (above ~110% of rated): The coil draws excess current, heating the coil windings. The armature is pulled in violently, causing mechanical shock to the contacts and shortening their life. Contact surfaces may weld together. Over time, insulation breaks down and the coil burns out. Maximum allowable supply is typically 110% of rated coil voltage.\n\nVoltage too low (below ~85% of rated): The magnetic field is insufficient to fully seat the armature. The armature chatters — partially pulled in, spring pushes it back, partially pulled in again — at 120 times per second (twice per AC cycle). This chattering causes the coil to draw high inrush current continuously, generates heat, and erodes the contact surfaces rapidly. The coil will burn out quickly. The shading coil cannot prevent chattering caused by insufficient voltage — it only prevents the normal AC flux zero-crossings from causing release when the armature IS fully seated.`,
+        formula: 'Safe operating range: 85% to 110% of rated coil voltage\nFor 240V coil: minimum = 204V, maximum = 264V\nChattering = low voltage. Violent operation/welded contacts = high voltage'
+      },
+      {
+        type: 'real-world',
+        title: 'NEMA vs IEC Contactors: Choosing the Right Standard',
+        body: `North American electrical work uses two different standards for contactors and motor starters, and you will encounter both:\n\nNEMA (National Electrical Manufacturers Association): the traditional North American standard. NEMA contactors are categorized by size numbers (Size 0 through Size 9). They are generally oversized compared to their IEC equivalents for the same load — this gives them excellent tolerance for high ambient temperatures, severe duty cycles, and less-than-ideal maintenance conditions. Easy to apply: choose the NEMA size for the motor HP and voltage from a table.\n\nIEC (International Electrotechnical Commission): the international standard, now widely used in North America especially in industrial OEM equipment. IEC contactors are smaller and lighter than NEMA equivalents. They have higher temperature ratings and tighter manufacturing tolerances. IEC contactors must be carefully applied — using one in a higher ambient temperature or more severe duty cycle than specified will cause premature failure. Smaller creepage distances (the surface path between conductors) require careful attention to contamination.\n\nAs a rule: NEMA is more forgiving of adverse conditions. IEC requires more careful application engineering.`
+      },
+      {
+        type: 'analogy',
+        title: 'The Relay as a Remote-Controlled Switch',
+        body: `Think of a relay as exactly what it is: a remote-controlled switch. The coil is the remote control — it can be operated by a low-power signal from any distance over small control wires. The contacts are the switch — they can handle the full load current of the controlled circuit.\n\nThe crucial advantage: the control circuit and the controlled circuit are completely electrically isolated. The control circuit might be 24V DC from a PLC output card. The controlled circuit might be 600V AC driving a large motor. These two circuits never touch each other electrically — the only connection is through the magnetic field in the relay.\n\nThis isolation is also a safety feature: a person touching the 24V control wiring is not in danger from the 600V power circuit, even though their touch controls the motor. Separation of control and power is one of the fundamental principles of safe industrial design.`
+      },
+      {
+        type: 'quiz',
+        title: 'Quick Check',
+        questions: [
+          { q: 'What is the purpose of laminations in a relay core and armature?', a: 'Laminations break up the iron core into thin sheets insulated from each other. This restricts eddy currents (induced circulating currents) to tiny loops within each sheet, reducing eddy current losses that would otherwise cause heat and reduce efficiency in AC devices.' },
+          { q: 'A 240V AC contactor coil has a seal-in voltage of approximately:', a: '204V (240 × 0.85 = 204V). Below this voltage the armature cannot fully seat. Drop-out is approximately 120V (240 × 0.50).' },
+          { q: 'Why does a relay coil draw much higher current before the armature seals in compared to after?', a: 'Before sealing: large air gap = high magnetic reluctance = low inductance = low XL = low impedance = high current. After sealing: air gap eliminated = low reluctance = high inductance = high XL = high impedance = low current. Inrush is typically 4-10× sealed current.' },
+          { q: 'A Form C contact has three terminals. Name them and describe the contact action when the coil energizes.', a: 'Common (C), Normally Open (NO), and Normally Closed (NC). With coil de-energized: Common is connected to NC. When coil energizes: armature pulls in, Common transfers to NO (NC opens simultaneously). This is a changeover or SPDT action.' },
+          { q: 'What is the difference between electrical interlock and mechanical interlock on a reversing contactor?', a: 'Electrical interlock: NC auxiliary contact of each contactor is wired in series with the coil circuit of the other — if one is energized, its NC contact opens to break the other\'s coil circuit. Mechanical interlock: a physical linkage prevents both contactor armatures from seating simultaneously. Best practice uses both for redundant protection against phase-to-phase shorts.' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: 'Pro Tips',
+        tips: [
+          'A chattering or buzzing contactor always has one of two causes: coil voltage too low (below ~85% rated) or a broken shading coil. Check supply voltage at the coil terminals first. If voltage is correct, inspect the shading ring — it is a copper ring embedded in the pole face of the core or armature. A broken shading ring causes 120 Hz chatter even at correct voltage.',
+          'When you replace a relay or contactor, always check the coil voltage rating on the new device nameplate before installing it. Installing a 120V coil in a 240V circuit will destroy it instantly. Installing a 240V coil in a 120V circuit means it will never pull in.',
+          'IEC-style contactors used in North American installations must be evaluated for duty cycle and ambient temperature. An IEC contactor rated for a 10 HP motor at 40°C must be derated if the panel ambient exceeds that temperature. NEMA contactors are much more tolerant of adverse conditions.',
+          'The adder deck system on industrial control relays is extremely useful: you can add normally open or normally closed contact blocks to a relay without replacing the coil assembly. This saves cost when adding interlocks to an existing installation.'
+        ]
+      },
+      {
+        type: 'objectives',
+        title: 'Module 21 Objectives',
+        objectives: [
+          'Describe the operating principle of an electromagnetic relay, identifying the coil, core, armature, armature springs, and contact springs.',
+          'Explain the purpose of laminations in relay and contactor cores and armatures, and describe how they reduce eddy current losses.',
+          'Explain the purpose of the shading coil in an AC relay or contactor and describe what would happen without it.',
+          'Identify and describe the four main relay types: plug-in, power, industrial control (with adder decks), and low-voltage lighting relays.',
+          'Distinguish between a relay and a contactor based on current ratings, arc suppression, and intended applications.',
+          'Define and compare NEMA and IEC contactor ratings, identifying the key differences in sizing philosophy, temperature rating, and creepage distance.',
+          'Identify non-reversing and reversing contactor configurations and explain why reversing contactors require both mechanical and electrical interlocking.',
+          'Define contact form designations: Form A (SPST-NO), Form B (SPST-NC), Form C (SPDT), Form X (double-make NO), Form Y (double-break NC).',
+          'Describe the properties of silver, copper, and silver-cadmium oxide contact materials and identify their relative strengths and weaknesses.',
+          'Describe bridge contacts and bifurcated bridge contacts and explain how they improve contact life.',
+          'Read relay and contactor nameplate information including coil voltage, contact voltage rating, continuous current rating, HP rating, and NEMA pilot duty rating.',
+          'Identify standard terminal numbering for contactor coils (A1/A2) and main contacts (1/2, 3/4, 5/6) and auxiliary contacts (13/14, 21/22).',
+          'Define seal-in voltage and drop-out voltage and calculate each for a given coil voltage rating.',
+          'Explain the inductance change that occurs when the armature seals, and describe why inrush current is 4-10× the sealed current.',
+          'Describe the effects of operating a coil above 110% and below 85% of its rated voltage.',
+          'Describe the purpose of seal-in (holding) contacts and explain the three-wire control circuit operation.',
+          'Identify the safety advantage of three-wire control (momentary start with seal-in) versus two-wire control (maintained contact).'
+        ],
+        questions: [
+          { q: 'A relay coil is rated 120V AC. Calculate the approximate seal-in voltage and drop-out voltage.', a: 'Seal-in ≈ 120 × 0.85 = 102V. Drop-out ≈ 120 × 0.50 = 60V.' },
+          { q: 'Why does a contactor coil burn out when the armature is held open (cannot seat)?', a: 'With the armature open, the large air gap keeps inductance very low. Low inductance = low XL = low impedance = very high coil current (4-10× normal sealed current). The coil is rated only for the much lower sealed current. Sustained inrush current overheats and destroys the coil insulation.' },
+          { q: 'A reversing motor starter is wired with only electrical interlock (no mechanical). An apprentice energizes both forward and reverse coils simultaneously. What happens?', a: 'Both sets of main contacts close simultaneously. This connects two different AC phases directly together through the motor — a phase-to-phase bolted fault. Extremely high fault current flows. The result is destruction of the contactors, potential arc blast, blown fuses or tripped breaker, and possible personnel injury. Both electrical AND mechanical interlocks are required as a redundant safety measure.' }
+        ]
+      },
+      {
+        type: 'outcome',
+        title: 'Module Desired Outcome',
+        outcome: 'The student will describe the construction, operating principles, ratings, and application of relays and contactors in industrial motor control, including coil voltage effects, contact materials, and interlocking requirements.',
+        questions: [
+          { q: 'During commissioning of a new motor starter, the electrician observes that the contactor makes a buzzing noise and the motor barely turns. Diagnose the likely cause and describe the correct repair procedure.', a: 'The buzzing indicates the contactor armature is chattering — it cannot fully seat. Most likely cause: supply voltage to the coil is below the seal-in threshold (85% of rated). Measure voltage at coil terminals A1-A2 while the start button is held. Compare to nameplate rating. If voltage is correct but chattering continues, inspect the shading rings on the core pole faces — a broken shading ring causes chattering even at correct voltage. Do not operate the contactor in this condition as the sustained inrush current will burn out the coil.' },
+          { q: 'Explain why a contactor\'s coil draws 6 times its normal current at the moment of initial energization but settles to 1/6 of that value once the armature seats. What is the practical consequence for coil selection?', a: 'At energization the armature is fully separated from the core. The large air gap creates high magnetic reluctance, resulting in very low inductance. Low inductance means low inductive reactance (XL = 2πfL), so the coil presents low impedance and draws high current. Once the armature seats, the air gap disappears, reluctance drops dramatically, inductance rises correspondingly, XL increases, impedance rises, and current falls to the low sealed value. Practical consequence: the coil must be rated for intermittent inrush without overheating, but the sustained sealed current must not exceed the coil\'s continuous current rating. A coil that chatters draws the high inrush current continuously and will fail.' }
+        ]
+      }
+    ]
+  },
+  {
     id: 'm22', period: 2,
     title: 'Timers & Smart Relays',
     icon: '⏱',
