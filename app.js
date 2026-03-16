@@ -1749,6 +1749,39 @@ const Dashboard = {
       </div>
 
       ${(() => {
+        // Check if user has any uploaded notes content
+        const uid = state.user.id;
+        let hasNotes = false;
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sparky_notes_' + uid + '_')) {
+            const val = localStorage.getItem(key) || '';
+            if (val.replace(/<[^>]*>/g,'').trim().length > 30) { hasNotes = true; break; }
+          }
+        }
+        if (hasNotes) return '';
+        return `<div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(249,115,22,0.08));border:2px solid rgba(245,158,11,0.4);border-radius:16px;padding:24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;animation:pulse-border 2s ease-in-out infinite;">
+          <div style="font-size:3rem;flex-shrink:0;">📄</div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-weight:800;font-size:1.1rem;color:var(--accent);margin-bottom:6px;">Upload Your Module Content</div>
+            <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
+              SparkStudy's AI tutor, quiz generator, and flashcard maker all work from <strong>your</strong> module content.
+              Upload a PDF of your textbook or snap photos of your notes to unlock personalized study tools.
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+            <button class="btn btn-primary" onclick="App.navigate('notes')" style="white-space:nowrap;font-size:0.9rem;">
+              📄 Upload Now
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="this.closest('div[style*=linear-gradient]').style.display='none'" style="font-size:0.75rem;color:var(--text-muted);">
+              Dismiss
+            </button>
+          </div>
+        </div>
+        <style>@keyframes pulse-border{0%,100%{border-color:rgba(245,158,11,0.4)}50%{border-color:rgba(245,158,11,0.8)}}</style>`;
+      })()}
+
+      ${(() => {
         const daysLeft = ClassSchedule.getDaysUntilExam(state);
         if (daysLeft === null) return '';
         const cs = state.classSchedule || {};
@@ -2019,9 +2052,26 @@ const Flashcards = {
     const dueCards = SM2.getDueCards(state);
     const topics = getTopicsForPeriod(state.user.period);
 
+    // Check for notes
+    const _uid = state.user.id;
+    let _hasNotes = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sparky_notes_' + _uid + '_') && (localStorage.getItem(k)||'').replace(/<[^>]*>/g,'').trim().length > 30) { _hasNotes = true; break; }
+    }
+
     container.innerHTML = `
       <h1 style="margin-bottom:8px;">Flashcards</h1>
-      <p style="color:var(--text-secondary);margin-bottom:32px;">Powered by spaced repetition \u2014 cards appear right before you'd forget them.</p>
+      <p style="color:var(--text-secondary);margin-bottom:${_hasNotes ? '32' : '16'}px;">Powered by spaced repetition \u2014 cards appear right before you'd forget them.</p>
+
+      ${!_hasNotes ? `<div onclick="App.navigate('notes')" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:1.8rem;">📄</span>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload your module content for personalized flashcards</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">The AI quiz & flashcard generator works best with your own notes. Tap to upload a PDF or photo.</div>
+        </div>
+        <span style="color:var(--accent);font-weight:700;">Upload &rarr;</span>
+      </div>` : ''}
 
       ${dueCards.length > 0 ? `
         <div class="card card-glow" style="margin-bottom:32px;text-align:center;padding:32px;cursor:pointer;" onclick="Flashcards.startDue()">
@@ -2290,9 +2340,26 @@ const Exams = {
     const attempts = state.exams.attempts;
     const bestScore = attempts.length > 0 ? Math.max(...attempts.map(a => a.pct)) : null;
 
+    // Check for notes
+    const _uid = state.user.id;
+    let _hasNotes = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sparky_notes_' + _uid + '_') && (localStorage.getItem(k)||'').replace(/<[^>]*>/g,'').trim().length > 30) { _hasNotes = true; break; }
+    }
+
     container.innerHTML = `
       <h1 style="margin-bottom:8px;">Practice Exams</h1>
-      <p style="color:var(--text-secondary);margin-bottom:32px;">Simulate the real Alberta IP exam \u2014 50 questions, 60 minutes, instant results.</p>
+      <p style="color:var(--text-secondary);margin-bottom:${_hasNotes ? '32' : '16'}px;">Simulate the real Alberta IP exam \u2014 50 questions, 60 minutes, instant results.</p>
+
+      ${!_hasNotes ? `<div onclick="App.navigate('notes')" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:1.8rem;">📄</span>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload your module for AI-powered study tools</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Upload a PDF or photo of your textbook to unlock personalized quizzes and AI tutoring.</div>
+        </div>
+        <span style="color:var(--accent);font-weight:700;">Upload &rarr;</span>
+      </div>` : ''}
 
       <div class="card card-glow" style="margin-bottom:24px;padding:32px;">
         <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
@@ -9252,6 +9319,16 @@ const LESSONS_CONTENT = [
         ]
       },
       {
+        type: 'concept',
+        title: 'Molded-Case Circuit Breakers (MCCB)',
+        body: 'MCCBs are the most common circuit breakers in commercial and industrial applications.\n\nFrame sizes: 100A, 225A, 400A, 600A, 800A, 1200A, 2000A, 3000A, 4000A, 6000A.\n\nTrip units can be:\n• Thermal-magnetic (standard) — bimetallic strip for overload + electromagnetic for short circuit\n• Electronic (adjustable settings) — current transformers and microprocessor, fully adjustable\n• Motor circuit protector (instantaneous only) — used with separate motor starters that have overload relays\n\nAdjustable electronic trip units allow setting:\n• Long-time delay (overload protection)\n• Short-time delay (for downstream coordination)\n• Instantaneous trip (short circuit)\n• Ground fault protection (optional)\n\nSeries ratings: A downstream breaker can have a lower AIC rating if protected by a properly rated upstream breaker. This must be a listed and tested series combination — you cannot assume series protection without verification.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Coordination and Selective Protection',
+        body: 'Selective coordination: Only the protective device nearest the fault opens. All upstream devices remain closed — minimizing the extent of a power outage.\n\nTime-current curves: Show the relationship between fault current magnitude and trip time for each device. Used to verify that devices are properly coordinated.\n\nCoordination rules:\n• Upstream device must be slower than downstream device at ALL fault current levels\n• Fuses: upstream fuse must be at least 2:1 ratio for full coordination\n• Breakers: time-current curves must not overlap at any current level\n\nArc flash considerations:\n• Higher available fault current = more arc flash energy (incident energy)\n• Faster clearing time = less arc flash energy exposure\n• Current-limiting fuses and breakers significantly reduce arc flash energy\n• Zone-selective interlocking (ZSI): downstream device signals upstream to delay its trip, improving coordination while reducing arc flash energy at the fault point'
+      },
+      {
         type: 'protip',
         title: 'Pro Tips',
         tips: [
@@ -9495,13 +9572,9 @@ const LESSONS_CONTENT = [
     border: 'rgba(239,68,68,0.3)',
     readTime: 'Coming Soon',
     sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
-  },
-  // ── Owner-only raw module content (OCR extracted from ILM textbooks) ────────
-  {
-    id: 'm1_raw',
-    period: 2,
-    ownerOnly: true,
-    title: 'Fundamentals of Alternating Current',
+  }
+];
+/*OWNER_RAW_REMOVED
     icon: '〰️',
     subtitle: 'Second Period - Alternating Current (AC) Circuit Properties',
     color: '#f59e0b',
@@ -9810,12 +9883,7 @@ const LESSONS_CONTENT = [
       },
       {
         type: 'keypoint',
-        title: 'Coordination and Selective Protection',
-        body: 'Selective coordination: Only the protective device nearest the fault opens. All upstream devices remain closed.\n\nTime-current curves: Show the relationship between fault current magnitude and trip time. Used to verify coordination.\n\nCoordination rules:\n• Upstream device must be slower than downstream device at all fault levels\n• Fuses: upstream must be at least 2:1 ratio for coordination\n• Breakers: time-current curves must not overlap\n\nArc flash considerations:\n• Higher available fault current = more arc flash energy\n• Faster clearing time = less arc flash energy\n• Current-limiting devices reduce arc flash energy significantly\n• Zone-selective interlocking (ZSI): downstream device signals upstream to delay, improving coordination and reducing arc flash'
-      }
-    ]
-  }
-];
+OWNER_RAW_REMOVED*/
 const Lessons = {
   activeLesson: null,
   _ttsActive: false,
