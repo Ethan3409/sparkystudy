@@ -45,16 +45,31 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ethan3409.github.io/sparkystudy';
 
+// Simple rate limiter for all API endpoints
+const apiRateLimit = new Map();
+function rateLimit(req, res, maxRequests = 30, windowMs = 60000) {
+  const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  const now = Date.now();
+  const entry = apiRateLimit.get(ip) || { count: 0, resetAt: now + windowMs };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs; }
+  entry.count++;
+  apiRateLimit.set(ip, entry);
+  if (entry.count > maxRequests) { res.status(429).json({ error: 'Too many requests. Try again later.' }); return false; }
+  return true;
+}
+setInterval(() => { const now = Date.now(); for (const [ip, e] of apiRateLimit) { if (now > e.resetAt + 600000) apiRateLimit.delete(ip); } }, 600000);
+
+// HTML escape helper for email templates
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 // CORS — allow only your frontend
-// Browsers send Origin as scheme+host only (no path), so we allow the root domain too
 app.use(cors({
   origin: [
     FRONTEND_URL,
     'https://ethan3409.github.io',
     'https://sparkystudy.com',
     'https://www.sparkystudy.com',
-    'http://localhost:3000',
-    'http://127.0.0.1:5500'
+    ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000', 'http://127.0.0.1:5500'] : [])
   ]
 }));
 
@@ -116,6 +131,7 @@ app.post('/api/tts', async (req, res) => {
 // AI chat — only answers based on provided module/notes context.
 // If no context, tells the user to add module content.
 app.post('/api/chat', async (req, res) => {
+  if (!rateLimit(req, res, 20, 60000)) return;
   if (!anthropic) return res.status(503).json({ error: 'AI not configured. Add ANTHROPIC_API_KEY to Railway Variables.' });
   const { question, history = [], systemContext = '' } = req.body;
   if (!question) return res.status(400).json({ error: 'Missing question' });
@@ -148,6 +164,7 @@ app.post('/api/chat', async (req, res) => {
 // Accepts a base64 image and uses Claude Vision to extract text (OCR).
 // Used by students uploading photos of textbook pages or handwritten notes.
 app.post('/api/extract-image', async (req, res) => {
+  if (!rateLimit(req, res, 10, 60000)) return;
   if (!anthropic) return res.status(503).json({ error: 'AI not configured.' });
   const { image, mimeType = 'image/jpeg' } = req.body;
   if (!image) return res.status(400).json({ error: 'Missing image data' });
@@ -211,6 +228,7 @@ Respond with ONLY valid JSON: {"type":"module" or "notes","confidence":0.0-1.0,"
 // ── POST /api/detect-title ───────────────────────────────────────────────────
 // Detects the title of a module/textbook from its first page text content.
 app.post('/api/detect-title', async (req, res) => {
+  if (!rateLimit(req, res, 15, 60000)) return;
   if (!anthropic) return res.status(503).json({ error: 'AI not configured.' });
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Missing text' });
@@ -233,6 +251,7 @@ app.post('/api/detect-title', async (req, res) => {
 // ── POST /api/create-checkout-session ───────────────────────────────────────
 // Creates a Stripe Checkout Session and returns the URL to redirect the user.
 app.post('/api/create-checkout-session', async (req, res) => {
+  if (!rateLimit(req, res, 5, 60000)) return;
   if (!stripe) return res.status(503).json({ error: 'Payment system not configured yet. Please contact support.' });
   try {
     const { email, promo } = req.body;
@@ -336,9 +355,13 @@ app.post('/api/contact', async (req, res) => {
     return res.status(429).json({ error: 'Too many messages. Please wait an hour before sending another.' });
   }
 
-  const { name, email, subject, message } = req.body;
-  if (!name || !email || !message) return res.status(400).json({ error: 'Missing required fields.' });
+  const { name: rawName, email: rawEmail, subject: rawSubject, message } = req.body;
+  if (!rawName || !rawEmail || !message) return res.status(400).json({ error: 'Missing required fields.' });
   if (message.length > 2000) return res.status(400).json({ error: 'Message too long (max 2000 characters).' });
+  // Sanitize inputs to prevent email header injection and XSS
+  const name = (rawName || '').replace(/[\r\n]/g, '').slice(0, 100);
+  const email = (rawEmail || '').replace(/[\r\n]/g, '').slice(0, 100);
+  const subject = (rawSubject || '').replace(/[\r\n]/g, '').slice(0, 200);
 
   const ownerEmail = process.env.CONTACT_EMAIL;
   if (!ownerEmail) {
@@ -364,9 +387,9 @@ app.post('/api/contact', async (req, res) => {
         <div style="font-family:sans-serif;max-width:600px;">
           <h2 style="color:#f59e0b;">New Support Message — SparkStudy</h2>
           <table style="border-collapse:collapse;width:100%;margin-bottom:20px;">
-            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;width:100px;">From</td><td style="padding:8px;border:1px solid #e5e7eb;">${name}</td></tr>
-            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;">Email</td><td style="padding:8px;border:1px solid #e5e7eb;">${email}</td></tr>
-            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;">Subject</td><td style="padding:8px;border:1px solid #e5e7eb;">${subject || 'No subject'}</td></tr>
+            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;width:100px;">From</td><td style="padding:8px;border:1px solid #e5e7eb;">${escHtml(name)}</td></tr>
+            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;">Email</td><td style="padding:8px;border:1px solid #e5e7eb;">${escHtml(email)}</td></tr>
+            <tr><td style="padding:8px;background:#f3f4f6;font-weight:600;">Subject</td><td style="padding:8px;border:1px solid #e5e7eb;">${escHtml(subject || 'No subject')}</td></tr>
           </table>
           <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;white-space:pre-wrap;">${message.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <p style="color:#9ca3af;font-size:0.85rem;margin-top:16px;">Reply directly to this email to respond to ${name}.</p>
