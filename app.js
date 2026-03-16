@@ -3807,9 +3807,7 @@ const Notes = {
     const topics = this.TOPICS_LIST.filter(t => t.period === 0 || t.period === period);
     const topicNames = topics.map(t => t.id + ': ' + t.name).join('\n');
 
-    if (!confirm('This will use AI to sort your notes into the appropriate topic categories.\n\nYour current notes will be split and moved to matching topics. Continue?')) return;
-
-    showToast('🗂️ Organizing notes with AI...', 'info');
+    showToast('🗂️ Organizing notes with AI... This may take a moment.', 'info');
 
     try {
       const BACKEND = 'https://sparkystudy-production.up.railway.app';
@@ -3825,7 +3823,7 @@ Rules:
 - code = CEC code rules, regulations, code references
 - general = anything that doesn't fit the above
 
-Return ONLY a JSON array, no markdown, no code blocks, no explanation. Example format:
+CRITICAL: Return ONLY a valid JSON array. No markdown, no code blocks, no explanation, no text before or after. Format:
 [{"topic_id":"theory","content":"note text here"},{"topic_id":"lab","content":"other text"}]
 
 Notes to sort:
@@ -3834,18 +3832,27 @@ ${text.slice(0, 6000)}`,
           systemContext: ''
         })
       });
+      if (!res.ok) throw new Error('Server error: ' + res.status);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      // Parse the AI response — extract JSON array (handle markdown code blocks)
+      // Parse the AI response — extract JSON array
       let organized;
       try {
-        let raw = data.answer;
+        let raw = data.answer || '';
         // Strip markdown code blocks if present
         raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
-        const jsonMatch = raw.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) throw new Error('No JSON array found in response');
-        organized = JSON.parse(jsonMatch[0]);
+        // Find the first complete JSON array (non-greedy)
+        const arrStart = raw.indexOf('[');
+        if (arrStart === -1) throw new Error('No JSON array found');
+        // Find matching closing bracket
+        let depth = 0, arrEnd = -1;
+        for (let ci = arrStart; ci < raw.length; ci++) {
+          if (raw[ci] === '[') depth++;
+          if (raw[ci] === ']') { depth--; if (depth === 0) { arrEnd = ci; break; } }
+        }
+        if (arrEnd === -1) throw new Error('Incomplete JSON array');
+        organized = JSON.parse(raw.substring(arrStart, arrEnd + 1));
       } catch(e) {
         console.error('Organize parse error:', e, data.answer);
         showToast('AI couldn\'t organize the notes. Try again.', 'error');
