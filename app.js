@@ -13134,7 +13134,8 @@ const MathPractice = {
 
   // Maps module exam topics to math practice category IDs
   _moduleToMathMap: {
-    'ac-theory': ['ac-basics', 'reactance', 'impedance'],
+    'ac-theory': ['ac-basics'],
+    'ac-circuits': ['reactance', 'impedance', 'power-factor', 'ac-basics'],
     'inductors-capacitors': ['reactance', 'impedance', 'ac-basics'],
     'power-factor': ['power-factor'],
     'motors': ['motors'],
