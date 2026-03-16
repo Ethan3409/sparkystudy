@@ -2886,6 +2886,7 @@ const Exams = {
 const Notes = {
   currentTopic: 'general',
   _currentPeriod: 0,  // always 0 now (no period filtering)
+  _focusMode: false,
   mode: 'edit',   // 'edit' | 'quiz' | 'study' | 'community'
   quizCards: [],
   quizIdx: 0,
@@ -3085,6 +3086,7 @@ const Notes = {
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Study mode" style="padding:6px 10px;">📖 Study</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuizAI('${userId}')" title="AI quiz" style="padding:6px 10px;">⚡ Quiz</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print" style="padding:6px 10px;">🖨️</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._toggleFocus()" title="Full page focus mode" style="padding:6px 10px;" id="notesFocusBtn">${this._focusMode ? '⬜ Exit Focus' : '⬛ Focus Mode'}</button>
               </div>
             </div>
             <!-- Formatting toolbar -->
@@ -3328,6 +3330,39 @@ const Notes = {
     document.execCommand('hiliteColor', false, 'rgba(245,158,11,0.3)');
     document.execCommand('bold', false, null);
     showToast('Key term marked — it\'ll appear in your auto-quiz!', 'success');
+  },
+
+  _toggleFocus() {
+    this._focusMode = !this._focusMode;
+    const container = document.querySelector('.notes-layout');
+    const sidebar = document.querySelector('.notes-sidebar');
+    const navbar = document.querySelector('.main-nav');
+    const bottomNav = document.querySelector('.bottom-nav');
+    const appContainer = document.querySelector('.app-container');
+    const btn = document.getElementById('notesFocusBtn');
+
+    if (this._focusMode) {
+      // Enter focus mode — hide sidebar, nav, expand editor
+      if (sidebar) sidebar.style.display = 'none';
+      if (container) container.style.gridTemplateColumns = '1fr';
+      if (navbar) navbar.style.display = 'none';
+      if (bottomNav) bottomNav.style.display = 'none';
+      if (appContainer) { appContainer.style.paddingTop = '0'; appContainer.style.maxWidth = '100%'; }
+      if (btn) btn.textContent = '⬜ Exit Focus';
+      // Make editor taller
+      const editor = document.getElementById('notesEditor');
+      if (editor) editor.style.minHeight = 'calc(100vh - 200px)';
+    } else {
+      // Exit focus mode — restore everything
+      if (sidebar) sidebar.style.display = '';
+      if (container) container.style.gridTemplateColumns = '';
+      if (navbar) navbar.style.display = '';
+      if (bottomNav) bottomNav.style.display = '';
+      if (appContainer) { appContainer.style.paddingTop = ''; appContainer.style.maxWidth = ''; }
+      if (btn) btn.textContent = '⬛ Focus Mode';
+      const editor = document.getElementById('notesEditor');
+      if (editor) editor.style.minHeight = '';
+    }
   },
 
   _toggleExtChars() {
