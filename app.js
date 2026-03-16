@@ -3039,6 +3039,7 @@ const Notes = {
                   <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
                 </label>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._organizeAI('${userId}')" title="AI auto-organize notes into topics" style="padding:6px 10px;">🗂️ Organize</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._cleanupNotes('${userId}')" title="Remove duplicates and clean up formatting" style="padding:6px 10px;">🧹 Clean</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Study mode" style="padding:6px 10px;">📖 Study</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuizAI('${userId}')" title="AI quiz" style="padding:6px 10px;">⚡ Quiz</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print" style="padding:6px 10px;">🖨️</button>
@@ -3900,6 +3901,61 @@ const Notes = {
     });
   },
 
+  // Clean up notes: remove duplicates, strip auto-organized labels, consolidate
+  _cleanupNotes(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (!editor || !editor.innerHTML.trim()) {
+      showToast('No notes to clean up.', 'info');
+      return;
+    }
+
+    let html = editor.innerHTML;
+
+    // 1. Remove all "Auto-organized" labels and their containers
+    html = html.replace(/<hr[^>]*>\s*<div[^>]*>🗂️\s*Auto-organized[^<]*<\/div>/gi, '');
+    html = html.replace(/<div[^>]*>🗂️\s*Auto-organized[^<]*<\/div>/gi, '');
+    html = html.replace(/<hr[^>]*>\s*<div[^>]*>📋\s*Restored from:[^<]*<\/div>/gi, '');
+    html = html.replace(/<div[^>]*>📋\s*Restored from:[^<]*<\/div>/gi, '');
+
+    // 2. Split into text chunks and deduplicate
+    const parts = html.split(/<hr[^>]*>/gi);
+    const seen = new Set();
+    const unique = [];
+
+    parts.forEach(part => {
+      // Normalize: strip tags, collapse whitespace, lowercase for comparison
+      const normalized = part.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (normalized.length < 5) return; // skip empty chunks
+      // Check if we've seen this text (or something 90%+ similar)
+      const key = normalized.slice(0, 100); // use first 100 chars as dedup key
+      if (seen.has(key)) return; // skip duplicate
+      seen.add(key);
+      unique.push(part);
+    });
+
+    // 3. Also deduplicate within a single block (line-by-line)
+    const finalHtml = unique.map(block => {
+      const lines = block.split(/<br\s*\/?>/gi);
+      const seenLines = new Set();
+      const uniqueLines = [];
+      lines.forEach(line => {
+        const norm = line.replace(/<[^>]*>/g, '').trim().toLowerCase();
+        if (norm.length < 5) { uniqueLines.push(line); return; }
+        const lineKey = norm.slice(0, 80);
+        if (seenLines.has(lineKey)) return;
+        seenLines.add(lineKey);
+        uniqueLines.push(line);
+      });
+      return uniqueLines.join('<br>');
+    }).join('<hr>');
+
+    editor.innerHTML = finalHtml;
+    this._onInput(userId);
+
+    const removed = parts.length - unique.length;
+    showToast(`🧹 Cleaned up! Removed ${removed} duplicate${removed !== 1 ? 's' : ''} and formatting labels.`, 'success');
+  },
+
   // AI-powered note organizer: takes all notes from current topic and sorts content
   // into the appropriate topic sections based on what each line/paragraph is about
   async _organizeAI(userId) {
@@ -4009,9 +4065,16 @@ ${numbered.slice(0, 7000)}`,
         if (catChunks.length === 0) continue;
         const key = this._storageKey(userId, cat);
         const existing = localStorage.getItem(key) || '';
-        const newContent = catChunks.join('<br><br>');
+        const existingNorm = existing.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').toLowerCase();
+        // Filter out chunks that already exist in the target topic (prevent duplicates)
+        const deduped = catChunks.filter(chunk => {
+          const chunkNorm = chunk.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+          return chunkNorm.length > 10 && !existingNorm.includes(chunkNorm.slice(0, 80));
+        });
+        if (deduped.length === 0) continue;
+        const newContent = deduped.join('<br><br>');
         localStorage.setItem(key, existing
-          ? existing + '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">🗂️ Auto-organized from ' + (this.currentTopic || 'notes') + '</div>' + newContent
+          ? existing + '<hr>' + newContent
           : newContent);
         movedCount += catChunks.length;
       }
