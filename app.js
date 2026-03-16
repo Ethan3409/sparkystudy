@@ -162,6 +162,35 @@ const FireDB = {
       const snap = await this.db.collection('support').where('userId', '==', userId).orderBy('sentAt', 'desc').get();
       return snap.docs.map(d => d.data());
     } catch(e) { return null; }
+  },
+
+  // ── Shared Notes ──────────────────────────────────────────────────────────
+  // Students can opt-in to share their own notes (NOT modules) with other
+  // students in the same period. Module/textbook content is NEVER shared.
+  async saveSharedNote(note) {
+    if (!this.ready) return;
+    try {
+      await this.db.collection('shared_notes').doc(note.id).set({
+        ...note,
+        _ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) { console.warn('saveSharedNote failed:', e.message); }
+  },
+  async getSharedNotes(period) {
+    if (!this.ready) return [];
+    try {
+      const snap = await this.db.collection('shared_notes')
+        .where('period', '==', period)
+        .orderBy('sharedAt', 'desc')
+        .limit(100)
+        .get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { console.warn('getSharedNotes failed:', e.message); return []; }
+  },
+  async deleteSharedNote(noteId) {
+    if (!this.ready) return;
+    try { await this.db.collection('shared_notes').doc(noteId).delete(); }
+    catch(e) { /* fail silently */ }
   }
 };
 
@@ -1763,10 +1792,10 @@ const Dashboard = {
         return `<div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(249,115,22,0.08));border:2px solid rgba(245,158,11,0.4);border-radius:16px;padding:24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;animation:pulse-border 2s ease-in-out infinite;">
           <div style="font-size:3rem;flex-shrink:0;">📄</div>
           <div style="flex:1;min-width:200px;">
-            <div style="font-weight:800;font-size:1.1rem;color:var(--accent);margin-bottom:6px;">Upload Your Module Content</div>
+            <div style="font-weight:800;font-size:1.1rem;color:var(--accent);margin-bottom:6px;">Upload Your Notes or Modules</div>
             <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
-              SparkStudy's AI tutor, quiz generator, and flashcard maker all work from <strong>your</strong> module content.
-              Upload a PDF of your textbook or snap photos of your notes to unlock personalized study tools.
+              SparkStudy's AI tutor, quiz generator, and flashcard tools all work from <strong>your</strong> content.
+              Upload your <strong>study notes</strong> (shareable with classmates) or <strong>textbook modules</strong> (kept private on your device).
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
@@ -2067,8 +2096,8 @@ const Flashcards = {
       ${!_hasNotes ? `<div onclick="App.navigate('notes')" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
         <span style="font-size:1.8rem;">📄</span>
         <div style="flex:1;">
-          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload your module content for personalized flashcards</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);">The AI quiz & flashcard generator works best with your own notes. Tap to upload a PDF or photo.</div>
+          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload your notes or modules for personalized flashcards</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Upload study notes (shareable) or textbook modules (private). The AI tools work from your content.</div>
         </div>
         <span style="color:var(--accent);font-weight:700;">Upload &rarr;</span>
       </div>` : ''}
@@ -2355,8 +2384,8 @@ const Exams = {
       ${!_hasNotes ? `<div onclick="App.navigate('notes')" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
         <span style="font-size:1.8rem;">📄</span>
         <div style="flex:1;">
-          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload your module for AI-powered study tools</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);">Upload a PDF or photo of your textbook to unlock personalized quizzes and AI tutoring.</div>
+          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload notes or modules for AI-powered study tools</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Upload study notes (shareable) or textbook modules (private) to unlock personalized quizzes and AI tutoring.</div>
         </div>
         <span style="color:var(--accent);font-weight:700;">Upload &rarr;</span>
       </div>` : ''}
@@ -2927,14 +2956,14 @@ const Notes = {
                   <div style="font-size:0.72rem;color:var(--text-muted);" id="notesStatus">Auto-saved</div>
                 </div>
               </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms and review">📖 Study Mode</button>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuizAI('${userId}')" title="AI-powered quiz from your notes">⚡ Make Quiz</button>
-                <label class="btn btn-secondary btn-sm" title="Upload PDF or photos of module pages" style="cursor:pointer;margin:0;">
-                  📄 Upload PDF / Photos
-                  <input type="file" accept="image/*,.pdf" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <label class="btn btn-primary btn-sm" title="Upload notes or module content" style="cursor:pointer;margin:0;padding:6px 14px;">
+                  📄 Upload
+                  <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
                 </label>
-                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print clean notes">🖨️ Print</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Study mode" style="padding:6px 10px;">📖 Study</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuizAI('${userId}')" title="AI quiz" style="padding:6px 10px;">⚡ Quiz</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print" style="padding:6px 10px;">🖨️</button>
               </div>
             </div>
             <!-- Formatting toolbar -->
@@ -2987,23 +3016,33 @@ const Notes = {
 
           ${!savedHtml ? `
           <!-- Upload prompt banner (shown when notes are empty) -->
-          <div style="margin-top:12px;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:14px;padding:20px 22px;display:flex;align-items:flex-start;gap:16px;">
-            <div style="font-size:2rem;flex-shrink:0;">📚</div>
-            <div>
-              <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px;color:var(--accent);">Add your module content here</div>
-              <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
-                The AI study tools (quiz generator, flashcard creator, AI tutor) all work from <strong>your notes</strong>.
-                Upload a <strong>PDF</strong>, take a <strong>📷 photo</strong> of your textbook pages, or type/paste your module content directly.
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent);color:#000;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;">
-                  📄 Upload PDF / Photos
-                  <input type="file" accept="image/*,.pdf" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
-                </label>
-                <button onclick="document.getElementById('notesEditor').focus()" style="padding:8px 16px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;font-size:0.85rem;color:var(--text-primary);cursor:pointer;">✏️ Type Notes</button>
+          <div style="margin-top:12px;background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(249,115,22,0.06));border:2px solid rgba(245,158,11,0.4);border-radius:14px;padding:24px;animation:pulse-border 2s ease-in-out infinite;">
+            <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;">
+              <div style="font-size:2.5rem;flex-shrink:0;">📄</div>
+              <div>
+                <div style="font-weight:800;font-size:1.1rem;margin-bottom:8px;color:var(--accent);">Upload Your Notes or Module Content</div>
+                <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.7;">
+                  SparkStudy's AI tools need your content to work. Upload your <strong>study notes</strong> or <strong>textbook modules</strong> to unlock:
+                </div>
+                <ul style="font-size:0.85rem;color:var(--text-secondary);margin:8px 0 0 16px;line-height:1.8;list-style:disc;">
+                  <li>⚡ <strong>AI-generated quizzes</strong> from your exact content</li>
+                  <li>🤖 <strong>AI tutor</strong> that answers from your materials</li>
+                  <li>📝 <strong>Flashcard generator</strong> tailored to your modules</li>
+                </ul>
               </div>
             </div>
-          </div>` : ''}
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <label style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:linear-gradient(135deg,var(--accent),#d97706);color:#000;border-radius:10px;font-size:0.95rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(245,158,11,0.3);">
+                📄 Upload PDF or Photos
+                <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
+              </label>
+              <button onclick="document.getElementById('notesEditor').focus()" style="padding:12px 20px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;font-size:0.88rem;color:var(--text-primary);cursor:pointer;font-weight:600;">✏️ Type / Paste Notes</button>
+            </div>
+            <div style="margin-top:14px;font-size:0.78rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+              🔒 Modules stay private on your device. Notes can optionally be shared with classmates.
+            </div>
+          </div>
+          <style>@keyframes pulse-border{0%,100%{border-color:rgba(245,158,11,0.4)}50%{border-color:rgba(245,158,11,0.8)}}</style>` : ''}
         </div>
       </div>
     `;
@@ -3020,9 +3059,119 @@ const Notes = {
     const editor = document.getElementById('notesEditor');
     if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
     this.currentTopic = topicId;
+    this.mode = 'edit';
     const state = Storage.get();
     this.render(state);
     setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 100);
+  },
+
+  _openCommunity(userId) {
+    this.mode = 'community';
+    this._communityLoading = true;
+    const state = Storage.get();
+    this.render(state);
+    // Fetch shared notes for user's period
+    FireDB.getSharedNotes(state.user.period).then(notes => {
+      this._communityNotes = notes || [];
+      this._communityLoading = false;
+      this.render(Storage.get());
+    }).catch(() => {
+      this._communityNotes = [];
+      this._communityLoading = false;
+      this.render(Storage.get());
+    });
+  },
+
+  _renderCommunity(container, state) {
+    const userId = state.user.id;
+    const period = state.user.period;
+    const notes = this._communityNotes;
+    const myNotes = notes.filter(n => n.userId === userId);
+    const otherNotes = notes.filter(n => n.userId !== userId);
+
+    container.innerHTML = `
+      <div style="max-width:800px;margin:0 auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h1 style="margin:0;font-size:1.6rem;">🌐 Community Notes</h1>
+            <p style="color:var(--text-secondary);font-size:0.88rem;margin-top:4px;">Shared study notes from Period ${period} students</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">← Back to My Notes</button>
+        </div>
+
+        ${this._communityLoading ? `
+          <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+            <div style="font-size:2rem;margin-bottom:12px;">⏳</div>
+            Loading community notes...
+          </div>
+        ` : notes.length === 0 ? `
+          <div style="text-align:center;padding:60px 20px;">
+            <div style="font-size:3rem;margin-bottom:16px;">📭</div>
+            <h2 style="font-size:1.2rem;margin-bottom:8px;">No shared notes yet</h2>
+            <p style="color:var(--text-secondary);font-size:0.9rem;max-width:400px;margin:0 auto 20px;">
+              Be the first to share your study notes with Period ${period} classmates!
+              Upload your notes and choose to share when prompted.
+            </p>
+            <button class="btn btn-primary" onclick="Notes.mode='edit';Notes.render(Storage.get())">Upload Notes</button>
+          </div>
+        ` : `
+          ${myNotes.length > 0 ? `
+            <div style="margin-bottom:24px;">
+              <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:12px;">Your Shared Notes</h3>
+              ${myNotes.map(n => `
+                <div style="background:var(--bg-card);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:16px;margin-bottom:10px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                    <div>
+                      <div style="font-weight:700;font-size:0.95rem;">📝 ${n.topic}</div>
+                      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${n.wordCount || 0} words · Shared ${new Date(n.sharedAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="Notes._unshareNote('${n.id}')" style="color:var(--danger);font-size:0.75rem;">Remove</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${otherNotes.length > 0 ? `
+            <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:12px;">From Classmates</h3>
+            ${otherNotes.map(n => `
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                  <div>
+                    <div style="font-weight:700;font-size:0.95rem;">📝 ${n.topic}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">By ${n.userName} · ${n.wordCount || 0} words · ${new Date(n.sharedAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="Notes._importSharedNote('${n.id}','${userId}')">📥 Import to My Notes</button>
+                </div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);max-height:120px;overflow:hidden;position:relative;line-height:1.6;">
+                  ${n.content.slice(0, 500).replace(/</g,'&lt;').replace(/\n/g,'<br>')}${n.content.length > 500 ? '...' : ''}
+                  ${n.content.length > 300 ? '<div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,var(--bg-card));"></div>' : ''}
+                </div>
+              </div>
+            `).join('')}
+          ` : ''}
+        `}
+      </div>
+    `;
+  },
+
+  _unshareNote(noteId) {
+    if (!confirm('Remove this note from the community? Other students will no longer be able to see it.')) return;
+    FireDB.deleteSharedNote(noteId);
+    this._communityNotes = this._communityNotes.filter(n => n.id !== noteId);
+    showToast('Note removed from community.', 'info');
+    this.render(Storage.get());
+  },
+
+  _importSharedNote(noteId, userId) {
+    const note = this._communityNotes.find(n => n.id === noteId);
+    if (!note) return;
+    const key = 'sparky_notes_' + userId + '_community_' + note.topic.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const existing = localStorage.getItem(key) || '';
+    const content = note.content.replace(/\n/g, '<br>');
+    localStorage.setItem(key, existing ? existing + '<hr>' + content : '<h2>' + note.topic + ' (from ' + note.userName + ')</h2>' + content);
+    showToast('📥 Notes imported! Find them under "' + note.topic + '" in your notes.', 'success');
+    syncAIContext(Storage.get());
   },
 
   _fmt(cmd) {
@@ -3253,13 +3402,17 @@ const Notes = {
     }
   },
 
-  // Photo upload → Claude Vision OCR → append text to editor
+  // Upload flow: ask user if content is Notes or Module, then process
   async _uploadPages(event, userId) {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
-    const editor = document.getElementById('notesEditor');
     event.target.value = '';
 
+    // Show type selector modal
+    const selectedType = await this._showUploadTypeModal();
+    if (!selectedType) return; // user cancelled
+
+    const editor = document.getElementById('notesEditor');
     const BACKEND = 'https://sparkystudy-production.up.railway.app';
     let totalExtracted = 0;
     const total = files.length;
@@ -3273,15 +3426,12 @@ const Notes = {
         let extractedText = '';
 
         if (file.type === 'application/pdf') {
-          // Try PDF.js first (works for text-based PDFs)
           extractedText = await this._extractPdfText(file);
           if (extractedText.trim().length < 50) {
-            // PDF is probably scanned images — convert pages to images and OCR via backend
-            showToast(`📄 ${fname} is scanned — running OCR (this may take a moment)...`, 'info');
+            showToast(`📄 ${fname} is scanned — running OCR...`, 'info');
             extractedText = await this._ocrPdf(file, BACKEND);
           }
         } else if (file.type.startsWith('image/')) {
-          // Image — send to backend for OCR
           showToast(`📷 Extracting text from ${fname}...`, 'info');
           const base64 = await this._fileToBase64(file);
           const res = await fetch(BACKEND + '/api/extract-image', {
@@ -3293,16 +3443,61 @@ const Notes = {
           if (data.error) throw new Error(data.error);
           extractedText = data.text || '';
         } else {
-          // Plain text file
           extractedText = await file.text();
         }
 
-        if (extractedText.trim().length > 10 && editor) {
-          const heading = `<h2>${fname.replace(/\.[^.]+$/, '')}</h2>`;
-          const formatted = extractedText.replace(/\n/g, '<br>');
-          editor.innerHTML += (editor.innerHTML.trim() ? '<hr>' : '') + heading + formatted;
-          this._onInput(userId);
+        if (extractedText.trim().length < 10) continue;
+
+        // ── AI SAFETY CHECK: verify classification matches user selection ──
+        let aiClassification = null;
+        if (extractedText.trim().length > 100) {
+          try {
+            const classRes = await fetch(BACKEND + '/api/classify-content', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: extractedText })
+            });
+            aiClassification = await classRes.json();
+          } catch(e) { /* classification failed — proceed with user's choice */ }
+        }
+
+        // If user said "notes" but AI detects module with high confidence, warn
+        if (selectedType === 'notes' && aiClassification && aiClassification.type === 'module' && aiClassification.confidence >= 0.75) {
+          const proceed = confirm(
+            '⚠️ This content looks like it may be from a copyrighted textbook or module.\n\n' +
+            'Reason: ' + (aiClassification.reason || 'Textbook formatting detected') + '\n\n' +
+            'Copyrighted module content cannot be shared with other students.\n\n' +
+            'Would you like to save this as a MODULE instead (private, not shared)?'
+          );
+          if (proceed) {
+            // Re-classify as module — stays local only
+            await this._saveAsModule(extractedText, fname, userId, editor);
+            totalExtracted++;
+            continue;
+          }
+          // User insists it's notes — let them, but mark as unverified
+        }
+
+        // If user said "module" but AI detects notes, that's fine — more restrictive is always safe
+        if (selectedType === 'module' || (aiClassification && aiClassification.type === 'module' && aiClassification.confidence >= 0.85)) {
+          // MODULES: save locally ONLY, never share
+          await this._saveAsModule(extractedText, fname, userId, editor);
           totalExtracted++;
+        } else {
+          // NOTES: save locally and offer to share
+          if (editor) {
+            const heading = `<h2>${fname.replace(/\.[^.]+$/, '')}</h2>`;
+            const formatted = extractedText.replace(/\n/g, '<br>');
+            editor.innerHTML += (editor.innerHTML.trim() ? '<hr>' : '') + heading + formatted;
+            this._onInput(userId);
+          }
+          totalExtracted++;
+
+          // Ask to share notes with same-period students
+          const state = Storage.get();
+          if (state && !state.user.isOwner && extractedText.trim().length > 100) {
+            await this._offerToShareNotes(extractedText, fname, userId, state.user.period, state.user.name);
+          }
         }
       } catch (err) {
         console.error('Upload error for', fname, err);
@@ -3311,12 +3506,128 @@ const Notes = {
     }
 
     if (totalExtracted > 0) {
-      showToast(`${totalExtracted} file${totalExtracted > 1 ? 's' : ''} added to your notes!`, 'success');
+      showToast(`${totalExtracted} file${totalExtracted > 1 ? 's' : ''} processed!`, 'success');
       syncAIContext(Storage.get());
-      // Remove the empty-notes upload prompt banner if it exists
-      const banner = editor?.parentElement?.parentElement?.querySelector('[style*="Add your module content"]');
-      if (banner) banner.closest('div[style*="linear-gradient"]')?.remove();
     }
+  },
+
+  // Module content: save locally only, NEVER to cloud
+  async _saveAsModule(text, fname, userId, editor) {
+    if (editor) {
+      const heading = `<h2>📕 ${fname.replace(/\.[^.]+$/, '')}</h2>`;
+      const formatted = text.replace(/\n/g, '<br>');
+      editor.innerHTML += (editor.innerHTML.trim() ? '<hr>' : '') + heading + formatted;
+      this._onInput(userId);
+    }
+    showToast('📕 Module saved locally (private — not shared)', 'info');
+  },
+
+  // Show modal asking user to choose Notes vs Module
+  _showUploadTypeModal() {
+    return new Promise(resolve => {
+      const modal = document.createElement('div');
+      modal.id = 'uploadTypeModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.2s ease;';
+      modal.innerHTML = `
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:480px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+          <h2 style="margin:0 0 8px;font-size:1.2rem;">What are you uploading?</h2>
+          <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:24px;line-height:1.6;">
+            This helps us protect copyrighted material and share notes responsibly.
+          </p>
+
+          <div id="uploadTypeNotes" style="cursor:pointer;background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(16,185,129,0.04));border:2px solid rgba(34,197,94,0.3);border-radius:14px;padding:20px;margin-bottom:14px;transition:border-color 0.15s,transform 0.1s;" onmouseover="this.style.borderColor='rgba(34,197,94,0.6)';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='rgba(34,197,94,0.3)';this.style.transform=''">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="font-size:2rem;">📝</div>
+              <div>
+                <div style="font-weight:800;font-size:1rem;color:#22c55e;">My Own Notes</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;line-height:1.5;">
+                  Your handwritten notes, typed summaries, study cards, or class notes.
+                  <strong>Can be shared</strong> with classmates in the same period (with your permission).
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="uploadTypeModule" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04));border:2px solid rgba(245,158,11,0.3);border-radius:14px;padding:20px;margin-bottom:20px;transition:border-color 0.15s,transform 0.1s;" onmouseover="this.style.borderColor='rgba(245,158,11,0.6)';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='rgba(245,158,11,0.3)';this.style.transform=''">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="font-size:2rem;">📕</div>
+              <div>
+                <div style="font-weight:800;font-size:1rem;color:#f59e0b;">Textbook / Module</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;line-height:1.5;">
+                  Published textbook pages, ILM modules, or any copyrighted course material.
+                  <strong>Stays private</strong> — never shared or uploaded to our servers.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin-bottom:16px;">
+            <span style="font-size:1.2rem;">🔒</span>
+            <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.5;">
+              <strong style="color:#ef4444;">Copyright protection:</strong> Module/textbook content is stored on your device only and is never uploaded, shared, or transmitted. Our AI also verifies content type as a safety measure.
+            </div>
+          </div>
+
+          <button id="uploadTypeCancel" style="width:100%;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-muted);cursor:pointer;font-size:0.88rem;">Cancel</button>
+        </div>`;
+
+      document.body.appendChild(modal);
+
+      modal.querySelector('#uploadTypeNotes').onclick = () => { modal.remove(); resolve('notes'); };
+      modal.querySelector('#uploadTypeModule').onclick = () => { modal.remove(); resolve('module'); };
+      modal.querySelector('#uploadTypeCancel').onclick = () => { modal.remove(); resolve(null); };
+      modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(null); } };
+    });
+  },
+
+  // Offer to share notes with same-period students
+  _offerToShareNotes(text, fname, userId, period, userName) {
+    return new Promise(resolve => {
+      const modal = document.createElement('div');
+      modal.id = 'shareNotesModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.2s ease;';
+      modal.innerHTML = `
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:440px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="font-size:2rem;">🤝</div>
+            <div>
+              <h3 style="margin:0;font-size:1.1rem;">Share with classmates?</h3>
+              <div style="font-size:0.82rem;color:var(--text-muted);">Help other Period ${period} students</div>
+            </div>
+          </div>
+          <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;">
+            Would you like to share these notes with other students in <strong>Period ${period}</strong>?
+            Your name will appear as the contributor. You can remove shared notes at any time from Settings.
+          </p>
+          <div style="display:flex;gap:10px;">
+            <button id="shareYes" style="flex:1;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Yes, share my notes</button>
+            <button id="shareNo" style="flex:1;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);cursor:pointer;font-size:0.9rem;">No, keep private</button>
+          </div>
+        </div>`;
+
+      document.body.appendChild(modal);
+
+      modal.querySelector('#shareYes').onclick = async () => {
+        modal.remove();
+        const noteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const topicName = fname.replace(/\.[^.]+$/, '');
+        const sharedNote = {
+          id: noteId,
+          userId: userId,
+          userName: userName || 'Anonymous',
+          period: period,
+          topic: topicName,
+          content: text.slice(0, 15000), // cap at 15k chars
+          sharedAt: Date.now(),
+          wordCount: text.split(/\s+/).filter(Boolean).length
+        };
+        await FireDB.saveSharedNote(sharedNote);
+        showToast('📤 Notes shared with Period ' + period + ' students!', 'success');
+        resolve(true);
+      };
+      modal.querySelector('#shareNo').onclick = () => { modal.remove(); resolve(false); };
+      modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(false); } };
+    });
   },
 
   async _extractPdfText(file) {

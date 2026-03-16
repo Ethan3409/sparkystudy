@@ -156,6 +156,37 @@ app.post('/api/extract-image', async (req, res) => {
   }
 });
 
+// ── POST /api/classify-content ───────────────────────────────────────────────
+// Uses AI to determine if uploaded text is copyrighted textbook material (module)
+// or student-created notes. Returns { type: 'module' | 'notes', confidence, reason }
+app.post('/api/classify-content', async (req, res) => {
+  if (!anthropic) return res.status(503).json({ error: 'AI not configured.' });
+  const { text } = req.body;
+  if (!text || text.length < 30) return res.status(400).json({ error: 'Text too short to classify' });
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      system: `You classify educational text as either a copyrighted TEXTBOOK/MODULE or student-created NOTES.
+
+TEXTBOOK/MODULE indicators: publisher name (ILM, Pearson, McGraw-Hill), edition numbers, ISBN, module codes (e.g. 030201a), formal objective lists, "Rationale" or "Outcome" sections, figure references like "Figure 1 -", page numbers in margins, copyright notices, "Learning Resources for Skilled Trades", professional typesetting language.
+
+STUDENT NOTES indicators: informal language, abbreviations, personal comments ("I think", "remember to", "prof said"), bullet point summaries, handwritten style (short fragments), class dates, highlighting markers, study tips, personal mnemonics, incomplete sentences.
+
+Respond with ONLY valid JSON: {"type":"module" or "notes","confidence":0.0-1.0,"reason":"brief explanation"}`,
+      messages: [{ role: 'user', content: text.slice(0, 3000) }]
+    });
+    const raw = response.content[0].text.trim();
+    const json = JSON.parse(raw);
+    res.json(json);
+  } catch (err) {
+    console.error('Classification error:', err.message);
+    // Default to safest assumption: treat as module (don't share)
+    res.json({ type: 'module', confidence: 0.5, reason: 'Classification failed — defaulting to module for safety' });
+  }
+});
+
 // ── POST /api/create-checkout-session ───────────────────────────────────────
 // Creates a Stripe Checkout Session and returns the URL to redirect the user.
 app.post('/api/create-checkout-session', async (req, res) => {
