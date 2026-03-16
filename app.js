@@ -1027,6 +1027,12 @@ function syncAIContext(state) {
       const text = (localStorage.getItem(key) || '').trim();
       if (text.length > 20) notes.push('=== [Module] ===\n' + text);
     }
+    // Also include lesson notes
+    if (key && key.startsWith('sparky_lesson_notes_' + uid + '_')) {
+      const html = localStorage.getItem(key) || '';
+      const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (text.length > 20) notes.push('=== [Lesson Notes] ===\n' + text);
+    }
   }
   window._sparkStudyCtx = notes.join('\n\n').slice(0, 20000);
 }
@@ -9679,11 +9685,11 @@ const LESSONS_CONTENT = [
     id: 'm21', period: 2,
     title: 'Relays & Contactors',
     icon: '🔌',
-    subtitle: 'The Brain and Muscle of Industrial Control',
+    subtitle: 'ILM 030204a — The Brain and Muscle of Industrial Control',
     color: '#10b981',
     gradient: 'linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.06))',
     border: 'rgba(16,185,129,0.3)',
-    readTime: '22 min read',
+    readTime: '35 min read',
     sections: [
       {
         type: 'hook',
@@ -9697,8 +9703,8 @@ const LESSONS_CONTENT = [
       },
       {
         type: 'concept',
-        title: 'Types of Relays: Plug-in, Power, and Industrial',
-        body: `Not all relays are created equal. There are several distinct families, each suited to different applications:\n\n• Plug-in relays (general-purpose): the most common type in control panels. Come in tubular (round pin) and spade pin configurations. Rated for relatively low currents. Sockets allow easy replacement without rewiring. Contacts available as NO, NC, or Form C (changeover).\n\n• Power relays: physically larger, designed for heavier loads than plug-in types but lighter than full contactors. Used for switching moderate industrial loads, heating elements, and lighting circuits.\n\n• Industrial control relays (NEMA/IEC rated): designed specifically for control circuit service in industrial environments. Feature adder decks — additional contact assemblies that can be snapped on to increase the number of available contacts without changing the relay body.\n\n• Low-voltage lighting relays: specialized relays with coils rated below 30V AC or below 60V DC, used in lighting management and low-voltage switching systems such as those found in commercial buildings and ballast switching applications.`
+        title: 'Types of Relays: Plug-in, Power, Industrial, Latching, and Reed',
+        body: `Not all relays are created equal. There are several distinct families, each suited to different applications:\n\n• Plug-in relays (general-purpose): the most common type in control panels. Come in tubular (round pin) and spade pin configurations. Rated for relatively low currents (typically 5-15A). Sockets allow easy replacement without rewiring. Contacts available as NO, NC, or Form C (changeover). Common base styles: 8-pin octal (DPDT), 11-pin octal (3PDT), and 14-pin (4PDT).\n\n• Power relays: physically larger, designed for heavier loads than plug-in types but lighter than full contactors. Used for switching moderate industrial loads, heating elements, and lighting circuits.\n\n• Industrial control relays (machine tool relays, NEMA/IEC rated): designed specifically for control circuit service in industrial environments. Feature adder decks — additional contact assemblies that can be snapped on to increase the number of available contacts without changing the relay body. Rugged construction for factory floor vibration and dust.\n\n• Latching relays (impulse relays): a relay that stays in its last switched position after the coil is de-energized — it does not need continuous power to hold its contacts. Toggled between states by short current pulses. Uses a permanent magnet or mechanical latch to hold position. Two-coil latching relays have separate set and reset coils. Single-coil types toggle with each pulse. Used in lighting control, memory circuits, and applications where power consumption must be minimized.\n\n• Reed relays: consist of two thin ferromagnetic reeds sealed inside a glass tube filled with inert gas. When a coil around the tube is energized, the reeds magnetize and snap together, closing the contact. Extremely fast switching speed (under 1 ms), very long contact life (millions of operations), and hermetically sealed contacts immune to contamination. Limited to very low current (typically under 1A). Used in test equipment, telecommunications, and instrumentation.\n\n• Low-voltage lighting relays: specialized relays with coils rated below 30V AC or below 60V DC, used in lighting management and low-voltage switching systems such as those found in commercial buildings and ballast switching applications.`
       },
       {
         type: 'concept',
@@ -9713,9 +9719,20 @@ const LESSONS_CONTENT = [
         formula: 'Form A = SPST-NO | Form B = SPST-NC | Form C = SPDT (changeover) | Form X = double-make NO | Form Y = double-break NC'
       },
       {
+        type: 'keypoint',
+        title: 'Multi-Pole Contact Configurations',
+        body: `Relays and contactors come in various pole configurations. The number of poles tells you how many independent circuits the device can switch simultaneously:\n\n• SPST (Single-Pole Single-Throw): switches one circuit on or off. One moving contact, one stationary contact. The simplest configuration.\n\n• SPDT (Single-Pole Double-Throw): one common terminal switches between two circuits (Form C). The moving contact transfers from one stationary contact to the other.\n\n• DPDT (Double-Pole Double-Throw): two independent Form C contact sets operated by the same coil. Switches two separate circuits simultaneously, each with changeover capability. Very common in general-purpose plug-in relays (8-pin octal base).\n\n• 3PDT (Triple-Pole Double-Throw): three independent Form C contact sets. Available on 11-pin octal base relays. Provides three changeover contacts from a single coil.\n\n• 4PDT (Four-Pole Double-Throw): four independent Form C contact sets. Available on 14-pin relay bases. Provides maximum switching flexibility from a single relay.\n\nKey exam fact: each pole is an independent switching path. Adding poles does NOT increase current capacity — it adds more circuits. A DPDT relay rated at 10A means each pole can carry 10A independently, not 20A total across both poles. Power contactors for three-phase motors are always 3-pole (one pole per phase).`,
+        formula: 'SPST = 1 circuit | SPDT = 1 circuit, 2 positions | DPDT = 2 circuits | 3PDT = 3 circuits | 4PDT = 4 circuits\n8-pin octal = DPDT | 11-pin octal = 3PDT | 14-pin = 4PDT'
+      },
+      {
         type: 'concept',
-        title: 'Nameplate Information and Terminal Numbering',
-        body: `Every relay and contactor has a nameplate or data label that contains the essential ratings. You must be able to read these before installation:\n\n• Coil voltage rating: the voltage at which the coil is designed to operate (e.g., 120V AC, 24V DC, 240V AC). Operating outside this range causes premature failure.\n\n• Contact voltage rating: the maximum voltage the contacts are rated to switch. Must equal or exceed the circuit voltage.\n\n• Continuous current rating: the maximum current the contacts can carry continuously without overheating. Expressed in amperes.\n\n• Horsepower rating: for motor contactors, the maximum horsepower load at a specified voltage (e.g., 10 HP at 208V, 15 HP at 480V).\n\n• NEMA pilot duty rating: the current available for control circuits from the contacts, expressed in VA at a specific power factor.\n\nTerminal numbering: coil terminals are typically labeled A1 and A2. Main power contacts are labeled 1/2 (L1/T1), 3/4 (L2/T2), 5/6 (L3/T3). Auxiliary contacts are labeled 13/14 (NO), 21/22 (NC), etc. IEC and NEMA may use different schemes — always consult the device wiring diagram.`
+        title: 'Nameplate Information and Terminal Numbering (IEC/NEMA)',
+        body: `Every relay and contactor has a nameplate or data label that contains the essential ratings. You must be able to read these before installation:\n\n• Coil voltage rating: the voltage at which the coil is designed to operate (e.g., 120V AC, 24V DC, 240V AC). Operating outside this range causes premature failure.\n\n• Contact voltage rating: the maximum voltage the contacts are rated to switch. Must equal or exceed the circuit voltage.\n\n• Continuous current rating: the maximum current the contacts can carry continuously without overheating. Expressed in amperes.\n\n• Horsepower rating: for motor contactors, the maximum horsepower load at a specified voltage (e.g., 10 HP at 208V, 15 HP at 480V).\n\n• NEMA pilot duty rating: the current available for control circuits from the contacts, expressed in VA at a specific power factor.\n\nTerminal numbering: coil terminals are typically labeled A1 and A2. Main power contacts are labeled 1/2 (L1/T1), 3/4 (L2/T2), 5/6 (L3/T3). Auxiliary contacts are labeled 13/14 (NO), 21/22 (NC), etc. IEC and NEMA may use different schemes — always consult the device wiring diagram.\n\nIEC auxiliary contact numbering system: the first digit indicates the contact sequence number (1st, 2nd, 3rd contact on the device). The second digit indicates function: 1/2 = NC contact, 3/4 = NO contact, 5/6 = NC with special function, 7/8 = NO with special function. Example: contact 13/14 means the first NO auxiliary contact. Contact 21/22 means the second NC auxiliary contact. Contact 43/44 means the fourth NO auxiliary contact.`
+      },
+      {
+        type: 'concept',
+        title: 'Arc Chutes and Blow-Out Coils',
+        body: `When contacts open under load, an electric arc forms across the gap. In high-current devices like contactors, this arc must be extinguished quickly or it will destroy the contacts and housing. Two main technologies are used:\n\nArc chutes (deion chambers): a stack of steel or ceramic plates mounted around the contact area. When an arc forms, the magnetic field of the arc current drives the arc upward into the arc chute. The plates split the arc into many smaller arcs in series. Each plate acts as a heat sink, cooling the arc plasma. The total voltage required to sustain many small arcs exceeds the supply voltage, and the arc extinguishes. Arc chutes are standard on NEMA-size contactors and are removable for inspection.\n\nBlow-out coils (magnetic blow-out): a coil wired in series with the main contacts creates a magnetic field perpendicular to the arc. This field forces the arc sideways (by the motor effect — current-carrying conductor in a magnetic field experiences a force) into the arc chute, stretching and cooling it. Blow-out coils are especially important on DC contactors where there is no natural current zero-crossing to help extinguish the arc. AC arcs naturally extinguish at each current zero (120 times per second at 60 Hz), making arc suppression easier on AC devices.\n\nKey exam fact: DC arcs are much harder to extinguish than AC arcs because DC current never passes through zero. DC contactors require more aggressive arc suppression (larger arc chutes, blow-out coils) and are derated compared to their AC ratings.`
       },
       {
         type: 'concept',
@@ -9725,7 +9742,7 @@ const LESSONS_CONTENT = [
       {
         type: 'concept',
         title: 'Contact Materials and Their Properties',
-        body: `Contact materials are chosen based on the trade-offs between conductivity, durability, resistance to welding, and oxidation behaviour:\n\n• Silver contacts: the most common material for control relays. Silver oxide (which forms on the surface) is electrically conductive, so silver contacts are self-cleaning — the oxide does not increase contact resistance the way copper oxide does. However, silver contacts can weld together under high inrush currents.\n\n• Copper contacts: used in high-current applications. Copper has a hard surface that is more resistant to contact welding than silver. However, copper oxide is non-conductive, so copper contacts are prone to pitting and increased contact resistance if they arc frequently or are used in contaminated environments.\n\n• Cadmium contacts (silver-cadmium oxide): a versatile alloy combining silver's conductivity with cadmium's arc resistance. Does not conduct quite as well as pure silver but handles a wide variety of current and voltage applications. Widely used in industrial contactors.`
+        body: `Contact materials are chosen based on the trade-offs between conductivity, durability, resistance to welding, and oxidation behaviour:\n\n• Silver contacts: the most common material for control relays. Silver oxide (which forms on the surface) is electrically conductive, so silver contacts are self-cleaning — the oxide does not increase contact resistance the way copper oxide does. However, silver contacts can weld together under high inrush currents.\n\n• Copper contacts: used in high-current applications. Copper has a hard surface that is more resistant to contact welding than silver. However, copper oxide is non-conductive, so copper contacts are prone to pitting and increased contact resistance if they arc frequently or are used in contaminated environments.\n\n• Cadmium contacts (silver-cadmium oxide): a versatile alloy combining silver's conductivity with cadmium's arc resistance. Does not conduct quite as well as pure silver but handles a wide variety of current and voltage applications. Widely used in industrial contactors.\n\n• Tungsten contacts: the hardest and most arc-resistant contact material. Tungsten has a very high melting point (3,422 degrees C — highest of any metal), making it extremely resistant to arc erosion and contact welding. However, tungsten has higher electrical resistance than silver, so it is used where arc resistance is more important than low contact resistance. Common in high-voltage DC applications, automotive relays, and heavy-duty switching where severe arcing is expected. Tungsten is also used as a facing material bonded to a copper or silver base to combine arc resistance with good conductivity.`
       },
       {
         type: 'concept',
@@ -9761,6 +9778,23 @@ const LESSONS_CONTENT = [
         body: `North American electrical work uses two different standards for contactors and motor starters, and you will encounter both:\n\nNEMA (National Electrical Manufacturers Association): the traditional North American standard. NEMA contactors are categorized by size numbers (Size 0 through Size 9). They are generally oversized compared to their IEC equivalents for the same load — this gives them excellent tolerance for high ambient temperatures, severe duty cycles, and less-than-ideal maintenance conditions. Easy to apply: choose the NEMA size for the motor HP and voltage from a table.\n\nIEC (International Electrotechnical Commission): the international standard, now widely used in North America especially in industrial OEM equipment. IEC contactors are smaller and lighter than NEMA equivalents. They have higher temperature ratings and tighter manufacturing tolerances. IEC contactors must be carefully applied — using one in a higher ambient temperature or more severe duty cycle than specified will cause premature failure. Smaller creepage distances (the surface path between conductors) require careful attention to contamination.\n\nAs a rule: NEMA is more forgiving of adverse conditions. IEC requires more careful application engineering.`
       },
       {
+        type: 'concept',
+        title: 'NEMA Contactor Sizes: The Complete Table',
+        body: `NEMA sizes are standardized across all manufacturers. Each size corresponds to specific HP and current ratings at standard voltages:\n\n• Size 00: up to 1.5 HP at 200V, 2 HP at 230V, 2 HP at 460V, 2 HP at 575V. Max continuous current: 9A.\n• Size 0: up to 3 HP at 200V, 3 HP at 230V, 5 HP at 460V, 5 HP at 575V. Max continuous current: 18A.\n• Size 1: up to 7.5 HP at 200V, 7.5 HP at 230V, 10 HP at 460V, 10 HP at 575V. Max continuous current: 27A.\n• Size 2: up to 10 HP at 200V, 15 HP at 230V, 25 HP at 460V, 25 HP at 575V. Max continuous current: 45A.\n• Size 3: up to 25 HP at 200V, 30 HP at 230V, 50 HP at 460V, 50 HP at 575V. Max continuous current: 90A.\n• Size 4: up to 40 HP at 200V, 50 HP at 230V, 100 HP at 460V, 100 HP at 575V. Max continuous current: 135A.\n• Size 5: up to 75 HP at 200V, 100 HP at 230V, 200 HP at 460V, 200 HP at 575V. Max continuous current: 270A.\n• Size 6: up to 150 HP at 200V, 200 HP at 230V, 400 HP at 460V, 400 HP at 575V. Max continuous current: 540A.\n• Size 7: up to 300 HP at 200V, 400 HP at 230V, 600 HP at 460V, 600 HP at 575V. Max continuous current: 810A.\n• Size 8: up to 450 HP at 200V, 500 HP at 230V, 900 HP at 460V, 900 HP at 575V. Max continuous current: 1215A.\n• Size 9: up to 800 HP at 200V, 750 HP at 230V, 1600 HP at 460V, 1600 HP at 575V. Max continuous current: 2250A.\n\nAs voltage increases, the same NEMA size handles a larger HP motor because current decreases with increasing voltage for the same power.`,
+        formula: 'Size 00=9A | Size 0=18A | Size 1=27A | Size 2=45A | Size 3=90A | Size 4=135A | Size 5=270A | Size 6=540A | Size 7=810A | Size 8=1215A | Size 9=2250A'
+      },
+      {
+        type: 'concept',
+        title: 'Contactor Construction: E-Frame and U-Frame Cores',
+        body: `The magnetic core of a contactor is built in specific shapes that determine how the armature moves and how the magnetic circuit performs:\n\nE-frame (clapper-type) construction: the core is shaped like the letter E when viewed from the side. The coil sits on the center leg of the E. The armature is hinged at one end and swings closed like a clapper against the pole faces of the E-core. E-frame contactors are the most common design for NEMA sizes 00 through 4. The hinge action provides a wiping motion on the contacts that helps keep them clean. Compact design, reliable, and cost-effective for moderate current ratings.\n\nU-frame (bell-crank or vertical-action) construction: the core is shaped like the letter U. The coil sits inside the U. The armature is pulled straight down (or up) into the U-core, and this linear motion is transferred to the contacts through a mechanical linkage. U-frame construction is used for larger contactors (NEMA sizes 5 through 9) because the straight-pull action provides greater magnetic force for heavier contact assemblies. The vertical motion allows for stronger contact pressure at higher current ratings.\n\nDC contactor cores: unlike AC contactors, DC contactor cores do NOT need laminations because the magnetic field is constant (not alternating). DC cores can be solid iron, which is simpler and provides maximum magnetic force. However, solid cores cause the armature to stick momentarily when the coil is de-energized (residual magnetism). A non-magnetic shim or air gap is used to prevent sticking.`
+      },
+      {
+        type: 'concept',
+        title: 'Motor Starters: Contactor Plus Overload Relay',
+        body: `A motor starter is not a single device — it is a contactor combined with an overload relay. Understanding this distinction is critical:\n\nThe contactor provides the switching function — it connects and disconnects the motor from the power supply. It handles the inrush current of starting and the interruption of running current. The contactor alone provides NO overload protection.\n\nThe overload relay provides motor protection — it monitors the current flowing to the motor and trips (opens a set of contacts in the control circuit) if current exceeds a preset value for a specified time. Overload relays allow brief overcurrents (like motor starting inrush) but trip on sustained overcurrents that would overheat the motor windings.\n\nTypes of overload relays:\n- Bimetallic (thermal): two dissimilar metals bonded together bend when heated by motor current. When bending reaches a threshold, it trips the overload contacts. Must cool down before resetting.\n- Melting alloy (solder pot or eutectic): a calibrated alloy melts at a specific temperature corresponding to overcurrent. The ratchet wheel releases and the overload trips. Very reliable and tamper-resistant.\n- Electronic: uses current transformers to sense motor current and a microprocessor to calculate thermal capacity. Faster response, adjustable trip class, and can provide single-phase protection.\n\nTrip classes: Class 10 trips within 10 seconds at 6x FLA. Class 20 trips within 20 seconds. Class 30 trips within 30 seconds. Class 10 is standard for most motors. Class 20 or 30 is used for high-inertia loads that need longer starting time.\n\nA combination motor starter adds a disconnect switch or circuit breaker ahead of the contactor, providing both overcurrent (short-circuit) protection and overload protection in a single enclosure.`,
+        formula: 'Motor Starter = Contactor + Overload Relay\nCombination Starter = Disconnect + Contactor + Overload Relay\nClass 10 = trips in 10s at 6x FLA | Class 20 = 20s | Class 30 = 30s'
+      },
+      {
         type: 'analogy',
         title: 'The Relay as a Remote-Controlled Switch',
         body: `Think of a relay as exactly what it is: a remote-controlled switch. The coil is the remote control — it can be operated by a low-power signal from any distance over small control wires. The contacts are the switch — they can handle the full load current of the controlled circuit.\n\nThe crucial advantage: the control circuit and the controlled circuit are completely electrically isolated. The control circuit might be 24V DC from a PLC output card. The controlled circuit might be 600V AC driving a large motor. These two circuits never touch each other electrically — the only connection is through the magnetic field in the relay.\n\nThis isolation is also a safety feature: a person touching the 24V control wiring is not in danger from the 600V power circuit, even though their touch controls the motor. Separation of control and power is one of the fundamental principles of safe industrial design.`
@@ -9773,7 +9807,14 @@ const LESSONS_CONTENT = [
           { q: 'A 240V AC contactor coil has a seal-in voltage of approximately:', a: '204V (240 × 0.85 = 204V). Below this voltage the armature cannot fully seat. Drop-out is approximately 120V (240 × 0.50).' },
           { q: 'Why does a relay coil draw much higher current before the armature seals in compared to after?', a: 'Before sealing: large air gap = high magnetic reluctance = low inductance = low XL = low impedance = high current. After sealing: air gap eliminated = low reluctance = high inductance = high XL = high impedance = low current. Inrush is typically 4-10× sealed current.' },
           { q: 'A Form C contact has three terminals. Name them and describe the contact action when the coil energizes.', a: 'Common (C), Normally Open (NO), and Normally Closed (NC). With coil de-energized: Common is connected to NC. When coil energizes: armature pulls in, Common transfers to NO (NC opens simultaneously). This is a changeover or SPDT action.' },
-          { q: 'What is the difference between electrical interlock and mechanical interlock on a reversing contactor?', a: 'Electrical interlock: NC auxiliary contact of each contactor is wired in series with the coil circuit of the other — if one is energized, its NC contact opens to break the other\'s coil circuit. Mechanical interlock: a physical linkage prevents both contactor armatures from seating simultaneously. Best practice uses both for redundant protection against phase-to-phase shorts.' }
+          { q: 'What is the difference between electrical interlock and mechanical interlock on a reversing contactor?', a: 'Electrical interlock: NC auxiliary contact of each contactor is wired in series with the coil circuit of the other — if one is energized, its NC contact opens to break the other\'s coil circuit. Mechanical interlock: a physical linkage prevents both contactor armatures from seating simultaneously. Best practice uses both for redundant protection against phase-to-phase shorts.' },
+          { q: 'What NEMA size contactor is needed for a 50 HP motor at 460V?', a: 'NEMA Size 3. Size 3 is rated for up to 50 HP at 460V with a maximum continuous current of 90A.' },
+          { q: 'What is the purpose of an arc chute on a contactor?', a: 'An arc chute (deion chamber) is a stack of steel or ceramic plates that splits the arc into many smaller arcs in series when contacts open under load. Each plate cools the arc plasma and the total voltage needed to sustain many small arcs exceeds the supply voltage, extinguishing the arc quickly and protecting the contacts.' },
+          { q: 'What makes a motor starter different from a contactor?', a: 'A motor starter = contactor + overload relay. The contactor provides switching; the overload relay provides motor protection against sustained overcurrent. A contactor alone has NO overload protection.' },
+          { q: 'How does a latching relay differ from a standard relay?', a: 'A latching relay stays in its last switched position after the coil is de-energized — it does not require continuous power to hold its contacts. It uses a permanent magnet or mechanical latch to hold position. It is toggled by short current pulses rather than continuous energization.' },
+          { q: 'What is the difference between E-frame and U-frame contactor construction?', a: 'E-frame (clapper-type): core shaped like an E, armature hinges and swings closed. Used for smaller contactors (NEMA sizes 00-4). U-frame: core shaped like a U, armature pulls straight in with greater force. Used for larger contactors (NEMA sizes 5-9) that need stronger contact pressure.' },
+          { q: 'Why are DC arcs harder to extinguish than AC arcs?', a: 'AC current naturally passes through zero 120 times per second (at 60 Hz), giving the arc a chance to extinguish at each zero-crossing. DC current never passes through zero, so the arc must be forcibly stretched and cooled using arc chutes and blow-out coils.' },
+          { q: 'An IEC auxiliary contact is labeled 21/22. What does this mean?', a: 'The first digit (2) is the contact sequence number (second contact on the device). The second digit indicates function: 1/2 = NC contact. So 21/22 is the second NC auxiliary contact.' }
         ]
       },
       {
@@ -9783,7 +9824,11 @@ const LESSONS_CONTENT = [
           'A chattering or buzzing contactor always has one of two causes: coil voltage too low (below ~85% rated) or a broken shading coil. Check supply voltage at the coil terminals first. If voltage is correct, inspect the shading ring — it is a copper ring embedded in the pole face of the core or armature. A broken shading ring causes 120 Hz chatter even at correct voltage.',
           'When you replace a relay or contactor, always check the coil voltage rating on the new device nameplate before installing it. Installing a 120V coil in a 240V circuit will destroy it instantly. Installing a 240V coil in a 120V circuit means it will never pull in.',
           'IEC-style contactors used in North American installations must be evaluated for duty cycle and ambient temperature. An IEC contactor rated for a 10 HP motor at 40°C must be derated if the panel ambient exceeds that temperature. NEMA contactors are much more tolerant of adverse conditions.',
-          'The adder deck system on industrial control relays is extremely useful: you can add normally open or normally closed contact blocks to a relay without replacing the coil assembly. This saves cost when adding interlocks to an existing installation.'
+          'The adder deck system on industrial control relays is extremely useful: you can add normally open or normally closed contact blocks to a relay without replacing the coil assembly. This saves cost when adding interlocks to an existing installation.',
+          'Never file or sand relay contacts. Filing removes the thin layer of contact material (silver, silver-cadmium oxide) bonded to the contact base, exposing the inferior base metal underneath. If contacts are pitted or burned, replace the contact assembly or the entire relay.',
+          'When sizing a NEMA contactor, always size for the motor HP and voltage — not just the current. NEMA size tables account for inrush current and duty cycle that a simple current comparison would miss. A Size 1 at 27A continuous is not equivalent to any 27A-rated switch.',
+          'Arc chutes must be inspected and replaced if the ceramic plates are cracked, broken, or heavily carbon-tracked. A damaged arc chute cannot properly extinguish arcs, leading to contact welding and potential fire.',
+          'Silver contacts are self-cleaning because silver oxide is conductive. Copper contacts are NOT — copper oxide is an insulator. This is why copper contacts in dirty or humid environments develop high contact resistance and must be inspected more frequently.'
         ]
       },
       {
@@ -9793,12 +9838,12 @@ const LESSONS_CONTENT = [
           'Describe the operating principle of an electromagnetic relay, identifying the coil, core, armature, armature springs, and contact springs.',
           'Explain the purpose of laminations in relay and contactor cores and armatures, and describe how they reduce eddy current losses.',
           'Explain the purpose of the shading coil in an AC relay or contactor and describe what would happen without it.',
-          'Identify and describe the four main relay types: plug-in, power, industrial control (with adder decks), and low-voltage lighting relays.',
+          'Identify and describe the six main relay types: plug-in (general-purpose), power, industrial control (with adder decks), latching (impulse), reed, and low-voltage lighting relays.',
           'Distinguish between a relay and a contactor based on current ratings, arc suppression, and intended applications.',
           'Define and compare NEMA and IEC contactor ratings, identifying the key differences in sizing philosophy, temperature rating, and creepage distance.',
           'Identify non-reversing and reversing contactor configurations and explain why reversing contactors require both mechanical and electrical interlocking.',
           'Define contact form designations: Form A (SPST-NO), Form B (SPST-NC), Form C (SPDT), Form X (double-make NO), Form Y (double-break NC).',
-          'Describe the properties of silver, copper, and silver-cadmium oxide contact materials and identify their relative strengths and weaknesses.',
+          'Describe the properties of silver, copper, silver-cadmium oxide, and tungsten contact materials and identify their relative strengths and weaknesses.',
           'Describe bridge contacts and bifurcated bridge contacts and explain how they improve contact life.',
           'Read relay and contactor nameplate information including coil voltage, contact voltage rating, continuous current rating, HP rating, and NEMA pilot duty rating.',
           'Identify standard terminal numbering for contactor coils (A1/A2) and main contacts (1/2, 3/4, 5/6) and auxiliary contacts (13/14, 21/22).',
@@ -9829,11 +9874,11 @@ const LESSONS_CONTENT = [
     id: 'm22', period: 2,
     title: 'Timers & Smart Relays',
     icon: '⏱',
-    subtitle: 'Time-Based Control and Programmable Logic',
+    subtitle: 'ILM 030204d — Time-Based Control and Programmable Logic',
     color: '#f97316',
     gradient: 'linear-gradient(135deg,rgba(249,115,22,0.12),rgba(234,88,12,0.06))',
     border: 'rgba(249,115,22,0.3)',
-    readTime: '18 min read',
+    readTime: '22 min read',
     sections: [
       {
         type: 'hook',
@@ -9843,12 +9888,12 @@ const LESSONS_CONTENT = [
       {
         type: 'concept',
         title: 'Timer Types: From Mechanical to Electronic',
-        body: `Timing mechanisms have evolved through several generations, each with different accuracy and application suitability:\n\n• Spring-wound interval timers: a clockwork mechanism wound by a motor or manually. Timing accuracy is limited — acceptable for applications where exact timing is not critical, such as process hold times with wide tolerances. Not suitable for precision control.\n\n• Mechanical and electronic time switches: real-clock-based devices that switch outputs on and off at preset times of day or week. Used for daily/weekly scheduling such as lighting control, HVAC scheduling, and irrigation systems. Not suitable for triggering control sequences based on process events.\n\n• Timing relays: the precision tool for control sequences. Response to a control input with a precisely adjustable time delay. Available with pneumatic, fluid dashpot, or electronic timing mechanisms. Used wherever accurate, repeatable time delays are required in a control circuit.`
+        body: `Timing mechanisms have evolved through several generations, each with different accuracy and application suitability. The three basic types of timing devices are spring-wound interval timers, mechanical/electronic time switches, and timing relays.\n\n• Spring-wound interval timers: a clockwork mechanism wound by turning a knob or dial. Commonly available in a wall-switch style that replaces a standard toggle switch in a single-gang box. The user turns the dial to set a timed-on interval (typically 5 to 60 minutes), and the timer runs down to zero, then switches off. Timing accuracy is limited — acceptable for applications where exact timing is not critical. Common applications include bathroom exhaust fans (CEC often requires timed ventilation), sauna and steam room heaters (safety shutoff after a set period), and heat lamps. Not suitable for precision control or process sequences.\n\n• Mechanical and electronic time switches: real-clock-based devices that switch outputs on and off at preset times of day or week. Mechanical versions use a small synchronous clock motor that rotates a dial once every 24 hours (or once every 7 days for weekly models). Adjustable cams or trippers are positioned around the dial at the desired on and off times — pushing a cam outward sets an on-time, pulling it inward sets an off-time. Electronic time switches replace the clock motor and cams with a microprocessor and digital display, allowing more switching events per day and battery backup to maintain time during power outages. Used for daily/weekly scheduling such as lighting control, HVAC scheduling, sign lighting, and irrigation systems. Not suitable for triggering control sequences based on process events.\n\n• Timing relays: the precision tool for control sequences. They respond to a control input with a precisely adjustable time delay. Available with pneumatic, fluid dashpot, or electronic timing mechanisms. Used wherever accurate, repeatable time delays are required in a control circuit.`
       },
       {
         type: 'concept',
         title: 'Timing Control Methods: How the Delay Is Generated',
-        body: `Inside a timing relay, the delay is produced by one of three mechanisms — each with different characteristics:\n\n• Pneumatic timing: a bellows or piston mechanism with an adjustable needle valve controls how fast air flows through an orifice. The slower the airflow, the longer the delay. Pneumatic timers are rugged and immune to electrical interference, but drift with temperature and are not highly precise. Adjustment range is typically limited.\n\n• Fluid dashpot (oil-dashpot): a piston moves through a chamber of fluid. The needle valve controls how fast fluid transfers between two chambers. Similar characteristics to pneumatic — reliable but not highly precise. Less common in modern installations.\n\n• Electronic timing: uses an RC (resistor-capacitor) circuit or a digital timer chip. The RC circuit charges a capacitor through a resistor, and the timing is set by changing the resistance value. Digital electronic timers use a crystal oscillator reference and are extremely accurate and repeatable. Adjustment is easy (potentiometer or digital keypad), range is wide, and accuracy is far superior to pneumatic or dashpot types.`
+        body: `Inside a timing relay, the delay is produced by one of three mechanisms — each with different characteristics:\n\n• Pneumatic timing: a bellows or piston mechanism with an adjustable needle valve controls how fast air flows through an orifice. The slower the airflow, the longer the delay. Pneumatic timers are rugged and immune to electrical interference, but drift with temperature and are not highly precise. Adjustment range is typically limited.\n\n• Fluid dashpot (oil-dashpot): a piston moves through a chamber filled with constant-viscosity oil (silicone-based). The needle valve controls how fast oil transfers between two chambers. The use of constant-viscosity oil is critical — it maintains consistent timing across a range of temperatures, unlike ordinary oil whose viscosity changes with temperature. Similar characteristics to pneumatic — reliable but not highly precise. Less common in modern installations.\n\n• Electronic timing: uses an RC (resistor-capacitor) circuit or a digital timer chip. The RC circuit charges a capacitor through a resistor, and the timing is set by changing the resistance value. Digital electronic timers use a crystal oscillator reference and are extremely accurate and repeatable. Adjustment is easy (potentiometer or digital keypad), range is wide, and accuracy is far superior to pneumatic or dashpot types.`
       },
       {
         type: 'keypoint',
@@ -9859,34 +9904,34 @@ const LESSONS_CONTENT = [
       {
         type: 'keypoint',
         title: 'TDOD: Time Delay on De-energization (Off-Delay)',
-        body: `TDOD (Time Delay On De-energization) is also called an off-delay timer. It keeps its timed output active for a set period after the input signal is removed.\n\nOperation sequence:\n1. Control signal energizes the coil — timed contacts change state immediately (NO closes, NC opens).\n2. While the coil remains energized, timed contacts remain changed.\n3. When the coil is de-energized, timing begins.\n4. After the preset time elapses, timed contacts return to their normal state.\n\nTypical applications: motor cooling fan run-on (fan keeps running 2 minutes after motor stops), oven exhaust hood (hood stays on 3 minutes after cooking stops), anti-short-cycle timer for compressors (prevents restarting within a minimum off time).`,
+        body: `TDOD (Time Delay On De-energization) is also called an off-delay timer. It keeps its timed output active for a set period after the input signal is removed.\n\nOperation sequence:\n1. Control signal energizes the coil — timed contacts change state immediately (NO closes, NC opens).\n2. While the coil remains energized, timed contacts remain changed.\n3. When the coil is de-energized, timing begins.\n4. After the preset time elapses, timed contacts return to their normal state.\n\nImportant safety consideration: any circuit using a TDOD timer MUST include an emergency stop that can immediately de-energize the timed output. Because the timed contacts remain changed during the timing period after the coil drops out, the load continues to run even though the operator has removed the control signal. An emergency stop must be able to override the timer and kill the output instantly.\n\nTypical applications: motor cooling fan run-on (fan keeps running 2 minutes after motor stops), oven exhaust hood (hood stays on 3 minutes after cooking stops), anti-short-cycle timer for compressors (prevents restarting within a minimum off time).`,
         formula: 'Off-delay: Coil ON → timed contacts change state immediately\nCoil OFF → timing starts → after preset time, timed contacts return to normal'
       },
       {
         type: 'concept',
         title: 'Interval and One-Shot Timing',
-        body: `Beyond on-delay and off-delay, there are two additional timing modes that are useful in specific applications:\n\nInterval timing: the coil energizes → timed contacts immediately change state → after the preset time, contacts return to normal (regardless of whether the coil is still energized). The contacts stay normal until the coil is de-energized and re-energized again. Example: a warning horn sounds for exactly 10 seconds when a door is opened.\n\nOne-shot timing: triggered by a momentary signal applied to the start terminal (not by continuous coil energization). When the start signal is received, contacts change state for the preset time period, then return to normal. The process can be triggered again by another start pulse. Example: a lathe operation where the operator presses a button to run the part feed for a preset time, then it stops automatically regardless of whether the button is still held.`
+        body: `Beyond on-delay and off-delay, there are two additional timing modes that are useful in specific applications:\n\nInterval timing: the coil energizes → timed contacts immediately change state → after the preset time, contacts return to normal (regardless of whether the coil is still energized). The contacts stay normal until the coil is de-energized and re-energized again. The key distinction from on-delay: contacts change instantly at energization rather than after a delay. Applications: furnace purge cycle (combustion blower runs for a fixed purge period before ignition is allowed — contacts change immediately to start the blower, then revert after the purge time expires), warning horn sounds for exactly 10 seconds when a door is opened.\n\nOne-shot timing: requires a start signal each time — triggered by a momentary signal applied to the start terminal (not by continuous coil energization). When the start signal is received, the coil energizes and stays energized for the preset time period. Timed contacts change state for that period, then return to normal when the coil de-energizes. A new start pulse is required to initiate each cycle — the timer does not repeat on its own. Applications: lathe oil spray (operator presses a button to spray cutting oil on the workpiece for a preset time, then it stops automatically regardless of whether the button is still held), automatic door openers (door opens for a set time then closes).`
       },
       {
         type: 'concept',
         title: 'Repeat Cycle Timing (Flicker)',
-        body: `A repeat cycle timer (also called a flicker relay or recycling timer) continuously cycles its output between the changed and normal state as long as it is energized.\n\nTwo types:\n• Symmetrical: the on-time and off-time are equal. The output is a square wave with a 50% duty cycle.\n• Non-symmetrical: the on-time and off-time are independently adjustable. This allows precise control of the ratio of on to off time.\n\nApplications:\n• Intermittent windshield wiper control\n• Alarm horn cycling (beep pattern)\n• Automatic lubrication systems (pump for 15 seconds every 10 minutes)\n• Pilot light flashing to indicate a specific alarm or status\n• Irrigation zone cycling\n\nNote: for very precise pulse generation, electronic repeat-cycle timers are far more accurate than pneumatic types.`
+        body: `A repeat cycle timer (also called a flicker relay or recycling timer) continuously cycles its output between the changed and normal state as long as it is energized.\n\nTwo types:\n• Symmetrical: the on-time and off-time are equal. The output is a square wave with a 50% duty cycle.\n• Non-symmetrical: the on-time and off-time are independently adjustable. This allows precise control of the ratio of on to off time.\n\nApplications:\n• Air exhaust cycles (exhaust fan runs for 5 minutes, off for 10 minutes, repeating — non-symmetrical)\n• Alarm horn cycling (beep pattern — symmetrical)\n• Automatic lubrication systems (pump for 15 seconds every 10 minutes — non-symmetrical)\n• Pilot light flashing to indicate a specific alarm or status (symmetrical)\n• Intermittent windshield wiper control\n• Irrigation zone cycling\n\nNote: for very precise pulse generation, electronic repeat-cycle timers are far more accurate than pneumatic types.`
       },
       {
         type: 'concept',
         title: 'Multi-Function Timing Relays',
-        body: `Modern electronic timing relays are available in multi-function versions that can provide several different timing modes from a single unit. A selector switch or DIP switch on the relay body selects the mode.\n\nFeatures of multi-function timing relays:\n• Selectable mode: on-delay, off-delay, interval, one-shot, repeat cycle symmetrical, repeat cycle non-symmetrical — all available in one relay.\n• Independently adjustable on-time and off-time (for non-symmetrical repeat cycle).\n• Digital display showing elapsed time or preset time.\n• Wide timing range: from milliseconds to hours in a single unit.\n• Supply voltage flexibility: many models accept a wide input voltage range (24-240V AC/DC).\n\nA multi-function timer reduces inventory requirements — one part number covers many different timing applications in a facility.`
+        body: `Modern electronic timing relays are available in multi-function versions that can provide several different timing modes from a single unit. A rotary mode switch on the relay body selects the timing function. Common mode switch positions are designated by letters:\n\n• A — On-delay (TDOE)\n• B — Off-delay (TDOD)\n• C — One-shot (single pulse)\n• E — Interval timing\n• G — Repeat cycle, symmetrical (equal on/off)\n• I — Repeat cycle, non-symmetrical (independent on/off adjustment)\n• K — Extended on-delay with signal memory\n• P — Repeat cycle starting with pause (off period first)\n\nFeatures of multi-function timing relays:\n• All timing modes available in one relay — selected by the mode switch position.\n• Independently adjustable on-time and off-time (for non-symmetrical repeat cycle modes).\n• Digital display showing elapsed time or preset time.\n• Wide timing range: from milliseconds to hours in a single unit.\n• Supply voltage flexibility: many models accept a wide input voltage range (24-240V AC/DC).\n\nReset terminals: many multi-function timing relays include a reset terminal. Applying a signal to the reset terminal interrupts and restarts the timing sequence at any point before it completes. This is useful when an external event must restart the timed cycle — for example, resetting a purge timer if a safety interlock trips before purge is complete.\n\nA multi-function timer reduces inventory requirements — one part number covers many different timing applications in a facility.`
       },
       {
         type: 'keypoint',
         title: 'Smart Relays: Simplified Programmable Controllers',
-        body: `A smart relay (also called a programmable logic relay or PLR) is a compact, self-contained device that combines digital inputs, digital outputs, program memory, and a real-time clock in a single DIN-rail-mounted package.\n\nPhysical characteristics:\n• 8 to 24 digital inputs\n• 4 to 16 digital or relay outputs\n• Analog inputs on some models\n• Built-in real-time clock with calendar\n• Front-panel display and navigation buttons for programming and monitoring\n• Optional computer interface for programming via laptop (free software)\n• Power supply typically 24V DC or 100-240V AC\n\nProgramming methods: function block diagrams (connect pre-built function blocks graphically) or ladder logic (standard IEC 61131-3 LD language). Most smart relays can be programmed from the front panel keypad for simple applications, or from a laptop for complex ones.\n\nA single smart relay can replace 10-15 discrete relays, timers, and counters, at a fraction of the panel space and cost. Logic changes require software changes, not rewiring.`,
+        body: `A smart relay (also called a programmable logic relay or PLR) evolved from programmable logic controllers (PLCs). As PLC technology advanced, manufacturers developed simplified, lower-cost versions for smaller applications that did not need the full power and I/O capacity of a traditional PLC. The result is a compact, self-contained device that combines digital inputs, digital outputs, onboard program memory, and a real-time clock in a single DIN-rail-mounted package.\n\nPhysical characteristics:\n• 8 to 24 digital inputs\n• 4 to 16 digital or relay outputs\n• Analog inputs on some models\n• Built-in real-time clock with calendar\n• Front-panel display and navigation buttons for programming and monitoring\n• Optional computer interface for programming via laptop (free software)\n• Power supply typically 24V DC or 100-240V AC\n\nProgramming methods: function block diagrams (connect pre-built function blocks graphically) or ladder logic (standard IEC 61131-3 LD language). Most smart relays can be programmed from the front panel keypad for simple applications, or from a laptop for complex ones.\n\nA single smart relay can replace 10-15 discrete relays, timers, and counters, at a fraction of the panel space and cost. Logic changes require software changes, not rewiring.`,
         formula: 'Smart relay advantage: reprogrammable without rewiring. Logic changes = software changes only.'
       },
       {
         type: 'concept',
         title: 'Smart Relay Functions and Applications',
-        body: `Smart relays support all standard timing functions plus advanced features not available in discrete devices:\n\nStandard functions available:\n• Standard relay (non-timed on/off)\n• TDOE (on-delay)\n• TDOD (off-delay)\n• Interval timing\n• One-shot timing\n• Repeat cycle symmetrical\n• Repeat cycle non-symmetrical\n• Real-time scheduling (daily/weekly/monthly calendar switching)\n• Totalizing timer with reset (accumulates on-time over multiple starts)\n\nTypical smart relay applications:\n• Car wash automation: sequential start of water pump, brushes, rinse, dryer based on sensor inputs and timing\n• Commercial lighting management: schedule-based control with override inputs\n• Access control and door locking: time-based unlock with sensor confirmation\n• Small machinery automation: replace an entire relay panel for a simple machine\n• HVAC control: economizer cycles, damper sequencing, setback scheduling\n• Pumping stations: level-based starts with anti-short-cycle protection`
+        body: `Smart relays support all standard timing functions plus advanced features not available in discrete devices:\n\nStandard functions available:\n• Standard relay (non-timed on/off)\n• TDOE (on-delay)\n• TDOD (off-delay)\n• Interval timing\n• One-shot timing\n• Repeat cycle symmetrical\n• Repeat cycle non-symmetrical\n• Real-time scheduling (daily/weekly/monthly calendar switching)\n• Totalizing timer with reset (accumulates on-time over multiple start/stop cycles — useful for maintenance scheduling based on total run-hours)\n\nTypical smart relay applications:\n• Building automation: coordinated control of lighting, ventilation, security, and energy management from a single device\n• Car wash automation: sequential start of water pump, brushes, rinse, dryer based on sensor inputs and timing\n• Commercial lighting management: schedule-based control with override inputs\n• Access control and door locking: time-based unlock with sensor confirmation\n• Small machinery automation: replace an entire relay panel for a simple machine\n• HVAC control: economizer cycles, damper sequencing, setback scheduling\n• Pumping stations: level-based starts with anti-short-cycle protection\n\nKey advantages over discrete devices: smart relays can be reprogrammed without rewiring — logic changes are software-only. Programs can be saved, backed up, and transferred to replacement units. Multiple I/O points and onboard memory eliminate the need for separate relays, timers, and counters.`
       },
       {
         type: 'real-world',
@@ -9953,7 +9998,7 @@ const LESSONS_CONTENT = [
     id: 'm23', period: 2,
     title: 'Pilot & Overcurrent Devices',
     icon: '🛡',
-    subtitle: 'The Guardians of Every Circuit',
+    subtitle: 'ILM 030204c — The Guardians of Every Circuit',
     color: '#ef4444',
     gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
     border: 'rgba(239,68,68,0.3)',
@@ -10103,11 +10148,11 @@ const LESSONS_CONTENT = [
     id: 'm24', period: 2,
     title: 'Drawing & Diagram Conversion',
     icon: '📋',
-    subtitle: 'Reading the Language Every Electrician Must Speak',
+    subtitle: 'ILM 030204b — Reading the Language Every Electrician Must Speak',
     color: '#ec4899',
     gradient: 'linear-gradient(135deg,rgba(236,72,153,0.12),rgba(219,39,119,0.06))',
     border: 'rgba(236,72,153,0.3)',
-    readTime: '18 min read',
+    readTime: '25 min read',
     sections: [
       {
         type: 'hook',
@@ -11001,11 +11046,45 @@ const Lessons = {
     window.scrollTo(0, 0);
   },
 
+  _notesOpen: false,
+
+  _toggleNotes(lessonId, userId) {
+    this._notesOpen = !this._notesOpen;
+    const panel = document.getElementById('lessonNotesPanel');
+    const btn = document.getElementById('lessons-notes-btn');
+    if (panel) panel.style.display = this._notesOpen ? 'block' : 'none';
+    if (btn) {
+      btn.style.background = this._notesOpen ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.06)';
+      btn.style.borderColor = this._notesOpen ? 'var(--accent)' : 'rgba(245,158,11,0.3)';
+      btn.innerHTML = '📝 ' + (this._notesOpen ? 'Hide Notes' : 'My Notes');
+    }
+    if (this._notesOpen) {
+      setTimeout(() => { const ed = document.getElementById('lessonNotesEditor'); if (ed) ed.focus(); }, 100);
+    }
+  },
+
+  _saveNotes(lessonId, userId) {
+    const editor = document.getElementById('lessonNotesEditor');
+    if (!editor) return;
+    const key = 'sparky_lesson_notes_' + userId + '_' + lessonId;
+    localStorage.setItem(key, editor.innerHTML);
+    const saved = document.getElementById('lessonNotesSaved');
+    if (saved) { saved.textContent = 'Saved ✓'; setTimeout(() => { if (saved) saved.textContent = 'Auto-saved'; }, 1500); }
+    // Also sync to AI context
+    syncAIContext(Storage.get());
+  },
+
   _renderLesson(lessonId, container) {
     const lesson = this._findLesson(lessonId);
     if (!lesson) { this.activeLesson = null; return; }
+    const state = Storage.get();
+    const userId = state ? state.user.id : '';
 
     const sectionHtml = lesson.sections.map((s, idx) => this._renderSection(s, lesson.color, idx)).join('');
+
+    // Load saved notes for this lesson
+    const notesKey = 'sparky_lesson_notes_' + userId + '_' + lessonId;
+    const savedNotes = localStorage.getItem(notesKey) || '';
 
     container.innerHTML = `
       <div style="padding:16px 0;">
@@ -11016,7 +11095,29 @@ const Lessons = {
           <button id="lessons-read-btn" onclick="Lessons._toggleRead()" style="background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.15s;">
             🔊 Read Aloud
           </button>
+          <button id="lessons-notes-btn" onclick="Lessons._toggleNotes('${lessonId}','${userId}')" style="background:${this._notesOpen ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.06)'};border:1px solid ${this._notesOpen ? 'var(--accent)' : 'rgba(245,158,11,0.3)'};color:var(--accent);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.15s;">
+            📝 ${this._notesOpen ? 'Hide Notes' : 'My Notes'}
+          </button>
         </div>
+
+        <!-- Notes panel (collapsible) -->
+        <div id="lessonNotesPanel" style="display:${this._notesOpen ? 'block' : 'none'};margin-bottom:20px;">
+          <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:14px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04));padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(245,158,11,0.2);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:1.1rem;">📝</span>
+                <span style="font-weight:700;font-size:0.88rem;color:var(--accent);">Notes — ${lesson.title}</span>
+              </div>
+              <span id="lessonNotesSaved" style="font-size:0.72rem;color:var(--text-muted);">Auto-saved</span>
+            </div>
+            <div id="lessonNotesEditor" contenteditable="true" spellcheck="true"
+              style="min-height:150px;max-height:400px;overflow-y:auto;padding:16px;font-size:0.9rem;line-height:1.7;color:var(--text-primary);outline:none;"
+              data-placeholder="Type your notes here while studying this lesson..."
+              oninput="Lessons._saveNotes('${lessonId}','${userId}')"
+            >${savedNotes}</div>
+          </div>
+        </div>
+
         <div style="background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:32px;margin-bottom:28px;">
           <div style="font-size:3rem;margin-bottom:12px;">${lesson.icon}</div>
           <h1 style="font-size:1.9rem;margin:0 0 6px;color:${lesson.color};">${lesson.title}</h1>
