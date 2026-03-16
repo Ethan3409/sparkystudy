@@ -1010,31 +1010,88 @@ function updateTrialBanner(state) {
 function syncAIContext(state) {
   if (!state || !state.user) { window._sparkStudyCtx = ''; return; }
   const uid = state.user.id;
-  const notes = [];
+  const parts = [];
+
+  // 1. Include ALL lesson content from LESSONS_CONTENT (the actual module material)
+  if (typeof LESSONS_CONTENT !== 'undefined') {
+    const userPeriod = state.user.period || 2;
+    const lessons = LESSONS_CONTENT.filter(l => {
+      if (l.ownerOnly && state.user.id !== 'owner_ethan') return false;
+      return l.period === userPeriod || l.period === 0;
+    });
+    lessons.forEach(lesson => {
+      const sectionTexts = [];
+      if (lesson.sections && Array.isArray(lesson.sections)) {
+        lesson.sections.forEach(s => {
+          let text = '';
+          if (s.title) text += s.title + ': ';
+          if (s.body) text += s.body;
+          if (s.formula) text += ' Formula: ' + s.formula;
+          if (s.content) text += ' ' + s.content;
+          // Include quiz questions and answers
+          if (s.questions && Array.isArray(s.questions)) {
+            s.questions.forEach(q => {
+              if (q.q) text += ' Q: ' + q.q;
+              if (q.a) text += ' A: ' + q.a;
+              if (q.options) text += ' Options: ' + q.options.join(', ');
+              if (q.answer) text += ' Answer: ' + q.answer;
+            });
+          }
+          if (text.trim().length > 10) sectionTexts.push(text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim());
+        });
+      }
+      if (sectionTexts.length > 0) {
+        parts.push('=== LESSON: ' + lesson.title + ' ===\n' + sectionTexts.join('\n'));
+      }
+    });
+  }
+
+  // 2. User's own notes
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith('sparky_notes_' + uid + '_')) {
       const topic = key.replace('sparky_notes_' + uid + '_', '');
+      if (topic.includes('_ts_') || topic.includes('migrated') || topic.includes('merged')) continue;
       const html = localStorage.getItem(key) || '';
       const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (text.length > 20) notes.push('=== ' + topic + ' ===\n' + text);
+      if (text.length > 20) parts.push('=== MY NOTES: ' + topic + ' ===\n' + text);
     }
   }
-  // Also include uploaded module text stored under sparky_modtext_<uid>_*
+
+  // 3. Uploaded module text
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith('sparky_modtext_' + uid + '_')) {
       const text = (localStorage.getItem(key) || '').trim();
-      if (text.length > 20) notes.push('=== [Module] ===\n' + text);
+      if (text.length > 20) parts.push('=== UPLOADED MODULE ===\n' + text);
     }
-    // Also include lesson notes
     if (key && key.startsWith('sparky_lesson_notes_' + uid + '_')) {
       const html = localStorage.getItem(key) || '';
       const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (text.length > 20) notes.push('=== [Lesson Notes] ===\n' + text);
+      if (text.length > 20) parts.push('=== LESSON NOTES ===\n' + text);
     }
   }
-  window._sparkStudyCtx = notes.join('\n\n').slice(0, 20000);
+
+  // 4. Uploaded lessons (user-created from module uploads)
+  if (typeof LESSONS_CONTENT !== 'undefined') {
+    const uploaded = LESSONS_CONTENT.filter(l => l.isUploaded);
+    uploaded.forEach(lesson => {
+      const sectionTexts = [];
+      if (lesson.sections && Array.isArray(lesson.sections)) {
+        lesson.sections.forEach(s => {
+          let text = '';
+          if (s.title) text += s.title + ': ';
+          if (s.body) text += s.body;
+          if (text.trim().length > 10) sectionTexts.push(text.replace(/\s+/g, ' ').trim());
+        });
+      }
+      if (sectionTexts.length > 0) {
+        parts.push('=== UPLOADED LESSON: ' + lesson.title + ' ===\n' + sectionTexts.join('\n'));
+      }
+    });
+  }
+
+  window._sparkStudyCtx = parts.join('\n\n').slice(0, 60000);
 }
 
 const App = {

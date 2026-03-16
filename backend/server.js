@@ -101,7 +101,7 @@ app.post('/api/chat', async (req, res) => {
 
   const hasContext = typeof systemContext === 'string' && systemContext.trim().length > 30;
   const systemPrompt = hasContext
-    ? `You are SparkStudy AI, a study assistant for Alberta electrical apprentices. Answer questions based ONLY on the module/notes content provided below. Stay focused on that content. If the answer is not clearly in the content, say so and suggest the student add more notes.\n\nModule/Notes Content:\n${systemContext.slice(0, 12000)}`
+    ? `You are SparkStudy AI, a study assistant for Alberta electrical apprentices (ILM curriculum). You have access to the student's lesson content, notes, and uploaded modules below. Answer questions based on this content. If a topic is covered in the LESSON sections, use that material to give a thorough answer. If you truly cannot find the answer in any of the provided content, say so.\n\nAvailable Content:\n${systemContext.slice(0, 50000)}`
     : `You are SparkStudy AI, a study assistant for Alberta electrical apprentices. No specific module or notes content has been loaded. Answer as helpfully as you can, but always end your response with this exact line:\n\n⚠️ *I can't be fully certain without your module content. For accurate course-specific answers, upload your notes using the 📎 button.*`;
 
   const messages = [
@@ -112,7 +112,7 @@ app.post('/api/chat', async (req, res) => {
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: systemPrompt,
       messages
     });
