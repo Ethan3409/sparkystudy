@@ -2919,11 +2919,12 @@ const Notes = {
         <!-- Sidebar -->
         <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:14px;height:fit-content;position:sticky;top:80px;">
           <!-- Period tabs -->
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
-            ${periodTabs.map(({p, label}) => `
-              <button onclick="Notes._switchPeriod(${p},'${userId}')" style="flex:1;min-width:0;padding:5px 2px;font-size:0.72rem;font-weight:700;border-radius:6px;border:1px solid ${this._currentPeriod===p?'var(--accent)':'var(--border)'};background:${this._currentPeriod===p?'rgba(245,158,11,0.15)':'transparent'};color:${this._currentPeriod===p?'var(--accent)':'var(--text-muted)'};cursor:pointer;transition:all 0.15s;${p===userPeriod&&this._currentPeriod!==p?'border-style:dashed;':''}">${label}</button>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:12px;">
+            ${periodTabs.filter(t=>t.p>0).map(({p, label}) => `
+              <button onclick="Notes._switchPeriod(${p},'${userId}')" style="padding:6px 4px;font-size:0.75rem;font-weight:700;border-radius:6px;border:1px solid ${this._currentPeriod===p?'var(--accent)':'var(--border)'};background:${this._currentPeriod===p?'rgba(245,158,11,0.15)':'transparent'};color:${this._currentPeriod===p?'var(--accent)':'var(--text-muted)'};cursor:pointer;transition:all 0.15s;${p===userPeriod&&this._currentPeriod!==p?'border-style:dashed;':''}">${label}</button>
             `).join('')}
           </div>
+          <button onclick="Notes._switchPeriod(0,'${userId}')" style="width:100%;padding:7px;font-size:0.75rem;font-weight:700;border-radius:6px;border:1px solid ${this._currentPeriod===0?'var(--accent)':'var(--border)'};background:${this._currentPeriod===0?'rgba(245,158,11,0.15)':'transparent'};color:${this._currentPeriod===0?'var(--accent)':'var(--text-muted)'};cursor:pointer;transition:all 0.15s;margin-bottom:8px;">📝 General Notes</button>
           <!-- Community tab -->
           <button onclick="Notes._openCommunity('${userId}')" style="width:100%;padding:8px;font-size:0.78rem;font-weight:600;border-radius:8px;border:1px solid rgba(88,166,255,0.3);background:rgba(88,166,255,0.06);color:#58a6ff;cursor:pointer;margin-bottom:12px;transition:all 0.15s;">
             🌐 Community Notes
