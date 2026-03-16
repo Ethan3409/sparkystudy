@@ -2821,8 +2821,8 @@ const Exams = {
 
 // ===== NOTES MODULE =====
 const Notes = {
-  currentTopic: 'general',
-  _currentPeriod: 0,  // 0=general, 1-4=period, 5=community
+  currentTopic: 'theory',
+  _currentPeriod: 0,  // always 0 now (no period filtering)
   mode: 'edit',   // 'edit' | 'quiz' | 'study' | 'community'
   quizCards: [],
   quizIdx: 0,
@@ -2843,39 +2843,12 @@ const Notes = {
     { label:'½', tip:'Half' }, { label:'¼', tip:'Quarter' }, { label:'¾', tip:'3/4' },
   ],
 
-  // period:0 = all-periods general topics; period:1-4 = specific year
+  // Simple 4-category note system — same for all periods
   TOPICS_LIST: [
-    // General (all periods)
-    { id:'general',       name:'General Notes',          icon:'📝', period:0 },
-    { id:'safety',        name:'Safety',                 icon:'🦺', period:0 },
-    { id:'code-cec',      name:'CEC Code',               icon:'📖', period:0 },
-    { id:'exam-prep',     name:'Exam Prep',              icon:'🎯', period:0 },
-    { id:'formulas',      name:'Formulas & Calcs',       icon:'🧮', period:0 },
-    // Period 1 — AC Theory & Fundamentals
-    { id:'p1-ac-fund',    name:'AC Fundamentals',        icon:'〰️', period:1 },
-    { id:'p1-ind-cap',    name:'Inductors & Capacitors', icon:'🔄', period:1 },
-    { id:'p1-ac-circuits',name:'AC Circuits',            icon:'⚡', period:1 },
-    { id:'p1-general',    name:'P1 General Notes',       icon:'📝', period:1 },
-    // Period 2 — Magnetic Controls
-    { id:'p2-relays',     name:'Relays & Contactors',    icon:'🔌', period:2 },
-    { id:'p2-timers',     name:'Timers & Smart Relays',  icon:'⏱️', period:2 },
-    { id:'p2-pilot',      name:'Pilot & Overcurrent',    icon:'🔐', period:2 },
-    { id:'p2-diagrams',   name:'Drawing & Diagrams',     icon:'📐', period:2 },
-    { id:'p2-general',    name:'P2 General Notes',       icon:'📝', period:2 },
-    // Period 3 — Motor Control & Distribution
-    { id:'p3-motors',     name:'Motor Starters',         icon:'⚙️', period:3 },
-    { id:'p3-pf',         name:'Power Factor Correction',icon:'🔺', period:3 },
-    { id:'p3-xfmr',       name:'Transformers (Advanced)',icon:'🔄', period:3 },
-    { id:'p3-dist',       name:'Distribution Systems',   icon:'🏭', period:3 },
-    { id:'p3-wiring',     name:'Wiring Methods',         icon:'🏗️', period:3 },
-    { id:'p3-general',    name:'P3 General Notes',       icon:'📝', period:3 },
-    // Period 4 — Commercial & Industrial
-    { id:'p4-commercial', name:'Commercial Wiring',      icon:'🏢', period:4 },
-    { id:'p4-industrial', name:'Industrial Automation',  icon:'🤖', period:4 },
-    { id:'p4-plc',        name:'PLCs & Controllers',     icon:'💻', period:4 },
-    { id:'p4-power',      name:'Power Systems',          icon:'⚡', period:4 },
-    { id:'p4-service',    name:'Service Entrance',       icon:'🔌', period:4 },
-    { id:'p4-general',    name:'P4 General Notes',       icon:'📝', period:4 },
+    { id:'theory',   name:'Theory',   icon:'📘', period:0 },
+    { id:'lab',      name:'Lab',      icon:'🔧', period:0 },
+    { id:'code',     name:'Code',     icon:'📖', period:0 },
+    { id:'general',  name:'General',  icon:'📝', period:0 },
   ],
 
   _storageKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}`; },
@@ -2924,43 +2897,21 @@ const Notes = {
     const topics = this._allNoteIds(userId, this._currentPeriod);
     const sharingEnabled = (state.user.subscription || {}).notesSharing !== false;
 
-    const periodTabs = [
-      { p: 0, label: 'General' },
-      { p: 1, label: 'P1' },
-      { p: 2, label: 'P2' },
-      { p: 3, label: 'P3' },
-      { p: 4, label: 'P4' },
-    ];
-
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;min-height:calc(100vh - 120px);">
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:20px;min-height:calc(100vh - 120px);">
         <!-- Sidebar -->
         <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:14px;height:fit-content;position:sticky;top:80px;">
-          <!-- Period tabs -->
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:12px;">
-            ${periodTabs.filter(t=>t.p>0).map(({p, label}) => `
-              <button onclick="Notes._switchPeriod(${p},'${userId}')" style="padding:6px 4px;font-size:0.75rem;font-weight:700;border-radius:6px;border:1px solid ${this._currentPeriod===p?'var(--accent)':'var(--border)'};background:${this._currentPeriod===p?'rgba(245,158,11,0.15)':'transparent'};color:${this._currentPeriod===p?'var(--accent)':'var(--text-muted)'};cursor:pointer;transition:all 0.15s;${p===userPeriod&&this._currentPeriod!==p?'border-style:dashed;':''}">${label}</button>
-            `).join('')}
-          </div>
-          <button onclick="Notes._switchPeriod(0,'${userId}')" style="width:100%;padding:7px;font-size:0.75rem;font-weight:700;border-radius:6px;border:1px solid ${this._currentPeriod===0?'var(--accent)':'var(--border)'};background:${this._currentPeriod===0?'rgba(245,158,11,0.15)':'transparent'};color:${this._currentPeriod===0?'var(--accent)':'var(--text-muted)'};cursor:pointer;transition:all 0.15s;margin-bottom:8px;">📝 General Notes</button>
-          <!-- Community tab -->
-          <button onclick="Notes._openCommunity('${userId}')" style="width:100%;padding:8px;font-size:0.78rem;font-weight:600;border-radius:8px;border:1px solid rgba(88,166,255,0.3);background:rgba(88,166,255,0.06);color:#58a6ff;cursor:pointer;margin-bottom:12px;transition:all 0.15s;">
-            🌐 Community Notes
-          </button>
-          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;padding:0 4px;margin-bottom:8px;">
-            ${this._currentPeriod === 0 ? 'General Topics' : `Period ${this._currentPeriod} Modules`}
-          </div>
+          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;padding:0 4px;margin-bottom:10px;">My Notes</div>
           ${topics.map(t => `
             <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
-              ${t.icon} <span style="font-size:0.82rem;">${t.name}</span>
+              ${t.icon} <span style="font-size:0.85rem;">${t.name}</span>
               ${t.has ? '<span style="float:right;font-size:0.65rem;color:var(--accent);">●</span>' : ''}
             </div>
           `).join('')}
-          ${this._currentPeriod >= 3 ? `
-            <div style="margin-top:12px;padding:10px;background:rgba(139,92,246,0.08);border-radius:8px;border:1px solid rgba(139,92,246,0.2);font-size:0.72rem;color:var(--text-muted);line-height:1.5;">
-              📚 Period ${this._currentPeriod} lesson content is coming soon. Add your own class notes here and share them with the community!
-            </div>
-          ` : ''}
+          <div style="height:1px;background:var(--border);margin:12px 0;"></div>
+          <button onclick="Notes._openCommunity('${userId}')" style="width:100%;padding:8px;font-size:0.78rem;font-weight:600;border-radius:8px;border:1px solid rgba(88,166,255,0.3);background:rgba(88,166,255,0.06);color:#58a6ff;cursor:pointer;transition:all 0.15s;">
+            🌐 Community Notes
+          </button>
         </div>
 
         <!-- Main editor pane -->
@@ -10046,6 +9997,35 @@ const LESSONS_CONTENT = [
           'When troubleshooting a timer that appears not to be timing: verify coil voltage first (measure across A1/A2 or coil terminals). Then verify the timer is actually timing — most electronic timers have an LED that flashes during timing. If the LED is not flashing, the coil is not energized. If the LED is flashing but contacts do not change, the output contacts may be failed.',
           'Smart relay programs can be saved and transferred. Always back up the program from any smart relay before maintenance. If the device is replaced, the program can be loaded into the new unit in minutes rather than spending hours re-commissioning from scratch.',
           'Totalizing timers in smart relays are valuable for maintenance scheduling: they accumulate total motor run-hours across many start/stop cycles and can trigger an output when service is due. This eliminates the need for separate hour meters.'
+        ]
+      },
+      {
+        type: 'quiz',
+        title: 'Self-Test and Activity Answers',
+        questions: [
+          { q: 'Name the three basic types of timing devices.', a: 'Spring-wound interval timers, mechanical/electronic time switches, and timing relays.' },
+          { q: 'What type of timer is a wall-switch style device used for bathroom fans and sauna heaters?', a: 'A spring-wound interval timer. The user turns the dial to set a timed-on interval, and the device switches off automatically when the time expires.' },
+          { q: 'How does a mechanical time switch select on and off times?', a: 'A synchronous clock motor rotates a dial once every 24 hours (or 7 days for weekly models). Adjustable cams or trippers are positioned around the dial — pushing a cam outward sets an on-time, pulling it inward sets an off-time.' },
+          { q: 'What fluid is used in a dashpot timing relay and why?', a: 'Constant-viscosity silicone-based oil. It maintains consistent timing across temperature changes, unlike ordinary oil whose viscosity varies with temperature.' },
+          { q: 'Describe the complete TDOE operation sequence.', a: 'Coil energizes — timing begins. Instant contacts (if any) change immediately. Timed contacts remain normal during timing. After preset time, timed contacts change state (NO closes, NC opens). When coil de-energizes, timed contacts return to normal immediately — no delay on de-energization.' },
+          { q: 'What happens if a TDOE coil is de-energized before the preset time expires?', a: 'The timer resets completely. Timed contacts never change state — they remain in their normal position.' },
+          { q: 'Give a typical application of a TDOE (on-delay) timer.', a: 'Lubrication pump pre-run: the lube pump must run for a preset time (e.g., 3 minutes) before the main spindle drive starts, ensuring all bearings are lubricated.' },
+          { q: 'Describe the complete TDOD operation sequence.', a: 'Coil energizes — timed contacts change state immediately (NO closes, NC opens). Contacts remain changed while coil is energized. When coil de-energizes, timing begins. After preset time, timed contacts return to normal state.' },
+          { q: 'Why must a TDOD circuit include an emergency stop?', a: 'Because after the coil de-energizes, the timed contacts remain changed during the timing period — the load continues running even though the operator removed the control signal. An emergency stop must override the timer and kill the output instantly.' },
+          { q: 'Give a typical application of a TDOD (off-delay) timer.', a: 'Motor run-on: a cooling fan continues running for a set time after the motor stops to allow adequate cool-down of the heating elements.' },
+          { q: 'How does interval timing differ from one-shot timing?', a: 'Interval timing is triggered by continuous coil energization — contacts change instantly and revert after preset time. One-shot requires a momentary start signal each time, the coil stays energized for the preset period, and a new trigger is needed for each cycle.' },
+          { q: 'Give an application of interval timing.', a: 'Furnace purge cycle: combustion blower runs for a fixed purge period before ignition is allowed.' },
+          { q: 'Give an application of one-shot timing.', a: 'Lathe oil spray: operator presses a button to spray cutting oil for a preset time, then it stops automatically regardless of whether the button is still held.' },
+          { q: 'What is the difference between symmetrical and non-symmetrical repeat cycle timers?', a: 'Symmetrical: on-time equals off-time (50% duty cycle). Non-symmetrical: on-time and off-time are independently adjustable, allowing different durations for each.' },
+          { q: 'Give an application of repeat cycle timing.', a: 'Air exhaust cycles: exhaust fan runs for 5 minutes, off for 10 minutes, repeating continuously (non-symmetrical repeat cycle).' },
+          { q: 'What do the mode switch letters A, B, C, E, G, I, K, and P represent on a multi-function timing relay?', a: 'A = On-delay (TDOE), B = Off-delay (TDOD), C = One-shot, E = Interval timing, G = Symmetrical repeat cycle, I = Non-symmetrical repeat cycle, K = Extended on-delay with signal memory, P = Repeat cycle starting with pause (off period first).' },
+          { q: 'What is the purpose of a reset terminal on a timing relay?', a: 'It allows the timing sequence to be interrupted and restarted before completion. Applying a signal to the reset terminal restarts the timer from zero — useful when an external event must restart the timed cycle.' },
+          { q: 'What device did smart relays evolve from?', a: 'Programmable logic controllers (PLCs). As PLC technology advanced, manufacturers developed simplified, lower-cost versions for smaller applications.' },
+          { q: 'Name two programming methods for smart relays.', a: 'Ladder logic (IEC 61131-3 LD language) and function block diagrams (FBD — connecting pre-built function blocks graphically). Most can also be programmed from the front panel keypad.' },
+          { q: 'List typical smart relay applications.', a: 'Building automation, car wash automation, HVAC control, commercial lighting management, access control and door locking, small machinery automation, and pumping stations.' },
+          { q: 'What timing functions are available in a smart relay?', a: 'Standard relay (non-timed on/off), TDOE, TDOD, interval, one-shot, repeat cycle (symmetrical and non-symmetrical), real-time scheduling (daily/weekly/monthly), and totalizing timer with reset.' },
+          { q: 'What is a totalizing timer and what is it used for?', a: 'A timer that accumulates total on-time across multiple start/stop cycles. Used for maintenance scheduling — triggering a service alert after a motor accumulates a set number of run-hours, eliminating the need for separate hour meters.' },
+          { q: 'What is the key advantage of smart relays over discrete relay panels?', a: 'Reprogrammability without rewiring. Logic changes require only software changes. Programs can be saved, backed up, and transferred to replacement units.' }
         ]
       },
       {
