@@ -91,6 +91,27 @@ app.use(express.json({ limit: '20mb' }));
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
+// ── POST /api/tts ───────────────────────────────────────────────────────────
+// Text-to-speech proxy — keeps ElevenLabs API key server-side
+app.post('/api/tts', async (req, res) => {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'TTS not configured.' });
+  const { text } = req.body;
+  if (!text || typeof text !== 'string' || text.length < 1) return res.status(400).json({ error: 'Text required.' });
+  try {
+    const voiceId = 'FOSKkhOXCEGmWEXxIIpp';
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.substring(0, 5000), model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.55, similarity_boost: 0.80 } })
+    });
+    if (!response.ok) { const err = await response.json().catch(() => ({})); return res.status(response.status).json({ error: err.detail?.message || 'TTS failed' }); }
+    res.set('Content-Type', 'audio/mpeg');
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (err) { console.error('TTS error:', err.message); res.status(500).json({ error: 'TTS failed' }); }
+});
+
 // ── POST /api/chat ───────────────────────────────────────────────────────────
 // AI chat — only answers based on provided module/notes context.
 // If no context, tells the user to add module content.
