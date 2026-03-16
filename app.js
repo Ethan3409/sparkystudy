@@ -2980,6 +2980,7 @@ const Notes = {
                   📄 Upload
                   <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
                 </label>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._organizeAI('${userId}')" title="AI auto-organize notes into topics" style="padding:6px 10px;">🗂️ Organize</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Study mode" style="padding:6px 10px;">📖 Study</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuizAI('${userId}')" title="AI quiz" style="padding:6px 10px;">⚡ Quiz</button>
                 <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print" style="padding:6px 10px;">🖨️</button>
@@ -3782,6 +3783,86 @@ const Notes = {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  },
+
+  // AI-powered note organizer: takes all notes from current topic and sorts content
+  // into the appropriate topic sections based on what each line/paragraph is about
+  async _organizeAI(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (!editor || !editor.innerHTML.trim()) {
+      showToast('No notes to organize. Add some content first!', 'info');
+      return;
+    }
+
+    const text = editor.innerHTML.replace(/<[^>]*>/g, '\n').replace(/\s+/g, ' ').trim();
+    if (text.length < 50) {
+      showToast('Not enough content to organize.', 'info');
+      return;
+    }
+
+    // Get available topics for the user's period
+    const state = Storage.get();
+    const period = state ? state.user.period : 2;
+    const topics = this.TOPICS_LIST.filter(t => t.period === 0 || t.period === period);
+    const topicNames = topics.map(t => t.id + ': ' + t.name).join('\n');
+
+    if (!confirm('This will use AI to sort your notes into the appropriate topic categories.\n\nYour current notes will be split and moved to matching topics. Continue?')) return;
+
+    showToast('🗂️ Organizing notes with AI...', 'info');
+
+    try {
+      const BACKEND = 'https://sparkystudy-production.up.railway.app';
+      const res = await fetch(BACKEND + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: `Sort the following notes into categories. Available categories:\n${topicNames}\n\nFor each piece of content, assign it to the most relevant category. Return ONLY valid JSON: an array of objects like [{"topic_id":"p2-relays","content":"the note text"},{"topic_id":"general","content":"other text"}]. Group related lines together. If content doesn't fit any specific topic, use "general".\n\nNotes to organize:\n${text.slice(0, 6000)}`,
+          history: [],
+          systemContext: ''
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      // Parse the AI response — extract JSON array
+      let organized;
+      try {
+        const jsonMatch = data.answer.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error('No JSON found');
+        organized = JSON.parse(jsonMatch[0]);
+      } catch(e) {
+        showToast('AI couldn\'t organize the notes. Try again.', 'error');
+        return;
+      }
+
+      if (!Array.isArray(organized) || organized.length === 0) {
+        showToast('No categories detected. Notes unchanged.', 'info');
+        return;
+      }
+
+      // Save organized content to each topic
+      let movedCount = 0;
+      organized.forEach(item => {
+        if (!item.topic_id || !item.content || item.content.trim().length < 5) return;
+        const key = this._storageKey(userId, item.topic_id);
+        const existing = localStorage.getItem(key) || '';
+        const newContent = item.content.replace(/\n/g, '<br>');
+        localStorage.setItem(key, existing ? existing + '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">🗂️ Auto-organized</div>' + newContent : newContent);
+        movedCount++;
+      });
+
+      // Clear the current editor since content has been distributed
+      editor.innerHTML = '';
+      this._onInput(userId);
+      syncAIContext(state);
+
+      showToast(`🗂️ Notes organized into ${movedCount} topic${movedCount !== 1 ? 's' : ''}! Check the sidebar.`, 'success');
+      // Re-render to show updated topic indicators
+      this.render(Storage.get());
+    } catch(err) {
+      console.error('Organize error:', err);
+      showToast('Failed to organize: ' + err.message, 'error');
+    }
   },
 
   _renderQuiz(container, userId) {
@@ -9851,7 +9932,16 @@ const LESSONS_CONTENT = [
           'Explain the inductance change that occurs when the armature seals, and describe why inrush current is 4-10× the sealed current.',
           'Describe the effects of operating a coil above 110% and below 85% of its rated voltage.',
           'Describe the purpose of seal-in (holding) contacts and explain the three-wire control circuit operation.',
-          'Identify the safety advantage of three-wire control (momentary start with seal-in) versus two-wire control (maintained contact).'
+          'Identify the safety advantage of three-wire control (momentary start with seal-in) versus two-wire control (maintained contact).',
+          'Identify multi-pole contact configurations: SPST, SPDT, DPDT, 3PDT, 4PDT, and their corresponding relay pin bases (8-pin, 11-pin, 14-pin).',
+          'Describe the function of arc chutes and blow-out coils, and explain why DC arcs are harder to extinguish than AC arcs.',
+          'List NEMA contactor sizes 00 through 9 and associate each with its continuous current rating.',
+          'Compare E-frame (clapper) and U-frame (vertical-action) contactor construction and identify which NEMA sizes use each type.',
+          'Define a motor starter as contactor plus overload relay and identify the three types of overload relays (bimetallic, melting alloy, electronic).',
+          'Explain trip classes (Class 10, 20, 30) for overload relays and when each is used.',
+          'Describe the IEC auxiliary contact numbering system and interpret contact labels such as 13/14 and 21/22.',
+          'Describe latching relay operation and identify applications where latching relays are preferred over standard relays.',
+          'Describe reed relay construction, advantages (speed, contact life, sealed contacts), and current limitations.'
         ],
         questions: [
           { q: 'A relay coil is rated 120V AC. Calculate the approximate seal-in voltage and drop-out voltage.', a: 'Seal-in ≈ 120 × 0.85 = 102V. Drop-out ≈ 120 × 0.50 = 60V.' },
