@@ -2504,6 +2504,12 @@ const Exams = {
                   return '<option value="module:' + m.id + '">' + m.num + '. ' + m.name + ' (' + qCount + ' questions)</option>';
                 }).join('')}
               </optgroup>
+              <optgroup label="&#x1F4D5; By CEC Code Section">
+                ${CEC_SECTIONS.filter(s => s.period <= state.user.period).map(s => {
+                  const qCount = EXAM_BANK.filter(eq => eq.cecSection === s.id).length;
+                  return qCount > 0 ? '<option value="cecSection:' + s.id + '">' + s.name + ' (' + qCount + ' questions)</option>' : '';
+                }).join('')}
+              </optgroup>
               <optgroup label="&#x1F4CA; By Topic (All)">
                 ${Object.values(TOPICS).filter(t => t.period <= state.user.period).sort((a,b)=>a.order-b.order).map(t => {
                   const qCount = EXAM_BANK.filter(eq => eq.topic === t.id).length;
@@ -2665,6 +2671,8 @@ const Exams = {
       return EXAM_BANK.filter(eq => mod.topics.includes(eq.topic));
     } else if (type === 'topic') {
       return EXAM_BANK.filter(eq => eq.topic === id);
+    } else if (type === 'cecSection') {
+      return EXAM_BANK.filter(eq => eq.cecSection === id);
     }
     return [];
   },

@@ -104,6 +104,40 @@ const MODULES = [
   { id:'m56', num:56, name:'Hot Water Heating Systems Lab', section:'heating-lab', topics:['industrial'], hasContent:false },
 ];
 
+// ===== CEC CODE BOOK SECTIONS =====
+const CEC_SECTIONS = [
+  { id: 'cec-0',  name: 'Section 0 — Object, Scope & Definitions', period: 1 },
+  { id: 'cec-2',  name: 'Section 2 — General Rules', period: 1 },
+  { id: 'cec-4',  name: 'Section 4 — Conductors', period: 1 },
+  { id: 'cec-6',  name: 'Section 6 — Services & Service Equipment', period: 1 },
+  { id: 'cec-8',  name: 'Section 8 — Circuit Loading & Demand Factors', period: 2 },
+  { id: 'cec-10', name: 'Section 10 — Grounding & Bonding', period: 1 },
+  { id: 'cec-12', name: 'Section 12 — Wiring Methods', period: 1 },
+  { id: 'cec-14', name: 'Section 14 — Protection & Control', period: 1 },
+  { id: 'cec-16', name: 'Section 16 — Class 1 & Class 2 Circuits', period: 2 },
+  { id: 'cec-18', name: 'Section 18 — Hazardous Locations', period: 2 },
+  { id: 'cec-20', name: 'Section 20 — Flammable Liquid & Gasoline Dispensing', period: 2 },
+  { id: 'cec-22', name: 'Section 22 — Locations of Special Importance', period: 2 },
+  { id: 'cec-24', name: 'Section 24 — Patient Care Areas', period: 2 },
+  { id: 'cec-26', name: 'Section 26 — Installation of Electrical Equipment', period: 1 },
+  { id: 'cec-28', name: 'Section 28 — Motors & Generators', period: 2 },
+  { id: 'cec-30', name: 'Section 30 — Electrical Metallic Tubing', period: 1 },
+  { id: 'cec-32', name: 'Section 32 — Fire Alarm Systems', period: 2 },
+  { id: 'cec-34', name: 'Section 34 — Signs & Outline Lighting', period: 2 },
+  { id: 'cec-36', name: 'Section 36 — High Voltage Installations', period: 2 },
+  { id: 'cec-38', name: 'Section 38 — Elevators, Lifts & Related Equipment', period: 2 },
+  { id: 'cec-46', name: 'Section 46 — Emergency Power Supply', period: 2 },
+  { id: 'cec-62', name: 'Section 62 — Fixed Electric Heating Systems', period: 2 },
+  { id: 'cec-64', name: 'Section 64 — Renewable Energy Systems', period: 2 },
+  { id: 'cec-68', name: 'Section 68 — Pools, Tubs & Spas', period: 2 },
+  { id: 'cec-70', name: 'Section 70 — Electrical Vehicle Charging', period: 2 },
+  { id: 'cec-72', name: 'Section 72 — Mobile Homes & Recreational Vehicles', period: 2 },
+  { id: 'cec-76', name: 'Section 76 — Temporary Wiring', period: 2 },
+  { id: 'cec-78', name: 'Section 78 — Marine Wharves & Docking Facilities', period: 2 },
+  { id: 'cec-84', name: 'Section 84 — Interconnection of Electric Power Production Sources', period: 2 },
+  { id: 'cec-86', name: 'Section 86 — Electric Vehicle Energy Transfer Systems', period: 2 },
+];
+
 function getModulesForPeriod(period) {
   // All modules are Period 2 for now
   if (period === 2) return MODULES;
@@ -245,6 +279,11 @@ const FLASHCARD_BANK = [
   { id:'fc12', topic:'series-circuits', q:"What happens if one component opens in a series circuit?", a:"The entire circuit stops — no current flows through any component" },
   { id:'fc13', topic:'series-circuits', q:"Calculate total R: 15Ω + 25Ω + 10Ω in series", a:"Rt = 15 + 25 + 10 = 50Ω" },
   { id:'fc14', topic:'series-circuits', q:"What is Kirchhoff's Voltage Law?", a:"The sum of all voltage drops in a closed loop equals the source voltage" },
+  { id:'fc199', topic:'series-circuits', q:"A 120V source drives 3A through a series circuit. What is the total resistance?", a:"R = V/I = 120/3 = 40Ω" },
+  { id:'fc200', topic:'series-circuits', q:"How do you find the voltage drop across one resistor in a series circuit?", a:"VR = I × R (multiply the common series current by that resistor's value)" },
+  { id:'fc201', topic:'series-circuits', q:"What does KVL tell you if your voltage drops don't add up to source voltage?", a:"You have made a calculation error — KVL always holds. Recheck your work." },
+  { id:'fc202', topic:'series-circuits', q:"Two series resistors: 40Ω and 80Ω on a 120V source. What current flows?", a:"Rt = 40+80=120Ω; I = 120/120 = 1A" },
+  { id:'fc203', topic:'series-circuits', q:"In a series circuit, which resistor drops the most voltage?", a:"The largest resistor — voltage drop is proportional to resistance (V = I×R, I is the same for all)" },
 
   // PARALLEL CIRCUITS
   { id:'fc15', topic:'parallel-circuits', q:"Formula for total resistance of two resistors in parallel?", a:"Rt = (R1 × R2) / (R1 + R2) — product over sum" },
@@ -253,6 +292,11 @@ const FLASHCARD_BANK = [
   { id:'fc18', topic:'parallel-circuits', q:"Three 90Ω resistors in parallel: total R?", a:"Rt = R/n = 90/3 = 30Ω" },
   { id:'fc19', topic:'parallel-circuits', q:"Adding more branches to a parallel circuit does what to total resistance?", a:"Decreases total resistance (more paths for current)" },
   { id:'fc20', topic:'parallel-circuits', q:"What is Kirchhoff's Current Law?", a:"The sum of currents entering a node equals the sum leaving it" },
+  { id:'fc204', topic:'parallel-circuits', q:"A 240V source powers two parallel branches: 120Ω and 60Ω. What is the total current?", a:"I1=240/120=2A; I2=240/60=4A; It=2+4=6A" },
+  { id:'fc205', topic:'parallel-circuits', q:"Why can't you use the simple product-over-sum formula for three parallel resistors?", a:"Product-over-sum only works for TWO resistors. For three or more, use the reciprocal formula: 1/Rt = 1/R1 + 1/R2 + 1/R3" },
+  { id:'fc206', topic:'parallel-circuits', q:"A branch opens in a parallel circuit. What happens to the other branches?", a:"They continue operating normally — each branch is independent and still receives full source voltage" },
+  { id:'fc207', topic:'parallel-circuits', q:"Why does adding more parallel branches reduce total resistance?", a:"More branches provide additional current paths, reducing overall opposition to current flow" },
+  { id:'fc208', topic:'parallel-circuits', q:"Two parallel resistors: 200Ω and 200Ω. What is Rt?", a:"Rt = R/n = 200/2 = 100Ω (or product-over-sum: 200×200/400 = 100Ω)" },
 
   // MAGNETISM
   { id:'fc21', topic:'magnetism', q:"What creates a magnetic field around a conductor?", a:"Electric current flowing through the conductor" },
@@ -277,6 +321,11 @@ const FLASHCARD_BANK = [
   { id:'fc36', topic:'tools', q:"What is a fish tape used for?", a:"Pulling wires through conduit or wall cavities" },
   { id:'fc37', topic:'tools', q:"What does a continuity test check?", a:"Whether there is a complete path for current flow (unbroken circuit)" },
   { id:'fc38', topic:'tools', q:"What tool is used to bend conduit?", a:"A conduit bender (hickey for small, mechanical for larger)" },
+  { id:'fc209', topic:'tools', q:"What is the live-dead-live method for using a voltage tester?", a:"Test on a KNOWN live source first, then test the de-energized circuit, then re-test on the known live source — confirms the tester is working before and after" },
+  { id:'fc210', topic:'tools', q:"What is a torque screwdriver / torque wrench used for in electrical work?", a:"Tightening connections to the manufacturer's specified torque to prevent loose connections and overheating" },
+  { id:'fc211', topic:'tools', q:"What unit does a clamp-on ammeter measure, and how does it work?", a:"Measures current in amperes — senses the magnetic field around a single conductor without breaking the circuit" },
+  { id:'fc212', topic:'tools', q:"When using a megger (insulation tester), what must be done first?", a:"De-energize the circuit and disconnect it from all loads and equipment — a megger applies high voltage (500V–1000V+) that would damage equipment" },
+  { id:'fc213', topic:'tools', q:"What is a knockout punch used for?", a:"Cutting clean circular holes in electrical boxes and panels for conduit fittings and cable connectors" },
 
   // WIRING METHODS
   { id:'fc39', topic:'wiring-methods', q:"What does NMD90 stand for?", a:"Non-Metallic Dry, 90°C temperature rating" },
@@ -285,6 +334,11 @@ const FLASHCARD_BANK = [
   { id:'fc42', topic:'wiring-methods', q:"What is the minimum burial depth for direct-buried cable?", a:"600mm (CEC Rule 12-012)" },
   { id:'fc43', topic:'wiring-methods', q:"Name 3 types of raceways", a:"EMT, rigid PVC conduit, and flexible metal conduit" },
   { id:'fc44', topic:'wiring-methods', q:"What is the maximum percentage conduit fill for 3+ conductors?", a:"40% (CEC Table 8)" },
+  { id:'fc214', topic:'wiring-methods', q:"What is the minimum number of full EMT conduit bends allowed between pull points?", a:"The CEC limits conduit runs to a maximum of 360° of bends (four 90° bends) between pull boxes" },
+  { id:'fc215', topic:'wiring-methods', q:"When is flexible metallic conduit (FMC) required at motor connections?", a:"FMC is required at final connections to motors and vibrating equipment to absorb vibration and allow alignment" },
+  { id:'fc216', topic:'wiring-methods', q:"What is a box fill calculation used to determine?", a:"The minimum required volume (in cubic centimetres or cubic inches) of an electrical box based on the number and size of conductors, devices, and fittings inside" },
+  { id:'fc217', topic:'wiring-methods', q:"What does TECK cable stand for and where is it used?", a:"Thermoplastic Ethylene Copolymer Jacketed with steel armour — used in industrial and commercial installations requiring mechanical protection" },
+  { id:'fc218', topic:'wiring-methods', q:"What is the minimum bending radius for a conductor inside conduit per CEC?", a:"Conductors must not be bent to a radius less than 8× the overall diameter of the conductor (to prevent insulation damage)" },
 
   // RESIDENTIAL
   { id:'fc45', topic:'residential', q:"Standard residential voltage in Canada?", a:"120/240V single phase" },
@@ -326,6 +380,11 @@ const FLASHCARD_BANK = [
   { id:'fc73', topic:'transformers', q:"What is a transformer's VA rating?", a:"The maximum volt-ampere load it can handle (apparent power)" },
   { id:'fc74', topic:'transformers', q:"Can a transformer change frequency?", a:"No — output frequency equals input frequency" },
   { id:'fc75', topic:'transformers', q:"What causes eddy current losses?", a:"Circulating currents induced in the transformer core by the changing magnetic field" },
+  { id:'fc219', topic:'transformers', q:"What is an isolation transformer and why is it used?", a:"A 1:1 ratio transformer that provides no voltage change but isolates the secondary circuit from the primary — used for safety in medical and electronics applications" },
+  { id:'fc220', topic:'transformers', q:"What is an autotransformer and what is its key limitation?", a:"A transformer using a single tapped winding — smaller and cheaper than a two-winding transformer, but provides NO electrical isolation between primary and secondary" },
+  { id:'fc221', topic:'transformers', q:"Why must a current transformer (CT) secondary never be left open-circuited?", a:"With no load, all primary current becomes magnetizing current and the core saturates, inducing dangerously high voltage on the secondary — potentially lethal" },
+  { id:'fc222', topic:'transformers', q:"What phase shift does a standard Delta-Wye transformer introduce?", a:"30° phase shift — the secondary voltage lags the primary by 30° in a standard Dy1 connection" },
+  { id:'fc223', topic:'transformers', q:"What does transformer percent impedance (%Z) tell you?", a:"The percentage of rated voltage needed to drive full-load current through the shorted secondary — lower %Z means higher available fault current on the secondary" },
 
   // MOTORS
   { id:'fc76', topic:'motors', q:"Synchronous speed formula?", a:"Ns = 120f / P (f = frequency, P = number of poles)" },
@@ -1278,6 +1337,28 @@ const EXAM_BANK = [
   {id:'e1027',topic:'ac-circuits',q:"The voltage across the inductor in a series RL circuit is calculated by:",opts:["VL = I × R","VL = I × XL","VL = I × Z","VL = VT - VR"],correct:1,exp:"VL = I × XL. The voltage across the inductor equals the current times the inductive reactance."},
   {id:'e1028',topic:'ac-circuits',q:"If a series circuit has R = 100Ω, XL = 200Ω, and XC = 100Ω, the impedance is:",opts:["400Ω","141.4Ω","100Ω","200Ω"],correct:1,exp:"Net X = XL - XC = 200 - 100 = 100Ω. Z = √(R² + X²) = √(10000 + 10000) = √20000 = 141.4Ω."},
   {id:'e1029',topic:'ac-circuits',q:"The power factor angle (θ) in a circuit with R = 30Ω and X = 40Ω is approximately:",opts:["36.9°","45°","53.1°","60°"],correct:2,exp:"tan θ = X/R = 40/30 = 1.333. θ = arctan(1.333) ≈ 53.1°."},
+
+  // ── CEC Section 24 — Patient Care Areas ──
+  {id:'e1030',topic:'advanced-code',cecSection:'cec-24',q:"\"Basic care area\" is defined as a patient care area where body contact between patient and medical electrical equipment is neither frequent nor usual.",opts:["True","False"],correct:0,exp:"Per CEC Section 24, a basic care area is one where body contact between patient and medical electrical equipment is neither frequent nor usual."},
+  {id:'e1031',topic:'advanced-code',cecSection:'cec-24',q:"An electrical distribution system in which no circuit conductor is connected directly to ground can be referred to as a(n) ____________ system.",opts:["Isolated","Essential","Either of the terms in A or B","Grounded"],correct:0,exp:"An isolated system is one in which no circuit conductor is connected directly to ground. Essential systems serve a different purpose (backup power)."},
+  {id:'e1032',topic:'advanced-code',cecSection:'cec-24',q:"Patient care areas are designated as:",opts:["Basic care areas","Critical care areas","Intermediate care areas","All of the above"],correct:3,exp:"CEC Section 24 designates patient care areas as basic care areas, critical care areas, and intermediate care areas."},
+  {id:'e1033',topic:'advanced-code',cecSection:'cec-24',q:"Different locations and zones of a hospital can be designated as essential care areas.",opts:["True","False"],correct:1,exp:"The CEC does not use the term 'essential care areas.' The designations are basic, critical, and intermediate care areas. 'Essential' refers to essential electrical systems (backup power), not care area classifications."},
+  {id:'e1034',topic:'advanced-code',cecSection:'cec-24',q:"The Appendix B note to 24-002 states that the hazard index with one isolated conductor connected to ground is not necessarily the same as the hazard index with the other isolated conductor connected to ground, and that of the two, the greater hazard index governs.",opts:["True","False"],correct:0,exp:"Per Appendix B note to Rule 24-002, the hazard index can differ depending on which conductor is grounded, and the greater value governs."},
+  {id:'e1035',topic:'advanced-code',cecSection:'cec-24',q:"\"Patient care area\" is defined as an area intended primarily for the provision of diagnosis, therapy, or care.",opts:["True","False"],correct:0,exp:"Per CEC Section 24, a patient care area is defined as an area intended primarily for the provision of diagnosis, therapy, or care."},
+  {id:'e1036',topic:'advanced-code',cecSection:'cec-24',q:"Branch circuits in intermediate care areas, other than those supplying multi-phase equipment, shall be:",opts:["2-wire circuits","Edison 3-wire circuits","Of a Ground Fault Circuit Interrupter protected type","For supplying 3-wire split duplex receptacles"],correct:0,exp:"Per CEC Section 24, branch circuits in intermediate care areas (other than those supplying multi-phase equipment) shall be 2-wire circuits."},
+  {id:'e1037',topic:'advanced-code',cecSection:'cec-24',q:"Circuits in critical care areas shall be fed from:",opts:["A grounded system","An isolated system","Either a grounded system or an isolated system","A grounded distribution system"],correct:1,exp:"Per CEC Section 24, circuits in critical care areas shall be fed from an isolated system to minimize shock hazard to patients."},
+  {id:'e1038',topic:'advanced-code',cecSection:'cec-24',q:"The maximum voltage to ground for circuits in a basic care area (unless for special purposes) is __________ V.",opts:["8","24","125","150"],correct:3,exp:"Per CEC Section 24, the maximum voltage to ground for circuits in a basic care area is 150V (unless for special purposes)."},
+  {id:'e1039',topic:'advanced-code',cecSection:'cec-24',q:"Receptacles located in bathrooms or washrooms within a patient care area shall be protected by a ground fault circuit interrupter of the Class A type.",opts:["True","False"],correct:0,exp:"Per CEC Section 24, receptacles in bathrooms or washrooms within a patient care area require Class A GFCI protection."},
+  {id:'e1040',topic:'advanced-code',cecSection:'cec-24',q:"Receptacles that are located adjacent to a washbasin in a patient care area shall be:",opts:["Installed on an isolated circuit","Protected by a Class A type ground fault circuit interrupter","Coloured red when connected to a grounded circuit","Conform to all of the above conditions"],correct:1,exp:"Per CEC Section 24, receptacles adjacent to a washbasin in a patient care area shall be protected by a Class A type GFCI."},
+  {id:'e1041',topic:'advanced-code',cecSection:'cec-24',q:"5-20RA receptacles are used to supply portable computer work stations in a basic care area. These receptacles are required to be hospital grade.",opts:["True","False"],correct:1,exp:"Hospital grade receptacles are required in critical care areas, not necessarily for computer workstations in basic care areas supplying portable equipment."},
+  {id:'e1042',topic:'advanced-code',cecSection:'cec-24',q:"The branch circuits supplying receptacles and permanently connected equipment in basic care areas shall be supplied from a grounded distribution system.",opts:["True","False"],correct:0,exp:"Per CEC Section 24, branch circuits supplying receptacles and permanently connected equipment in basic care areas shall be supplied from a grounded distribution system."},
+  {id:'e1043',topic:'advanced-code',cecSection:'cec-24',q:"Single-phase isolated circuits in hospitals shall be:",opts:["Not connected directly to ground","Grounded according to 10-206","Supplied from an approved G.F.C.I.","Grounded according to 10-210"],correct:0,exp:"Per CEC Section 24, single-phase isolated circuits in hospitals shall not be connected directly to ground — that is the fundamental requirement of an isolated system."},
+  {id:'e1044',topic:'advanced-code',cecSection:'cec-24',q:"When testing the integrity of a single-phase isolated system, the total impedance between ground and each of the ungrounded conductors is 650 kΩ. This value is within the acceptable limit.",opts:["True","False"],correct:1,exp:"Per CEC Section 24, the minimum acceptable impedance for a single-phase isolated system is typically higher. 650 kΩ may not meet the required minimum depending on the specific rule requirements."},
+  {id:'e1045',topic:'advanced-code',cecSection:'cec-24',q:"Three-phase isolated systems should be subject to a periodic test of impedance to ground of the system, together with any connected load, unless an approved isolation sensing device is used.",opts:["True","False"],correct:0,exp:"Per Appendix B notes for CEC Section 24, three-phase isolated systems should be periodically tested for impedance to ground unless an approved isolation sensing device is used."},
+  {id:'e1046',topic:'advanced-code',cecSection:'cec-24',q:"It is imperative that the impedance to ground of individually isolated branch circuits be tested at regular intervals, and that maintenance procedures be instituted for the system and the equipment connected to it as necessary to limit the hazard index to 2 mA.",opts:["True","False"],correct:0,exp:"Per Appendix B notes of CEC Section 24, regular impedance testing and maintenance is required to keep the hazard index at or below 2 mA."},
+  {id:'e1047',topic:'advanced-code',cecSection:'cec-24',q:"Isolated circuits in a patient care area in a hospital shall have overcurrent devices that will open all ungrounded conductors simultaneously.",opts:["True","False"],correct:0,exp:"Per CEC Section 24, isolated circuits in patient care areas require overcurrent devices that open all ungrounded conductors simultaneously to maintain isolation integrity."},
+  {id:'e1048',topic:'advanced-code',cecSection:'cec-24',q:"An essential electrical system for a hospital shall consist of at least a vital branch, and may also include a delayed vital branch or both. The minimum restoration times for these two circuits are one circuit restoring in:",opts:["10 s and one restoring in 1 min","2 min and one restoring in 1 h","1 min and one restoring in 24 h","10 s and one restoring in 24 h"],correct:0,exp:"Per CEC Section 24, the vital branch must restore within 10 seconds and the delayed vital branch within 1 minute."},
+  {id:'e1049',topic:'advanced-code',cecSection:'cec-24',q:"The generator set used in a hospital shall NOT be installed in a service room or enclosure in accordance with CSA C282.",opts:["True","False"],correct:1,exp:"Per CEC Section 24, the generator set used in a hospital SHALL be installed in a service room or enclosure in accordance with CSA C282. The statement is false."},
 ];
 
 
@@ -1544,7 +1625,10 @@ const STUDY_CONTENT = {
       { heading: "Voltage Drop Calculations", content: "Voltage drop is the reduction in voltage along a conductor due to its resistance. The CEC recommends (but does not require) maximum 3% drop on branch circuits and 5% total from service to load. Excessive voltage drop causes motors to overheat, lights to dim, and equipment to malfunction.", isFormula: true, formula: "Single phase: Vd = 2 × I × R × L / 1000\nThree phase: Vd = √3 × I × R × L / 1000\n\nwhere I = current (amps)\n      R = resistance per km (from CEC Table 8)\n      L = one-way length (meters)\n\nVd% = (Vd / Vsource) × 100" },
       { heading: "Conductor Selection Process", content: "When selecting conductor size, check four factors and use the LARGEST size required: (1) Ampacity per CEC Table 2 with derating factors applied, (2) Voltage drop — ensure it stays within 3%/5% limits, (3) Short circuit withstand — the conductor must survive the available fault current until the overcurrent device clears, (4) Physical protection and mechanical strength — minimum 14 AWG for most applications, 12 AWG for 20A circuits. On exams, they will give you a scenario and ask you to determine wire size considering multiple factors — always check all four.", isKeyPoint: true },
       { heading: "Conductor Identification and Color Coding", content: "In Canada: Black = ungrounded (hot) conductor. Red = second ungrounded conductor (in 120/240V circuits). Blue = third ungrounded conductor (in 3-phase). White or grey = grounded (neutral) conductor. Green or bare = bonding (grounding) conductor. For circuits over 250V (like 347/600V): Red, Black, Blue for three phases, White for neutral. Conductors 6 AWG and larger are often all black — they must be identified at each termination point with colored tape or paint matching the required color code. Always verify color coding matches the system before connecting anything." },
-      { heading: "Conductor Termination and Splicing", content: "All conductor connections must be made in approved boxes or enclosures. Wire nuts (marettes) are standard for splicing solid conductors up to 10 AWG. For larger conductors, use mechanical connectors (split bolts, set screw connectors) or compression connectors. Compression connectors require a specific crimp tool and die set — using the wrong die voids the UL listing. All splices must be insulated to the same level as the original conductor insulation. Torque specifications on terminal screws must be followed — loose connections cause fires, overtightened connections damage conductors." }
+      { heading: "Conductor Termination and Splicing", content: "All conductor connections must be made in approved boxes or enclosures. Wire nuts (marettes) are standard for splicing solid conductors up to 10 AWG. For larger conductors, use mechanical connectors (split bolts, set screw connectors) or compression connectors. Compression connectors require a specific crimp tool and die set — using the wrong die voids the UL listing. All splices must be insulated to the same level as the original conductor insulation. Torque specifications on terminal screws must be followed — loose connections cause fires, overtightened connections damage conductors." },
+      { heading: "Conductor Insulation Types and Temperature Ratings", content: "Insulation type determines the conductor's maximum operating temperature, which directly determines its ampacity. RW90 (the Canadian designation) is rated for 90°C in dry or wet locations — it is the most common insulation for modern branch circuit and feeder wiring. THWN/THHN is the American equivalent used on imported wire. RW75 is rated at 75°C and has lower ampacity. NMD90 (Loomex) is Non-Metallic Dry — the familiar white-sheathed cable used in residential walls, rated 90°C but only permitted in dry locations. The temperature rating of a conductor is only as good as the lowest-rated component in the circuit: if a terminal block is rated only 75°C, you must use the 75°C ampacity column from CEC Table 2 even if the wire itself is rated 90°C.", isKeyPoint: true },
+      { heading: "Ampacity Derating Factors", content: "CEC Table 2 gives conductor ampacity at 30°C ambient with no more than 3 current-carrying conductors in a raceway. When conditions differ, you must apply correction factors. Temperature correction: if ambient exceeds 30°C, multiply ampacity by the temperature correction factor from CEC Table 5A (higher ambient = lower factor). Conduit fill derating: when 4–6 conductors share a conduit, multiply by 0.80. For 7–9 conductors, multiply by 0.70. For 10–20 conductors, multiply by 0.50. Neutral conductors carrying only unbalanced current do not count. When multiple derating factors apply, multiply them together. Example: 12 AWG RW90 in 40°C ambient with 6 conductors: 25A × 0.88 (temp) × 0.80 (fill) = 17.6A available.", isKeyPoint: true, isFormula: true, formula: "Adjusted ampacity = Table 2 ampacity × Temperature factor × Fill factor\n\nTemp correction examples (from Table 5A for 90°C insulation):\n  31–35°C: × 0.96\n  36–40°C: × 0.91 (some tables use 0.88)\n  41–45°C: × 0.87\n  46–50°C: × 0.82\n\nConduit fill factors:\n  1–3 conductors: × 1.00\n  4–6 conductors: × 0.80\n  7–9 conductors: × 0.70\n  10–20 conductors: × 0.50" },
+      { heading: "Conduit Fill Calculations", content: "CEC Rule 12-1014 limits how many conductors can be installed in a conduit to prevent heat buildup and conductor damage. The maximum fill is 40% of the conduit's cross-sectional area for three or more conductors (53% for two conductors, 31% for one conductor with a pull wire). To calculate fill: find the cross-sectional area of each conductor including insulation from CEC Table 8 (in mm²), add them all up, and compare to the 40% fill capacity of the conduit from CEC Table 8. Larger conduit runs cooler and makes pulling conductors much easier. As a practical rule: if a pull requires more than 10% of the conductor weight in pulling force, the conduit is likely overfilled or has too many bends.", isKeyPoint: false, isFormula: true, formula: "Steps for conduit fill:\n1. Find conductor area from CEC Table 8 (mm² including insulation)\n2. Multiply by number of conductors of each size\n3. Add all conductor areas together\n4. Find conduit inner area from CEC Table 8\n5. Divide total conductor area by conduit inner area × 100\n6. Must be ≤ 40% for 3+ conductors\n\nExample: 6 × 12 AWG RW90 in conduit\n  Each 12 AWG = 8.6 mm²\n  Total = 6 × 8.6 = 51.6 mm²\n  ½\" EMT inner area = 129 mm²\n  Fill = 51.6/129 = 40% ✓ (exactly at limit)" }
     ]
   },
   'relays-contactors': {
