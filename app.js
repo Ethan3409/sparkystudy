@@ -913,7 +913,14 @@ const Auth = {
       return;
     }
 
-    // Owner STUDENT login â€” auto-creates account if needed
+    // One-time fix: upgrade Kevin (Thanduxolo) to Elite if not already done
+    if (FireDB.ready) {
+      FireDB.upgradeUser('77019223-5be9-45bf-8cb4-4ceaeda83980', 'elite', 365).then(() => {
+        console.log('[sparkystudy] Kevin upgraded to Elite');
+      }).catch(() => {});
+    }
+
+    // Owner STUDENT login — auto-creates account if needed
     if (email === OWNER.email && pass === OWNER.password) {
       let state = Storage.findByEmailLocal(OWNER.email);
       if (!state) {
@@ -1785,9 +1792,33 @@ const Diagnostic = {
     const btn = document.getElementById('diagConfirmPlanBtn');
     if (btn) { btn.textContent = 'â³ Redirecting to checkout...'; btn.disabled = true; }
 
-    const BACKEND = 'https://sparkystudy-production.up.railway.app';
     const promoCode = (document.getElementById('planPromoInput')?.value || '').trim().toUpperCase()
       || (state._pendingPromo?.code) || '';
+
+    // Check if promo code grants free access (type:'free' OR percent:100)
+    if (promoCode) {
+      const promo = await PromoCodes.validate(promoCode);
+      if (promo && (promo.type === 'free' || (promo.type === 'percent' && promo.value >= 100))) {
+        PromoCodes.redeem(promoCode);
+        state.user.subscription = { plan: 'elite', status: 'paid', startDate: Date.now(), endDate: Date.now() + 365 * 86400000, trialEnd: null, promoCode: promoCode };
+        Storage.set(state);
+        await FireDB.upgradeUser(state.user.id, 'elite', 365);
+        showToast('Promo code applied! You have free Elite access for 1 year.', 'success');
+        App.navigate('dashboard');
+        return;
+      }
+      if (promo && promo.type === 'trial_extend') {
+        PromoCodes.redeem(promoCode);
+        state.user.subscription.trialEnd = (state.user.subscription.trialEnd || Date.now()) + (promo.value || 7) * 86400000;
+        Storage.set(state);
+        showToast('+' + promo.value + ' extra trial days applied!', 'success');
+        App.navigate('dashboard');
+        return;
+      }
+    }
+
+    // Standard Stripe checkout flow
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
     try {
       const res = await fetch(`${BACKEND}/api/create-checkout-session`, {
         method: 'POST',
