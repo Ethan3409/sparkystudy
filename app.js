@@ -120,6 +120,24 @@ const FireDB = {
     if (!this.ready) return;
     try { await this.db.collection('users').doc(uid).set({ user: fields }, { merge: true }); } catch(e) { /* fail silently */ }
   },
+  // Upgrade a user's subscription in Firestore (owner-only)
+  async upgradeUser(uid, plan, durationDays) {
+    if (!this.ready) return false;
+    try {
+      await this.db.collection('users').doc(uid).set({
+        user: {
+          subscription: {
+            status: 'paid',
+            plan: plan || 'elite',
+            startDate: Date.now(),
+            endDate: Date.now() + (durationDays || 365) * 86400000,
+            trialEnd: null
+          }
+        }
+      }, { merge: true });
+      return true;
+    } catch(e) { console.warn('upgradeUser failed:', e.message); return false; }
+  },
   async clearVisits() {
     if (!this.ready) return 0;
     try {
@@ -357,6 +375,24 @@ const Storage = {
     }
     if (!uid) return null;
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + uid)) || null; } catch(e) { return null; }
+  },
+  // Async version that merges Firestore subscription data (authoritative)
+  async getWithCloud() {
+    const state = this.get();
+    if (!state || !state.user || !FireDB.ready) return state;
+    try {
+      const doc = await FireDB.db.collection('users').doc(state.user.id).get();
+      if (doc.exists) {
+        const cloud = doc.data();
+        if (cloud.user?.subscription) {
+          // Firestore subscription is authoritative — merge it
+          state.user.subscription = { ...state.user.subscription, ...cloud.user.subscription };
+          // Save merged state back to localStorage
+          localStorage.setItem(STORAGE_KEY + '_' + state.user.id, JSON.stringify(state));
+        }
+      }
+    } catch(e) { /* non-critical — use local data */ }
+    return state;
   },
   set(state) {
     if (!state || !state.user) return;
@@ -798,12 +834,13 @@ const Auth = {
     });
   },
   appliedPromo: null,
-  applySignupPromo() {
+  async applySignupPromo() {
     const input = document.getElementById('signupPromo');
     const el = document.getElementById('signupPromoMsg');
     const code = (input?.value || '').trim().toUpperCase();
     if (!code) { if (el) el.innerHTML = ''; this.appliedPromo = null; return; }
-    const promo = PromoCodes.validate(code);
+    if (el) el.innerHTML = '<span style="color:#9ca3af;">Checking...</span>';
+    const promo = await PromoCodes.validate(code);
     if (promo) {
       this.appliedPromo = promo;
       const desc = promo.type === 'percent' ? promo.value + '% off' : promo.type === 'flat' ? '$' + promo.value + ' off' : promo.type === 'trial_extend' ? '+' + promo.value + ' extra trial days' : promo.type === 'free' ? 'Free access!' : promo.value;
@@ -919,6 +956,12 @@ const Auth = {
     Storage.setActiveUser(state.user.id);
     state.user.lastLogin = Date.now();
     Storage.set(state);
+    // Sync subscription status from Firestore (authoritative)
+    Storage.getWithCloud().then(merged => {
+      if (merged && merged.user.subscription.status !== state.user.subscription.status) {
+        showToast('Subscription status synced from server', 'info');
+      }
+    });
     SiteAnalytics.track('login', { userId: state.user.id, email });
     SiteAnalytics.trackVisit(state.user.id);
     showToast('Welcome back, ' + state.user.name + '!', 'success');
@@ -12520,37 +12563,75 @@ PRICING.load();
 
 // ===== PROMO CODES =====
 const PromoCodes = {
-  getAll() { try { return JSON.parse(localStorage.getItem(PROMO_KEY)) || []; } catch(e) { return []; } },
-  save(codes) { localStorage.setItem(PROMO_KEY, JSON.stringify(codes)); },
+  _cache: null,
+  _cacheTime: 0,
+  // Read from Firestore (with localStorage fallback + migration)
+  async getAll() {
+    // Return cache if fresh (< 30s)
+    if (this._cache && Date.now() - this._cacheTime < 30000) return this._cache;
+    // Try Firestore first
+    if (FireDB.ready) {
+      try {
+        const snap = await FireDB.db.collection('promoCodes').get();
+        const codes = snap.docs.map(d => d.data());
+        if (codes.length > 0) { this._cache = codes; this._cacheTime = Date.now(); return codes; }
+        // Migrate from localStorage if Firestore is empty
+        const local = (() => { try { return JSON.parse(localStorage.getItem(PROMO_KEY)) || []; } catch(e) { return []; } })();
+        if (local.length > 0) {
+          for (const p of local) await this._saveOne(p);
+          this._cache = local; this._cacheTime = Date.now();
+          return local;
+        }
+      } catch(e) { console.warn('PromoCodes Firestore read failed:', e.message); }
+    }
+    // Fallback to localStorage
+    try { const local = JSON.parse(localStorage.getItem(PROMO_KEY)) || []; this._cache = local; this._cacheTime = Date.now(); return local; } catch(e) { return []; }
+  },
+  // Sync version for immediate access (uses cache or localStorage)
+  getAllSync() {
+    if (this._cache) return this._cache;
+    try { return JSON.parse(localStorage.getItem(PROMO_KEY)) || []; } catch(e) { return []; }
+  },
+  async _saveOne(promo) {
+    if (!FireDB.ready) return;
+    try { await FireDB.db.collection('promoCodes').doc(promo.code).set(promo); } catch(e) {}
+  },
+  save(codes) {
+    localStorage.setItem(PROMO_KEY, JSON.stringify(codes));
+    this._cache = codes; this._cacheTime = Date.now();
+    // Sync all to Firestore
+    if (FireDB.ready) codes.forEach(p => this._saveOne(p));
+  },
   add(code, type, value, maxUses, expiry) {
-    const all = this.getAll();
+    const all = this.getAllSync();
     if (all.find(c => c.code.toUpperCase() === code.toUpperCase())) return false;
-    all.push({ code: code.toUpperCase(), type, value, maxUses: maxUses || null, uses: 0, expiry: expiry || null, active: true, created: Date.now() });
+    const promo = { code: code.toUpperCase(), type, value, maxUses: maxUses || null, uses: 0, expiry: expiry || null, active: true, created: Date.now() };
+    all.push(promo);
     this.save(all);
     return true;
   },
   remove(code) {
-    const all = this.getAll().filter(c => c.code !== code);
+    const all = this.getAllSync().filter(c => c.code !== code);
     this.save(all);
+    if (FireDB.ready) FireDB.db.collection('promoCodes').doc(code).delete().catch(() => {});
   },
   toggle(code) {
-    const all = this.getAll();
+    const all = this.getAllSync();
     const c = all.find(p => p.code === code);
-    if (c) c.active = !c.active;
-    this.save(all);
+    if (c) { c.active = !c.active; this.save(all); }
   },
-  apply(code) {
-    if (!code) return { success: false, message: `""` };
-    const promo = this.validate(code);
-    if (!promo) return { success: false, message: `'Invalid or expired promo code.'` };
+  async apply(code) {
+    if (!code) return { success: false, message: '' };
+    const promo = await this.validate(code);
+    if (!promo) return { success: false, message: 'Invalid or expired promo code.' };
     this.redeem(code);
     Diagnostic._appliedPromoData = promo;
-    const msg = promo.type === `'free'` ? `'Free access applied!'` : promo.type === `'trial_extend'` ? `'+' + promo.value + ' extra trial days applied!'` : promo.type === `'percent'` ? promo.value + `'% discount applied!'` : `'$' + promo.value + ' discount applied!'`;
+    const msg = promo.type === 'free' ? 'Free access applied!' : promo.type === 'trial_extend' ? '+' + promo.value + ' extra trial days applied!' : promo.type === 'percent' ? promo.value + '% discount applied!' : '$' + promo.value + ' discount applied!';
     return { success: true, message: msg };
   },
-  validate(code) {
+  async validate(code) {
     if (!code) return null;
-    const all = this.getAll();
+    const all = await this.getAll();
     const promo = all.find(c => c.code === code.toUpperCase() && c.active);
     if (!promo) return null;
     if (promo.maxUses && promo.uses >= promo.maxUses) return null;
@@ -12558,7 +12639,7 @@ const PromoCodes = {
     return promo;
   },
   redeem(code) {
-    const all = this.getAll();
+    const all = this.getAllSync();
     const promo = all.find(c => c.code === code.toUpperCase());
     if (promo) { promo.uses++; this.save(all); }
   }
@@ -12763,6 +12844,7 @@ const OwnerDashboard = {
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
+          ${!isPaid?`<button onclick="OwnerDashboard.upgradeUser('${u.id}','${u.name}')" style="font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid #22c55e;background:transparent;color:#22c55e;cursor:pointer;">&#x2B06; Upgrade</button>`:'<span style="font-size:0.72rem;color:#22c55e;padding:5px 8px;">&#x2705; Paid</span>'}
           <button onclick="OwnerDashboard.blockUser('${u.id}')" style="font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid ${isBanned?'#22c55e':'#f59e0b'};background:transparent;color:${isBanned?'#22c55e':'#f59e0b'};cursor:pointer;">${isBanned?'Unblock':'Block'}</button>
           <button onclick="OwnerDashboard.removeUser('${u.id}')" style="font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid #ef4444;background:transparent;color:#ef4444;cursor:pointer;">Remove</button>
         </div>
@@ -13079,6 +13161,28 @@ const OwnerDashboard = {
     this.render();
   },
 
+  async upgradeUser(uid, name) {
+    const days = prompt('Upgrade ' + name + ' to Elite.\n\nHow many days? (365 = 1 year)', '365');
+    if (!days) return;
+    const d = parseInt(days);
+    if (isNaN(d) || d < 1) return showToast('Invalid number of days', 'error');
+    if (!confirm('Upgrade ' + name + ' to Elite for ' + d + ' days?')) return;
+    const ok = await FireDB.upgradeUser(uid, 'elite', d);
+    if (ok) {
+      // Also update local copy if exists
+      const st = Storage.getUserById(uid);
+      if (st) {
+        st.user.subscription = { ...st.user.subscription, status: 'paid', plan: 'elite', startDate: Date.now(), endDate: Date.now() + d * 86400000, trialEnd: null };
+        localStorage.setItem('sparkstudy_v1_' + uid, JSON.stringify(st));
+      }
+      showToast(name + ' upgraded to Elite for ' + d + ' days!', 'success');
+      // Refresh cloud users
+      if (FireDB.ready) { const cu = await FireDB.getAllUsers(); if (cu) this._cloudUsers = cu; }
+      this.render();
+    } else {
+      showToast('Upgrade failed — check Firebase connection', 'error');
+    }
+  },
   async blockUser(uid) {
     const st = Storage.getUserById(uid);
     if (!st) return showToast('User not found', 'error');
