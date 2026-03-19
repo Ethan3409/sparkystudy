@@ -1,0 +1,258 @@
+{
+  "module_id": "m3",
+  "module_number": 3,
+  "title": "Inductors and Capacitors in Circuits",
+  "course": "Second Period - Alternating Current (AC) Circuit Properties",
+  "publisher": "ILM Learning Resources for Skilled Trades",
+  "code": "030201c",
+  "edition": "2nd Edition",
+  "total_pages": 42,
+  "pages": [
+    {
+      "page": 1,
+      "section": "Introduction / Rationale / Objectives",
+      "figures": [],
+      "content": "Inductors and Capacitors in Circuits\n\nRationale\nWhy is it important for you to learn this skill?\nInductors and capacitors are used in a variety of applications that an electrician will encounter. It is important to understand the effect these devices will have when placed in both ac and dc circuits.\n\nOutcome\nWhen you have completed this module, you will be able to\nConnect and analyze the effects of capacitors and inductors in circuits.\n\nObjectives\n1. Describe the effects of an inductor in a dc circuit.\n2. Describe the effects of a capacitor in a dc circuit.\n3. Describe the effects of an inductor in an ac circuit.\n4. Describe the characteristics of an ac inductive circuit.\n5. Calculate inductance and inductive reactance.\n6. Describe the effects of a capacitor in an ac circuit.\n7. Describe the characteristics of an ac capacitive circuit.\n8. Calculate capacitance and capacitive reactance.\n9. Connect and analyze pure dc inductive and pure capacitive circuits.\n10. Connect and analyze pure ac inductive and pure capacitive circuits.\n\nNOTE: Objectives Nine and Ten are practical components and are not covered in this module.\n\nIntroduction\nThis module outlines the effect of inductors and capacitors in both alternating current (ac) and direct current (dc) circuits. You will learn about the characteristics and the relevant calculations needed when working with these devices."
+    },
+    {
+      "page": 2,
+      "section": "Objective One - Inductors in Direct Current Circuits",
+      "figures": ["Figure 1 - Current versus time (in time constants)"],
+      "content": "Objective One\nWhen you have completed this objective, you will be able to\nDescribe the effects of an inductor in a dc circuit.\n\nInductors in Direct Current Circuits\nIf a dc voltage is applied to a purely resistive circuit, the current instantly rises to a steady value. If a dc voltage is applied to an inductive circuit, the current does not rise instantly; it rises at a rate that is determined by the inductance of the circuit.\n\nTime Constant\nA time constant, represented by the symbol T, is the amount of time it takes for a circuit value to change by 63.2%. One time constant of an inductive circuit is equal to the ratio of inductance (L) of the circuit divided by the resistance (R). This can be stated as T = L/R.\n\nIf dc voltage is applied to a circuit that has both resistance (R) and inductance (L), the rate of time it takes the current to rise to a steady value depends on the values of resistance and inductance. The amount of current that flows depends on the voltage applied and the resistance of the circuit. The value of steady current is determined by Ohm's law, where the current in amperes (A) is represented by the symbol I, and the applied voltage by the symbol E, as expressed in the following formula:\nI = E/R\n\nThe induced counter-electromotive force (cemf) that results from the inductance of the circuit prevents the current in an inductive circuit from rising instantly to a steady value. The rate the current rises changes faster at the beginning of the process, then slowly levels off until there is no further change (steady state). Figure 1 shows the rise of the current in an inductive circuit with the application of a dc voltage."
+    },
+    {
+      "page": 3,
+      "section": "Objective One - Time Constant (continued)",
+      "figures": ["Figure 2 - Current change of 63.2% for each time constant"],
+      "content": "It takes approximately five time constants to reach a maximum steady value of current. Figure 2 displays the current change of 63.2% for each time constant.\n\nIf the steady state value of the current is 6 A, the current after one time constant is calculated as follows:\nCurrent change = 6.000 A x 63.2% = 3.792 A\nRemaining current = 2.208 A\n\nAfter the second time constant, the current changes by 63.2% of the remaining current. This change calculation is completed as:\nCurrent change = 2.208 A x 63.2% = 1.395 A\n\nThe current after two time constants is then calculated by adding the current after one time constant to the current change after the second time constant. In this example, the values and calculation would be:\n- Current after one time constant = 3.792 A\n- Current change after second time constant = 1.395 A\n3.792 A + 1.395 A = 5.187 A"
+    },
+    {
+      "page": 4,
+      "section": "Objective One - Time Constant Equation / Steady State Current Graph",
+      "figures": ["Figure 3 - Steady state current versus time constants"],
+      "content": "Continue to follow this procedure to determine the remaining time constants. After the fifth time constant, the current reaches 6 A, its steady-state value. This curve is shown in terms of a percentage of steady state current in Figure 3.\n\nTime Constant Table:\nTC 1: Current 3.792, % 63.2\nTC 2: Current 5.187, % 86.5\nTC 3: Current 5.701, % 95\nTC 4: Current 5.89, % 98.1\nTC 5: Current 5.96, % 99.4\n\nTime Constant Equation\nIn a resistive-inductive (RL) circuit, the value of the time constant in seconds equals the inductance measured in henry (H) divided by the resistance in ohms (Ω) and is represented in the following formula:\nT = L/R\n\nFor example, the time constant for a coil that has an inductance of 0.16 H and a resistance of 4 Ω is calculated in the following way:\nT = L/R = 0.16 H / 4 Ω = 0.04 s = 0.04 s x 5 = 0.2 s\n\nThe time required for the current to reach a steady value is 7 (the time of one time constant) times 5. This is calculated as T = 0.04 s x 5 = 0.2 s."
+    },
+    {
+      "page": 5,
+      "section": "Objective One - Effect of Changing L or R",
+      "figures": ["Figure 4 - Current versus time in a purely resistive circuit", "Figure 5 - Current versus time in a purely inductive circuit (lower emf)", "Figure 6 - Current versus time in a coil with different values of R"],
+      "content": "Effect of Changing L or R\nWhen you apply a dc voltage to a purely resistive circuit, the current instantly rises to a steady value - determined by Ohm's law - as shown in Figure 4.\n\nWhen you apply a dc voltage to a purely inductive circuit, as in Figure 5, the current tries to rise to infinity at a rate determined by the inductance of the circuit.\n\nIn the same circuit, when the inductance is high, the cemf is high. It takes longer to reach the steady current value, as illustrated in Figure 7. There is a direct relationship between the inductance of the circuit and the time required for one time constant.\n\nA circuit with a real coil has both inductive and resistive properties. In this case, when the steady current value is reached, as shown in Figure 6, there is an inverse relationship between the resistance of the circuit and the time required for one time constant. A higher resistance means the steady current value is reached in a shorter period of time."
+    },
+    {
+      "page": 6,
+      "section": "Objective One - Opening an Inductive Circuit",
+      "figures": ["Figure 7 - Current versus time in a coil with different values of L", "Figure 8 - Inductive circuit with both R and L"],
+      "content": "Figure 7 - Current versus time in a coil with different values of L.\n\nOpening an Inductive Circuit\nWhen you open an inductive circuit, the collapsing magnetic field can induce a high voltage into the circuit, as demonstrated in Figure 8.\n\nFigure 8 - Inductive circuit with both R and L.\n12 Vdc, R = 3 Ω, L = 0.2 H\n\nWhen the switch is closed for enough time to become the steady state current (five time constants), the value of the current can be calculated using Ohm's law:\nI = E/R = 12 V / 3 Ω = 4 A\n\nWhen the switch is opened, the current drops from four amperes to zero amperes almost instantly. This rapid change in current across the switch causes an extremely large induced voltage which can be calculated by the rate of change of current multiplied by its inductance:\ne = (change of current / change of time in seconds) x L\ne = (0.0000004 s / 4 A) x 0.2 H = 2 000 000 V"
+    },
+    {
+      "page": 7,
+      "section": "Objective One - Opening Inductive Circuit (continued) / Induced EMF Calculation",
+      "figures": [],
+      "content": "For this example, assume the time it takes for the current to reach 0 A after the switch is opened is 0.4 microseconds (μs).\n\nYou would first convert microseconds (μs) to seconds (s).\n0.4 μs / 1 000 000 = 0.0000004 s\n\nNOTE: The symbol μ represents micro (x 10^-6) in the SI system of measurement. One million microseconds are equal to one second (1 000 000 μs = 1 s).\n\nThen substitute the values into the formula to perform the calculation for induced emf (e):\ne = (change of current / change of time in seconds) x L\ne = (4 A / 0.0000004 s) x 0.2 H = 2 000 000 V\n\nThe induced voltage is measured in volts, in this instance it is represented in megavolts. The induced emf of 2 000 000 V would then be converted to 2 megavolts (MV).\n\nThe high voltage (sometimes called an inductive kick) does not last for long. However, it can cause serious arcing at the switch unless:\n- The system is designed to handle it, or\n- A method is used to reduce the high voltage before it reaches the switch."
+    },
+    {
+      "page": 8,
+      "section": "Objective One - Discharge Resistors / Examples 1.1 and 1.2",
+      "figures": ["Figure 9 - Coil with discharge resistor"],
+      "content": "Discharge Resistors\nIn a circuit where a high induced voltage (voltage spike) can be destructive, you can connect a properly sized resistor across the coil permanently or automatically at the instant the switch opens. This resistor is called a discharge resistor. In Figure 9, a discharge resistor has been added to the circuit from Figure 8.\n\nFigure 9 - Coil with discharge resistor. 12 Vdc, 0.2 H, 3 Ω\n\nWhen the switch is open, the current in the coil drops rapidly from 4 A, which causes the magnetic field to collapse quickly in the coil. This results in a high induced voltage (cemf) that keep the current flowing across the open switch causing an arc or spark. When you place a discharge resistor in parallel with the coil, the resistance of the discharge circuit is lower than the resistance of the air gap at the switch. The current now flows through the discharge resistor and no spark occurs at the switch. The discharge resistor reduces arcing at the switch when an inductive circuit is switched open.\n\nExample 1.1\nThe discharge resistor reduces arcing at the switch when an inductive circuit is switched open. When the switch is opened, the induced voltage can be stated as V_i = I x R. If the resistance of the discharge circuit without a discharge resistor is 500 000 Ω (open circuit), the inductive kick is calculated as follows:\nV_i = I x R = 4 A x 500 000 Ω = 2 000 000 V\n\nExample 1.2\nWith a 100 Ω resistor in parallel with the coil, the induced voltage at the instant the switch is opened is calculated as follows:\nV_i = I x R = 4 A x 100 Ω = 400 V"
+    },
+    {
+      "page": 9,
+      "section": "Objective One Activity",
+      "figures": [],
+      "content": "Objective One Activity\n1. a) During the time span of one time constant after closing an inductive circuit, the current rises to 63.2% of its steady value.\nb) How many time constants are required for the current of a coil to reach a steady value? 5 time constants\n\n2. a) Write the equation for the time constant of a resistive-inductive circuit.\nb) What is the unit of measurement for a time constant? Seconds\n\n3. If the iron core of a coil is removed, the time taken for the current to reach its steady value:\na) Increases\nb) Decreases\nc) Stays the same\n\n4. How would the time constant in a coil with 1000 turns of No. 20 AWG copper wire compare to 1000 turns of No. 30 AWG copper wire?\na) Less length of time\nb) Greater length of time\nc) The same length of time\n\n5. Describe what happens when an inductive circuit is opened.\nVoltage cemf - a huge surge of voltage opposing the current\n\n6. What is the purpose of a discharge resistor?\nTo reduce the huge surge of voltage by the cemf"
+    },
+    {
+      "page": 10,
+      "section": "Objective Two - Capacitors in Direct Current Circuits / Electric Charge",
+      "figures": [],
+      "content": "Objective Two\nWhen you have completed this objective, you will be able to\nDescribe the effects of a capacitor in a dc circuit.\n\nCapacitors in Direct Current Circuits\nCapacitance is the property of a capacitor that allows it to store an electric charge. In a dc circuit, a capacitor begins to charge when the circuit is turned on. The stored charge increases until the voltage across the capacitor is the same as the supply voltage. The current stops flowing when there is a difference in voltage between the supply and the capacitor equalizes. Current flows only when there is a difference in voltage between two points.\n\nThe symbol C (italicized) represents capacitance for example, C = 50 μF. The symbol C (not italicized) represents coulombs (for example, Q = 5 C).\n\nNOTE\n\nElectric Charge\nA capacitor is useful because it can store more than one electric charge (Q). A charged capacitor has a separation between negative and positive charges. This separation forms an electric field. The electric field remains in the capacitor until a connection forms a circuit, which allows the capacitor to release its charge.\n\nThe unit of measurement for electric charge is the coulomb (C). One coulomb represents approximately 6.24 x 10^18 (240 000 000 000 000 000 000) electrons. One coulomb is the quantity of electric charge that maintains a current flow of one ampere (A) for one second.\n\nCalculating an Electric Charge\nIf you know the amount of current and the length of time that a current flows, you can calculate an electric charge. This can be expressed as:\nQuantity of charge = Current x Unit of time\nQ = I x t\n\nWhere:\n- Q = quantity of electric charge in coulombs (C)\n- I = current in amperes (A)\n- t = time in seconds (s)\n\nExample 2.1\nCalculate the electrical charge required to keep a current of 2.5 A flowing for two seconds (2 s).\nQ = I x t = 2.5 A x 2 s = 5 C"
+    },
+    {
+      "page": 11,
+      "section": "Objective Two - Calculating Electric Charge in a Capacitor / Examples 2.1 and 2.2",
+      "figures": [],
+      "content": "Calculating an Electric Charge in a Capacitor\nA capacitor with a one farad (F) rating can store a charge of one coulomb per volt. This is represented in the following equation:\nCapacitance = Quantity of charge / Voltage\nC = Q/V\n\nWhere:\n- C = capacitance in farads (F)\n- Q = quantity of charge in coulombs (C)\n- V = voltage (V)\n\nWhen we transpose the equation a charge on a capacitor can be calculated if the capacitance and measured voltage across it are known.\nQ = C x V\n\nExample 2.2\nWe calculate the stored electrical charge in a 50 μF capacitor that has been charged to 22 V using the transposed equation.\nYou must first convert 50 μF to F:\n50 μF / 1 000 000 = 0.00005 F\nQ = C x V = 0.000005 F x 22 V = 0.001 C\n\nIn the example above 0.001 C would be converted to 1.1 mC. One coulomb is equal to one thousand millicoulombs. The conversion would be 0.001 C x 1000 = 1.1 mC.\n\nThe charge stored in a capacitor varies with the capacitance of the capacitor and its measured value of voltage."
+    },
+    {
+      "page": 12,
+      "section": "Objective Two - Charging and Discharging a Capacitor",
+      "figures": ["Figure 10 - Charging a capacitor", "Figure 11 - Discharging a capacitor through a resistor"],
+      "content": "Charging and Discharging a Capacitor\nIn Figure 10, the switch is in Position 1. The capacitor is connected to the dc source. The instant the switch is closed, there is a rush of electrons onto the negative plate of the capacitor from the negative terminal of the dc source. A corresponding rush flow of current continues until the voltage across the plates equals the supply voltage (V_capacitor = E_supply). When the voltage across the plates is equal, the flow of electrons stops, and the capacitor is fully charged.\n\nFigure 10 - Charging a capacitor.\n\nIf the switch is moved to Position 2, a voltage equal to the source voltage still exists between the plates of the capacitor. The capacitor has a stored charge because there is an electric field with an excess of electrons on the negative (-) side and a lack of electrons on the positive (+) side.\n\nIf the switch is moved to Position 3, as shown in Figure 11, electrons flow from the negative plate through the resistor to the positive plate until the voltage across the plates drops to zero. At this point the capacitor is fully discharged.\n\nFigure 11 - Discharging a capacitor through a resistor."
+    },
+    {
+      "page": 13,
+      "section": "Objective Two - Time Constant / Figures 12 and 13",
+      "figures": ["Figure 12 - Voltage and current in a charging RC circuit", "Figure 13 - Time constants and capacitor voltage"],
+      "content": "Time Constant\nWhen a dc voltage is applied to a capacitor, the initial current flow is very high and is limited only by the resistance of the circuit.\n\nAs the charge builds on the plates:\n- The voltage between the plates increases,\n- The current decreases until the voltage across the plates equals the applied voltage, and\n- The current slows to zero, as is shown in Figure 12.\n- The opposing voltage opposes the applied voltage.\n\nFigure 12 - Voltage and current in a charging RC circuit.\nV_capacitor = E\n\nThe time it takes for the voltage to reach maximum value can be divided into five equal periods as Figure 13 demonstrates. The length of each period is defined as one time constant. During each time constant, the capacitor voltage increases by 63.2% of the difference between the maximum value and present value.\n\nFigure 13 - Time constants and capacitor voltage.\nV_1 = V_max x 63.2%\nV_2 = V_1 + (V_max - V_1) x 63.2%"
+    },
+    {
+      "page": 14,
+      "section": "Objective Two - Time Constants and Capacitor Voltage / Figures 14 and 15",
+      "figures": ["Figure 14 - Time constants and capacitor voltage", "Figure 15 - Voltage and current when discharging an RC circuit"],
+      "content": "When a capacitor is being charged, it takes the same amount of time for the capacitor to reach maximum as it does for the capacitor voltage to reach maximum. If the total charging time is again divided into five time constants, then during each time constant, the capacitor current decreases by 63.2% of the present value, as noted in Figure 14.\n\nFigure 14 - Time constants and capacitor voltage.\nI_max\nI_1 = I_max - (I_max x 63.2%)\nI_2 = I_1 - (I_1 x 63.2%)\n\nSimilarly, if the time it takes for a charged capacitor to discharge is divided into five equal periods as in Figure 15, each period is also defined as one time constant. During each time constant, the capacitor voltage and current decreases by 63.2% of the present value.\n\nFigure 15 - Voltage and current when discharging an RC circuit.\nV = V_max - (V_max x 63.2%)\nI_t = I_max - (I_max x 63.2%)"
+    },
+    {
+      "page": 15,
+      "section": "Objective Two - Calculating Time Constants / Example 2.3",
+      "figures": ["Figure 16 - Resistive-capacitive circuit"],
+      "content": "Calculating Time Constants\nThe time required to charge a capacitor varies directly with the resistance and the capacitance of a circuit. If the resistance is high, the initial current is low, and more time is required to charge the capacitor. If the capacitance is high, more electrons and more time are required to charge the capacitor.\n\nThe equation for calculating one time constant in an RC circuit is T = R x C where:\n- T is the time constant in seconds (s)\n- R is the resistance in ohms (Ω), and\n- C is the capacitance in farads (F).\n\nIt takes five time constants to fully charge a capacitor.\n\nExample 2.3\nCalculate how long it takes to charge the capacitor in the circuit in Figure 16.\n\nFigure 16 - Resistive-capacitive circuit. 200 Ω, 15 μF\n\nNOTE: Before performing calculations, you must convert values to the correct units. For instance, in this example microfarads (μF) must be converted to farads (F).\n\nOne time constant for this RC circuit is calculated as follows:\nT = R x C = 200 Ω x 0.000015 F = 0.003 s\n\nAfter converting seconds to milliseconds (0.003 s x 1000 = 3 ms), the time required to charge the capacitor equals five time constants and is calculated as:\nCharging time = 5 x T = 5 x 2.4 = 15 ms"
+    },
+    {
+      "page": 16,
+      "section": "Objective Two - Example 2.4 / Varying R and C / Figure 17",
+      "figures": ["Figure 17 - Effects of changing R or C"],
+      "content": "Example 2.4\nCalculate the voltage across a capacitor after one time constant if it is connected to a 30 V battery.\nVdc = Vdc_max x 63.2% = 30 Vdc x 0.632 = 18.96 Vdc\n\nVarying the Values of R and C\nThe time constant of a capacitive circuit is proportional to the resistance and capacitance in the circuit. By varying the capacitance and/or the resistance, the total charge or discharge time can be changed.\n\nFigure 17 shows that an increase in either resistance (Ω) or capacitance (μF) increases the time constant for an RC circuit. A decrease in resistance (Ω) or capacitance (μF) decreases the time constant in the circuit.\n\nFigure 17 - Effects of changing R or C.\nBaseline: T = R x C = 5 Ω x 10 μF = 50 μs\nIncreased R: T = R x C = 10 Ω x 10 μF = 100 μs\nIncreased C: T = R x C = 5 Ω x 20 μF = 100 μs"
+    },
+    {
+      "page": 17,
+      "section": "Objective Two Activity",
+      "figures": [],
+      "content": "Objective Two Activity\n1. What is the symbol for electric charge?\n2. What is the unit of measurement of electric charge and the unit symbol?\n3. Calculate the charge required to keep a current of 5 A flowing for 4 seconds.\n4. Calculate the charge of a 100 μF capacitor when its measured voltage is 200 V dc.\n5. Calculate how long it will take an 80 μF capacitor to charge when it is connected in series with a 30 Ω resistor.\n6. Calculate the voltage across a 50 μF capacitor after one time constant if the capacitor is connected in series with a 1200 Ω resistor on a 100 V dc supply."
+    },
+    {
+      "page": 18,
+      "section": "Objective Three - Inductors in Alternating Current Circuits / Table 1 Comparison",
+      "figures": ["Table 1 - Comparison of resistance and inductance in an AC circuit"],
+      "content": "Objective Three\nWhen you have completed this objective, you will be able to\nDescribe the effects of an inductor in an ac circuit.\n\nInductors in Alternating Current Circuits\nIn ac circuits, the current continually changes. Coils, which have inductance, react to change in current in an ac circuit. The reaction is an opposition to current flow and is called inductive reactance. Table 1 provides a comparison of the effect on resistance and inductance in an ac circuit.\n\nTable 1 - Comparison of resistance and inductance in an AC circuit.\nEffect / ac Supply / Inductance\nProvides opposition to the steady current flow / Yes / Yes\nProduces a counter emf (cemf) / No / Yes\nCreates opposition to the change of current / No / Yes\nCreates inductive reactance / No / Yes\n\nInductive Reactance\nInductive reactance is the opposition to current flow due to induced cemf in an ac circuit. The statement that the inductive reactance of a component is 10 ohms can be written XL = 10 Ω.\n\nI = E/R\n\nNOTE: Inductive reactance exists only in ac circuits due to the constantly changing current. Inductive reactance does not occur in dc circuits as the current is constant.\n\nThe symbol for inductive reactance is XL. The statement that the inductive reactance of a component is 10 ohms can be written XL = 10 Ω. Inductive reactance is the opposition to current flow due to induced cemf in an ac circuit that results in a decrease in the total current. Therefore, the current never reaches the value calculated by Ohm's law."
+    },
+    {
+      "page": 19,
+      "section": "Objective Three - Effect of Inductance and Frequency on Inductive Reactance",
+      "figures": ["Figure 18 - Low inductance versus high inductance", "Figure 19 - Effect of frequency on inductive reactance"],
+      "content": "Effect of Inductance on Inductive Reactance\nIf the inductance of the coil is high, the cemf and the inductive reactance are high, as illustrated in Figure 18. Inductive reactance varies directly with inductance.\n\nFigure 18 - Low inductance versus high inductance.\nLow inductance: Low cemf, Low inductive reactance\nHigh inductance: High cemf, High inductive reactance\n\nEffect of Frequency on Inductive Reactance\nIf the frequency of the supply voltage is high, the rate of change of current is also high. Again, this results in a high cemf and a high inductive reactance, as noted in Figure 19.\n\nFigure 19 - Effect of frequency on inductive reactance.\nLow frequency: Low cemf, Low inductive reactance\nHigh frequency: High cemf, High inductive reactance"
+    },
+    {
+      "page": 20,
+      "section": "Objective Three Activity",
+      "figures": [],
+      "content": "Objective Three Activity\n1. Inductive reactance is the opposition created by inductance in an ac circuit.\n   The symbol for inductive reactance is XL and its unit of measurement is ohms (Ω).\n2. The symbol for inductive reactance is _____ created by induction in an ac circuit, and its unit of measurement is _____.\n3. What are the two (2) factors affecting the inductive reactance is _____.\n   a)\n   b)\n4. When the frequency of a circuit is increased, what happens to the inductive reactance of the circuit?\n   a) Decreases\n   b) Increases\n   c) Stays the same"
+    },
+    {
+      "page": 21,
+      "section": "Objective Four - Inductive Alternating Current Circuits / Phase Relationships",
+      "figures": ["Figure 20 - Induced voltage and current relationship"],
+      "content": "Objective Four\nWhen you have completed this objective, you will be able to\nDescribe the characteristics of an ac inductive circuit.\n\nInductive Alternating Current Circuits\nThe relationship between the induced voltage and the current in an inductive circuit that is connected to a dc source is shown in Figure 20. The induced voltage opposes the voltage originally applied to the inductive circuit and is referred to as counter emf or cemf.\n\nFigure 20 - Induced voltage and current relationship.\n+12 V / 0 V / -12 V — Counter emf / Applied emf\n\nWhen the current (I) increases from zero in the positive direction, the induced voltage is at a maximum because the rate of change of the current is at a maximum. The induced voltage depends upon the inductance and resistance of the circuit. The magnitude of the induced voltage has the opposite polarity to the applied voltage. The magnitude of the induced voltage is greatest with the maximum rate of change of current and has the opposite polarity to the applied voltage. When the current starts to increase from zero, it has the highest rate of change. When the current is maximum (no longer changing), the induced voltage is zero.\n\nAlternating Current Source\nWhen ac is applied to an inductive circuit, current begins to flow. Unlike a dc source, in an ac source, the cycle repeats for voltage changes.\n- It rises in value with one polarity.\n- It decreases to zero.\n- It rises in value with the opposite polarity.\n- It decreases to zero.\n\nA circuit's inductive property causes an induced voltage that opposes the rising applied voltage in an attempt to stop the current from increasing. The applied voltage reaches a maximum and then it begins to fall. The current then attempts to fall in response to the decreasing applied voltage. This falling current creates an induced voltage that aids the decreasing applied voltage and attempts to stop the current from decreasing."
+    },
+    {
+      "page": 22,
+      "section": "Objective Four - Phase Relationships / Phasor Diagrams",
+      "figures": ["Figure 21 - Induced voltage and current in a coil connected to AC source", "Figure 22 - The induced voltage drop and current lag in inductive AC circuit", "Figure 23 - Phasor diagram for an inductor in an AC circuit", "Figure 24 - Closed and open arrowhead"],
+      "content": "Phase Relationships\nThe induced voltage (cemf) can be plotted in relation to the current flow and represent an ac source, as illustrated in Figure 21.\n- When the current (I) is zero, the induced voltage (cemf) is maximum.\n- When the current (I) is maximum, the induced voltage (cemf) is zero.\n\nFigure 21 - Induced voltage and current in a coil connected to ac source.\n+12 V / -12 V — cemf / 0° to 360°\n\nFigure 22 shows the supplied voltage across the inductive reactance (V_XL), the induced voltage (cemf), and the current (I_L).\n\nFigure 22 - The induced voltage, the voltage drop, and the current in an inductive ac circuit.\n+12 V / -12 V — V_XL, cemf / 0° to 360°\n\nThe effect is that the total amount of current (I_L) is reduced and the current reaches its maximum value after the applied voltage (V_S) reaches a maximum value. It is some amount of time (expressed in electrical degrees) after V_S, so I_L follows or lags behind V_S. You could also say that I_L leads V_S, but it is accepted practice to relate the current to the voltage that causes the current to flow. The phase relationship in an ac inductive circuit can be stated as I_L lags V_S by 90°.\n\nElectrical degrees are a measurement of time, not physical distance.\n\nPhasor Diagrams\nThe relationship between current and voltage in an inductive circuit can also be represented by the phasor diagrams. Phasors show a time relationship between voltage and current within a circuit. Both phasor diagrams show that V_S lags I_L by 90°.\n- Figure 23 (left) has a horizontal reference V_S.\n- Figure 23 (right) has a horizontal reference I_L.\n\nFigure 23 - Phasor diagram for an inductor in an AC circuit.\nV_S at 90°, I_L horizontal (left diagram)\nI_L at 90°, V_S horizontal (right diagram)\n\nA phasor diagram always has:\n- Horizontal and vertical reference lines,\n- Lines (arrows) representing currents and/or voltages, and\n- Angles measured in electrical degrees.\n\nAll voltage phasors on a diagram are drawn to the same scale (for example, 10 V per cm). All current phasors on a diagram are drawn to the same scale (for example, 2 A per cm).\n\nEach phasor has its origin at zero where the horizontal and vertical lines cross. One phasor (current or voltage) is normally drawn along the horizontal reference to the right of the origin. It is the reference phasor. The other phasors are drawn at an angle to the horizontal reference.\nPhasors that are counterclockwise to the reference phasor lead the reference phasor.\nPhasors that are clockwise from the reference phasor lag the reference phasor.\n\nFigure 24 - Closed and open arrowhead.\nA closed arrowhead Figure 24 (left) on a phasor represents current. An open arrowhead Figure 24 (right) represents voltage.\n\nNOTE: Phasor diagrams will be discussed in more detail in later modules of your technical training."
+    },
+    {
+      "page": 23,
+      "section": "Objective Four Activity",
+      "figures": ["Figure 25 - Phasor diagrams (a, b, c, d)"],
+      "content": "Objective Four Activity\n1. State the phase relationship between V_S and I_L in a purely inductive circuit.\n2. Which of the diagram(s) in Figure 25 represents a purely inductive circuit?\n   a) V_L at 90°, I_L horizontal\n   b) V_L at 90°, I_L horizontal (different orientation)\n   c) V_L horizontal, I_L at 90° downward\n   d) Phasors at 45°\n\nFigure 25 - Phasor diagrams."
+    },
+    {
+      "page": 24,
+      "section": "Objective Five - Calculating Inductance and Inductive Reactance / Examples 5.1 and 5.2",
+      "figures": [],
+      "content": "Objective Five\nWhen you have completed this objective, you will be able to\nCalculate inductance and inductive reactance.\n\nCalculating Inductive Reactance\nInductive reactance (XL) in ohms may be calculated with the following formula:\nXL = 2πfL\n\nWhere:\n- f = frequency in hertz (Hz) and\n- L = inductance in henry (H).\nValues 2 and π are constants in the formula.\n\nExample 5.1\nThe inductance of a coil is 0.3 H, calculate its inductive reactance if it is connected to a 60 Hz supply.\nXL = 2πfL = 2 x π x 60 Hz x 0.3 H = 113 Ω\n\nExample 5.2\nThe inductance of a coil is 450 mH, calculate its inductive reactance if it is connected to a 100 Hz supply.\nYou must first convert the inductance of the coil from millihenry (mH) to henry (H).\n450 mH / 1000 = 0.45 H\nThen, calculate the inductive reactance:\nXL = 2πfL = 2 x π x 100 Hz x 0.45 H = 282.74 Ω"
+    },
+    {
+      "page": 25,
+      "section": "Objective Five - Example 5.3",
+      "figures": [],
+      "content": "Example 5.3\nA coil has an inductive reactance of 65 Ω when connected to a 50 Hz supply. Calculate the inductance of the coil.\n\nTranspose the formula used to calculate the inductive reactance, then calculate the inductance of the coil. The formula and calculation are now:\nL = XL / (2πf) = 65 Ω / (2 x π x 50 Hz) = 0.207 H\n\nTo convert 0.207 H to mH, perform the following conversion:\n0.207 x 1000 = 207 mH"
+    },
+    {
+      "page": 26,
+      "section": "Objective Five Activity",
+      "figures": [],
+      "content": "Objective Five Activity\n1. Write the equation for inductive reactance.\n2. The resistance of a coil is 30 Ω and its inductance is 0.22 H. Calculate the inductive reactance of the coil if the supply is 120 V, 60 Hz.\n3. Calculate the inductance of a coil if its inductive reactance is 60.3 Ω when it is connected to a 120 V, 60 Hz supply."
+    },
+    {
+      "page": 27,
+      "section": "Objective Six - Capacitors in Alternating Current Circuits / Table 2 Comparison",
+      "figures": ["Table 2 - Comparison of resistance and capacitance in an AC circuit"],
+      "content": "Objective Six\nWhen you have completed this objective, you will be able to\nDescribe the effects of a capacitor in an ac circuit.\n\nCapacitors in Alternating Current Circuits\nIn ac circuits, the voltage is constantly changing. The electrical property of a capacitor (capacitance) is an opposition to the flow of current called capacitive reactance. The reaction to the change in voltage causes the voltage is constantly changing. Table 2 presents a comparison of effects on resistance and capacitance and presents a comparison of effects on resistance and capacitance in an ac circuit.\n\nTable 2 - Comparison of resistance and capacitance in an AC circuit.\nEffect / ac Supply / Capacitance\nProvides opposition to the steady current flow / Yes / No\nCreates opposition to the change of voltage / No / Yes\nCreates capacitive reactance / No / Yes\n\nCapacitive Reactance\nThis reaction limits the total amount of current in a circuit when a capacitor is connected to an ac supply. This opposition is called capacitive reactance (XC). Its unit of measurement is the ohm (Ω). The statement that the capacitive reactance of a component is 24 ohms can be written as XC = 24 Ω.\n\nEffect of Capacitance on Capacitive Reactance\nThe capacitive reactance of a capacitor in an ac circuit is affected by its capacitance and the frequency of the voltage across it.\n- If the capacitance of the capacitor is high, the flow of electrons to and from the plates is greater (more current flows), which indicates that the ohmic value of capacitive reactance is low (low XC).\n- If the capacitance is low, the flow of electrons is reduced, the ohmic value of the capacitive reactance is high (high XC).\n\nCapacitive reactance is inversely proportional to the capacitance."
+    },
+    {
+      "page": 28,
+      "section": "Objective Six - Effect of Frequency on Capacitive Reactance / Figure 26",
+      "figures": ["Figure 26 - Effect of frequency on capacitive reactance"],
+      "content": "Effect of Frequency on Capacitive Reactance\nCapacitive reactance is also inversely proportional to the frequency of the supply, as seen in Figure 26.\n- If the frequency of the supply is high, the capacitor tries to charge and discharge more frequently, so the electron flow is relatively high. This indicates that the ohmic value of capacitive reactance is low (low XC).\n- If the frequency is low, the capacitor charges and discharges more slowly and the electron flow is low. This indicates that the ohmic value of capacitive reactance is high (high XC).\n\nFigure 26 - Effect of frequency on capacitive reactance.\nHigh frequency: Low capacitive reactance\nLow frequency: High capacitive reactance\n\nNOTE: Capacitive reactance exists only in ac circuits due to the constantly changing voltage. Capacitive reactance does not occur in dc circuits as the voltage is constant."
+    },
+    {
+      "page": 29,
+      "section": "Objective Six Activity",
+      "figures": [],
+      "content": "Objective Six Activity\n1. What is the unit of measure for capacitive reactance?\n2. If a capacitor in a circuit is replaced with one of smaller capacitance, what happens to the capacitive reactance of the circuit?\n   a) Increases\n   b) Decreases\n   c) Stays the same\n3. If a 400 V, 60 Hz supply to a 75 μF capacitor is reduced to 240 V, 60 Hz, what happens to the capacitive reactance of that capacitor?\n   a) Increases\n   b) Decreases\n   c) Stays the same"
+    },
+    {
+      "page": 30,
+      "section": "Objective Seven - Capacitive Alternating Current Circuits / Phase Relationships",
+      "figures": ["Figure 27 - Voltage and current relationship in an AC capacitive circuit"],
+      "content": "Objective Seven\nWhen you have completed this objective, you will be able to\nDescribe the characteristics of an ac capacitive circuit.\n\nCapacitive Alternating Current Circuits\nThe capacitor in an ac circuit tends to lead the voltage in the circuit. In a resistive circuit, the current builds with the applied voltage, then falls as the voltage falls. The current can only lead the voltage in a circuit when a capacitor is fully charged. When the supply voltage decreases to a value that is less than the voltage across the capacitor, the capacitor acts as a supply and causes current to flow.\n\nPhase Relationships\nIn an inductive circuit, the current lags the voltage. However, a capacitor in a circuit causes the current to lead the voltage.\n- In Figure 27, Point A represents the current as the supply voltage starts to rise.\n- The current instantly becomes high and begins to charge the capacitor, then\n- decreases. At Point B, which occurs one quarter of a cycle later than Point A, the supply voltage approaches full charge.\n- Between Points B and C, as the supply voltage begins to drop, the energy stored in the capacitor is discharged back to the circuit, and the charging current is zero.\n- This relationship between the current and the voltage continues throughout the sine wave. The voltage reaches its positive peak 90 electrical degrees after the current.\n\nIn a purely capacitive circuit, the current leads the voltage by 90°.\n\nFigure 27 - Voltage and current relationship in an ac capacitive circuit.\nTime axis: 0°, 90°, 180°, 270°, 360°\nCurrent (I) leads Voltage (V_C)"
+    },
+    {
+      "page": 31,
+      "section": "Objective Seven - Phasor Diagrams / Figure 28",
+      "figures": ["Figure 28 - Phasors"],
+      "content": "Phasor Diagrams\nThe current leads the voltage by 90 electrical degrees in an ac capacitive circuit. Figure 28 shows two phasor diagrams for the voltage and current in the circuit.\n- The left phasor diagram uses voltage as the horizontal reference.\n- The phasor diagram on the right uses current as the horizontal reference in both cases.\n\nFigure 28 - Phasors.\nLeft diagram (Voltage Reference): I_C at 90° above, V_C horizontal\nRight diagram (Current Reference): V_C at 90° below, I_C horizontal\n\nThe current leads or is ahead of the voltage by 90° in both cases."
+    },
+    {
+      "page": 32,
+      "section": "Objective Seven Activity",
+      "figures": [],
+      "content": "Objective Seven Activity\n1. In a capacitive ac circuit, how does the current rise and fall compared in time to the rise and fall of the voltage?\n   a) Leads\n   b) Lags\n   c) Same time\n2. When the supply voltage is at its maximum in a purely capacitive circuit, what is the value of the current?\n   a) Maximum\n   b) Minimum\n3. State the phase relationship between V_C and I_C in a purely inductive circuit."
+    },
+    {
+      "page": 33,
+      "section": "Objective Eight - Calculating Capacitive Reactance / Examples 8.1 and 8.2",
+      "figures": [],
+      "content": "Objective Eight\nWhen you have completed this objective, you will be able to\nCalculate capacitance and capacitive reactance.\n\nCalculating Capacitive Reactance\nCapacitive reactance may be calculated using the following equation. The numerical values 1, 2, and π are constants in the formula:\nXC = 1 / (2πfC)\n\nWhere:\n- XC = capacitive reactance in Ω,\n- f = frequency in Hz, and\n- C = capacitance in F.\n\nExample 8.1\nThe capacitance of a capacitor is 500 μF, calculate its capacitive reactance if it is connected to a 60 Hz supply.\nXC = 1 / (2πfC) = 1 / (2 x π x 60 Hz x 0.0005 F) = 5.305 Ω\n\nExample 8.2\nA capacitor has a capacitive reactance of 10 Ω when connected to a 60 Hz supply. Calculate the capacitance of the coil.\nC = 1 / (2πfXC) = 1 / (2 x π x 60 Hz x 10 Ω) = 0.000265 F or 265 μF"
+    },
+    {
+      "page": 34,
+      "section": "Objective Eight Activity",
+      "figures": [],
+      "content": "Objective Eight Activity\n1. Write the equation for capacitive reactance.\n2. Calculate the capacitive reactance of an 800 μF capacitor installed in a 120 V, 60 Hz circuit.\n3. Calculate the capacitance of a capacitor if the capacitive reactance is 44.8 Ω when it is connected to a 120 V, 60 Hz supply."
+    },
+    {
+      "page": 35,
+      "section": "Self-Test Questions 1-6",
+      "figures": [],
+      "content": "Self-Test\n1. A dc circuit contains a coil with 2.5 Ω of resistance and 300 mH of inductance. What is the length of time for one time constant?\n   a) 0.12 seconds\n   b) 0.75 seconds\n   c) 8.33 seconds\n   d) 120 seconds\n\n2. 100 V dc is applied to a coil with 300 mH and 5 Ω of resistance. Calculate the inductive kick across the switch of the circuit if it takes 1.4 μs (microseconds) for the inductive current to drop to zero after opening the switch.\n   a) 210 MV\n   b) 4.64 MV\n   c) 4.29 MV\n   d) 2371 MV\n\n3. Calculate the voltage across a capacitor after one time constant if it is connected to a 24 V dc source?\n   a) 8.832 V\n   b) 15.17 V\n   c) 24 V\n   d) 151.68 V\n\n4. A dc circuit contains a capacitor 300 μF of capacitance in series with a 4 Ω resistor. What is the length of time to complete one time constant?\n   a) 0.0008 seconds\n   b) 0.0012 seconds\n   c) 0.0083 seconds\n   d) 1.20 seconds\n\n5. An ac circuit contains a coil. Which of the following statements is true if the frequency of the circuit were to decrease?\n   a) The inductance of the coil would increase.\n   b) The inductance of the coil would decrease.\n   c) The inductive reactance of the coil would increase.\n   d) The inductive reactance of the coil would decrease.\n\n6. What is the relationship between current and voltage in a purely inductive circuit?\n   a) Current leads voltage by 90°\n   b) Current leads voltage by 90°\n   c) Current lags voltage by 90°\n   d) Current lags voltage by 180°"
+    },
+    {
+      "page": 36,
+      "section": "Self-Test Questions 7-11",
+      "figures": [],
+      "content": "7. The inductance of a coil is 600 mH. What is the inductive reactance when connected to a 60 Hz ac source?\n   a) 113.1 Ω\n   b) 226.2 Ω\n   c) 600 Ω\n   d) 226 195 Ω\n\n8. Which of the following statements is true if the frequency of the circuit were to decrease in an ac circuit that contains a capacitor?\n   a) The capacitance of the capacitor would increase.\n   b) The capacitance of the capacitor would decrease.\n   c) The capacitive reactance of the capacitor would decrease.\n   d) The capacitive reactance of the capacitor would increase.\n\n9. What is the phase relationship between current and voltage in a purely capacitive circuit?\n   a) Current leads voltage by 90°\n   b) Current leads voltage by 90°\n   c) Current lags voltage by 90°\n   d) Current lags voltage by 180°\n\n10. What is the capacitance of the capacitor in a 30 Hz ac circuit which has 75 Ω of capacitive reactance?\n    a) 42.44 μF\n    b) 32.37 μF\n    c) 424.4 μF\n    d) 238.75 mF\n\n11. What would happen to the capacitive reactance if the frequency were increased from 50 Hz to 60 Hz on an ac circuit that contains a capacitor with 75 Ω of capacitive reactance?\n    a) XC would increase.\n    b) XC would decrease.\n    c) XC would not change.\n    d) There is not enough information to answer the question."
+    },
+    {
+      "page": 37,
+      "section": "Objective One Activity Answers",
+      "figures": [],
+      "content": "Objective One Activity Answers\n1. a) During the time span of one time constant after closing an inductive circuit, the current rises to 63.2% of its steady value.\n   b) Five\n2. a) The equation for the time constant of a resistive-inductive circuit is T = L/R.\n   b) Seconds\n3. b) Decreases\n4. a) Greater\n5. When an inductive circuit is opened, the collapsing magnetic field can induce a very high voltage into the circuit.\n6. The discharge resistor reduces arcing at the switch when an inductive circuit is opened."
+    },
+    {
+      "page": 38,
+      "section": "Objective Two Activity Answers",
+      "figures": [],
+      "content": "Objective Two Activity Answers\n1. Q\n2. a) Coulomb\n   b) C (note that the symbol is not italicized).\n3. Q = I x t = 5 A x 4 s = 20 C\n4. Q = C x V = 0.0001 F x 200 V = 0.02 C\n5. First T = R x C = 30 Ω x 0.00008 F = 0.0024 s (2.4 ms)\n   Then Charging time = 5 x 2.4 = 12 ms\n6. The voltage after one time constant is 63.2% of the supply voltage, which is 63.2 V\n   Calculated using 100 Vdc x 63.2% = 63.2 V"
+    },
+    {
+      "page": 39,
+      "section": "Objective Three, Four, Five Activity Answers",
+      "figures": [],
+      "content": "Objective Three Activity Answers\n1. Inductive reactance is the opposition created by inductance in an ac circuit.\n   The symbol for inductive reactance is XL and its unit of measurement is ohms (Ω).\n2. Frequency of the supply voltage\n3. a) Inductance of the coil\n   b) Frequency of the supply voltage\n4. a) Increases\n\nObjective Four Activity Answers\n1. In a purely inductive circuit, I_L lags V_S by 90°.\n2. Both b and c: b uses current as the horizontal reference, while c uses voltage as the horizontal reference. Both show that I_L lags V_S by 90°.\n\nObjective Five Activity Answers\n1. The formula for inductive reactance is XL = 2πfL.\n2. XL = 2πfL = 2 x π x 60 Hz x 0.22 H = 82.938 Ω\n3. L = XL / (2πf) = 60.3 Ω / (2 x π x 60 Hz) = 0.16 H (or 160 mH)"
+    },
+    {
+      "page": 40,
+      "section": "Objective Six, Seven, Eight Activity Answers",
+      "figures": [],
+      "content": "Objective Six Activity Answers\n1. Ohms (Ω)\n2. a) Increases\n3. c) Stays the same\n\nObjective Seven Activity Answers\n1. a) Leads\n2. b) Minimum\n3. In a purely capacitive circuit, I_C leads V_C by 90°.\n\nObjective Eight Activity Answers\n1. XC = 1 / (2πfC)\n2. XC = 1 / (2πfC) = 1 / (2 x π x 60 Hz x 0.0008 F) = 3.316 Ω\n3. C = 1 / (2πfXC) = 1 / (2 x π x 60 Hz x 44.8 Ω) = 0.000059209 F or 59.209 μF"
+    },
+    {
+      "page": 41,
+      "section": "Self-Test Answers",
+      "figures": [],
+      "content": "Self-Test Answers\n1. a) 0.12 seconds\n2. b) 4.29 MV\n3. b) 15.17 V\n4. b) 0.0012 seconds\n5. d) The inductive reactance of the coil would decrease.\n6. c) Current lags voltage by 90°\n7. b) 226.2 Ω\n8. c) The capacitive reactance of the capacitor would increase.\n9. a) Current leads voltage by 90°\n10. b) 42.44 μF\n11. b) XC would decrease"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "name": "SparkStudy — Alberta Electrical Apprentice",
-  "short_name": "SparkStudy",
+  "name": "sparkystudy — Alberta Electrical Apprentice",
+  "short_name": "sparkystudy",
   "description": "Study platform for Alberta 1st & 2nd year electrical apprentices",
   "start_url": "/index.html",
   "display": "standalone",

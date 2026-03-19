@@ -1,12 +1,12 @@
-﻿
+
 // ===== FIREBASE CONFIG =====
 // HOW TO SET UP (takes ~5 min):
 //   1. Go to https://console.firebase.google.com  and sign in with your Google account
-//   2. Click "Add project" â†’ name it "sparkystudy" â†’ disable Google Analytics â†’ Create
-//   3. In your project: click the </> (Web) icon â†’ register app as "sparkystudy" â†’ Continue
+//   2. Click "Add project" → name it "sparkystudy" → disable Google Analytics → Create
+//   3. In your project: click the </> (Web) icon → register app as "sparkystudy" → Continue
 //   4. Copy the firebaseConfig object values into the fields below
-//   5. In left sidebar: Build â†’ Firestore Database â†’ Create database â†’ Start in test mode â†’ Next â†’ Enable
-//   6. Save and redeploy. Done â€” all users will now appear in your admin panel!
+//   5. In left sidebar: Build → Firestore Database → Create database → Start in test mode → Next → Enable
+//   6. Save and redeploy. Done — all users will now appear in your admin panel!
 const FB_CONFIG = {
   apiKey:            "AIzaSyBAbpgFTA_HcbAWO30fWAQuIr7BhH36Z4Q",
   authDomain:        "sparkystudy-afd09.firebaseapp.com",
@@ -15,6 +15,30 @@ const FB_CONFIG = {
   messagingSenderId: "48279803646",
   appId:             "1:48279803646:web:16dcac58d4a39a1e1537af"
 };
+
+// ===== CASHBACK SCALE (real AIT exam scores) =====
+const CASHBACK_SCALE = [
+  { min: 95, amount: 50 },
+  { min: 90, amount: 45 },
+  { min: 85, amount: 40 },
+  { min: 80, amount: 30 },
+  { min: 75, amount: 20 },
+  { min: 70, amount: 10 },
+];
+
+// ===== ALBERTA POLYTECHNIC SCHOOLS =====
+const SCHOOLS_LIST = [
+  { id: 'sait',          name: 'SAIT',              short: 'SAIT' },
+  { id: 'nait',          name: 'NAIT',              short: 'NAIT' },
+  { id: 'lakeland',      name: 'Lakeland',          short: 'Lakeland' },
+  { id: 'lethbridge',    name: 'Lethbridge Poly',   short: 'Leth.' },
+  { id: 'red-deer',      name: 'Red Deer Poly',     short: 'RDP' },
+  { id: 'medicine-hat',  name: 'Medicine Hat',      short: 'MHC' },
+  { id: 'keyano',        name: 'Keyano',            short: 'Keyano' },
+  { id: 'northwestern',  name: 'Northwestern',      short: 'NWP' },
+  { id: 'northern-lakes',name: 'Northern Lakes',    short: 'NLC' },
+  { id: 'portage',       name: 'Portage',           short: 'Portage' },
+];
 
 // ===== FIREBASE BRIDGE =====
 const FireDB = {
@@ -32,7 +56,7 @@ const FireDB = {
       if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
       this.db = firebase.firestore();
       this.ready = true;
-      console.log('[sparkystudy] Firebase connected âœ“');
+      console.log('[sparkystudy] Firebase connected ✓');
       return true;
     } catch(e) { console.warn('[sparkystudy] Firebase init failed:', e.message); return false; }
   },
@@ -104,10 +128,69 @@ const FireDB = {
       const batch = this.db.batch();
       snap.docs.forEach(d => batch.delete(d.ref));
       await batch.commit();
-      // If there were 500 (max batch), run again to catch the rest
       if (snap.docs.length === 500) await this.clearVisits();
       return snap.docs.length;
     } catch(e) { console.warn('clearVisits failed', e); return 0; }
+  },
+
+  // ── Support messages ───────────────────────────────────────────────────────
+  async saveMessage(msg) {
+    if (!this.ready) return;
+    try { await this.db.collection('support').doc(msg.id).set({ ...msg, _ts: firebase.firestore.FieldValue.serverTimestamp() }); }
+    catch(e) { console.warn('saveMessage failed:', e.message); }
+  },
+  async getAllMessages() {
+    if (!this.ready) return null;
+    try {
+      const snap = await this.db.collection('support').orderBy('sentAt', 'desc').limit(200).get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { return null; }
+  },
+  async replyMessage(msgId, reply) {
+    if (!this.ready) return;
+    try {
+      await this.db.collection('support').doc(msgId).update({
+        replies: firebase.firestore.FieldValue.arrayUnion(reply),
+        status: 'replied',
+        readByOwner: true
+      });
+    } catch(e) { console.warn('replyMessage failed:', e.message); }
+  },
+  async getMessagesForUser(userId) {
+    if (!this.ready) return null;
+    try {
+      const snap = await this.db.collection('support').where('userId', '==', userId).orderBy('sentAt', 'desc').get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { return null; }
+  },
+
+  // ── Shared Notes ──────────────────────────────────────────────────────────
+  // Students can opt-in to share their own notes (NOT modules) with other
+  // students in the same period. Module/textbook content is NEVER shared.
+  async saveSharedNote(note) {
+    if (!this.ready) return;
+    try {
+      await this.db.collection('shared_notes').doc(note.id).set({
+        ...note,
+        _ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) { console.warn('saveSharedNote failed:', e.message); }
+  },
+  async getSharedNotes(period) {
+    if (!this.ready) return [];
+    try {
+      const snap = await this.db.collection('shared_notes')
+        .where('period', '==', period)
+        .orderBy('sharedAt', 'desc')
+        .limit(100)
+        .get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { console.warn('getSharedNotes failed:', e.message); return []; }
+  },
+  async deleteSharedNote(noteId) {
+    if (!this.ready) return;
+    try { await this.db.collection('shared_notes').doc(noteId).delete(); }
+    catch(e) { /* fail silently */ }
   }
 };
 
@@ -121,21 +204,170 @@ const ANALYTICS_KEY = 'sparkstudy_analytics';
 const ACTIVE_USER_KEY = 'sparkstudy_active';
 const PREV_ACCOUNT_KEY = 'sparkstudy_prev_uid';
 
+const BACKUP_USER_KEY = 'sparkstudy_backup_uid';
+const SUPPORT_KEY = 'sparkstudy_support';
+
+// ===== SUPPORT MESSAGES =====
+const SupportMessages = {
+  getAll() {
+    try { return JSON.parse(localStorage.getItem(SUPPORT_KEY) || '[]'); } catch(e) { return []; }
+  },
+  _save(msgs) { localStorage.setItem(SUPPORT_KEY, JSON.stringify(msgs)); },
+  getForUser(userId) { return this.getAll().filter(m => m.userId === userId); },
+  unreadCount() { return this.getAll().filter(m => !m.readByOwner).length; },
+
+  send(userId, userName, userEmail, subject, message) {
+    const msg = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      userId, userName, userEmail, subject, message,
+      sentAt: Date.now(), status: 'open', replies: [], readByOwner: false
+    };
+    const msgs = this.getAll();
+    msgs.unshift(msg);
+    this._save(msgs);
+    FireDB.saveMessage(msg);
+    return msg;
+  },
+
+  reply(msgId, replyText) {
+    const msgs = this.getAll();
+    const msg = msgs.find(m => m.id === msgId);
+    if (!msg) return;
+    const reply = { message: replyText, sentAt: Date.now() };
+    msg.replies = msg.replies || [];
+    msg.replies.push(reply);
+    msg.status = 'replied';
+    msg.readByOwner = true;
+    this._save(msgs);
+    FireDB.replyMessage(msgId, reply);
+  },
+
+  markReadByOwner(msgId) {
+    const msgs = this.getAll();
+    const msg = msgs.find(m => m.id === msgId);
+    if (msg) { msg.readByOwner = true; this._save(msgs); }
+  },
+
+  // Merge cloud messages into local store (called after Firebase fetch)
+  mergeCloud(cloudMsgs) {
+    if (!cloudMsgs || !cloudMsgs.length) return;
+    const local = this.getAll();
+    const localIds = new Set(local.map(m => m.id));
+    // Also update existing messages with new replies from cloud
+    cloudMsgs.forEach(cm => {
+      const existing = local.find(m => m.id === cm.id);
+      if (existing) {
+        if ((cm.replies||[]).length > (existing.replies||[]).length) {
+          existing.replies = cm.replies;
+          existing.status = cm.status;
+        }
+      } else {
+        local.push(cm);
+      }
+    });
+    local.sort((a, b) => b.sentAt - a.sentAt);
+    this._save(local);
+  },
+
+  // Returns messages that have new replies the user hasn't seen yet
+  getUnreadReplies(userId) {
+    const seen = (() => { try { return JSON.parse(localStorage.getItem('sparkstudy_seen_replies') || '{}'); } catch(e) { return {}; } })();
+    return this.getForUser(userId).filter(m => (m.replies||[]).length > (seen[m.id] || 0));
+  },
+
+  // Mark all current replies as seen
+  markRepliesRead(userId) {
+    const seen = {};
+    this.getForUser(userId).forEach(m => { seen[m.id] = (m.replies||[]).length; });
+    localStorage.setItem('sparkstudy_seen_replies', JSON.stringify(seen));
+  }
+};
+
+// Sync support messages from Firebase and check for unread owner replies.
+// Shows a persistent popup on the dashboard that stays until user dismisses or clicks to view.
+async function checkOwnerReplies(userId) {
+  if (!userId) return;
+  // Sync from Firebase first so we get the latest replies
+  if (FireDB.ready) {
+    const cloud = await FireDB.getMessagesForUser(userId).catch(() => null);
+    if (cloud) SupportMessages.mergeCloud(cloud);
+  }
+  const unread = SupportMessages.getUnreadReplies(userId);
+  if (!unread.length) return;
+
+  // Don't show duplicate popup
+  if (document.getElementById('ownerReplyPopup')) return;
+
+  // Build reply preview
+  const latestMsg = unread[0];
+  const latestReply = latestMsg.replies[latestMsg.replies.length - 1];
+  const replyPreview = latestReply.message.length > 120
+    ? latestReply.message.substring(0, 120).replace(/</g,'&lt;') + '...'
+    : latestReply.message.replace(/</g,'&lt;');
+  const replyDate = new Date(latestReply.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+  const moreCount = unread.length > 1 ? ` and ${unread.length - 1} more` : '';
+
+  const popup = document.createElement('div');
+  popup.id = 'ownerReplyPopup';
+  popup.style.cssText = 'position:fixed;top:80px;right:20px;z-index:99998;max-width:400px;width:calc(100% - 40px);animation:slideInRight 0.3s ease;';
+  popup.innerHTML = `
+    <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,0.5),0 0 0 1px rgba(245,158,11,0.2);overflow:hidden;cursor:pointer;" onclick="document.getElementById('ownerReplyPopup').remove();App.navigate('settings');">
+      <!-- Close X button — stops propagation so clicking X doesn't navigate -->
+      <button onclick="event.stopPropagation();document.getElementById('ownerReplyPopup').remove();" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:4px 6px;border-radius:6px;z-index:2;transition:color 0.15s,background 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.color='var(--text-muted)';this.style.background='none'">✕</button>
+
+      <!-- Header bar -->
+      <div style="background:linear-gradient(135deg,var(--accent),#d97706);padding:12px 16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.3rem;">💬</span>
+        <div>
+          <div style="font-weight:800;font-size:0.88rem;color:#000;">New Reply from SparkStudy</div>
+          <div style="font-size:0.72rem;color:rgba(0,0,0,0.6);">${replyDate}${moreCount}</div>
+        </div>
+      </div>
+
+      <!-- Message preview -->
+      <div style="padding:14px 16px;">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">Re: <strong>${latestMsg.subject}</strong></div>
+        <div style="font-size:0.88rem;line-height:1.6;color:var(--text-primary);">${replyPreview.replace(/\n/g,'<br>')}</div>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--accent);font-weight:600;">Tap to view full message →</div>
+      </div>
+    </div>
+    <style>
+      @keyframes slideInRight {
+        from { opacity:0; transform:translateX(60px); }
+        to { opacity:1; transform:translateX(0); }
+      }
+    </style>`;
+  document.body.appendChild(popup);
+}
+
 const Storage = {
   // Active user session
   get() {
-    const uid = localStorage.getItem(ACTIVE_USER_KEY);
+    let uid = localStorage.getItem(ACTIVE_USER_KEY);
+    // ── Data-loss recovery: if active key is missing, restore from backup ──
+    if (!uid) {
+      const backup = localStorage.getItem(BACKUP_USER_KEY);
+      if (backup) {
+        const backupState = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + backup)); } catch(e) { return null; } })();
+        if (backupState && backupState.user) {
+          localStorage.setItem(ACTIVE_USER_KEY, backup);
+          uid = backup;
+        }
+      }
+    }
     if (!uid) return null;
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + uid)) || null; } catch(e) { return null; }
   },
   set(state) {
     if (!state || !state.user) return;
     const uid = state.user.id;
-    localStorage.setItem(STORAGE_KEY + '_' + uid, JSON.stringify(state));
+    const json = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY + '_' + uid, json);
     localStorage.setItem(ACTIVE_USER_KEY, uid);
+    localStorage.setItem(BACKUP_USER_KEY, uid); // ← backup so data survives accidental session clear
     // Update user registry
     UserRegistry.update(state.user);
-    // Async cloud sync â€” non-blocking, never breaks local flow
+    // Async cloud sync — non-blocking, never breaks local flow
     FireDB.saveUser(state);
   },
   update(partial) { const s = this.get(); if (!s) return null; Object.assign(s, partial); this.set(s); return s; },
@@ -143,9 +375,10 @@ const Storage = {
     const uid = localStorage.getItem(ACTIVE_USER_KEY);
     if (uid) localStorage.removeItem(STORAGE_KEY + '_' + uid);
     localStorage.removeItem(ACTIVE_USER_KEY);
+    localStorage.removeItem(BACKUP_USER_KEY);
   },
   logout() { localStorage.removeItem(ACTIVE_USER_KEY); },
-  setActiveUser(uid) { localStorage.setItem(ACTIVE_USER_KEY, uid); },
+  setActiveUser(uid) { localStorage.setItem(ACTIVE_USER_KEY, uid); localStorage.setItem(BACKUP_USER_KEY, uid); },
   getUserById(uid) {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + uid)) || null; } catch(e) { return null; }
   },
@@ -193,7 +426,7 @@ const Storage = {
     if (!u) return null;
     return this.getUserById(u.id);
   },
-  // Public email lookup â€” checks local first, then Firestore (async)
+  // Public email lookup — checks local first, then Firestore (async)
   findByEmail(email) {
     return this.findByEmailLocal(email);
   }
@@ -313,12 +546,12 @@ const SiteAnalytics = {
 
 // ===== POINTS & GAMIFICATION =====
 const RANKS = [
-  { min:0,     name:'Apprentice',  badge:'âš¡', color:'#6b7280' },
-  { min:100,   name:'Journeyman',  badge:'ðŸ”§', color:'#3b82f6' },
-  { min:500,   name:'Technician',  badge:'ðŸ”Œ', color:'#8b5cf6' },
-  { min:1500,  name:'Electrician', badge:'âš¡', color:'#f59e0b' },
-  { min:4000,  name:'Master',      badge:'ðŸ†', color:'#22c55e' },
-  { min:10000, name:'Expert',      badge:'â­', color:'#ef4444' },
+  { min:0,     name:'Apprentice',  badge:'⚡', color:'#6b7280' },
+  { min:100,   name:'Journeyman',  badge:'🔧', color:'#3b82f6' },
+  { min:500,   name:'Technician',  badge:'🔌', color:'#8b5cf6' },
+  { min:1500,  name:'Electrician', badge:'⚡', color:'#f59e0b' },
+  { min:4000,  name:'Master',      badge:'🏆', color:'#22c55e' },
+  { min:10000, name:'Expert',      badge:'⭐', color:'#ef4444' },
 ];
 
 const Points = {
@@ -332,8 +565,16 @@ const Points = {
     math_correct:     { base: 2,   desc: 'Correct math answer'      },
     diagnostic_done:  { base: 50,  desc: 'Complete diagnostic'      },
     daily_login:      { base: 5,   desc: 'Daily login'              },
-    streak_7:         { base: 50,  desc: '7-day streak bonus'       },
-    streak_30:        { base: 200, desc: '30-day streak bonus'      },
+    streak_7:         { base: 75,  desc: '7-day streak bonus'       },
+    streak_30:        { base: 300, desc: '30-day streak bonus'      },
+    study_session:    { base: 10,  desc: 'Daily study session'      },
+    quiz_complete:    { base: 25,  desc: 'Practice quiz finished'   },
+    quiz_perfect:     { base: 50,  desc: 'Perfect quiz score'       },
+    module_upload:    { base: 15,  desc: 'Module uploaded'          },
+    real_exam_submit: { base: 100, desc: 'Exam score submitted'     },
+    real_exam_80:     { base: 200, desc: 'Real exam 80%+ bonus'     },
+    real_exam_90:     { base: 400, desc: 'Real exam 90%+ bonus'     },
+    real_exam_95:     { base: 600, desc: 'Real exam 95%+ bonus'     },
   },
 
   getRank(total) {
@@ -372,7 +613,7 @@ const Points = {
     Storage.set(state);
     if (!silent) {
       const mult = multiplier > 1 ? ` <span style="color:#f59e0b">${multiplier}x streak!</span>` : '';
-      showToast(`+${earned} pts â€” ${reason}${mult}`, 'success');
+      showToast(`+${earned} pts — ${reason}${mult}`, 'success');
     }
     // Sync to Firebase so leaderboard sees it
     FireDB.saveUser(state);
@@ -380,7 +621,7 @@ const Points = {
   },
 
   awardExam(pct) {
-    const pts = Math.round(pct * 2); // 0â€“200 pts based on score
+    const pts = Math.round(pct * 2); // 0–200 pts based on score
     this.award('Exam completed', pts);
     if (pct === 100) this.award('Perfect score!', Points.ACTIONS.exam_perfect.base, true);
     else if (pct >= 70) this.award('Passing grade', Points.ACTIONS.exam_pass.base, true);
@@ -457,14 +698,16 @@ function recordStudy(state) {
   const wasNewDay = state.sessions.lastStudy !== today;
   if (!state.sessions.daily[today]) state.sessions.daily[today] = { flashcards: 0, exams: 0, time: 0 };
   state = updateStreak(state);
+  state.sessions.lastActive = Date.now();
   Storage.set(state);
+  FireDB.saveUser(state);
   // Award daily login points once per day
   if (wasNewDay && !state.user.isOwner) {
     setTimeout(() => {
       Points.award('Daily login', Points.ACTIONS.daily_login.base, true);
       const streak = state.sessions.streak;
-      if (streak === 7)  Points.award('7-day streak! ðŸ”¥', Points.ACTIONS.streak_7.base);
-      if (streak === 30) Points.award('30-day streak! ðŸ’¥', Points.ACTIONS.streak_30.base);
+      if (streak === 7)  Points.award('7-day streak! 🔥', Points.ACTIONS.streak_7.base);
+      if (streak === 30) Points.award('30-day streak! 💥', Points.ACTIONS.streak_30.base);
     }, 500);
   }
   return state;
@@ -546,48 +789,80 @@ const Auth = {
   isOwnerAnalytics: false,
   selectPeriod(p) {
     this.selectedPeriod = p;
-    document.querySelectorAll('.period-option').forEach(el => {
-      el.classList.toggle('selected', parseInt(el.dataset.period) === p);
+    // Handle both old .period-option and new signup .signup-period-opt
+    document.querySelectorAll('.period-option, .signup-period-opt').forEach(el => {
+      const selected = parseInt(el.dataset.period) === p;
+      el.style.borderColor = selected ? '#f59e0b' : 'var(--border)';
+      el.style.background = selected ? 'rgba(245,158,11,0.08)' : '';
+      el.classList.toggle('selected', selected);
     });
   },
   appliedPromo: null,
-  checkPromo() {
-    const code = document.getElementById('signupPromo').value.trim();
-    const el = document.getElementById('promoResult');
-    if (!code) { el.innerHTML = ''; this.appliedPromo = null; return; }
+  applySignupPromo() {
+    const input = document.getElementById('signupPromo');
+    const el = document.getElementById('signupPromoMsg');
+    const code = (input?.value || '').trim().toUpperCase();
+    if (!code) { if (el) el.innerHTML = ''; this.appliedPromo = null; return; }
     const promo = PromoCodes.validate(code);
     if (promo) {
       this.appliedPromo = promo;
       const desc = promo.type === 'percent' ? promo.value + '% off' : promo.type === 'flat' ? '$' + promo.value + ' off' : promo.type === 'trial_extend' ? '+' + promo.value + ' extra trial days' : promo.type === 'free' ? 'Free access!' : promo.value;
-      el.innerHTML = '<span style="color:#22c55e;">&#x2705; ' + desc + ' &mdash; Code applied!</span>';
+      if (el) el.innerHTML = '<span style="color:#22c55e;">&#x2705; ' + desc + ' &mdash; Code applied!</span>';
     } else {
       this.appliedPromo = null;
-      el.innerHTML = '<span style="color:#ef4444;">&#x274C; Invalid or expired code</span>';
+      if (el) el.innerHTML = '<span style="color:#ef4444;">&#x274C; Invalid or expired code</span>';
     }
   },
+  checkPromo() { this.applySignupPromo(); },
   async signup() {
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const pass = document.getElementById('signupPassword').value;
-    if (!name || !email || !pass) return showToast('Please fill in all fields', 'error');
-    // Check local first (fast), then Firestore (catches accounts from other devices)
-    if (Storage.findByEmailLocal(email)) return showToast('An account with this email already exists. Please log in.', 'error');
+    const errEl = document.getElementById('signupError');
+    const btn = document.getElementById('signupBtn');
+    const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } else showToast(msg, 'error'); };
+
+    if (!name || !email || !pass) return showErr('Please fill in all fields.');
+    if (pass.length < 6) return showErr('Password must be at least 6 characters.');
+    if (!this.selectedPeriod) return showErr('Please select which period you are in.');
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) return showErr('Please enter a valid email address.');
+
+    // Check email not already used (local first, then cloud)
+    if (Storage.findByEmailLocal(email)) return showErr('An account with this email already exists. Please log in.');
     if (FireDB.ready) {
       const cloudUser = await FireDB.findByEmail(email);
-      if (cloudUser) return showToast('An account with this email already exists. Please log in.', 'error');
+      if (cloudUser) return showErr('An account with this email already exists. Please log in.');
     }
-    // Default to period 1 â€” user will pick their year on the plan selection screen after diagnostic
-    const state = Storage.createDefault(name, email, pass, this.selectedPeriod || 1);
-    SiteAnalytics.track('signup', { email, period: this.selectedPeriod || 1 });
-    showToast('Account created! Starting your diagnostic...', 'success');
+
+    // Check name not already used
+    const allUsers = UserRegistry.getAll();
+    if (allUsers.some(u => u.name.toLowerCase().trim() === name.toLowerCase().trim())) {
+      return showErr('That name is already taken — please use a different name.');
+    }
+
+    if (btn) { btn.classList.add('btn-loading'); btn.disabled = true; }
+    if (errEl) errEl.style.display = 'none';
+
+    // Create account locally — trial starts after diagnostic
+    const state = Storage.createDefault(name, email, pass, this.selectedPeriod, false);
+    // Persist promo to carry through to checkout after diagnostic
+    if (this.appliedPromo) {
+      state._pendingPromo = this.appliedPromo;
+      Storage.set(state);
+    }
     App.navigate('diagnostic');
   },
   async login() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPassword').value;
+    const email = document.getElementById('loginEmail')?.value?.trim();
+    const pass = document.getElementById('loginPassword')?.value;
+    const loginBtn = document.getElementById('loginBtn');
     if (!email || !pass) return showToast('Please enter email and password', 'error');
+    if (loginBtn) { loginBtn.classList.add('btn-loading'); loginBtn.disabled = true; }
 
-    // Owner ANALYTICS-ONLY login â€” goes straight to analytics dashboard
+    // Owner ANALYTICS-ONLY login — goes straight to analytics dashboard
     if (email === OWNER_ANALYTICS_LOGIN.email && pass === OWNER_ANALYTICS_LOGIN.password) {
       this.isOwnerAnalytics = true;
       // Load all users from Firebase into admin panel (async)
@@ -596,12 +871,12 @@ const Auth = {
         if (cloudUsers) OwnerDashboard._cloudUsers = cloudUsers;
       }
       SiteAnalytics.track('owner_analytics_login', {});
-      showToast('Owner Analytics Mode â€” viewing all site data', 'success');
+      showToast('Owner Analytics Mode — viewing all site data', 'success');
       App.navigate('owner');
       return;
     }
 
-    // Owner STUDENT login â€” auto-creates account if needed
+    // Owner STUDENT login — auto-creates account if needed
     if (email === OWNER.email && pass === OWNER.password) {
       let state = Storage.findByEmailLocal(OWNER.email);
       if (!state) {
@@ -624,10 +899,10 @@ const Auth = {
       return;
     }
 
-    // Regular student login â€” check local first, then Firestore
+    // Regular student login — check local first, then Firestore
     let state = Storage.findByEmailLocal(email);
     if (!state && FireDB.ready) {
-      // Student signed up on a different device â€” pull their account from cloud
+      // Student signed up on a different device — pull their account from cloud
       showToast('Looking up your account...', 'info');
       const cloudState = await FireDB.findByEmail(email);
       if (cloudState) {
@@ -649,6 +924,14 @@ const Auth = {
     showToast('Welcome back, ' + state.user.name + '!', 'success');
     if (!state.diagnostic.completed) App.navigate('diagnostic');
     else App.navigate('dashboard');
+    // Check for owner replies after a short delay (let page render first)
+    setTimeout(() => checkOwnerReplies(state.user.id), 1500);
+    // Periodically check for new replies every 60 seconds
+    if (window._replyCheckInterval) clearInterval(window._replyCheckInterval);
+    window._replyCheckInterval = setInterval(() => {
+      const s = Storage.get();
+      if (s && s.user && !s.user.isOwner) checkOwnerReplies(s.user.id);
+    }, 60000);
   },
   logout() {
     this.isOwnerAnalytics = false;
@@ -659,10 +942,174 @@ const Auth = {
 };
 
 // ===== APP / ROUTER =====
+// ── Trial / subscription expiry check ───────────────────────────────────────
+function checkSubscriptionExpiry(state) {
+  if (!state || !state.user || !state.user.subscription) return;
+  const sub = state.user.subscription;
+  const now = new Date();
+
+  // Downgrade if elite_expires_at is past
+  if (sub.plan === 'elite' && sub.elite_expires_at) {
+    if (new Date(sub.elite_expires_at) < now) {
+      sub.plan = 'free';
+      sub.paid = false;
+      Storage.set(state);
+      showToast('Your Elite subscription has expired. Your study data is preserved.', 'info');
+      return;
+    }
+  }
+
+  // If still in trial but trial_end_date is past, stay elite (Stripe handles billing)
+  // This client-side check just shows a reminder banner
+  if (sub.plan === 'elite' && sub.trial && sub.trial_end_date) {
+    if (new Date(sub.trial_end_date) < now) {
+      // Trial ended — Stripe should have charged. Mark trial as ended.
+      sub.trial = false;
+      Storage.set(state);
+    }
+  }
+}
+
+function updateTrialBanner(state) {
+  const banner = document.getElementById('trial-banner');
+  if (!banner) return;
+  if (!state || !state.user) { banner.style.display = 'none'; return; }
+  const sub = state.user.subscription || {};
+  const now = Date.now();
+
+  // Support both Stripe-style and old-style trial fields
+  let trialEnd = null;
+  let inTrial = false;
+  if (sub.plan === 'elite' && sub.trial && sub.trial_end_date) {
+    trialEnd = new Date(sub.trial_end_date).getTime();
+    inTrial = trialEnd > now;
+  } else if (sub.status === 'trial' && sub.trialEnd) {
+    trialEnd = sub.trialEnd;
+    inTrial = trialEnd > now;
+  }
+
+  if (!inTrial || !trialEnd) { banner.style.display = 'none'; return; }
+
+  const daysLeft = Math.max(0, Math.ceil((trialEnd - now) / 86400000));
+  const hoursLeft = Math.max(0, Math.ceil((trialEnd - now) / 3600000));
+  const timeStr = daysLeft > 1 ? `${daysLeft} days` : daysLeft === 1 ? '1 day' : `${hoursLeft} hours`;
+  const endDateStr = new Date(trialEnd).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  const urgent = daysLeft <= 1;
+  const color = urgent ? '#ef4444' : '#f59e0b';
+  const bg = urgent ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.08)';
+  const border = urgent ? 'rgba(239,68,68,0.35)' : 'rgba(245,158,11,0.3)';
+
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div style="background:${bg};border-bottom:1px solid ${border};padding:9px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:0.85rem;">
+        <span style="font-size:1rem;">${urgent ? '🚨' : '⏳'}</span>
+        <span><strong style="color:${color};">${timeStr} left</strong> on your free trial — billing starts ${endDateStr}${urgent ? '. <strong>Cancel now to avoid charges.</strong>' : ''}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <a href="payment.html" style="font-size:0.78rem;font-weight:700;color:${color};text-decoration:none;white-space:nowrap;">Manage subscription →</a>
+        <button onclick="this.parentElement.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px;">✕</button>
+      </div>
+    </div>
+  `;
+}
+
+// Sync user notes into window._sparkStudyCtx so the AI widget answers from them
+function syncAIContext(state) {
+  if (!state || !state.user) { window._sparkStudyCtx = ''; return; }
+  const uid = state.user.id;
+  const parts = [];
+
+  // 1. Include ALL lesson content from LESSONS_CONTENT (the actual module material)
+  if (typeof LESSONS_CONTENT !== 'undefined') {
+    const userPeriod = state.user.period || 2;
+    const lessons = LESSONS_CONTENT.filter(l => {
+      if (l.ownerOnly && state.user.id !== 'owner_ethan') return false;
+      return l.period === userPeriod || l.period === 0;
+    });
+    lessons.forEach(lesson => {
+      const sectionTexts = [];
+      if (lesson.sections && Array.isArray(lesson.sections)) {
+        lesson.sections.forEach(s => {
+          let text = '';
+          if (s.title) text += s.title + ': ';
+          if (s.body) text += s.body;
+          if (s.formula) text += ' Formula: ' + s.formula;
+          if (s.content) text += ' ' + s.content;
+          // Include quiz questions and answers
+          if (s.questions && Array.isArray(s.questions)) {
+            s.questions.forEach(q => {
+              if (q.q) text += ' Q: ' + q.q;
+              if (q.a) text += ' A: ' + q.a;
+              if (q.options) text += ' Options: ' + q.options.join(', ');
+              if (q.answer) text += ' Answer: ' + q.answer;
+            });
+          }
+          if (text.trim().length > 10) sectionTexts.push(text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim());
+        });
+      }
+      if (sectionTexts.length > 0) {
+        parts.push('=== LESSON: ' + lesson.title + ' ===\n' + sectionTexts.join('\n'));
+      }
+    });
+  }
+
+  // 2. User's own notes
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('sparky_notes_' + uid + '_')) {
+      const topic = key.replace('sparky_notes_' + uid + '_', '');
+      if (topic.includes('_ts_') || topic.includes('migrated') || topic.includes('merged')) continue;
+      const html = localStorage.getItem(key) || '';
+      const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (text.length > 20) parts.push('=== MY NOTES: ' + topic + ' ===\n' + text);
+    }
+  }
+
+  // 3. Uploaded module text
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('sparky_modtext_' + uid + '_')) {
+      const text = (localStorage.getItem(key) || '').trim();
+      if (text.length > 20) parts.push('=== UPLOADED MODULE ===\n' + text);
+    }
+    if (key && key.startsWith('sparky_lesson_notes_' + uid + '_')) {
+      const html = localStorage.getItem(key) || '';
+      const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (text.length > 20) parts.push('=== LESSON NOTES ===\n' + text);
+    }
+  }
+
+  // 4. Uploaded lessons (user-created from module uploads)
+  if (typeof LESSONS_CONTENT !== 'undefined') {
+    const uploaded = LESSONS_CONTENT.filter(l => l.isUploaded);
+    uploaded.forEach(lesson => {
+      const sectionTexts = [];
+      if (lesson.sections && Array.isArray(lesson.sections)) {
+        lesson.sections.forEach(s => {
+          let text = '';
+          if (s.title) text += s.title + ': ';
+          if (s.body) text += s.body;
+          if (text.trim().length > 10) sectionTexts.push(text.replace(/\s+/g, ' ').trim());
+        });
+      }
+      if (sectionTexts.length > 0) {
+        parts.push('=== UPLOADED LESSON: ' + lesson.title + ' ===\n' + sectionTexts.join('\n'));
+      }
+    });
+  }
+
+  window._sparkStudyCtx = parts.join('\n\n').slice(0, 60000);
+}
+
 const App = {
   currentPage: null,
   navigate(page) {
     const state = Storage.get();
+    // Check subscription/trial expiry on every navigation
+    checkSubscriptionExpiry(state);
+    updateTrialBanner(state);
+    syncAIContext(state);
     const publicPages = ['landing', 'signup', 'login'];
     const ownerPages = ['owner'];
 
@@ -679,10 +1126,6 @@ const App = {
     const pageEl = document.getElementById('page-' + page);
     if (pageEl) pageEl.classList.add('active');
     this.currentPage = page;
-
-    // Clean up floating notes button when leaving exam page
-    NotesSidePanel.close();
-    if (Notes._fullscreen) { Notes._fullscreen = false; document.body.style.overflow = ''; }
 
     // Track page view
     const uid = state ? state.user.id : (Auth.isOwnerAnalytics ? 'owner-analytics' : null);
@@ -746,14 +1189,14 @@ const App = {
   renderPage(page, state) {
     switch (page) {
       case 'diagnostic': Diagnostic.render(state); break;
-      case 'dashboard': Dashboard.render(state); break;
+      case 'dashboard': Dashboard.render(state); requestPushPermission(); if (state && !state.user.isOwner) setTimeout(() => checkOwnerReplies(state.user.id), 800); break;
       case 'flashcards': Flashcards.render(state); break;
       case 'exams': Exams.render(state); break;
       case 'study-guide': StudyGuide.render(state); break;
       case 'tools': Tools.cleanup(); Tools.render(state); break;
       case 'analytics': Analytics.render(state); break;
       case 'review': Review.render(state); break;
-      case 'settings': Settings.render(state); break;
+      case 'settings': Settings.render(state); if (state && !state.user.isOwner) { SupportMessages.markRepliesRead(state.user.id); const popup = document.getElementById('ownerReplyPopup'); if (popup) popup.remove(); } break;
       case 'group': GroupProgress.render(state); break;
       case 'owner': OwnerDashboard.render(); break;
       case 'lessons': Lessons.render(state); break;
@@ -775,8 +1218,16 @@ const App = {
     const state = Storage.get();
     if (state) {
       SiteAnalytics.trackVisit(state.user.id);
-      if (!state.diagnostic.completed) this.navigate('diagnostic');
-      else this.navigate('dashboard');
+      // Check if coming back from payment-success with a post-payment redirect
+      const gotoPage = localStorage.getItem('sparkstudy_goto');
+      if (gotoPage) {
+        localStorage.removeItem('sparkstudy_goto');
+        this.navigate(gotoPage);
+      } else if (!state.diagnostic.completed) {
+        this.navigate('diagnostic');
+      } else {
+        this.navigate('dashboard');
+      }
     } else {
       this.navigate('landing');
     }
@@ -790,24 +1241,123 @@ const Diagnostic = {
   currentIndex: 0,
   answers: [],
   startTime: null,
+  _selectedTopics: [],
+  _isRetake: false,
 
   render(state) {
     const container = document.getElementById('diagContent');
-    if (state && state.diagnostic.completed) {
+    const header = document.getElementById('diagHeader');
+    // If completed and not a retake, go to dashboard
+    if (state && state.diagnostic.completed && !this._isRetake) {
       App.navigate('dashboard');
       return;
     }
-    // Filter questions for the user's period
-    this.questions = DIAGNOSTIC_QUESTIONS.filter(dq => {
-      const t = TOPICS[dq.topic];
-      return t && t.period <= state.user.period;
-    });
-    // Shuffle
-    this.questions = this.questions.sort(() => Math.random() - 0.5);
+    this._isRetake = false;
+    if (header) header.innerHTML = '<h1>&#x1F9E0; Diagnostic Assessment</h1><p style="color:var(--text-secondary);margin-top:8px;">Tell us what you\'ve covered — we\'ll test only those topics.</p>';
+    this._renderTopicSelect(state, container);
+  },
+
+  // ── Screen 1: Topic Selection ─────────────────────────────────────────
+  _renderTopicSelect(state, container) {
+    const period = (state && state.user && state.user.period) || 1;
+    const allTopics = Object.values(TOPICS).filter(t => t.period <= period).sort((a,b) => a.order - b.order);
+
+    // Group by period
+    const byPeriod = {};
+    for (const t of allTopics) {
+      if (!byPeriod[t.period]) byPeriod[t.period] = [];
+      byPeriod[t.period].push(t);
+    }
+
+    const total = allTopics.length;
+    const selectedCount = this._selectedTopics.filter(id => allTopics.find(t => t.id === id)).length;
+
+    container.innerHTML = `
+      <div style="max-width:600px;margin:0 auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:0.85rem;color:var(--text-secondary);">Select topics you have already studied</div>
+          <div id="diagTopicCount" style="font-size:0.82rem;font-weight:700;color:var(--accent);">${selectedCount} / ${total} selected</div>
+        </div>
+
+        ${Object.entries(byPeriod).map(([p, topics]) => `
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
+              <div style="font-weight:700;font-size:0.92rem;">Period ${p} Topics</div>
+              <button class="btn btn-ghost btn-sm" onclick="Diagnostic._togglePeriod(${p})" style="font-size:0.78rem;">Select All</button>
+            </div>
+            <div style="padding:12px 16px;display:grid;gap:8px;">
+              ${topics.map(t => `
+                <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid ${this._selectedTopics.includes(t.id) ? 'var(--accent)' : 'var(--border)'};background:${this._selectedTopics.includes(t.id) ? 'rgba(245,158,11,0.06)' : 'transparent'};transition:all 0.15s;" onclick="Diagnostic._toggleTopic('${t.id}', ${p})">
+                  <div style="width:20px;height:20px;border-radius:5px;border:2px solid ${this._selectedTopics.includes(t.id) ? 'var(--accent)' : 'var(--border)'};background:${this._selectedTopics.includes(t.id) ? 'var(--accent)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;">
+                    ${this._selectedTopics.includes(t.id) ? '<span style="color:#000;font-size:12px;font-weight:900;">✓</span>' : ''}
+                  </div>
+                  <span style="font-size:0.88rem;">${t.icon} ${t.name}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:14px;text-align:center;">Only select topics you\'ve actually studied. Your results will only be as accurate as your selections.</p>
+
+        <button id="diagStartBtn" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:14px;opacity:${this._selectedTopics.length > 0 ? '1' : '0.4'};" onclick="Diagnostic._startQuiz()" ${this._selectedTopics.length === 0 ? 'disabled' : ''}>
+          Start Diagnostic (${this._buildQuestionSet().length} questions) &#8594;
+        </button>
+        <button onclick="Diagnostic.skipDiagnostic()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);color:var(--text-muted);padding:12px;border-radius:10px;cursor:pointer;font-size:0.85rem;">
+          Skip for now &mdash; I\'ll do this later
+        </button>
+      </div>
+    `;
+  },
+
+  _toggleTopic(id, period) {
+    const idx = this._selectedTopics.indexOf(id);
+    if (idx >= 0) this._selectedTopics.splice(idx, 1);
+    else this._selectedTopics.push(id);
+    this._renderTopicSelect(Storage.get(), document.getElementById('diagContent'));
+  },
+
+  _togglePeriod(period) {
+    const periodTopics = Object.values(TOPICS).filter(t => t.period === period).map(t => t.id);
+    const allSelected = periodTopics.every(id => this._selectedTopics.includes(id));
+    if (allSelected) {
+      this._selectedTopics = this._selectedTopics.filter(id => !periodTopics.includes(id));
+    } else {
+      for (const id of periodTopics) {
+        if (!this._selectedTopics.includes(id)) this._selectedTopics.push(id);
+      }
+    }
+    this._renderTopicSelect(Storage.get(), document.getElementById('diagContent'));
+  },
+
+  // ── Build question set from selected topics ───────────────────────────
+  _buildQuestionSet() {
+    if (this._selectedTopics.length === 0) return [];
+    const perTopic = Math.min(5, Math.max(3, Math.floor(40 / this._selectedTopics.length)));
+    let questions = [];
+    for (const topicId of this._selectedTopics) {
+      const topicQs = DIAGNOSTIC_QUESTIONS.filter(q => q.topic === topicId);
+      const shuffled = topicQs.sort(() => Math.random() - 0.5).slice(0, perTopic);
+      questions = questions.concat(shuffled);
+    }
+    // Cap at 40, shuffle the full set
+    return questions.sort(() => Math.random() - 0.5).slice(0, 40);
+  },
+
+  // ── Screen 2: Quiz ────────────────────────────────────────────────────
+  _startQuiz() {
+    if (this._selectedTopics.length === 0) return;
+    this.questions = this._buildQuestionSet();
+    if (this.questions.length === 0) {
+      showToast('No questions available for selected topics yet. More coming soon!', 'info');
+      return;
+    }
     this.currentIndex = 0;
     this.answers = new Array(this.questions.length).fill(null);
     this.startTime = Date.now();
-    this.renderQuestion(container);
+    const header = document.getElementById('diagHeader');
+    if (header) header.innerHTML = '<h1>&#x1F9E0; Diagnostic</h1><p style="color:var(--text-secondary);margin-top:8px;">Answer honestly — this shapes your study plan.</p>';
+    this.renderQuestion(document.getElementById('diagContent'));
   },
 
   renderQuestion(container) {
@@ -817,30 +1367,41 @@ const Diagnostic = {
     const pct = ((this.currentIndex) / this.questions.length * 100).toFixed(0);
 
     container.innerHTML = `
-      <div class="diag-progress">
-        <div class="diag-counter">Question ${this.currentIndex + 1} of ${this.questions.length}</div>
-        <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
-      </div>
-      <div class="diag-topic-badge">${topic.icon} ${topic.name}</div>
-      <div class="diag-question">${q.q}</div>
-      <div class="diag-options">
-        ${q.options.map((opt, i) => `
-          <div class="diag-option ${this.answers[this.currentIndex] === i ? 'selected' : ''}" onclick="Diagnostic.selectAnswer(${i})">
-            <div class="option-letter">${String.fromCharCode(65 + i)}</div>
-            <div>${opt}</div>
+      <div style="max-width:620px;margin:0 auto;">
+        <div class="diag-progress" style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <div class="diag-counter" style="font-size:0.82rem;color:var(--text-muted);">Question ${this.currentIndex + 1} of ${this.questions.length}</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);">${topic ? `${topic.icon} ${topic.name}` : ''}</div>
           </div>
-        `).join('')}
-        <div class="diag-option ${this.answers[this.currentIndex] === -1 ? 'selected' : ''}" onclick="Diagnostic.selectAnswer(-1)" style="border-style:dashed;opacity:0.75;">
-          <div class="option-letter" style="background:rgba(100,116,139,0.2);color:var(--text-muted);">?</div>
-          <div style="color:var(--text-muted);font-style:italic;">Haven't learned this yet</div>
+          <div class="progress-bar"><div class="fill" style="width:${pct}%;transition:width 0.4s ease;"></div></div>
         </div>
-      </div>
-      <div class="diag-actions">
-        <button class="btn btn-secondary" ${this.currentIndex === 0 ? 'disabled' : ''} onclick="Diagnostic.prev()">&#8592; Previous</button>
-        ${this.currentIndex < this.questions.length - 1
-          ? `<button class="btn btn-primary" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.next()">Next &#8594;</button>`
-          : `<button class="btn btn-primary" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.finish()">Finish Assessment</button>`
-        }
+
+        <div class="diag-question" style="font-size:1.05rem;font-weight:600;margin-bottom:24px;line-height:1.5;">${q.q}</div>
+
+        <div class="diag-options" style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+          ${q.options.map((opt, i) => `
+            <div class="diag-option ${this.answers[this.currentIndex] === i ? 'selected' : ''}"
+              onclick="Diagnostic.selectAnswer(${i})"
+              style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:10px;border:2px solid ${this.answers[this.currentIndex] === i ? 'var(--accent)' : 'var(--border)'};background:${this.answers[this.currentIndex] === i ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)'};cursor:pointer;transition:all 0.15s;">
+              <div class="option-letter" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;background:${this.answers[this.currentIndex] === i ? 'var(--accent)' : 'var(--bg-secondary)'};color:${this.answers[this.currentIndex] === i ? '#000' : 'var(--text-secondary)'};">${String.fromCharCode(65 + i)}</div>
+              <div style="font-size:0.9rem;">${opt}</div>
+            </div>
+          `).join('')}
+
+          <div class="diag-option ${this.answers[this.currentIndex] === -1 ? 'selected' : ''}"
+            onclick="Diagnostic.selectAnswer(-1)"
+            style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:10px;border:2px dashed ${this.answers[this.currentIndex] === -1 ? 'rgba(100,116,139,0.7)' : 'var(--border)'};background:${this.answers[this.currentIndex] === -1 ? 'rgba(100,116,139,0.1)' : 'transparent'};cursor:pointer;transition:all 0.15s;margin-top:4px;">
+            <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;background:rgba(100,116,139,0.15);color:var(--text-muted);">?</div>
+            <div style="color:var(--text-muted);font-size:0.88rem;font-style:italic;">I haven\'t learned this yet</div>
+          </div>
+        </div>
+
+        <div class="diag-actions" style="display:flex;justify-content:flex-end;">
+          ${this.currentIndex < this.questions.length - 1
+            ? `<button class="btn btn-primary" style="padding:11px 28px;" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.next()">Next &#8594;</button>`
+            : `<button class="btn btn-primary" style="padding:11px 28px;" ${this.answers[this.currentIndex] === null ? 'disabled' : ''} onclick="Diagnostic.finish()">See My Results &#8594;</button>`
+          }
+        </div>
       </div>
     `;
   },
@@ -856,72 +1417,238 @@ const Diagnostic = {
     this.renderQuestion();
   },
 
-  prev() {
-    if (this.currentIndex > 0) { this.currentIndex--; this.renderQuestion(); }
-  },
-
   finish() {
     if (this.answers[this.currentIndex] === null) return;
     const state = Storage.get();
     const timeSpent = Date.now() - this.startTime;
 
-    // Score by topic
-    const topicScores = {};
-    const topicCounts = {};
-    let totalCorrect = 0;
+    // Score by topic — 75% threshold per spec
+    const topicCorrect  = {};
+    const topicTotal    = {};
+    const topicNotCovered = {};
+    let coveredCorrect  = 0;
+    let coveredTotal    = 0;
 
-    const notLearnedTopics = {};
     this.questions.forEach((q, i) => {
-      const isNYL = this.answers[i] === -1;
-      const correct = !isNYL && this.answers[i] === q.correct;
-      if (correct) totalCorrect++;
-      if (isNYL) { notLearnedTopics[q.topic] = true; return; }
-      if (!topicScores[q.topic]) { topicScores[q.topic] = 0; topicCounts[q.topic] = 0; }
-      topicCounts[q.topic]++;
-      if (correct) topicScores[q.topic]++;
+      const isNYL    = this.answers[i] === -1;
+      const isCorrect = !isNYL && this.answers[i] === q.correct;
+
+      if (!topicCorrect[q.topic])  { topicCorrect[q.topic] = 0; topicTotal[q.topic] = 0; topicNotCovered[q.topic] = 0; }
+
+      if (isNYL) {
+        topicNotCovered[q.topic]++;
+      } else {
+        topicTotal[q.topic]++;
+        coveredTotal++;
+        if (isCorrect) { topicCorrect[q.topic]++; coveredCorrect++; }
+      }
     });
 
-    // Calculate percentages and find weak/strong
-    const topicPcts = {};
-    const weak = [];
-    const strong = [];
-    const notLearned = Object.keys(notLearnedTopics);
-    Object.keys(topicScores).forEach(tid => {
-      const pct = Math.round((topicScores[tid] / topicCounts[tid]) * 100);
-      topicPcts[tid] = pct;
-      if (pct < 60) weak.push(tid);
-      else if (pct >= 80) strong.push(tid);
-    });
+    // Categorize topics
+    const strong     = [];
+    const needsWork  = [];
+    const notCovered = [];
+    const topicPcts  = {};
 
-    // Sort weak by worst first
-    weak.sort((a, b) => topicPcts[a] - topicPcts[b]);
+    for (const tid of this._selectedTopics) {
+      const answered = topicTotal[tid] || 0;
+      const nyl      = topicNotCovered[tid] || 0;
+      const correct  = topicCorrect[tid] || 0;
 
-    const pct = Math.round((totalCorrect / this.questions.length) * 100);
+      if (answered === 0) {
+        // All questions were "haven't learned" → Not Covered
+        notCovered.push(tid);
+      } else {
+        const pct = Math.round((correct / answered) * 100);
+        topicPcts[tid] = pct;
+        if (pct >= 75) strong.push(tid);
+        else needsWork.push(tid);
+      }
+    }
 
-    const answeredTotal = this.questions.filter((_,i) => this.answers[i] !== -1).length || 1;
-    const answeredPct = Math.round((totalCorrect / answeredTotal) * 100);
-    state.diagnostic = {
-      completed: true,
-      completedDate: Date.now(),
-      responses: this.questions.map((q, i) => ({ qId: q.id, selected: this.answers[i], correct: q.correct, topic: q.topic, isCorrect: this.answers[i] === q.correct, isNYL: this.answers[i] === -1 })),
-      weakAreas: weak,
-      strongAreas: strong,
-      notLearnedAreas: notLearned,
-      topicPcts,
-      score: totalCorrect,
-      total: this.questions.length,
-      pct: answeredPct,
-      timeSpent
+    needsWork.sort((a,b) => (topicPcts[a]||0) - (topicPcts[b]||0));
+
+    // Build session record
+    const session = {
+      sessionId:      Date.now(),
+      dateTaken:      new Date().toISOString(),
+      topicsSelected: [...this._selectedTopics],
+      answers:        this.questions.map((q,i) => ({
+        questionId:  q.id,
+        topic:       q.topic,
+        given:       this.answers[i],
+        correct:     q.correct,
+        result:      this.answers[i] === -1 ? 'not_covered' : (this.answers[i] === q.correct ? 'correct' : 'incorrect'),
+      })),
+      summary: { strong, needsWork, notCovered, topicPcts, coveredCorrect, coveredTotal },
+      timeSpent,
     };
 
-    state.sessions.streak = 1;
-    state.sessions.streakStart = getToday();
-    state.sessions.lastStudy = getToday();
+    // Update state — keep full history, also update main diagnostic fields for backwards compat
+    if (!state.diagnostic.sessions) state.diagnostic.sessions = [];
+    state.diagnostic.sessions.push(session);
+    state.diagnostic.completed      = true;
+    state.diagnostic.completedDate  = Date.now();
+    state.diagnostic.weakAreas      = needsWork;
+    state.diagnostic.strongAreas    = strong;
+    state.diagnostic.notLearnedAreas = notCovered;
+    state.diagnostic.topicPcts      = topicPcts;
+    state.diagnostic.score          = coveredCorrect;
+    state.diagnostic.total          = coveredTotal;
+    state.diagnostic.pct            = coveredTotal > 0 ? Math.round((coveredCorrect / coveredTotal) * 100) : 0;
+    state.sessions.streak           = state.sessions.streak || 1;
+    state.sessions.lastStudy        = getToday();
+
     Storage.set(state);
+    FireDB.saveUser(state);
+    SiteAnalytics.track('diagnostic_complete', { userId: state.user.id, score: state.diagnostic.pct, weak: needsWork.length, strong: strong.length });
 
-    SiteAnalytics.track('diagnostic_complete', { userId: state.user.id, score: pct, weakAreas: weak.length, strongAreas: strong.length });
+    this.renderResults(state, session);
+  },
 
-    this.renderResults(state);
+  // ── Screen 3: Results ─────────────────────────────────────────────────
+  renderResults(state, session) {
+    if (!session) session = state.diagnostic.sessions && state.diagnostic.sessions[state.diagnostic.sessions.length - 1];
+    if (!session) { App.navigate('dashboard'); return; }
+
+    const container = document.getElementById('diagContent');
+    const header    = document.getElementById('diagHeader');
+    if (header) header.innerHTML = '<h1>&#x1F3C6; Diagnostic Complete</h1><p style="color:var(--text-secondary);margin-top:8px;">Here\'s exactly where you stand.</p>';
+
+    const { strong, needsWork, notCovered, topicPcts, coveredCorrect, coveredTotal } = session.summary;
+    const pct = coveredTotal > 0 ? Math.round((coveredCorrect / coveredTotal) * 100) : 0;
+    const sessionCount = (state.diagnostic.sessions || []).length;
+
+    const topicCard = (tid, color, pctVal) => {
+      const t = TOPICS[tid];
+      if (!t) return '';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-radius:8px;background:var(--bg-secondary);margin-bottom:6px;">
+        <span style="font-size:0.88rem;">${t.icon} ${t.name}</span>
+        ${pctVal !== undefined ? `<strong style="color:${color};font-size:0.85rem;">${pctVal}%</strong>` : '<span style="font-size:0.78rem;color:var(--text-muted);">Not tested</span>'}
+      </div>`;
+    };
+
+    container.innerHTML = `
+      <div style="max-width:620px;margin:0 auto;" class="slide-up">
+
+        <!-- Score summary -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;text-align:center;">
+          <div style="font-size:3rem;font-weight:900;color:var(--accent);line-height:1;">${pct}%</div>
+          <div style="font-size:0.92rem;color:var(--text-secondary);margin-top:6px;">
+            You scored <strong style="color:var(--text-primary);">${coveredCorrect}/${coveredTotal}</strong> on topics you've studied
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">
+            ${notCovered.length > 0 ? `${notCovered.length} topic${notCovered.length===1?'':'s'} marked as not covered yet — not counted against you` : 'All selected topics tested'}
+          </div>
+          ${sessionCount > 1 ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">Diagnostic #${sessionCount} · ${new Date(session.dateTaken).toLocaleDateString()}</div>` : ''}
+        </div>
+
+        ${needsWork.length > 0 ? `
+        <!-- Needs Work -->
+        <div style="background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius);padding:20px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:1.1rem;">⚠️</span>
+            <h3 style="margin:0;font-size:1rem;color:#f59e0b;">Needs Work</h3>
+            <span style="margin-left:auto;font-size:0.72rem;background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:10px;font-weight:700;">${needsWork.length} topic${needsWork.length===1?'':'s'}</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 14px;">These are your priority study areas. Below 75% correct.</p>
+          ${needsWork.map(tid => topicCard(tid, '#f59e0b', topicPcts[tid])).join('')}
+        </div>
+        ` : ''}
+
+        ${strong.length > 0 ? `
+        <!-- Strong -->
+        <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius);padding:20px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:1.1rem;">✅</span>
+            <h3 style="margin:0;font-size:1rem;color:#22c55e;">Strong Areas</h3>
+            <span style="margin-left:auto;font-size:0.72rem;background:rgba(34,197,94,0.12);color:#22c55e;padding:2px 8px;border-radius:10px;font-weight:700;">${strong.length} topic${strong.length===1?'':'s'}</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 14px;">You're solid here — spaced repetition will maintain this.</p>
+          ${strong.map(tid => topicCard(tid, '#22c55e', topicPcts[tid])).join('')}
+        </div>
+        ` : ''}
+
+        ${notCovered.length > 0 ? `
+        <!-- Not Covered -->
+        <div style="background:rgba(100,116,139,0.04);border:1px solid rgba(100,116,139,0.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:1.1rem;">📋</span>
+            <h3 style="margin:0;font-size:1rem;color:var(--text-muted);">Not Covered Yet</h3>
+            <span style="margin-left:auto;font-size:0.72rem;background:rgba(100,116,139,0.12);color:var(--text-muted);padding:2px 8px;border-radius:10px;font-weight:700;">${notCovered.length} topic${notCovered.length===1?'':'s'}</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 14px;">Come back and retest these once you've covered them in class.</p>
+          ${notCovered.map(tid => topicCard(tid, 'var(--text-muted)', undefined)).join('')}
+        </div>
+        ` : ''}
+
+        <!-- CTAs -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${needsWork.length > 0 ? `
+          <button class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:15px;" onclick="Diagnostic._startWeakStudy()">
+            &#x26A1; Start Studying My Weak Areas
+          </button>` : `
+          <button class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:15px;" onclick="App.navigate('dashboard')">
+            &#x2713; Go to Dashboard
+          </button>`}
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary" style="flex:1;" onclick="Diagnostic._retakeFromResults()">&#x1F504; Retake Diagnostic</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="App.navigate('dashboard')">&#x2192; Dashboard</button>
+          </div>
+        </div>
+
+        ${sessionCount > 1 ? `
+        <div style="margin-top:20px;">
+          <details>
+            <summary style="cursor:pointer;font-size:0.82rem;color:var(--text-muted);padding:8px 0;">&#x25B6; Diagnostic history (${sessionCount} sessions)</summary>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
+              ${(state.diagnostic.sessions || []).slice().reverse().map((s,i) => {
+                const d = s.summary;
+                const p = d.coveredTotal > 0 ? Math.round((d.coveredCorrect/d.coveredTotal)*100) : 0;
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;font-size:0.82rem;">
+                  <span style="color:var(--text-muted);">${new Date(s.dateTaken).toLocaleDateString()}</span>
+                  <span>${d.coveredCorrect}/${d.coveredTotal} covered</span>
+                  <strong style="color:${getMasteryColor(p)};">${p}%</strong>
+                </div>`;
+              }).join('')}
+            </div>
+          </details>
+        </div>
+        ` : ''}
+
+        <!-- Plan selection for new users -->
+        ${!state.user.subscription || state.user.subscription.plan === 'trial' ? `
+        <div style="margin-top:24px;" id="diagPlanSelect">
+          ${Diagnostic._planSelectHTML(state)}
+        </div>` : ''}
+      </div>
+    `;
+  },
+
+  _startWeakStudy() {
+    const state = Storage.get();
+    const weak  = state.diagnostic.weakAreas || [];
+    if (weak.length === 0) { App.navigate('flashcards'); return; }
+    // Set a filter so Flashcards shows only weak topic cards
+    state._weakStudyTopics = weak;
+    Storage.set(state);
+    App.navigate('flashcards');
+    showToast(`Studying ${weak.length} weak topic${weak.length===1?'':'s'} — let\'s close the gaps!`, 'success');
+  },
+
+  _retakeFromResults() {
+    this._selectedTopics = [];
+    this._isRetake = true;
+    const state = Storage.get();
+    const header = document.getElementById('diagHeader');
+    if (header) header.innerHTML = '<h1>&#x1F9E0; Retake Diagnostic</h1><p style="color:var(--text-secondary);margin-top:8px;">Select topics to test — include anything new you\'ve covered since last time.</p>';
+    this._renderTopicSelect(state, document.getElementById('diagContent'));
+  },
+
+  retake() {
+    this._selectedTopics = [];
+    this._isRetake = true;
+    App.navigate('diagnostic');
   },
 
   skipDiagnostic() {
@@ -932,7 +1659,6 @@ const Diagnostic = {
     s.diagnostic.weakAreas = [];
     s.diagnostic.notLearnedAreas = Object.keys(TOPICS);
     Storage.set(s);
-    // Show the plan selector inline instead of going to dashboard
     const header = document.getElementById('diagHeader');
     const container = document.getElementById('diagContent');
     if (header) header.innerHTML = '<h1>&#x1F389; Almost there!</h1><p style="color:var(--text-secondary);margin-top:8px;">Start your free trial and select your year to unlock everything.</p>';
@@ -945,26 +1671,20 @@ const Diagnostic = {
     const trial = PRICING.elite.trialDays;
     return `
     <div style="max-width:480px;margin:0 auto;">
-
-      <!-- Plan card -->
       <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(139,92,246,0.06));border:2px solid var(--accent);border-radius:18px;padding:28px;margin-bottom:20px;position:relative;overflow:hidden;">
         <div style="position:absolute;top:14px;right:14px;background:var(--accent);color:#000;font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:0.5px;">FREE TRIAL</div>
         <div style="font-size:1.5rem;font-weight:900;margin-bottom:4px;">&#x26A1; SparkyStudy Elite</div>
         <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:20px;">Everything you need to pass your apprenticeship exam</div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
           ${['All modules & lessons','Unlimited flashcards','Full practice exams','Diagnostic study plan','Smart analytics','Simulator tools'].map(f=>`<div style="font-size:0.82rem;display:flex;align-items:center;gap:6px;"><span style="color:#22c55e;font-size:0.9rem;">&#x2713;</span>${f}</div>`).join('')}
         </div>
-
         <div style="background:var(--bg-card);border-radius:12px;padding:16px;text-align:center;margin-bottom:4px;">
           <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">After your ${trial}-day free trial</div>
           <div style="font-size:2.2rem;font-weight:900;color:var(--accent);">$${price}<span style="font-size:1rem;font-weight:500;color:var(--text-secondary);">/year</span></div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">That's just $${(price/12).toFixed(2)}/month &mdash; less than a textbook</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">That's just $${(price/12).toFixed(2)}/month — less than a textbook</div>
         </div>
         <div style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:8px;">&#x26A0;&#xFE0F; You will not be charged today. After ${trial} days, your subscription is $${price}/year. Cancel anytime.</div>
       </div>
-
-      <!-- Year selection -->
       <div style="margin-bottom:18px;">
         <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">&#x1F393; Which year are you studying?</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="planYearGrid">
@@ -978,8 +1698,6 @@ const Diagnostic = {
           </div>
         </div>
       </div>
-
-      <!-- Promo code -->
       <div style="margin-bottom:18px;">
         <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:6px;">Have a promo code?</label>
         <div style="display:flex;gap:8px;">
@@ -988,9 +1706,7 @@ const Diagnostic = {
         </div>
         <div id="planPromoMsg" style="font-size:0.78rem;margin-top:5px;min-height:18px;"></div>
       </div>
-
-      <!-- CTA -->
-      <button onclick="Diagnostic.confirmPlan()" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:16px;">Start My ${trial}-Day Free Trial &#8594;</button>
+      <button id="diagConfirmPlanBtn" onclick="Diagnostic.confirmPlan()" class="btn btn-primary btn-lg" style="width:100%;font-size:1rem;padding:16px;">Start My ${trial}-Day Free Trial &#8594;</button>
       <p style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:10px;line-height:1.5;">No payment required today. By starting your trial you agree to be billed $${price}/year after ${trial} days unless you cancel. You can cancel at any time from Settings.</p>
     </div>`;
   },
@@ -1002,101 +1718,60 @@ const Diagnostic = {
     const y2 = document.getElementById('planY2');
     if (y1 && y2) {
       y1.style.borderColor = y === 1 ? 'var(--accent)' : 'var(--border)';
-      y1.style.background = y === 1 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
+      y1.style.background  = y === 1 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
       y2.style.borderColor = y === 2 ? 'var(--accent)' : 'var(--border)';
-      y2.style.background = y === 2 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
+      y2.style.background  = y === 2 ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
     }
   },
 
   _applyPromo() {
     const code = (document.getElementById('planPromoInput')?.value || '').trim().toUpperCase();
-    const msg = document.getElementById('planPromoMsg');
-    if (!code) { if(msg) msg.textContent = ''; return; }
+    const msg  = document.getElementById('planPromoMsg');
+    if (!code) { if (msg) msg.textContent = ''; return; }
     const result = PromoCodes.apply(code);
     if (msg) { msg.textContent = result.message; msg.style.color = result.success ? 'var(--success)' : 'var(--danger)'; }
   },
 
-  confirmPlan() {
+  async confirmPlan() {
     const state = Storage.get();
     if (!state) return;
     const year = this._selectedYear || state.user.period || 1;
     state.user.period = year;
     Storage.set(state);
-    App.navigate('dashboard');
+
+    const btn = document.getElementById('diagConfirmPlanBtn');
+    if (btn) { btn.textContent = '⏳ Redirecting to checkout...'; btn.disabled = true; }
+
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
+    const promoCode = (document.getElementById('planPromoInput')?.value || '').trim().toUpperCase()
+      || (state._pendingPromo?.code) || '';
+    try {
+      const res = await fetch(`${BACKEND}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.user.email, period: year, promo: promoCode || undefined })
+      });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Payment service is temporarily unavailable. Please try again in a moment.');
+      }
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Could not create checkout session');
+      }
+    } catch (e) {
+      if (btn) { btn.textContent = `Start My ${PRICING.elite.trialDays}-Day Free Trial \u2192`; btn.disabled = false; }
+      showToast(e.message, 'error');
+    }
   },
-
-  renderResults(state) {
-    const container = document.getElementById('diagContent');
-    const d = state.diagnostic;
-    const header = document.getElementById('diagHeader');
-    header.innerHTML = '<h1>Diagnostic Complete!</h1><p style="color:var(--text-secondary);margin-top:8px;">Here\'s where you stand. Your study plan has been customized based on these results.</p>';
-
-    const topicEntries = Object.entries(d.topicPcts).sort((a, b) => a[1] - b[1]);
-
-    container.innerHTML = `
-      <div class="diag-results slide-up">
-        <div class="diag-score-circle" style="--score-pct:${d.pct}%">
-          <div class="diag-score-inner">
-            <div class="score-num">${d.pct}%</div>
-            <div class="score-label">${d.score}/${d.total} correct</div>
-          </div>
-        </div>
-        <p style="color:var(--text-secondary);margin-bottom:8px;">Time: ${Math.round(d.timeSpent / 60000)} minutes</p>
-        <p style="font-size:1.1rem;font-weight:600;margin-bottom:24px;">
-          ${d.pct >= 80 ? 'Great foundation! Let\'s sharpen the edges.' : d.pct >= 60 ? 'Good start! We\'ve identified areas to focus on.' : 'Perfect \u2014 now we know exactly where to focus your study time.'}
-        </p>
-
-        ${d.weakAreas.length > 0 ? `
-          <div style="margin-bottom:16px;">
-            <h3 style="color:var(--danger);margin-bottom:12px;">&#9888; Areas Needing Work</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-              ${d.weakAreas.map(tid => `<span class="badge badge-danger">${TOPICS[tid]?.name || tid} \u2014 ${d.topicPcts[tid]}%</span>`).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        ${(d.notLearnedAreas||[]).length > 0 ? `
-          <div style="margin-bottom:16px;">
-            <h3 style="color:var(--text-muted);margin-bottom:12px;">&#x1F4DA; Not Covered Yet</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-              ${(d.notLearnedAreas||[]).map(tid => `<span class="badge" style="background:rgba(100,116,139,0.15);color:var(--text-muted);border:1px dashed var(--border);">${TOPICS[tid]?.name || tid}</span>`).join('')}
-            </div>
-            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;">We'll start you here â€” no pressure.</p>
-          </div>
-        ` : ''}
-
-        ${d.strongAreas.length > 0 ? `
-          <div style="margin-bottom:24px;">
-            <h3 style="color:var(--success);margin-bottom:12px;">&#10003; Strong Areas</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-              ${d.strongAreas.map(tid => `<span class="badge badge-success">${TOPICS[tid]?.name || tid} \u2014 ${d.topicPcts[tid]}%</span>`).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        ${topicEntries.length > 0 ? `
-        <details style="margin-bottom:24px;text-align:left;">
-          <summary style="cursor:pointer;font-size:0.85rem;color:var(--text-muted);padding:8px 0;">&#x25B6; All topic scores</summary>
-          <div class="diag-breakdown" style="margin-top:12px;">
-            ${topicEntries.map(([tid, pct]) => `
-              <div class="diag-topic-result">
-                <span class="topic-name">${TOPICS[tid]?.icon || ''} ${TOPICS[tid]?.name || tid}</span>
-                <span class="topic-score" style="color:${getMasteryColor(pct)}">${pct}%</span>
-              </div>
-            `).join('')}
-          </div>
-        </details>` : ''}
-
-        <div id="diagPlanSelect" style="margin-top:8px;">
-          ${Diagnostic._planSelectHTML(state)}
-        </div>
-      </div>
-    `;
-  }
 };
 
 // ===== DASHBOARD.JS =====
 // ===== DASHBOARD MODULE =====
+const APP_VERSION = 'v6-2026-03-14';
+
 const Dashboard = {
   render(state) {
     if (!state) return;
@@ -1126,7 +1801,22 @@ const Dashboard = {
       <div class="dash-welcome">
         <h1>Welcome back, ${state.user.name.split(' ')[0]}!</h1>
         <p>Period ${state.user.period} Electrical Apprentice &mdash; ${dueCards.length > 0 ? `${dueCards.length} flashcards due today` : 'All caught up on flashcards!'}</p>
+        <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">App ${APP_VERSION}</div>
       </div>
+
+      ${(() => {
+        const sub = state.user.subscription || {};
+        if (sub.plan !== 'elite' || !sub.trial || !sub.trial_end_date) return '';
+        const trialEnd = new Date(sub.trial_end_date);
+        const daysLeft = Math.max(0, Math.ceil((trialEnd - Date.now()) / 86400000));
+        if (daysLeft > 7) return '';
+        const color = daysLeft <= 1 ? 'var(--danger)' : 'var(--accent)';
+        const trialStr = trialEnd.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+        return `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius);padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div style="font-size:0.88rem;">⏳ <strong style="color:${color};">${daysLeft} day${daysLeft!==1?'s':''} left</strong> on your free trial — billing starts ${trialStr}</div>
+          <a href="payment.html" style="font-size:0.78rem;font-weight:700;color:var(--accent);text-decoration:none;white-space:nowrap;">Manage subscription →</a>
+        </div>`;
+      })()}
 
       ${(() => {
         const pts = (state.points && state.points.total) || 0;
@@ -1138,15 +1828,15 @@ const Dashboard = {
           <div style="font-size:2rem;">${rank.badge}</div>
           <div style="flex:1;min-width:140px;">
             <div style="font-weight:700;font-size:1rem;color:${rank.color};">${rank.name}</div>
-            <div style="font-size:0.78rem;color:var(--text-muted);margin:2px 0 6px;">${pts.toLocaleString()} pts total Â· ${wPts.toLocaleString()} this week</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin:2px 0 6px;">${pts.toLocaleString()} pts total · ${wPts.toLocaleString()} this week</div>
             <div style="background:var(--bg-secondary);border-radius:4px;height:6px;overflow:hidden;width:100%;max-width:220px;">
               <div style="height:100%;width:${pctToNext}%;background:linear-gradient(90deg,${rank.color},#f59e0b);border-radius:4px;transition:width 0.5s;"></div>
             </div>
-            ${nextRank ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:3px;">${pctToNext}% to ${nextRank.badge} ${nextRank.name}</div>` : '<div style="font-size:0.7rem;color:#f59e0b;margin-top:3px;">â­ Max rank achieved!</div>'}
+            ${nextRank ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:3px;">${pctToNext}% to ${nextRank.badge} ${nextRank.name}</div>` : '<div style="font-size:0.7rem;color:#f59e0b;margin-top:3px;">⭐ Max rank achieved!</div>'}
           </div>
           <div style="text-align:right;">
             <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:2px;">View Leaderboard</div>
-            <div style="font-size:0.8rem;color:var(--accent);">ðŸ† â†’</div>
+            <div style="font-size:0.8rem;color:var(--accent);">🏆 →</div>
           </div>
         </div>`;
       })()}
@@ -1170,6 +1860,59 @@ const Dashboard = {
         </div>
       </div>
 
+      ${(() => {
+        // Check if user has any uploaded notes content
+        const uid = state.user.id;
+        let hasNotes = false;
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sparky_notes_' + uid + '_')) {
+            const val = localStorage.getItem(key) || '';
+            if (val.replace(/<[^>]*>/g,'').trim().length > 30) { hasNotes = true; break; }
+          }
+        }
+        if (hasNotes) return '';
+        return `<div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(249,115,22,0.08));border:2px solid rgba(245,158,11,0.4);border-radius:16px;padding:24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;animation:pulse-border 2s ease-in-out infinite;">
+          <div style="font-size:3rem;flex-shrink:0;">📄</div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-weight:800;font-size:1.1rem;color:var(--accent);margin-bottom:6px;">Upload Your Notes or Modules</div>
+            <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
+              SparkStudy's AI tutor, quiz generator, and flashcard tools all work from <strong>your</strong> content.
+              Upload your <strong>study notes</strong> (shareable with classmates) or <strong>textbook modules</strong> (kept private on your device).
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+            <button class="btn btn-primary" onclick="App.navigate('notes')" style="white-space:nowrap;font-size:0.9rem;">
+              📄 Upload Now
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="this.closest('div[style*=linear-gradient]').style.display='none'" style="font-size:0.75rem;color:var(--text-muted);">
+              Dismiss
+            </button>
+          </div>
+        </div>
+        <style>@keyframes pulse-border{0%,100%{border-color:rgba(245,158,11,0.4)}50%{border-color:rgba(245,158,11,0.8)}}</style>`;
+      })()}
+
+      ${(() => {
+        const daysLeft = ClassSchedule.getDaysUntilExam(state);
+        if (daysLeft === null) return '';
+        const cs = state.classSchedule || {};
+        const schoolName = cs.school ? (SCHOOLS_LIST.find(s=>s.id===cs.school)?.name||cs.school) : '';
+        const urgencyColor = daysLeft <= 7 ? 'var(--danger)' : daysLeft <= 30 ? 'var(--accent)' : 'var(--success)';
+        const examDateStr = new Date(cs.examDate + 'T12:00:00').toLocaleDateString('en-CA',{month:'long',day:'numeric',year:'numeric'});
+        return `<div style="background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(139,92,246,0.06));border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="font-size:2.2rem;font-weight:900;color:${urgencyColor};min-width:48px;text-align:center;">${daysLeft < 0 ? '⏰' : daysLeft}</div>
+          <div style="flex:1;min-width:140px;">
+            <div style="font-weight:700;font-size:0.95rem;">${daysLeft < 0 ? 'Exam passed' : daysLeft === 0 ? 'Exam is TODAY!' : `Day${daysLeft===1?'':'s'} until exam`}${schoolName ? ` · ${schoolName}` : ''}</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);">Period ${cs.period||state.user.period} · ${examDateStr}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            ${!StudyPlan._plan ? `<button class="btn btn-primary btn-sm" onclick="StudyPlan.generate()">⚡ Study Plan</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="ClassSchedule.open()">✏️ Edit</button>
+          </div>
+        </div>`;
+      })()}
+
       <div class="dash-grid">
         <!-- Daily Goals -->
         <div class="card">
@@ -1183,7 +1926,7 @@ const Dashboard = {
               if (todayTopic) {
                 const topicMastery = getTopicMastery(state, todayTopicId);
                 return `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-                  <div style="font-size:0.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">ðŸ“… Today â€” ${dayName}</div>
+                  <div style="font-size:0.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">📅 Today — ${dayName}</div>
                   <div style="font-weight:700;font-size:0.95rem;">${todayTopic.icon} ${todayTopic.name}</div>
                   <div style="font-size:0.78rem;color:var(--text-muted);margin:4px 0 8px;">Current mastery: ${topicMastery}%</div>
                   <div style="display:flex;gap:8px;">
@@ -1193,7 +1936,7 @@ const Dashboard = {
                 </div>`;
               }
               return `<div style="font-size:0.8rem;color:var(--text-muted);padding:8px 0 12px;">
-                <a href="#" onclick="App.navigate('settings');return false;" style="color:var(--accent);">Set your class schedule</a> to get daily topic suggestions.
+                <a href="#" onclick="ClassSchedule.open();return false;" style="color:var(--accent);">Set your class schedule</a> to get daily topic suggestions and exam countdown.
               </div>`;
             })()}
             <div class="goal-item">
@@ -1219,7 +1962,10 @@ const Dashboard = {
 
         <!-- Weak Areas -->
         <div class="card">
-          <div class="section-title">&#9888;&#65039; Focus Areas</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="section-title" style="margin-bottom:0;">&#9888;&#65039; Focus Areas</div>
+            <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="Diagnostic.retake()">&#x1F504; Retake Diagnostic</button>
+          </div>
           <div class="weak-areas-list">
             ${weakTopics.map(wt => `
               <div class="weak-area-item">
@@ -1292,6 +2038,14 @@ const Dashboard = {
           </div>
         </div>
 
+        <!-- AI Study Plan -->
+        <div class="card full-width" style="background:linear-gradient(135deg,rgba(88,166,255,0.06),rgba(139,92,246,0.06));border-color:rgba(88,166,255,0.25);">
+          <div class="section-title" style="display:flex;align-items:center;gap:8px;">🤖 AI Study Plan</div>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 14px;">Get a personalized study plan based on your current progress and exam date.</p>
+          <button id="ai-plan-btn" onclick="Lessons._aiStudyPlan(this)" style="background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;">🤖 Build My Study Plan</button>
+          <div id="ai-plan-result" style="margin-top:14px;"></div>
+        </div>
+
         <!-- Mastery Heat Map -->
         <div class="card full-width">
           <div class="section-title">&#128202; Topic Mastery</div>
@@ -1313,17 +2067,78 @@ const Dashboard = {
 
         ${lastExam ? `
         <div class="card full-width">
-          <div class="section-title">&#128203; Last Exam Result</div>
+          <div class="section-title">&#128203; Last Practice Exam Result</div>
           <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
             <div style="font-size:2.5rem;font-weight:800;color:${lastExam.pct >= 70 ? 'var(--success)' : 'var(--danger)'}">${lastExam.pct}%</div>
-            <div>
+            <div style="flex:1;">
               <div style="font-weight:600;">${lastExam.pct >= 70 ? 'Passed!' : 'Keep practicing'}</div>
               <div style="color:var(--text-muted);font-size:0.85rem;">${lastExam.score}/${lastExam.total} correct &mdash; ${new Date(lastExam.date).toLocaleDateString()}</div>
             </div>
-            <button class="btn btn-secondary btn-sm" style="margin-left:auto;" onclick="App.navigate('review')">Review Answers</button>
+            <button class="btn btn-secondary btn-sm" onclick="App.navigate('review')">Review Answers</button>
           </div>
         </div>
         ` : ''}
+
+        <!-- Real Exam Submission & Cashback -->
+        ${(() => {
+          const realScores  = state.realExamScores || [];
+          const latestReal  = realScores.length > 0 ? realScores.slice().sort((a,b) => b.submittedAt - a.submittedAt)[0] : null;
+          if (latestReal && !latestReal.claimed && latestReal.cashback > 0) {
+            return `<div class="card full-width" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(135deg,var(--bg-card),rgba(34,197,94,0.03));">
+              <div class="section-title" style="color:var(--success);">&#x1F4B0; Cashback Reward Unlocked</div>
+              <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                <div>
+                  <div style="font-size:2rem;font-weight:900;color:var(--success);">$${latestReal.cashback}</div>
+                  <div style="font-size:0.78rem;color:var(--text-muted);">via e-transfer</div>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-weight:600;">You scored ${latestReal.score}% on your Period ${latestReal.period} exam!</div>
+                  <div style="font-size:0.84rem;color:var(--text-secondary);margin-top:2px;">Click Claim to request your e-transfer cashback reward.</div>
+                  ${latestReal.cashbackLocked ? `<div style="font-size:0.78rem;color:var(--accent);margin-top:4px;">&#9888; ${latestReal.cashbackReason}</div>` : ''}
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="ExamSubmission.claimCashback('${latestReal.id}')"${latestReal.cashbackLocked?' disabled style="opacity:0.5;cursor:not-allowed;"':''}>Claim &#8594;</button>
+              </div>
+            </div>`;
+          }
+          if (latestReal && latestReal.claimed) {
+            return `<div class="card full-width" style="border-color:rgba(34,197,94,0.2);">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:1.5rem;">&#10003;</span>
+                <div style="flex:1;">
+                  <div style="font-weight:600;">Cashback claimed — Period ${latestReal.period} · $${latestReal.cashback}</div>
+                  <div style="font-size:0.82rem;color:var(--text-muted);">You scored ${latestReal.score}%. E-transfer processed within 2 business days.</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="ExamSubmission.open()">Submit Another</button>
+              </div>
+            </div>`;
+          }
+          return `<div class="card full-width">
+            <div class="section-title">&#127891; Real Exam Results</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+              <div style="font-size:0.87rem;color:var(--text-secondary);">Submit your AIT exam score to unlock cashback rewards — up to $50 back via e-transfer.</div>
+              <button class="btn btn-primary btn-sm" onclick="ExamSubmission.open()">Submit Exam Score</button>
+            </div>
+          </div>`;
+        })()}
+
+        <!-- AI Study Plan (only if exam date is set) -->
+        ${(() => {
+          const daysLeft = ClassSchedule.getDaysUntilExam(state);
+          if (!daysLeft || daysLeft <= 0) return '';
+          return `<div class="card full-width">
+            <div class="section-title">&#128197; AI Study Plan</div>
+            <div id="studyPlanContainer">
+              ${StudyPlan._plan
+                ? StudyPlan._buildPlanHTML(StudyPlan._plan, state)
+                : `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div style="font-size:0.87rem;color:var(--text-secondary);">Get a personalized day-by-day plan from today to your exam date.</div>
+                    <button class="btn btn-primary btn-sm" onclick="StudyPlan.generate()">&#9889; Generate Plan</button>
+                  </div>`
+              }
+            </div>
+          </div>`;
+        })()}
+
       </div>
     `;
   }
@@ -1349,9 +2164,26 @@ const Flashcards = {
     const dueCards = SM2.getDueCards(state);
     const topics = getTopicsForPeriod(state.user.period);
 
+    // Check for notes
+    const _uid = state.user.id;
+    let _hasNotes = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sparky_notes_' + _uid + '_') && (localStorage.getItem(k)||'').replace(/<[^>]*>/g,'').trim().length > 30) { _hasNotes = true; break; }
+    }
+
     container.innerHTML = `
       <h1 style="margin-bottom:8px;">Flashcards</h1>
-      <p style="color:var(--text-secondary);margin-bottom:32px;">Powered by spaced repetition \u2014 cards appear right before you'd forget them.</p>
+      <p style="color:var(--text-secondary);margin-bottom:${_hasNotes ? '32' : '16'}px;">Powered by spaced repetition \u2014 cards appear right before you'd forget them.</p>
+
+      ${!_hasNotes ? `<div onclick="App.navigate('notes')" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:1.8rem;">📄</span>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload your notes or modules for personalized flashcards</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Upload study notes (shareable) or textbook modules (private). The AI tools work from your content.</div>
+        </div>
+        <span style="color:var(--accent);font-weight:700;">Upload &rarr;</span>
+      </div>` : ''}
 
       ${dueCards.length > 0 ? `
         <div class="card card-glow" style="margin-bottom:32px;text-align:center;padding:32px;cursor:pointer;" onclick="Flashcards.startDue()">
@@ -1455,6 +2287,10 @@ const Flashcards = {
           <button class="btn rate-good" onclick="Flashcards.rate(4)">&#10003; Good</button>
           <button class="btn rate-easy" onclick="Flashcards.rate(5)">&#128171; Easy</button>
         </div>
+        <div style="text-align:center;margin-top:12px;">
+          <button onclick="Flashcards._aiCoach(this, ${JSON.stringify(card.q)}, ${JSON.stringify(card.a)})" style="margin-top:8px;background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);color:#f97316;padding:7px 14px;border-radius:7px;font-size:0.8rem;font-weight:600;cursor:pointer;">🤖 Why was I wrong?</button>
+          <div class="ai-coach-result" style="display:none;margin-top:10px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:12px;font-size:0.85rem;line-height:1.6;text-align:left;"></div>
+        </div>
       ` : `
         <div class="fc-tap-hint">Tap the card or press Space to flip</div>
       `}
@@ -1484,7 +2320,7 @@ const Flashcards = {
       Points.award('Correct flashcard', Points.ACTIONS.flashcard_correct.base, true);
       // Bonus every 10 correct in a row
       this._correctStreak = (this._correctStreak || 0) + 1;
-      if (this._correctStreak > 0 && this._correctStreak % 10 === 0) Points.award('10-card streak! ðŸ”¥', Points.ACTIONS.flashcard_streak.base);
+      if (this._correctStreak > 0 && this._correctStreak % 10 === 0) Points.award('10-card streak! 🔥', Points.ACTIONS.flashcard_streak.base);
     } else {
       this._correctStreak = 0;
     }
@@ -1558,7 +2394,27 @@ const Flashcards = {
         </div>
       </div>
     `;
-  }
+  },
+
+  async _aiCoach(btn, question, answer) {
+    const resultEl = btn.nextElementSibling;
+    if (!resultEl) return;
+    btn.textContent = '⏳ Thinking...'; btn.disabled = true;
+    resultEl.style.display = 'block';
+    resultEl.textContent = 'Loading explanation...';
+    try {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: `An electrical apprentice got this flashcard wrong. Briefly explain why the correct answer is right, in plain English. Keep it under 80 words, practical, no fluff.\n\nQuestion: ${question}\nCorrect answer: ${answer}`, history: [] })
+      });
+      const data = await res.json();
+      resultEl.textContent = data.answer || 'No response.';
+      btn.style.display = 'none';
+    } catch(e) {
+      resultEl.textContent = 'Connection error.';
+      btn.textContent = '🤖 Why was I wrong?'; btn.disabled = false;
+    }
+  },
 };
 
 // Keyboard shortcut for flashcards
@@ -1596,9 +2452,26 @@ const Exams = {
     const attempts = state.exams.attempts;
     const bestScore = attempts.length > 0 ? Math.max(...attempts.map(a => a.pct)) : null;
 
+    // Check for notes
+    const _uid = state.user.id;
+    let _hasNotes = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sparky_notes_' + _uid + '_') && (localStorage.getItem(k)||'').replace(/<[^>]*>/g,'').trim().length > 30) { _hasNotes = true; break; }
+    }
+
     container.innerHTML = `
       <h1 style="margin-bottom:8px;">Practice Exams</h1>
-      <p style="color:var(--text-secondary);margin-bottom:32px;">Simulate the real Alberta IP exam \u2014 50 questions, 60 minutes, instant results.</p>
+      <p style="color:var(--text-secondary);margin-bottom:${_hasNotes ? '32' : '16'}px;">Simulate the real Alberta IP exam \u2014 50 questions, 60 minutes, instant results.</p>
+
+      ${!_hasNotes ? `<div onclick="App.navigate('notes')" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(249,115,22,0.06));border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+        <span style="font-size:1.8rem;">📄</span>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.9rem;color:var(--accent);">Upload notes or modules for AI-powered study tools</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Upload study notes (shareable) or textbook modules (private) to unlock personalized quizzes and AI tutoring.</div>
+        </div>
+        <span style="color:var(--accent);font-weight:700;">Upload &rarr;</span>
+      </div>` : ''}
 
       <div class="card card-glow" style="margin-bottom:24px;padding:32px;">
         <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
@@ -1623,12 +2496,26 @@ const Exams = {
           <div>
             <label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Select Module or Topic</label>
             <select id="customExamSelect" style="width:100%;padding:10px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;" onchange="Exams._updateCustomCount()">
-              <option value="">-- Choose a module --</option>
-              ${MODULES.filter(m => m.hasContent).map(m => {
-                const topicIds = m.topics;
-                const qCount = EXAM_BANK.filter(eq => topicIds.includes(eq.topic)).length;
-                return '<option value="module:' + m.id + '">' + m.num + '. ' + m.name + ' (' + qCount + ' questions)</option>';
-              }).join('')}
+              <option value="">-- Choose a module or topic --</option>
+              <optgroup label="&#x1F4D6; By Module">
+                ${MODULES.filter(m => m.hasContent).map(m => {
+                  const topicIds = m.topics;
+                  const qCount = EXAM_BANK.filter(eq => topicIds.includes(eq.topic)).length;
+                  return '<option value="module:' + m.id + '">' + m.num + '. ' + m.name + ' (' + qCount + ' questions)</option>';
+                }).join('')}
+              </optgroup>
+              <optgroup label="&#x1F4D5; By CEC Code Section">
+                ${CEC_SECTIONS.filter(s => s.period <= state.user.period).map(s => {
+                  const qCount = EXAM_BANK.filter(eq => eq.cecSection === s.id).length;
+                  return qCount > 0 ? '<option value="cecSection:' + s.id + '">' + s.name + ' (' + qCount + ' questions)</option>' : '';
+                }).join('')}
+              </optgroup>
+              <optgroup label="&#x1F4CA; By Topic (All)">
+                ${Object.values(TOPICS).filter(t => t.period <= state.user.period).sort((a,b)=>a.order-b.order).map(t => {
+                  const qCount = EXAM_BANK.filter(eq => eq.topic === t.id).length;
+                  return qCount > 0 ? '<option value="topic:' + t.id + '">' + t.icon + ' ' + t.name + ' (' + qCount + ' questions)</option>' : '';
+                }).join('')}
+              </optgroup>
             </select>
           </div>
           <button class="btn btn-primary" onclick="Exams.startCustom()" id="customExamBtn" disabled style="white-space:nowrap;padding:10px 24px;">
@@ -1739,7 +2626,7 @@ const Exams = {
         const hint = document.getElementById('customCountHint');
         if (slider) { slider.max = questions.length; slider.value = questions.length; }
         if (numInput) { numInput.max = questions.length; numInput.value = questions.length; }
-        if (hint) hint.textContent = questions.length + ' questions available â€” drag the slider or type a number (1â€“' + questions.length + ')';
+        if (hint) hint.textContent = questions.length + ' questions available — drag the slider or type a number (1–' + questions.length + ')';
       }
       const topicBreakdown = {};
       questions.forEach(q => { topicBreakdown[q.topic] = (topicBreakdown[q.topic] || 0) + 1; });
@@ -1784,6 +2671,8 @@ const Exams = {
       return EXAM_BANK.filter(eq => mod.topics.includes(eq.topic));
     } else if (type === 'topic') {
       return EXAM_BANK.filter(eq => eq.topic === id);
+    } else if (type === 'cecSection') {
+      return EXAM_BANK.filter(eq => eq.cecSection === id);
     }
     return [];
   },
@@ -1874,17 +2763,6 @@ const Exams = {
         </div>
       </div>
     `;
-
-    // Floating notes button
-    const nb = document.createElement('button');
-    nb.id = 'floatNotesBtn';
-    nb.innerHTML = '\ud83d\udcdd';
-    nb.title = 'Open my notes';
-    nb.style.cssText = 'position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#000;border:none;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 20px rgba(245,158,11,0.4);z-index:900;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,box-shadow 0.15s;';
-    nb.onmouseover = () => { nb.style.transform='scale(1.1)'; nb.style.boxShadow='0 6px 28px rgba(245,158,11,0.55)'; };
-    nb.onmouseout  = () => { nb.style.transform='scale(1)';   nb.style.boxShadow='0 4px 20px rgba(245,158,11,0.4)'; };
-    nb.onclick = () => NotesSidePanel.toggle(Storage.get());
-    document.body.appendChild(nb);
   },
 
   selectAnswer(idx) {
@@ -2003,7 +2881,7 @@ const Exams = {
           ${(() => {
             const wrongs = attempt.responses.filter(r=>!r.isCorrect).map(r=>({q:r.q,opts:r.opts,correct:r.correct,selected:r.selected,exp:r.exp||'',topic:r.topic}));
             if (wrongs.length > 0) { WrongAnswerStudy._pending = wrongs; WrongAnswerStudy._pendingLabel = 'Exam'; }
-            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">ðŸ“– Study My ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
+            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">📖 Study My ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
           })()}
           <button class="btn btn-primary" onclick="Exams.startNew()">Take Another Exam</button>
           <button class="btn btn-secondary" onclick="Exams.mode='list';App.navigate('exams')">Back to Exams</button>
@@ -2014,305 +2892,86 @@ const Exams = {
   }
 };
 
-// ===== NOTES SIDE PANEL (accessible during exams & quizzes) =====
-const NotesSidePanel = {
-  _panelId: 'notesSidePanelOverlay',
-
-  toggle(state) {
-    const existing = document.getElementById(this._panelId);
-    if (existing) { this.close(); return; }
-    this.open(state);
-  },
-
-  open(state) {
-    if (document.getElementById(this._panelId)) return;
-    const userId = state?.user?.id;
-    const topics = Notes.TOPICS_LIST;
-    const activeTopic = Notes.currentTopic || 'general';
-
-    const overlay = document.createElement('div');
-    overlay.id = this._panelId;
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;display:flex;justify-content:flex-end;';
-
-    // Backdrop
-    const backdrop = document.createElement('div');
-    backdrop.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);';
-    backdrop.onclick = () => this.close();
-    overlay.appendChild(backdrop);
-
-    // Panel
-    const panel = document.createElement('div');
-    panel.style.cssText = 'position:relative;width:min(480px,95vw);height:100%;background:var(--bg-card);border-left:1px solid var(--border);display:flex;flex-direction:column;animation:slideInRight 0.22s ease;';
-    panel.innerHTML = `
-      <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-        <div style="font-weight:800;font-size:1rem;">\ud83d\udcdd My Notes</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <select id="spTopicSel" style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);padding:5px 10px;font-size:0.82rem;cursor:pointer;outline:none;" onchange="NotesSidePanel._switchTopic(this.value,'${userId}')">
-            ${topics.map(t => `<option value="${t.id}" ${t.id===activeTopic?'selected':''}>${t.icon} ${t.name}</option>`).join('')}
-          </select>
-          <button onclick="NotesSidePanel.close()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.3rem;padding:0;line-height:1;">\u00d7</button>
-        </div>
-      </div>
-      <div id="spEditorWrap" style="flex:1;overflow-y:auto;position:relative;">
-        <div id="spEditor" contenteditable="true" spellcheck="true"
-          style="padding:18px;min-height:100%;outline:none;font-size:0.92rem;line-height:1.75;color:var(--text-primary);"
-          data-placeholder="Take notes here..."
-          oninput="NotesSidePanel._onInput('${userId}')">
-        </div>
-      </div>
-      <div style="padding:8px 18px;border-top:1px solid var(--border);font-size:0.7rem;color:var(--text-muted);display:flex;justify-content:space-between;flex-shrink:0;">
-        <span id="spWordCount">0 words</span><span>Auto-saved \u2713</span>
-      </div>
-    `;
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-
-    // Load content for active topic
-    const ed = document.getElementById('spEditor');
-    if (ed && userId) {
-      const html = localStorage.getItem(Notes._storageKey(userId, activeTopic)) || '';
-      ed.innerHTML = html;
-      const wc = document.getElementById('spWordCount');
-      if (wc) wc.textContent = Notes._wordCount(html) + ' words';
-      // Placeholder
-      if (!html) { ed.style.color = 'var(--text-muted)'; ed.textContent = 'Take notes here...'; ed.style.fontStyle='italic'; }
-      ed.addEventListener('focus', () => {
-        if (ed.textContent === 'Take notes here...') { ed.textContent=''; ed.style.color='var(--text-primary)'; ed.style.fontStyle='normal'; }
-      });
-      // Move cursor to end
-      const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
-      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
-    }
-  },
-
-  close() {
-    const el = document.getElementById(this._panelId);
-    const btn = document.getElementById('floatNotesBtn');
-    if (el) el.remove();
-    if (btn) btn.remove();
-  },
-
-  _switchTopic(topicId, userId) {
-    const ed = document.getElementById('spEditor');
-    const wc = document.getElementById('spWordCount');
-    if (!ed || !userId) return;
-    const html = localStorage.getItem(Notes._storageKey(userId, topicId)) || '';
-    ed.innerHTML = html;
-    if (!html) { ed.style.color='var(--text-muted)'; ed.textContent='Take notes here...'; ed.style.fontStyle='italic'; }
-    else { ed.style.color='var(--text-primary)'; ed.style.fontStyle='normal'; }
-    if (wc) wc.textContent = Notes._wordCount(html) + ' words';
-    Notes.currentTopic = topicId;
-  },
-
-  _onInput(userId) {
-    const ed = document.getElementById('spEditor');
-    const sel = document.getElementById('spTopicSel');
-    const wc = document.getElementById('spWordCount');
-    if (!ed || !userId || !sel) return;
-    const topicId = sel.value;
-    Notes._save(userId, topicId, ed.innerHTML);
-    if (wc) wc.textContent = Notes._wordCount(ed.innerHTML) + ' words';
-  },
-};
-
 // ===== NOTES MODULE =====
 const Notes = {
   currentTopic: 'general',
-  mode: 'edit',
+  _currentPeriod: 0,  // always 0 now (no period filtering)
+  _focusMode: false,
+  _currentPage: 1,
+  mode: 'edit',   // 'edit' | 'quiz' | 'study' | 'community'
   quizCards: [],
   quizIdx: 0,
   quizAnswers: {},
-  _autocorrect: (localStorage.getItem('sparky_autocorrect') === 'true'),
-  _autocorrectTimer: null,
-  _currentPage: {},  // { [topicId]: pageId }
-  _fullscreen: false,
-  _sidebarCollapsed: (localStorage.getItem('sparky_notes_sidebar_collapsed') === 'true'),
+  _communityNotes: [],
+  _communityLoading: false,
 
+  // Special characters for electrical trade — top row (always visible)
   CHARS: [
-    { label:'\u03a9', tip:'Ohm' }, { label:'\u03bc', tip:'Micro' }, { label:'\u00b0', tip:'Degree' },
-    { label:'\u2220', tip:'Angle' }, { label:'\u0394', tip:'Delta' }, { label:'\u03c6', tip:'Phi (phase)' },
-    { label:'\u03c0', tip:'Pi' }, { label:'\u221a', tip:'Square root' }, { label:'\u00b2', tip:'Squared' },
-    { label:'\u00b3', tip:'Cubed' }, { label:'\u00b1', tip:'Plus/minus' }, { label:'\u00d7', tip:'Multiply' },
-    { label:'\u00f7', tip:'Divide' }, { label:'\u2264', tip:'Less/equal' }, { label:'\u2265', tip:'Greater/equal' },
-    { label:'\u2260', tip:'Not equal' }, { label:'\u2211', tip:'Sum' }, { label:'\u221e', tip:'Infinity' },
-    { label:'\u2192', tip:'Arrow' }, { label:'\u2191', tip:'Up' }, { label:'\u2193', tip:'Down' },
-    { label:'\u2713', tip:'Check' }, { label:'\u2717', tip:'Cross' }, { label:'\u26a1', tip:'Lightning' },
-    { label:'\u00bd', tip:'Half' }, { label:'\u00bc', tip:'Quarter' }, { label:'\u00be', tip:'3/4' },
+    { label:'Ω', tip:'Ohm' }, { label:'μ', tip:'Micro' }, { label:'°', tip:'Degree' },
+    { label:'∠', tip:'Angle' }, { label:'Δ', tip:'Delta' }, { label:'φ', tip:'Phi (phase)' },
+    { label:'π', tip:'Pi' }, { label:'√', tip:'Square root' }, { label:'²', tip:'Squared' },
+    { label:'³', tip:'Cubed' }, { label:'±', tip:'Plus/minus' }, { label:'×', tip:'Multiply' },
+    { label:'÷', tip:'Divide' }, { label:'≤', tip:'Less/equal' }, { label:'≥', tip:'Greater/equal' },
+    { label:'≠', tip:'Not equal' }, { label:'∑', tip:'Sum' }, { label:'∞', tip:'Infinity' },
+    { label:'→', tip:'Arrow' }, { label:'↑', tip:'Up' }, { label:'↓', tip:'Down' },
+    { label:'✓', tip:'Check' }, { label:'✗', tip:'Cross' }, { label:'⚡', tip:'Lightning' },
+    { label:'½', tip:'Half' }, { label:'¼', tip:'Quarter' }, { label:'¾', tip:'3/4' },
+  ],
+  // Extended characters — shown in dropdown
+  CHARS_EXT: [
+    { group: 'Greek Letters', chars: [
+      { label:'α', tip:'Alpha' }, { label:'β', tip:'Beta' }, { label:'γ', tip:'Gamma' },
+      { label:'δ', tip:'Delta (lower)' }, { label:'ε', tip:'Epsilon' }, { label:'θ', tip:'Theta' },
+      { label:'λ', tip:'Lambda' }, { label:'ρ', tip:'Rho (resistivity)' }, { label:'σ', tip:'Sigma' },
+      { label:'τ', tip:'Tau (time constant)' }, { label:'ω', tip:'Omega (angular)' },
+      { label:'Φ', tip:'Phi (flux)' }, { label:'Ψ', tip:'Psi' }, { label:'η', tip:'Eta (efficiency)' },
+    ]},
+    { group: 'Subscripts & Superscripts', chars: [
+      { label:'₀', tip:'Sub 0' }, { label:'₁', tip:'Sub 1' }, { label:'₂', tip:'Sub 2' },
+      { label:'₃', tip:'Sub 3' }, { label:'ₚ', tip:'Sub p (primary)' }, { label:'ₛ', tip:'Sub s (secondary)' },
+      { label:'ₜ', tip:'Sub t (total)' }, { label:'ₙ', tip:'Sub n' },
+      { label:'⁰', tip:'Super 0' }, { label:'¹', tip:'Super 1' }, { label:'⁴', tip:'Super 4' },
+      { label:'⁵', tip:'Super 5' }, { label:'⁶', tip:'Super 6' }, { label:'⁻', tip:'Super minus' },
+    ]},
+    { group: 'Math & Electrical', chars: [
+      { label:'∝', tip:'Proportional to' }, { label:'≈', tip:'Approximately' }, { label:'≡', tip:'Identical to' },
+      { label:'∴', tip:'Therefore' }, { label:'∵', tip:'Because' }, { label:'⊥', tip:'Perpendicular' },
+      { label:'∥', tip:'Parallel' }, { label:'⌀', tip:'Diameter' }, { label:'℃', tip:'Celsius' },
+      { label:'⅓', tip:'One third' }, { label:'⅔', tip:'Two thirds' }, { label:'⅕', tip:'One fifth' },
+      { label:'‰', tip:'Per mille' }, { label:'†', tip:'Dagger' },
+    ]},
+    { group: 'Formulas (click to insert)', chars: [
+      { label:'V = IR', tip:'Ohms Law' }, { label:'P = VI', tip:'Power' },
+      { label:'P = I²R', tip:'Power (current)' }, { label:'P = V²/R', tip:'Power (voltage)' },
+      { label:'XL = 2πfL', tip:'Inductive reactance' }, { label:'XC = 1/(2πfC)', tip:'Capacitive reactance' },
+      { label:'Z = √(R²+X²)', tip:'Impedance' }, { label:'f = pn/120', tip:'Frequency' },
+      { label:'Vrms = Vp×0.707', tip:'RMS voltage' }, { label:'Vp = Vrms×1.414', tip:'Peak voltage' },
+      { label:'T = L/R', tip:'RL time constant' }, { label:'T = RC', tip:'RC time constant' },
+      { label:'V₁/V₂ = N₁/N₂', tip:'Turns ratio' }, { label:'PF = cos θ', tip:'Power factor' },
+      { label:'VL = √3×Vφ', tip:'Line voltage (wye)' }, { label:'IL = √3×Iφ', tip:'Line current (delta)' },
+      { label:'Ns = 120f/P', tip:'Synchronous speed' }, { label:'Q = CV', tip:'Charge' },
+      { label:'Q = It', tip:'Charge (current)' }, { label:'e = ΔI/Δt × L', tip:'Inductive kick' },
+    ]},
   ],
 
-  FORMULAS: [
-    // Ohm's Law & DC Power
-    { label:"V=IR",           insert:"V = I \u00d7 R",                             tip:"Ohm\u2019s Law \u2014 Voltage" },
-    { label:"I=V/R",          insert:"I = V \u00f7 R",                             tip:"Ohm\u2019s Law \u2014 Current" },
-    { label:"R=V/I",          insert:"R = V \u00f7 I",                             tip:"Ohm\u2019s Law \u2014 Resistance" },
-    { label:"P=VI",           insert:"P = V \u00d7 I",                             tip:"Power" },
-    { label:"P=I\u00b2R",    insert:"P = I\u00b2 \u00d7 R",                     tip:"Power (current & resistance)" },
-    { label:"P=V\u00b2/R",   insert:"P = V\u00b2 \u00f7 R",                     tip:"Power (voltage & resistance)" },
-    // AC Fundamentals (M1)
-    { label:"VRMS=Vp\u00d70.707", insert:"VRMS = Vpeak \u00d7 0.707",            tip:"RMS Voltage" },
-    { label:"Vp=VRMS\u00d71.414",insert:"Vpeak = VRMS \u00d7 1.414",             tip:"Peak Voltage" },
-    { label:"v(t)=Vp\u00d7sin(2\u03c0ft)", insert:"v(t) = Vpeak \u00d7 sin(2\u03c0ft)", tip:"Instantaneous AC voltage" },
-    { label:"f=1/T",          insert:"f = 1 \u00f7 T",                             tip:"Frequency from period" },
-    { label:"T=1/f",          insert:"T = 1 \u00f7 f",                             tip:"Period from frequency (60Hz = 16.7ms)" },
-    { label:"Sync RPM",       insert:"Sync Speed = (120 \u00d7 f) \u00f7 poles",  tip:"Synchronous motor speed" },
-    // Inductors & Capacitors (M2)
-    { label:"XL=2\u03c0fL",  insert:"XL = 2\u03c0fL",                            tip:"Inductive reactance" },
-    { label:"XC=1/(2\u03c0fC)",insert:"XC = 1 \u00f7 (2\u03c0fC)",              tip:"Capacitive reactance" },
-    { label:"EL=\u00bdLI\u00b2", insert:"E = \u00bd \u00d7 L \u00d7 I\u00b2", tip:"Energy stored in inductor (joules)" },
-    { label:"EC=\u00bdCV\u00b2", insert:"E = \u00bd \u00d7 C \u00d7 V\u00b2", tip:"Energy stored in capacitor (joules)" },
-    { label:"\u03c4=L/R",    insert:"\u03c4 = L \u00f7 R",                       tip:"Inductor time constant (seconds)" },
-    { label:"\u03c4=RC",     insert:"\u03c4 = R \u00d7 C",                       tip:"Capacitor time constant (seconds)" },
-    // Impedance & Power Factor (M3)
-    { label:"Z=\u221a(R\u00b2+X\u00b2)", insert:"Z = \u221a(R\u00b2 + X\u00b2)", tip:"Impedance" },
-    { label:"\u03b8=arctan(X/R)", insert:"\u03b8 = arctan(X \u00f7 R)",          tip:"Phase angle" },
-    { label:"PF=cos(\u03b8)", insert:"PF = cos(\u03b8) = R \u00f7 Z = P \u00f7 S", tip:"Power factor" },
-    { label:"P=VI\u00d7cos\u03b8", insert:"P = V \u00d7 I \u00d7 cos(\u03b8)", tip:"True (real) power \u2014 watts" },
-    { label:"Q=VI\u00d7sin\u03b8", insert:"Q = V \u00d7 I \u00d7 sin(\u03b8)", tip:"Reactive power \u2014 VAR" },
-    { label:"S=VI",           insert:"S = V \u00d7 I",                             tip:"Apparent power \u2014 VA" },
-    { label:"S=\u221a(P\u00b2+Q\u00b2)", insert:"S = \u221a(P\u00b2 + Q\u00b2)", tip:"Apparent power from P & Q" },
-    // Three-Phase (M4)
-    { label:"VL=\u221a3\u00d7Vp(Y)", insert:"VL = \u221a3 \u00d7 VP  (wye)",   tip:"Wye: line voltage from phase voltage" },
-    { label:"IL=\u221a3\u00d7Ip(\u0394)", insert:"IL = \u221a3 \u00d7 IP  (delta)", tip:"Delta: line current from phase current" },
-    { label:"P(3\u03c6)=\u221a3\u00d7VL\u00d7IL\u00d7PF", insert:"P = \u221a3 \u00d7 VL \u00d7 IL \u00d7 PF  (3\u03c6)", tip:"Three-phase true power" },
-    { label:"kVA(3\u03c6)=VL\u00d7IL\u00d7\u221a3/1000", insert:"kVA = (VL \u00d7 IL \u00d7 \u221a3) \u00f7 1000  (3\u03c6)", tip:"Three-phase apparent power" },
-    // Voltage Drop & Transformer
-    { label:"VD=2KID/CM",     insert:"VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM", tip:"Voltage drop (K=12.9 Cu, 21.2 Al)" },
-    { label:"N1/N2=V1/V2",    insert:"N1 \u00f7 N2 = V1 \u00f7 V2",              tip:"Transformer turns ratio" },
-    { label:"kVA(1\u03c6)=VA/1000", insert:"kVA = (V \u00d7 A) \u00f7 1000",   tip:"Single-phase kVA" },
-  ],
-
+  // Simple 4-category note system — same for all periods
   TOPICS_LIST: [
-    { id:'general',   name:'General Notes', icon:'\ud83d\udcdd' },
-    { id:'theory',    name:'Theory',        icon:'\u26a1' },
-    { id:'code',      name:'Code',          icon:'\ud83d\udcd6' },
-    { id:'lab',       name:'Lab',           icon:'\ud83d\udd2c' },
-    { id:'formulas',  name:'Formulas',      icon:'\ud83e\uddee' },
-    { id:'exam-prep', name:'Exam Prep',     icon:'\ud83c\udfaf' },
+    { id:'theory',   name:'Theory',   icon:'📘', period:0 },
+    { id:'lab',      name:'Lab',      icon:'🔧', period:0 },
+    { id:'code',     name:'Code',     icon:'📖', period:0 },
+    { id:'general',  name:'General',  icon:'📝', period:0 },
   ],
 
-  TEMPLATES: {
-    'general':   '<h2>\ud83d\udcdd General Notes</h2><p>Use this space for anything that doesn\'t fit another topic â€” reminders, questions to look up, things your instructor mentioned.</p><h3>Key Points from Today</h3><ul><li></li><li></li></ul><h3>Questions to Follow Up</h3><ul><li></li></ul>',
-    'theory':    '<h2>\u26a1 Theory Notes</h2><h3>AC Fundamentals</h3><ul><li><b>Frequency</b> \u2014 60 Hz in Canada; Period T = 1/f = 16.67 ms</li><li><b>RMS</b> = Peak \u00d7 0.707 (equivalent DC heating value)</li><li><b>Impedance</b> Z = \u221a(R\u00b2 + X\u00b2)</li></ul><h3>DC Fundamentals</h3><ul><li><b>Ohm\u2019s Law</b>: V = I \u00d7 R &nbsp; I = V \u00f7 R &nbsp; R = V \u00f7 I</li><li><b>Series</b>: same I everywhere, voltages add</li><li><b>Parallel</b>: same V everywhere, currents add</li></ul><h3>Power</h3><ul><li><b>True power (P)</b> \u2014 watts, consumed by R</li><li><b>Reactive power (Q)</b> \u2014 VAR, stored by L or C</li><li><b>Apparent power (S)</b> \u2014 VA = V \u00d7 I from source</li><li><b>PF</b> = P \u00f7 S = cos(\u03c6)</li></ul>',
-    'code':      '<h2>\ud83d\udcd6 CEC Code Notes</h2><h3>How to Read a Rule Number</h3><p>Rule <b>12-3034</b> = Section 12, Rule 3034. Appendix B has explanatory notes.</p><h3>Key Sections</h3><ul><li><b>Section 2</b> \u2014 Definitions</li><li><b>Section 4</b> \u2014 Conductors</li><li><b>Section 8</b> \u2014 Circuit loading &amp; demand</li><li><b>Section 10</b> \u2014 Grounding &amp; bonding</li><li><b>Section 12</b> \u2014 Wiring methods</li><li><b>Section 14</b> \u2014 Protection &amp; control</li><li><b>Section 28</b> \u2014 Motors &amp; generators</li></ul><h3>Rules I Keep Forgetting</h3><ul><li></li><li></li></ul>',
-    'lab':       '<h2>\ud83d\udd2c Lab Notes</h2><h3>Safety Checks Before Starting</h3><ul><li>\u2610 PPE on (safety glasses, boots)</li><li>\u2610 LOTO applied and verified</li><li>\u2610 Area clear</li></ul><h3>Today\'s Lab</h3><p><b>Objective:</b></p><p><b>Equipment Used:</b></p><h3>Measurements</h3><p>Record your readings here:</p><ul><li>Voltage: </li><li>Current: </li><li>Resistance: </li></ul><h3>Results / Observations</h3><p></p><h3>What Went Wrong / What I Learned</h3><p></p>',
-    'formulas':  '<h2>\ud83e\uddee Complete Formula Reference</h2><h3>\ud83d\udd0c Ohm\u2019s Law &amp; DC Power</h3><ul><li><b>V = I \u00d7 R</b> &mdash; Voltage</li><li><b>I = V \u00f7 R</b> &mdash; Current</li><li><b>R = V \u00f7 I</b> &mdash; Resistance</li><li><b>P = V \u00d7 I</b> &mdash; Power (watts)</li><li><b>P = I\u00b2 \u00d7 R</b> &mdash; Power from current &amp; resistance</li><li><b>P = V\u00b2 \u00f7 R</b> &mdash; Power from voltage &amp; resistance</li><li>Series: R\u1d1c = R1 + R2 + R3...</li><li>Parallel: 1/R\u1d1c = 1/R1 + 1/R2 + 1/R3...</li></ul><h3>\u007e AC Fundamentals (M1)</h3><ul><li><b>v(t) = Vpeak \u00d7 sin(2\u03c0ft)</b> &mdash; Instantaneous voltage</li><li><b>VRMS = Vpeak \u00d7 0.707</b> &mdash; RMS from peak</li><li><b>Vpeak = VRMS \u00d7 1.414</b> &mdash; Peak from RMS</li><li><b>f = 1/T</b> &mdash; Frequency (Hz); at 60 Hz: T = 16.7 ms</li><li><b>T = 1/f</b> &mdash; Period (seconds)</li><li><b>Sync Speed = (120 \u00d7 f) \u00f7 poles</b> &mdash; Motor synchronous RPM</li></ul><h3>\ud83d\udce1 Inductors &amp; Capacitors (M2)</h3><ul><li><b>XL = 2\u03c0fL</b> &mdash; Inductive reactance (\u03a9); L in henries</li><li><b>XC = 1 \u00f7 (2\u03c0fC)</b> &mdash; Capacitive reactance (\u03a9); C in farads</li><li><b>E = \u00bd \u00d7 L \u00d7 I\u00b2</b> &mdash; Energy stored in inductor (joules)</li><li><b>E = \u00bd \u00d7 C \u00d7 V\u00b2</b> &mdash; Energy stored in capacitor (joules)</li><li><b>\u03c4 = L \u00f7 R</b> &mdash; Inductor time constant (seconds)</li><li><b>\u03c4 = R \u00d7 C</b> &mdash; Capacitor time constant (seconds)</li></ul><h3>\ud83d\udcd0 Impedance &amp; Power Factor (M3)</h3><ul><li><b>Z = \u221a(R\u00b2 + X\u00b2)</b> &mdash; Impedance (\u03a9)</li><li><b>\u03b8 = arctan(X \u00f7 R)</b> &mdash; Phase angle</li><li><b>PF = cos(\u03b8) = R \u00f7 Z = P \u00f7 S</b> &mdash; Power factor</li><li><b>P = V \u00d7 I \u00d7 cos(\u03b8)</b> &mdash; True/real power (watts)</li><li><b>Q = V \u00d7 I \u00d7 sin(\u03b8)</b> &mdash; Reactive power (VAR)</li><li><b>S = V \u00d7 I</b> &mdash; Apparent power (VA)</li><li><b>S = \u221a(P\u00b2 + Q\u00b2)</b> &mdash; Apparent power from P &amp; Q</li></ul><h3>\ud83d\udd3a Three-Phase Power (M4)</h3><ul><li><b>Wye (Y):</b> VL = \u221a3 \u00d7 VP &nbsp;&nbsp; IL = IP</li><li><b>Delta (\u0394):</b> VL = VP &nbsp;&nbsp; IL = \u221a3 \u00d7 IP</li><li><b>P = \u221a3 \u00d7 VL \u00d7 IL \u00d7 PF</b> &mdash; 3\u03c6 true power (W)</li><li><b>kVA = (VL \u00d7 IL \u00d7 \u221a3) \u00f7 1000</b> &mdash; 3\u03c6 apparent power</li></ul><h3>\u26a1 Voltage Drop &amp; Conductors</h3><ul><li><b>VD = (2 \u00d7 K \u00d7 I \u00d7 D) \u00f7 CM</b></li><li>K = 12.9 (copper) &nbsp;|&nbsp; K = 21.2 (aluminum)</li><li>CM = circular mils of conductor &nbsp;|&nbsp; D = one-way distance (ft)</li></ul><h3>\ud83d\udd04 Transformers</h3><ul><li><b>N1/N2 = V1/V2 = I2/I1</b> &mdash; Turns ratio</li><li><b>kVA (1\u03c6) = (V \u00d7 A) \u00f7 1000</b></li><li><b>kVA (3\u03c6) = (V \u00d7 A \u00d7 \u221a3) \u00f7 1000</b></li></ul><h3>\u2699\ufe0f Motor Control (CEC Rules)</h3><ul><li>Branch circuit conductor: <b>125% \u00d7 FLA</b></li><li>Overload protection: <b>125% \u00d7 FLA</b> (SF \u2265 1.15)</li><li>Short-circuit/ground-fault protection: up to <b>250% FLA</b> (breaker)</li><li>Sync RPM = (120 \u00d7 f) \u00f7 poles</li></ul>',
-    'exam-prep': '<h2>\ud83c\udfaf Exam Prep</h2><h3>Must-Know Formulas</h3><ul><li>V = IR &nbsp; P = VI = I\u00b2R = V\u00b2/R</li><li>Z = \u221a(R\u00b2+X\u00b2) &nbsp; XL = 2\u03c0fL &nbsp; XC = 1/(2\u03c0fC)</li><li>VD = 2KID/CM &nbsp; kVA(3\u03c6) = V\u00d7A\u00d7\u221a3/1000</li></ul><h3>CEC Tables to Know</h3><ul><li><b>Table 2</b> \u2014 Conductor ampacity</li><li><b>Table 4</b> \u2014 Conduit fill</li><li><b>Table 8</b> \u2014 Conductor resistance &amp; area</li><li><b>Table 13</b> \u2014 Box fill volume</li></ul><h3>My Weak Areas</h3><ul><li>[ ] </li><li>[ ] </li><li>[ ] </li></ul><h3>Exam Day Tips</h3><ul><li>Read the question <b>twice</b></li><li>Eliminate obviously wrong answers first</li><li>Mark hard ones, come back at end</li></ul>',
-  },
   _storageKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}`; },
 
-  // â”€â”€ Pages system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _pagesMetaKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}_pages_meta`; },
-  _pageContentKey(userId, topicId, pageId) { return `sparky_notes_${userId}_${topicId}_p_${pageId}`; },
-
-  _getPages(userId, topicId) {
-    try {
-      const raw = localStorage.getItem(this._pagesMetaKey(userId, topicId));
-      if (raw) return JSON.parse(raw);
-    } catch(e) {}
-    // First visit â€” migrate any existing single note to Page 1
-    const existing = localStorage.getItem(this._storageKey(userId, topicId)) || '';
-    const pages = [{ id: 'p1', name: 'Page 1' }];
-    if (existing) localStorage.setItem(this._pageContentKey(userId, topicId, 'p1'), existing);
-    localStorage.setItem(this._pagesMetaKey(userId, topicId), JSON.stringify(pages));
-    return pages;
-  },
-
-  _savePagesMeta(userId, topicId, pages) {
-    localStorage.setItem(this._pagesMetaKey(userId, topicId), JSON.stringify(pages));
-  },
-
-  _currentPageId(topicId) {
-    if (!this._currentPage[topicId]) this._currentPage[topicId] = 'p1';
-    return this._currentPage[topicId];
-  },
-
-  _loadPage(userId, topicId, pageId) {
-    return localStorage.getItem(this._pageContentKey(userId, topicId, pageId)) || '';
-  },
-
-  _savePage(userId, topicId, pageId, html) {
-    localStorage.setItem(this._pageContentKey(userId, topicId, pageId), html);
-    localStorage.setItem(`sparky_notes_ts_${userId}_${topicId}`, Date.now());
-    // Keep old key in sync with current page so word count still works
-    localStorage.setItem(this._storageKey(userId, topicId), html);
-  },
-
-  _addPage(userId, topicId) {
-    const pages = this._getPages(userId, topicId);
-    const id = 'p' + Date.now();
-    pages.push({ id, name: 'Page ' + (pages.length + 1) });
-    this._savePagesMeta(userId, topicId, pages);
-    this._currentPage[topicId] = id;
-    this._renderEditor(document.getElementById('notesContent'), Storage.get());
-    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
-  },
-
-  _switchPage(userId, topicId, pageId) {
-    const editor = document.getElementById('notesEditor');
-    if (editor) this._savePage(userId, topicId, this._currentPageId(topicId), editor.innerHTML);
-    this._currentPage[topicId] = pageId;
-    this._renderEditor(document.getElementById('notesContent'), Storage.get());
-    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
-  },
-
-  _deletePage(userId, topicId, pageId) {
-    const pages = this._getPages(userId, topicId);
-    if (pages.length <= 1) return;
-    const page = pages.find(p => p.id === pageId);
-    const pageName = page ? page.name : 'this page';
-    if (!confirm(`Delete "${pageName}"? This cannot be undone.`)) return;
-    const idx = pages.findIndex(p => p.id === pageId);
-    if (idx === -1) return;
-    localStorage.removeItem(this._pageContentKey(userId, topicId, pageId));
-    pages.splice(idx, 1);
-    this._savePagesMeta(userId, topicId, pages);
-    if (this._currentPage[topicId] === pageId) {
-      this._currentPage[topicId] = pages[Math.max(0, idx - 1)].id;
-    }
-    this._renderEditor(document.getElementById('notesContent'), Storage.get());
-  },
-
-  _renamePage(userId, topicId, pageId) {
-    const pages = this._getPages(userId, topicId);
-    const page = pages.find(p => p.id === pageId);
-    if (!page) return;
-    const name = prompt('Rename page:', page.name);
-    if (name && name.trim()) {
-      page.name = name.trim();
-      this._savePagesMeta(userId, topicId, pages);
-      this._renderEditor(document.getElementById('notesContent'), Storage.get());
-    }
-  },
-
-  // Tab key handler â€” Tab = start/indent bullet, Shift+Tab = outdent
-  _handleEditorKey(e, userId) {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const sel = window.getSelection();
-      if (!sel || !sel.rangeCount) return;
-      let node = sel.anchorNode;
-      const editor = document.getElementById('notesEditor');
-      let inList = false;
-      while (node && node !== editor) {
-        if (node.nodeName === 'LI') { inList = true; break; }
-        node = node.parentNode;
-      }
-      if (inList) {
-        document.execCommand(e.shiftKey ? 'outdent' : 'indent', false, null);
-      } else if (!e.shiftKey) {
-        document.execCommand('insertUnorderedList', false, null);
-      }
-    }
-  },
-
   _load(userId, topicId) {
-    const pageId = this._currentPageId(topicId);
-    return this._loadPage(userId, topicId, pageId);
+    return localStorage.getItem(this._storageKey(userId, topicId)) || '';
   },
 
   _save(userId, topicId, html) {
-    const pageId = this._currentPageId(topicId);
-    this._savePage(userId, topicId, pageId, html);
+    localStorage.setItem(this._storageKey(userId, topicId), html);
+    // Update last-edited timestamp
+    localStorage.setItem(`sparky_notes_ts_${userId}_${topicId}`, Date.now());
   },
 
   _wordCount(html) {
@@ -2320,34 +2979,62 @@ const Notes = {
     return text ? text.split(/\s+/).filter(Boolean).length : 0;
   },
 
-  _relTime(ts) {
-    if (!ts) return '';
-    const d = Date.now() - ts;
-    const m = Math.floor(d/60000), h = Math.floor(d/3600000), dy = Math.floor(d/86400000);
-    if (m < 1) return 'just now';
-    if (m < 60) return m + 'm ago';
-    if (h < 24) return h + 'h ago';
-    if (dy === 1) return 'yesterday';
-    return dy + 'd ago';
+  _allNoteIds(userId, period) {
+    const list = period === 0
+      ? this.TOPICS_LIST.filter(t => t.period === 0)
+      : this.TOPICS_LIST.filter(t => t.period === period);
+    return list.map(t => ({ ...t, has: !!localStorage.getItem(this._storageKey(userId, t.id)) }));
   },
 
-  _allNoteIds(userId) {
-    return this.TOPICS_LIST.map(t => {
-      const html = localStorage.getItem(this._storageKey(userId, t.id)) || '';
-      const ts   = parseInt(localStorage.getItem(`sparky_notes_ts_${userId}_${t.id}`) || '0');
-      return { ...t, has: !!html, wordCount: this._wordCount(html), timestamp: ts };
-    });
-  },
+  // Migrate old topic notes into new 4-category system
+  _migrateOldNotes(userId) {
+    // Map ALL old topic IDs to new categories
+    const mapping = {
+      'safety': 'general', 'code-cec': 'code', 'exam-prep': 'general', 'formulas': 'theory',
+      'p1-ac-fund': 'theory', 'p1-ind-cap': 'theory', 'p1-ac-circuits': 'theory', 'p1-general': 'general',
+      'p2-relays': 'theory', 'p2-timers': 'theory', 'p2-pilot': 'theory', 'p2-diagrams': 'theory', 'p2-general': 'general',
+      'p3-motors': 'theory', 'p3-pf': 'theory', 'p3-xfmr': 'theory', 'p3-dist': 'theory', 'p3-wiring': 'theory', 'p3-general': 'general',
+      'p4-commercial': 'theory', 'p4-industrial': 'theory', 'p4-plc': 'theory', 'p4-power': 'theory', 'p4-service': 'theory', 'p4-general': 'general',
+      // Handle any uploaded module content that accidentally went to notes
+      'General Notes': 'general', 'Safety': 'general', 'CEC Code': 'code', 'Exam Prep': 'general', 'Formulas & Calcs': 'theory',
+    };
 
-  _applyTemplate(userId, topicId) {
-    const html = this.TEMPLATES[topicId] || '<h2>Notes</h2><p>Start writing here...</p>';
-    const editor = document.getElementById('notesEditor');
-    if (editor) {
-      editor.innerHTML = html;
-      this._save(userId, topicId, html);
-      const wc = document.getElementById('notesWordCount');
-      if (wc) wc.textContent = this._wordCount(html) + ' words';
-      showToast('Starter template applied!', 'success');
+    const currentIds = new Set(this.TOPICS_LIST.map(t => t.id));
+    let moved = 0;
+    const alreadyMerged = new Set(JSON.parse(localStorage.getItem('sparky_notes_merged_keys_' + userId) || '[]'));
+
+    // Scan ALL localStorage keys for any sparky_notes that don't match current 4 topics
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith('sparky_notes_' + userId + '_')) continue;
+      // Skip timestamp keys
+      if (key.includes('_ts_') || key.includes('_migrated_') || key.includes('_merged_') || key.includes('_community_')) continue;
+      const topicId = key.replace('sparky_notes_' + userId + '_', '');
+      if (currentIds.has(topicId)) continue; // already a valid current topic
+      if (alreadyMerged.has(key)) continue; // already merged this key before
+      const content = localStorage.getItem(key);
+      if (!content || content.replace(/<[^>]*>/g, '').trim().length < 5) continue;
+
+      // Determine target category
+      let targetId = mapping[topicId] || 'general';
+      // Auto-detect: if content looks like theory/formulas, put in theory
+      const textLower = content.replace(/<[^>]*>/g, '').toLowerCase();
+      if (textLower.includes('formula') || textLower.includes('equation') || textLower.includes('calculate')) targetId = 'theory';
+      if (textLower.includes('lab') || textLower.includes('experiment') || textLower.includes('hands-on')) targetId = 'lab';
+      if (textLower.includes('code rule') || textLower.includes('cec') || textLower.includes('regulation')) targetId = 'code';
+
+      const newKey = 'sparky_notes_' + userId + '_' + targetId;
+      const existing = localStorage.getItem(newKey) || '';
+      const label = '<hr><div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">📋 Restored from: ' + topicId + '</div>';
+      localStorage.setItem(newKey, existing + label + content);
+      // Track that we merged this key so we don't duplicate on next load
+      alreadyMerged.add(key);
+      moved++;
+    }
+
+    if (moved > 0) {
+      localStorage.setItem('sparky_notes_merged_keys_' + userId, JSON.stringify([...alreadyMerged]));
+      showToast(`Restored ${moved} note${moved !== 1 ? 's' : ''} from old topics!`, 'success');
     }
   },
 
@@ -2355,404 +3042,291 @@ const Notes = {
     const container = document.getElementById('notesContent');
     if (!container || !state) return;
     const userId = state.user.id;
-    if (this.mode === 'quiz')  { this._renderQuiz(container, userId); return; }
+    // Migrate old notes on first render
+    this._migrateOldNotes(userId);
+    if (this.mode === 'quiz') { this._renderQuiz(container, userId); return; }
     if (this.mode === 'study') { this._renderStudy(container, userId); return; }
+    if (this.mode === 'community') { this._renderCommunity(container, state); return; }
     this._renderEditor(container, state);
   },
 
   _renderEditor(container, state) {
     const userId = state.user.id;
+    const userPeriod = state.user.period || 2;
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
-    const pages = this._getPages(userId, this.currentTopic);
-    const currentPageId = this._currentPageId(this.currentTopic);
-    const savedHtml = this._load(userId, this.currentTopic);
-    const topics = this._allNoteIds(userId);
-    const isEmpty = !savedHtml.trim();
+    const savedHtml = this._loadPage(userId, this.currentTopic, this._currentPage);
+    const topics = this._allNoteIds(userId, this._currentPeriod);
+    const sharingEnabled = (state.user.subscription || {}).notesSharing !== false;
 
-    const pageTabs = pages.map(p => `
-      <div class="notes-page-tab ${p.id === currentPageId ? 'active' : ''}"
-        onclick="Notes._switchPage('${userId}','${this.currentTopic}','${p.id}')"
-        ondblclick="Notes._renamePage('${userId}','${this.currentTopic}','${p.id}')"
-        title="Double-click to rename">
-        ${this._esc(p.name)}
-        ${pages.length > 1 ? `<span class="notes-page-del" onclick="event.stopPropagation();Notes._deletePage('${userId}','${this.currentTopic}','${p.id}')">\u00d7</span>` : ''}
-      </div>
-    `).join('');
-
-    const sc = this._sidebarCollapsed;
-    const fs = this._fullscreen;
-    const gridCols = sc ? '44px 1fr' : '220px 1fr';
-    const stickyTop = '80px';
-
-    // â”€â”€ Shared: sidebar inner HTML â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const sidebarInner = sc ? `
-      <div class="notes-sidebar-collapsed-strip">
-        <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Expand sidebar">\u203a</button>
-        ${topics.map(t => `
-          <button class="notes-sidebar-icon-btn ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')" title="${t.name}">
-            ${t.icon}
-            ${t.has ? '<span class="nsi-dot"></span>' : ''}
-          </button>
-        `).join('')}
-      </div>
-    ` : `
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:${fs?'0':'16px'};padding:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:700;padding:2px 0;">Topics</div>
-          <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Collapse sidebar">\u2039</button>
-        </div>
-        ${topics.map(t => `
-          <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
-              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.icon} ${t.name}</span>
-              ${t.has ? '<span style="color:var(--accent);font-size:0.6rem;flex-shrink:0;">\u25cf</span>' : ''}
+    container.innerHTML = `
+      <div class="notes-layout">
+        <!-- Sidebar -->
+        <div class="notes-sidebar notes-no-print">
+          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;padding:0 4px;margin-bottom:10px;">My Notes</div>
+          ${topics.map(t => `
+            <div class="notes-sidebar-item ${t.id===this.currentTopic?'active':''}" onclick="Notes._switchTopic('${t.id}','${userId}')">
+              ${t.icon} <span style="font-size:0.85rem;">${t.name}</span>
+              ${t.has ? '<span style="float:right;font-size:0.65rem;color:var(--accent);">●</span>' : ''}
             </div>
-            ${t.has ? `<div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;">
-              <span>${t.wordCount} words</span><span>\u00b7</span><span>${this._relTime(t.timestamp)}</span>
-            </div>` : ''}
-          </div>
-        `).join('')}
-      </div>
-    `;
-
-    // â”€â”€ Shared: action buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const actionButtons = `
-      <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON' : 'Autocorrect OFF'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
-      <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">\ud83d\udcd6 Study Mode</button>
-      <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">\u26a1 Make Quiz</button>
-      <button class="btn btn-secondary btn-sm" onclick="Notes._download('${userId}')" title="Download all pages as HTML file">\u2b07\ufe0f Download</button>
-      <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print">\ud83d\udda8\ufe0f Print</button>
-      <button class="btn btn-sm notes-fs-btn" onclick="Notes._toggleFullscreen('${userId}')" title="${fs ? 'Exit full screen' : 'Full screen'}">${fs ? '\u26f6 Exit Full Screen' : '\u26f6 Full Screen'}</button>
-    `;
-
-    // â”€â”€ Shared: formatting toolbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const formattingBar = `
-      <div class="notes-toolbar">
-        <button class="ntb" onclick="Notes._fmt('bold')" title="Bold"><b>B</b></button>
-        <button class="ntb" onclick="Notes._fmt('italic')" title="Italic"><i>I</i></button>
-        <button class="ntb" onclick="Notes._fmt('underline')" title="Underline"><u>U</u></button>
-        <button class="ntb" onclick="Notes._fmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
-        <div class="ntb-sep"></div>
-        <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list (or press Tab)">\u2022 List</button>
-        <button class="ntb" onclick="Notes._fmt('insertOrderedList')" title="Numbered list">1. List</button>
-        <div class="ntb-sep"></div>
-        <button class="ntb" onclick="Notes._heading(1)" title="Heading 1" style="font-size:0.9rem;font-weight:900;">H1</button>
-        <button class="ntb" onclick="Notes._heading(2)" title="Heading 2" style="font-size:0.85rem;font-weight:800;">H2</button>
-        <button class="ntb" onclick="Notes._heading(3)" title="Heading 3" style="font-size:0.8rem;font-weight:700;">H3</button>
-        <div class="ntb-sep"></div>
-        <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">\u2715 Format</button>
-        <button class="ntb" onclick="Notes._highlight()" title="Mark as quiz term" style="background:rgba(245,158,11,0.15);color:var(--accent);">\u2605 Key Term</button>
-        <div class="ntb-sep"></div>
-        <button class="ntb notes-insert-btn" id="notesInsertBtn" onclick="Notes._toggleInsertPanel(event)" title="Insert symbol or formula">\u03a9 Insert \u25be</button>
-      </div>
-    `;
-
-    // â”€â”€ Shared: insert popover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const insertPanel = `
-      <div id="notesInsertPanel" class="notes-insert-panel" style="display:none;">
-        <div class="notes-insert-tabs">
-          <button class="notes-insert-tab active" id="niTabSymbols" onclick="Notes._switchInsertTab('symbols')">Symbols</button>
-          <button class="notes-insert-tab" id="niTabFormulas" onclick="Notes._switchInsertTab('formulas')">Formulas</button>
-        </div>
-        <div id="niSymbols" class="notes-insert-grid">
-          ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
-        </div>
-        <div id="niFormulas" class="notes-insert-grid" style="display:none;">
-          ${this.FORMULAS.map(f => `<button class="char-btn notes-formula-btn" onclick="Notes._insertChar(' ${f.insert} ')" title="${f.tip}">${f.label}</button>`).join('')}
-        </div>
-      </div>
-    `;
-
-    // â”€â”€ Shared: page tabs row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const pageTabsRow = `
-      <div class="notes-pages-bar notes-no-print">
-        ${pageTabs}
-        <button class="notes-page-add" onclick="Notes._addPage('${userId}','${this.currentTopic}')" title="Add new page">+ Page</button>
-      </div>
-    `;
-
-    // â”€â”€ Shared: editor area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const emptyTextColor = fs ? '#3a3a3a' : 'var(--text-muted)';
-    const editorArea = `
-      <div id="notesEditorWrap" class="notes-print-area" style="${fs ? '' : 'background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;'}position:relative;">
-        ${isEmpty ? `
-        <div id="notesEmptyState" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;pointer-events:none;z-index:1;">
-          <div style="font-size:2.5rem;opacity:0.15;">${topic.icon}</div>
-          <div style="text-align:center;pointer-events:none;">
-            <div style="font-size:0.9rem;font-weight:600;color:${emptyTextColor};margin-bottom:6px;">No notes yet for ${topic.name}</div>
-            <div style="font-size:0.75rem;color:${emptyTextColor};opacity:0.8;">Start typing \u2014 press Tab for bullets</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" style="pointer-events:all;" onclick="Notes._applyTemplate('${userId}','${this.currentTopic}')">
-            Use Starter Template
+          `).join('')}
+          <div style="height:1px;background:var(--border);margin:12px 0;"></div>
+          <button onclick="Notes._openCommunity('${userId}')" style="width:100%;padding:8px;font-size:0.78rem;font-weight:600;border-radius:8px;border:1px solid rgba(88,166,255,0.3);background:rgba(88,166,255,0.06);color:#58a6ff;cursor:pointer;transition:all 0.15s;">
+            🌐 Community Notes
           </button>
-        </div>` : ''}
-        <div id="notesEditor" class="notes-editor"
-          contenteditable="true"
-          spellcheck="true"
-          autocorrect="on"
-          data-placeholder="Start typing..."
-          oninput="Notes._onInput('${userId}');Notes._hideEmpty();Notes._scheduleAutocorrect('${userId}');"
-          onkeydown="Notes._handleEditorKey(event,'${userId}');"
-        >${savedHtml}</div>
-        <div id="notesPrintHeader" style="display:none;">
-          <h2>${topic.name} \u2014 sparkystudy Notes</h2>
-          <p style="font-size:0.8rem;color:#666;">Student: ${state.user.name} &nbsp;|&nbsp; Date: ${new Date().toLocaleDateString()}</p>
-          <hr>
         </div>
-      </div>
-    `;
 
-    // â”€â”€ Shared: word count bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const wordCountBar = `
-      <div class="notes-no-print" id="notesWordBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:0.72rem;color:${fs ? '#888' : 'var(--text-muted)'};">
-        <span id="notesWordCount">0 words</span>
-        <span>Tip: <strong style="color:var(--accent);">\u2605 Key Term</strong> = auto-quiz card &nbsp;|&nbsp; <strong>Tab</strong> = bullet &nbsp;|&nbsp; double-click page tab to rename</span>
-      </div>
-    `;
-
-    if (fs) {
-      // â•â•â• FULLSCREEN: clean dark editor â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-      container.innerHTML = `
-        <div class="notes-fullscreen-wrap">
-
-          <!-- Top bar -->
-          <div class="notes-fs-topbar notes-no-print">
-            <div class="notes-fs-titlerow">
-              <div class="notes-fs-title">
-                <span class="nft-icon">${topic.icon}</span>
+        <!-- Main editor pane -->
+        <div>
+          <!-- Header (non-sticky top bar) -->
+          <div class="notes-no-print" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:1.4rem;">${topic.icon}</span>
                 <div>
-                  <div class="nft-name">${topic.name}</div>
-                  <div class="nft-status" id="notesStatus">Auto-saved</div>
+                  <div style="font-weight:800;font-size:1rem;">${topic.name}</div>
+                  <div style="font-size:0.72rem;color:var(--text-muted);" id="notesStatus">Auto-saved</div>
                 </div>
               </div>
-              <div class="notes-fs-actions">
-                <button class="nfa-btn ${this._autocorrect ? 'on' : ''}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON \u2014 click to disable' : 'Autocorrect OFF \u2014 click to enable'}">AC</button>
-                <div class="nfa-sep"></div>
-                <button class="nfa-btn" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">Study</button>
-                <button class="nfa-btn" onclick="Notes._generateQuiz('${userId}')" title="Auto-quiz from notes">Quiz</button>
-                <button class="nfa-btn" onclick="Notes._download('${userId}')" title="Download notes as HTML">\u2193 Save</button>
-                <button class="nfa-btn" onclick="Notes._print('${userId}')" title="Print">Print</button>
-                <div class="nfa-sep"></div>
-                <button class="nfa-exit" onclick="Notes._toggleFullscreen('${userId}')" title="Exit full screen">\u2715 Exit</button>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <label class="btn btn-primary btn-sm" title="Upload notes or module content" style="cursor:pointer;margin:0;padding:6px 14px;">
+                  📄 Upload
+                  <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
+                </label>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._organizeAI('${userId}')" title="AI auto-organize notes into topics" style="padding:6px 10px;">🗂️ Organize</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._cleanupNotes('${userId}')" title="Remove duplicates and clean up formatting" style="padding:6px 10px;">🧹 Clean</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Study mode" style="padding:6px 10px;">📖 Study</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._generateQuizAI('${userId}')" title="AI quiz" style="padding:6px 10px;">⚡ Quiz</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._print('${userId}')" title="Print" style="padding:6px 10px;">🖨️</button>
+                <button class="btn btn-secondary btn-sm" onclick="Notes._toggleFocus()" title="Full page focus mode" style="padding:6px 10px;" id="notesFocusBtn">${this._focusMode ? '⬜ Exit Focus' : '⬛ Focus Mode'}</button>
               </div>
             </div>
-            ${formattingBar}
           </div>
 
-          ${insertPanel}
-
-          <!-- Body -->
-          <div class="notes-fs-body">
-
-            <!-- Left sidebar -->
-            <div class="notes-fs-sidebar notes-no-print ${sc ? 'collapsed' : ''}">
-              ${sidebarInner}
+          <!-- Sticky formatting toolbar — follows scroll -->
+          <div class="notes-no-print" style="position:sticky;top:60px;z-index:50;background:var(--bg-card);border:1px solid var(--border);border-top:none;padding:8px 16px;backdrop-filter:blur(12px);">
+            <div class="notes-toolbar">
+              <button class="ntb" onclick="Notes._fmt('bold')" title="Bold"><b>B</b></button>
+              <button class="ntb" onclick="Notes._fmt('italic')" title="Italic"><i>I</i></button>
+              <button class="ntb" onclick="Notes._fmt('underline')" title="Underline"><u>U</u></button>
+              <button class="ntb" onclick="Notes._fmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
+              <div class="ntb-sep"></div>
+              <button class="ntb" onclick="Notes._fmt('insertUnorderedList')" title="Bullet list">• List</button>
+              <button class="ntb" onclick="Notes._fmt('insertOrderedList')" title="Numbered list">1. List</button>
+              <div class="ntb-sep"></div>
+              <button class="ntb" onclick="Notes._heading(1)" title="Heading 1" style="font-size:0.9rem;font-weight:900;">H1</button>
+              <button class="ntb" onclick="Notes._heading(2)" title="Heading 2" style="font-size:0.85rem;font-weight:800;">H2</button>
+              <button class="ntb" onclick="Notes._heading(3)" title="Heading 3" style="font-size:0.8rem;font-weight:700;">H3</button>
+              <div class="ntb-sep"></div>
+              <button class="ntb" onclick="Notes._fmt('removeFormat')" title="Clear formatting">✕ Format</button>
+              <button class="ntb" onclick="Notes._highlight()" title="Highlight (marks as quiz term)" style="background:rgba(245,158,11,0.15);color:var(--accent);">★ Key Term</button>
+              <div class="ntb-sep"></div>
+              <span style="font-size:0.68rem;color:var(--text-muted);margin-left:auto;" id="notesPageInfo">Page ${(this._currentPage||1)} of ${this._getPageCount(userId, this.currentTopic)}</span>
+              <button class="ntb" onclick="Notes._prevPage('${userId}')" title="Previous page" ${(this._currentPage||1)<=1?'disabled style="opacity:0.3;pointer-events:none;"':''}>◀</button>
+              <button class="ntb" onclick="Notes._nextPage('${userId}')" title="Next page">▶</button>
+              <button class="ntb" onclick="Notes._addPage('${userId}')" title="Add new page" style="color:var(--accent);font-weight:700;">+ Page</button>
             </div>
-
-            <!-- Canvas -->
-            <div class="notes-fs-canvas">
-              ${pageTabsRow}
-              ${editorArea}
-              ${wordCountBar}
-            </div>
-
           </div>
+
+          <!-- Special character bar -->
+          <div class="notes-char-bar notes-no-print">
+            <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);font-weight:700;align-self:center;white-space:nowrap;margin-right:4px;">Quick Insert:</span>
+            ${this.CHARS.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label}')" title="${c.tip}">${c.label}</button>`).join('')}
+            <button class="char-btn" onclick="Notes._toggleExtChars()" title="More characters & formulas" style="background:rgba(139,92,246,0.15);color:#8b5cf6;font-weight:700;font-size:0.75rem;">▼ More</button>
+          </div>
+          <!-- Extended characters dropdown (hidden by default) -->
+          <div id="notesExtChars" class="notes-no-print" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-top:none;padding:10px 14px;">
+            ${this.CHARS_EXT.map(g => `
+              <div style="margin-bottom:10px;">
+                <div style="font-size:0.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${g.group}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                  ${g.chars.map(c => `<button class="char-btn" onclick="Notes._insertChar('${c.label.replace(/'/g, "\\'")}')" title="${c.tip}">${c.label}</button>`).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Editor -->
+          <div id="notesEditorWrap" class="notes-print-area" style="background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;">
+            <div id="notesEditor" class="notes-editor"
+              contenteditable="true"
+              spellcheck="true"
+              autocorrect="on"
+              data-placeholder="Start typing your notes here...&#10;&#10;Tip: Bold important terms with the toolbar — they'll become quiz cards automatically. Use the special character buttons above to insert Ω, μ, °, ∠ and more."
+              oninput="Notes._onInput('${userId}')"
+            >${savedHtml}</div>
+            <!-- Print header (hidden on screen) -->
+            <div id="notesPrintHeader" style="display:none;">
+              <h2>${topic.name} — sparkystudy Notes</h2>
+              <p style="font-size:0.8rem;color:#666;">Student: ${state.user.name} &nbsp;|&nbsp; Date: ${new Date().toLocaleDateString()}</p>
+              <hr>
+            </div>
+          </div>
+
+          <!-- Word count bar -->
+          <div class="notes-no-print" id="notesWordBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:0.72rem;color:var(--text-muted);">
+            <span id="notesWordCount">0 words</span>
+            <span>Tip: <strong style="color:var(--accent);">★ Key Term</strong> = auto-quiz card</span>
+          </div>
+
+          ${!savedHtml ? `
+          <!-- Upload prompt banner (shown when notes are empty) -->
+          <div style="margin-top:12px;background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(249,115,22,0.06));border:2px solid rgba(245,158,11,0.4);border-radius:14px;padding:24px;animation:pulse-border 2s ease-in-out infinite;">
+            <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;">
+              <div style="font-size:2.5rem;flex-shrink:0;">📄</div>
+              <div>
+                <div style="font-weight:800;font-size:1.1rem;margin-bottom:8px;color:var(--accent);">Upload Your Notes or Module Content</div>
+                <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.7;">
+                  SparkStudy's AI tools need your content to work. Upload your <strong>study notes</strong> or <strong>textbook modules</strong> to unlock:
+                </div>
+                <ul style="font-size:0.85rem;color:var(--text-secondary);margin:8px 0 0 16px;line-height:1.8;list-style:disc;">
+                  <li>⚡ <strong>AI-generated quizzes</strong> from your exact content</li>
+                  <li>🤖 <strong>AI tutor</strong> that answers from your materials</li>
+                  <li>📝 <strong>Flashcard generator</strong> tailored to your modules</li>
+                </ul>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <label style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:linear-gradient(135deg,var(--accent),#d97706);color:#000;border-radius:10px;font-size:0.95rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(245,158,11,0.3);">
+                📄 Upload PDF or Photos
+                <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Notes._uploadPages(event,'${userId}')">
+              </label>
+              <button onclick="document.getElementById('notesEditor').focus()" style="padding:12px 20px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;font-size:0.88rem;color:var(--text-primary);cursor:pointer;font-weight:600;">✏️ Type / Paste Notes</button>
+            </div>
+            <div style="margin-top:14px;font-size:0.78rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+              🔒 Modules stay private on your device. Notes can optionally be shared with classmates.
+            </div>
+          </div>
+          <style>@keyframes pulse-border{0%,100%{border-color:rgba(245,158,11,0.4)}50%{border-color:rgba(245,158,11,0.8)}}</style>` : ''}
         </div>
-      `;
-    } else {
-      // â•â•â• NORMAL mode layout â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-      container.innerHTML = `
-        <div style="display:grid;grid-template-columns:${gridCols};gap:${sc?'12px':'20px'};align-items:start;">
+      </div>
+    `;
 
-          <!-- Sidebar -->
-          <div class="notes-no-print notes-sidebar-outer ${sc ? 'collapsed' : ''}" style="position:sticky;top:${stickyTop};">
-            ${sidebarInner}
-          </div>
-
-          <!-- Editor pane -->
-          <div>
-            <!-- Sticky header -->
-            <div class="notes-sticky-header notes-no-print" style="top:${stickyTop};">
-              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <span style="font-size:1.4rem;">${topic.icon}</span>
-                  <div>
-                    <div style="font-weight:800;font-size:1rem;">${topic.name}</div>
-                    <div style="font-size:0.72rem;color:var(--text-muted);" id="notesStatus">Auto-saved</div>
-                  </div>
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                  ${actionButtons}
-                </div>
-              </div>
-              ${formattingBar}
-            </div>
-
-            ${insertPanel}
-            ${pageTabsRow}
-            ${editorArea}
-            ${wordCountBar}
-          </div>
-
-        </div>
-      `;
-    }
-
+    // Init word count
     const editor = document.getElementById('notesEditor');
     if (editor) {
       document.getElementById('notesWordCount').textContent = this._wordCount(editor.innerHTML) + ' words';
-      if (!isEmpty) this._hideEmpty();
     }
-  },
-
-  _esc(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  },
-
-  _hideEmpty() {
-    const el = document.getElementById('notesEmptyState');
-    if (el) el.style.display = 'none';
-  },
-
-  _toggleAutocorrect(userId) {
-    this._autocorrect = !this._autocorrect;
-    localStorage.setItem('sparky_autocorrect', this._autocorrect);
-    const btn = document.getElementById('notesAutocorrectBtn');
-    if (btn) {
-      btn.innerHTML = this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect';
-      btn.title = this._autocorrect ? 'Autocorrect ON \u2014 click to turn off' : 'Autocorrect OFF \u2014 click to turn on';
-      if (this._autocorrect) {
-        btn.style.background = 'rgba(34,197,94,0.15)';
-        btn.style.color = '#22c55e';
-        btn.style.borderColor = 'rgba(34,197,94,0.4)';
-        showToast('\u2713 Autocorrect on \u2014 spelling fixes as you type', 'success');
-      } else {
-        btn.style.background = '';
-        btn.style.color = '';
-        btn.style.borderColor = '';
-        showToast('Autocorrect off', 'info');
-      }
-    }
-  },
-
-  _scheduleAutocorrect(userId) {
-    if (!this._autocorrect) return;
-    clearTimeout(this._autocorrectTimer);
-    this._autocorrectTimer = setTimeout(() => this._runAutocorrect(userId), 1800);
-  },
-
-  async _runAutocorrect(userId) {
-    if (!this._autocorrect) return;
-    const editor = document.getElementById('notesEditor');
-    if (!editor) return;
-    const text = editor.innerText || editor.textContent || '';
-    if (text.trim().length < 3) return;
-    try {
-      const res = await fetch('https://api.languagetool.org/v2/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ text, language: 'en-CA', disabledRules: 'WHITESPACE_RULE,COMMA_PARENTHESIS_WHITESPACE', enabledOnly: 'false' })
-      });
-      const data = await res.json();
-      // Only auto-fix clear misspellings that have exactly one top suggestion
-      const fixes = (data.matches || []).filter(m =>
-        m.rule.issueType === 'misspelling' && m.replacements.length >= 1
-      );
-      if (fixes.length === 0) return;
-      // Apply fixes in reverse order so offsets stay valid
-      fixes.sort((a, b) => b.offset - a.offset);
-      let count = 0;
-      fixes.forEach(m => {
-        const replacement = m.replacements[0].value;
-        let pos = 0, found = false;
-        const walk = (node) => {
-          if (found) return;
-          if (node.nodeType === 3) {
-            const end = pos + node.length;
-            if (pos <= m.offset && m.offset < end) {
-              const lo = m.offset - pos;
-              const le = Math.min(lo + m.length, node.length);
-              const before = node.textContent.slice(0, lo);
-              const after  = node.textContent.slice(le);
-              node.textContent = before + replacement + after;
-              found = true;
-              count++;
-            }
-            pos = end;
-          } else { node.childNodes.forEach(walk); }
-        };
-        walk(editor);
-      });
-      if (count > 0) {
-        this._save(userId, this.currentTopic, editor.innerHTML);
-        const wc = document.getElementById('notesWordCount');
-        if (wc) wc.textContent = this._wordCount(editor.innerHTML) + ' words';
-        // Subtle indicator in status line â€” no intrusive toast
-        const st = document.getElementById('notesStatus');
-        if (st) { st.textContent = '\u2713 ' + count + ' spelling fix' + (count>1?'es':'') + ' applied'; setTimeout(() => { if (st) st.textContent = 'Auto-saved'; }, 2500); }
-      }
-    } catch(e) { /* silent â€” don't interrupt typing */ }
   },
 
   _switchTopic(topicId, userId) {
+    // Save current page before switching
     const editor = document.getElementById('notesEditor');
-    if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
     this.currentTopic = topicId;
+    this._currentPage = 1; // reset to page 1 on topic switch
+    this.mode = 'edit';
     const state = Storage.get();
     this.render(state);
     setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 100);
   },
 
-  _toggleFullscreen(userId) {
-    const editor = document.getElementById('notesEditor');
-    if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
-    this._fullscreen = !this._fullscreen;
-    // Prevent body scroll while fullscreen
-    document.body.style.overflow = this._fullscreen ? 'hidden' : '';
-    this._renderEditor(document.getElementById('notesContent'), Storage.get());
-    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
+  _openCommunity(userId) {
+    this.mode = 'community';
+    this._communityLoading = true;
+    const state = Storage.get();
+    this.render(state);
+    // Fetch shared notes for user's period
+    FireDB.getSharedNotes(state.user.period).then(notes => {
+      this._communityNotes = notes || [];
+      this._communityLoading = false;
+      this.render(Storage.get());
+    }).catch(() => {
+      this._communityNotes = [];
+      this._communityLoading = false;
+      this.render(Storage.get());
+    });
   },
 
-  _toggleSidebar(userId) {
-    const editor = document.getElementById('notesEditor');
-    if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
-    this._sidebarCollapsed = !this._sidebarCollapsed;
-    localStorage.setItem('sparky_notes_sidebar_collapsed', this._sidebarCollapsed);
-    this._renderEditor(document.getElementById('notesContent'), Storage.get());
-    setTimeout(() => { const ed = document.getElementById('notesEditor'); if (ed) ed.focus(); }, 60);
+  _renderCommunity(container, state) {
+    const userId = state.user.id;
+    const period = state.user.period;
+    const notes = this._communityNotes;
+    const myNotes = notes.filter(n => n.userId === userId);
+    const otherNotes = notes.filter(n => n.userId !== userId);
+
+    container.innerHTML = `
+      <div style="max-width:800px;margin:0 auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h1 style="margin:0;font-size:1.6rem;">🌐 Community Notes</h1>
+            <p style="color:var(--text-secondary);font-size:0.88rem;margin-top:4px;">Shared study notes from Period ${period} students</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">← Back to My Notes</button>
+        </div>
+
+        ${this._communityLoading ? `
+          <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+            <div style="font-size:2rem;margin-bottom:12px;">⏳</div>
+            Loading community notes...
+          </div>
+        ` : notes.length === 0 ? `
+          <div style="text-align:center;padding:60px 20px;">
+            <div style="font-size:3rem;margin-bottom:16px;">📭</div>
+            <h2 style="font-size:1.2rem;margin-bottom:8px;">No shared notes yet</h2>
+            <p style="color:var(--text-secondary);font-size:0.9rem;max-width:400px;margin:0 auto 20px;">
+              Be the first to share your study notes with Period ${period} classmates!
+              Upload your notes and choose to share when prompted.
+            </p>
+            <button class="btn btn-primary" onclick="Notes.mode='edit';Notes.render(Storage.get())">Upload Notes</button>
+          </div>
+        ` : `
+          ${myNotes.length > 0 ? `
+            <div style="margin-bottom:24px;">
+              <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:12px;">Your Shared Notes</h3>
+              ${myNotes.map(n => `
+                <div style="background:var(--bg-card);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:16px;margin-bottom:10px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                    <div>
+                      <div style="font-weight:700;font-size:0.95rem;">📝 ${n.topic}</div>
+                      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${n.wordCount || 0} words · Shared ${new Date(n.sharedAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="Notes._unshareNote('${n.id}')" style="color:var(--danger);font-size:0.75rem;">Remove</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${otherNotes.length > 0 ? `
+            <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:12px;">From Classmates</h3>
+            ${otherNotes.map(n => `
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                  <div>
+                    <div style="font-weight:700;font-size:0.95rem;">📝 ${n.topic}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">By ${n.userName} · ${n.wordCount || 0} words · ${new Date(n.sharedAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="Notes._importSharedNote('${n.id}','${userId}')">📥 Import to My Notes</button>
+                </div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);max-height:120px;overflow:hidden;position:relative;line-height:1.6;">
+                  ${n.content.slice(0, 500).replace(/</g,'&lt;').replace(/\n/g,'<br>')}${n.content.length > 500 ? '...' : ''}
+                  ${n.content.length > 300 ? '<div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,var(--bg-card));"></div>' : ''}
+                </div>
+              </div>
+            `).join('')}
+          ` : ''}
+        `}
+      </div>
+    `;
   },
 
-  _toggleInsertPanel(e) {
-    const panel = document.getElementById('notesInsertPanel');
-    if (!panel) return;
-    const btn = document.getElementById('notesInsertBtn');
-    if (panel.style.display === 'none') {
-      // Position panel below the button
-      const rect = btn.getBoundingClientRect();
-      panel.style.display = 'block';
-      panel.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
-      panel.style.left = Math.max(8, rect.left + window.scrollX - 200) + 'px';
-      // Close on outside click
-      setTimeout(() => {
-        const close = (ev) => {
-          if (!panel.contains(ev.target) && ev.target !== btn) {
-            panel.style.display = 'none';
-            document.removeEventListener('click', close);
-          }
-        };
-        document.addEventListener('click', close);
-      }, 50);
-    } else {
-      panel.style.display = 'none';
-    }
+  _unshareNote(noteId) {
+    if (!confirm('Remove this note from the community? Other students will no longer be able to see it.')) return;
+    FireDB.deleteSharedNote(noteId);
+    this._communityNotes = this._communityNotes.filter(n => n.id !== noteId);
+    showToast('Note removed from community.', 'info');
+    this.render(Storage.get());
   },
 
-  _switchInsertTab(tab) {
-    document.getElementById('niSymbols').style.display  = tab === 'symbols'  ? 'flex' : 'none';
-    document.getElementById('niFormulas').style.display = tab === 'formulas' ? 'flex' : 'none';
-    document.getElementById('niTabSymbols').classList.toggle('active',  tab === 'symbols');
-    document.getElementById('niTabFormulas').classList.toggle('active', tab === 'formulas');
+  _importSharedNote(noteId, userId) {
+    const note = this._communityNotes.find(n => n.id === noteId);
+    if (!note) return;
+    const key = 'sparky_notes_' + userId + '_community_' + note.topic.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const existing = localStorage.getItem(key) || '';
+    const content = note.content.replace(/\n/g, '<br>');
+    localStorage.setItem(key, existing ? existing + '<hr>' + content : '<h2>' + note.topic + ' (from ' + note.userName + ')</h2>' + content);
+    showToast('📥 Notes imported! Find them under "' + note.topic + '" in your notes.', 'success');
+    syncAIContext(Storage.get());
   },
 
   _fmt(cmd) {
@@ -2767,11 +3341,114 @@ const Notes = {
 
   _highlight() {
     document.getElementById('notesEditor')?.focus();
+    // Wrap selection in a mark span that signals "quiz term"
     const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) { showToast('Select a word or phrase first, then click Key Term', 'info'); return; }
+    if (!sel || sel.isCollapsed) {
+      showToast('Select a word or phrase first, then click Key Term', 'info');
+      return;
+    }
     document.execCommand('hiliteColor', false, 'rgba(245,158,11,0.3)');
     document.execCommand('bold', false, null);
-    showToast('Key term marked \u2014 it\'ll appear in your auto-quiz!', 'success');
+    showToast('Key term marked — it\'ll appear in your auto-quiz!', 'success');
+  },
+
+  _toggleFocus() {
+    this._focusMode = !this._focusMode;
+    const container = document.querySelector('.notes-layout');
+    const sidebar = document.querySelector('.notes-sidebar');
+    const navbar = document.querySelector('.main-nav');
+    const bottomNav = document.querySelector('.bottom-nav');
+    const appContainer = document.querySelector('.app-container');
+    const btn = document.getElementById('notesFocusBtn');
+
+    if (this._focusMode) {
+      // Enter focus mode — hide sidebar, nav, expand editor
+      if (sidebar) sidebar.style.display = 'none';
+      if (container) container.style.gridTemplateColumns = '1fr';
+      if (navbar) navbar.style.display = 'none';
+      if (bottomNav) bottomNav.style.display = 'none';
+      if (appContainer) { appContainer.style.paddingTop = '0'; appContainer.style.maxWidth = '100%'; }
+      if (btn) btn.textContent = '⬜ Exit Focus';
+      // Make editor taller
+      const editor = document.getElementById('notesEditor');
+      if (editor) editor.style.minHeight = 'calc(100vh - 200px)';
+    } else {
+      // Exit focus mode — restore everything
+      if (sidebar) sidebar.style.display = '';
+      if (container) container.style.gridTemplateColumns = '';
+      if (navbar) navbar.style.display = '';
+      if (bottomNav) bottomNav.style.display = '';
+      if (appContainer) { appContainer.style.paddingTop = ''; appContainer.style.maxWidth = ''; }
+      if (btn) btn.textContent = '⬛ Focus Mode';
+      const editor = document.getElementById('notesEditor');
+      if (editor) editor.style.minHeight = '';
+    }
+  },
+
+  // Page system — each topic can have multiple pages stored as topic_p1, topic_p2, etc.
+  _pageKey(userId, topicId, page) {
+    if (page === 1) return this._storageKey(userId, topicId); // page 1 = original key (backwards compatible)
+    return `sparky_notes_${userId}_${topicId}_p${page}`;
+  },
+
+  _getPageCount(userId, topicId) {
+    let count = 1;
+    // Check if page 1 has content
+    while (localStorage.getItem(this._pageKey(userId, topicId, count + 1)) !== null) {
+      count++;
+    }
+    // Also check the stored page count
+    const stored = parseInt(localStorage.getItem(`sparky_notes_pagecount_${userId}_${topicId}`) || '0');
+    return Math.max(count, stored, 1);
+  },
+
+  _loadPage(userId, topicId, page) {
+    return localStorage.getItem(this._pageKey(userId, topicId, page)) || '';
+  },
+
+  _savePage(userId, topicId, page, html) {
+    localStorage.setItem(this._pageKey(userId, topicId, page), html);
+    // Update page count if needed
+    const countKey = `sparky_notes_pagecount_${userId}_${topicId}`;
+    const current = parseInt(localStorage.getItem(countKey) || '1');
+    if (page > current) localStorage.setItem(countKey, page.toString());
+  },
+
+  _prevPage(userId) {
+    if (this._currentPage <= 1) return;
+    // Save current page first
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+    this._currentPage--;
+    this.render(Storage.get());
+  },
+
+  _nextPage(userId) {
+    const maxPage = this._getPageCount(userId, this.currentTopic);
+    if (this._currentPage >= maxPage) return;
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+    this._currentPage++;
+    this.render(Storage.get());
+  },
+
+  _addPage(userId) {
+    // Save current page
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+    // Create new page
+    const newPage = this._getPageCount(userId, this.currentTopic) + 1;
+    localStorage.setItem(`sparky_notes_pagecount_${userId}_${this.currentTopic}`, newPage.toString());
+    this._savePage(userId, this.currentTopic, newPage, '');
+    this._currentPage = newPage;
+    this.render(Storage.get());
+    showToast(`Page ${newPage} created!`, 'success');
+  },
+
+  _toggleExtChars() {
+    const el = document.getElementById('notesExtChars');
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
   },
 
   _insertChar(char) {
@@ -2789,7 +3466,7 @@ const Notes = {
     } else {
       document.execCommand('insertText', false, char);
     }
-    this._hideEmpty();
+    // Trigger save
     const userId = Storage.get()?.user?.id;
     if (userId) this._save(userId, this.currentTopic, editor.innerHTML);
   },
@@ -2797,12 +3474,16 @@ const Notes = {
   _onInput(userId) {
     const editor = document.getElementById('notesEditor');
     if (!editor) return;
+    // Debounced auto-save — saves to current page
     clearTimeout(this._saveTimer);
     this._saveTimer = setTimeout(() => {
-      this._save(userId, this.currentTopic, editor.innerHTML);
+      this._savePage(userId, this.currentTopic, this._currentPage, editor.innerHTML);
+      // Also keep the _save for backwards compat (page 1 = main key)
+      if (this._currentPage === 1) this._save(userId, this.currentTopic, editor.innerHTML);
       const status = document.getElementById('notesStatus');
       if (status) { status.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
     }, 800);
+    // Word count
     const wc = document.getElementById('notesWordCount');
     if (wc) wc.textContent = this._wordCount(editor.innerHTML) + ' words';
   },
@@ -2817,61 +3498,7 @@ const Notes = {
     if (header) header.style.display = 'none';
   },
 
-  _download(userId) {
-    const state = Storage.get();
-    const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
-    const pages = this._getPages(userId, this.currentTopic);
-    const date = new Date().toLocaleDateString('en-CA');
-
-    // Build one HTML doc with all pages as sections
-    const pagesSections = pages.map(p => {
-      const html = this._loadPage(userId, this.currentTopic, p.id);
-      return `<section class="page-section">
-        <h2 class="page-label">${this._esc(p.name)}</h2>
-        <div class="page-body">${html || '<p style="color:#888;font-style:italic;">No notes on this page.</p>'}</div>
-      </section>`;
-    }).join('<hr class="page-divider">');
-
-    const fullHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${topic.name} Notes â€” SparkyStudy</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 24px 16px; color: #1a1a1a; line-height: 1.6; }
-    .doc-header { border-bottom: 2px solid #f59e0b; padding-bottom: 12px; margin-bottom: 24px; }
-    .doc-header h1 { margin: 0; font-size: 1.6rem; }
-    .doc-header p { margin: 4px 0 0; color: #666; font-size: 0.85rem; }
-    .page-label { font-size: 1rem; font-weight: 700; color: #f59e0b; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .page-body { font-size: 0.95rem; }
-    .page-body ul { padding-left: 1.4em; }
-    .page-body h2 { font-size: 1.2rem; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-    .page-body h3 { font-size: 1rem; color: #444; }
-    .page-divider { border: none; border-top: 1px dashed #ddd; margin: 28px 0; }
-    mark { background: rgba(245,158,11,0.25); border-radius: 3px; padding: 1px 3px; }
-    @media print { body { padding: 0; } }
-  </style>
-</head>
-<body>
-  <div class="doc-header">
-    <h1>${topic.icon} ${topic.name} Notes</h1>
-    <p>Student: ${this._esc(state?.user?.name || '')} &nbsp;|&nbsp; Downloaded: ${date} &nbsp;|&nbsp; sparkystudy.com</p>
-  </div>
-  ${pagesSections}
-</body>
-</html>`;
-
-    const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `sparkystudy-${topic.id}-notes-${date}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Notes downloaded! Open the file in any browser.', 'success');
-  },
-
+  // ── Study Mode: render notes with key terms highlighted, show glossary ──
   _studyMode(userId) {
     const editor = document.getElementById('notesEditor');
     if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
@@ -2883,6 +3510,8 @@ const Notes = {
   _renderStudy(container, userId) {
     const html = this._load(userId, this.currentTopic);
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
+
+    // Extract highlighted/bolded terms for glossary
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     const terms = new Set();
@@ -2897,22 +3526,26 @@ const Notes = {
           <div style="display:flex;align-items:center;gap:12px;">
             <span style="font-size:1.5rem;">${topic.icon}</span>
             <div>
-              <h2 style="margin:0;font-size:1.1rem;">Study Mode \u2014 ${topic.name}</h2>
-              <div style="font-size:0.75rem;color:var(--text-muted);">Key terms highlighted \u00b7 Read through, then test yourself</div>
+              <h2 style="margin:0;font-size:1.1rem;">Study Mode — ${topic.name}</h2>
+              <div style="font-size:0.75rem;color:var(--text-muted);">Key terms highlighted · Read through, then test yourself</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-primary btn-sm" onclick="Notes.mode='quiz';Notes._generateQuiz('${userId}')">\u26a1 Take Quiz</button>
-            <button class="btn btn-secondary btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">\u2190 Back to Notes</button>
+            <button class="btn btn-primary btn-sm" onclick="Notes.mode='quiz';Notes._generateQuiz('${userId}')">⚡ Take Quiz</button>
+            <button class="btn btn-secondary btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">← Back to Notes</button>
           </div>
         </div>
+
         <div style="display:grid;grid-template-columns:1fr ${terms.size>0?'260px':'0'};gap:20px;align-items:start;">
+          <!-- Notes content -->
           <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;font-size:0.95rem;line-height:1.9;color:var(--text-primary);">
             ${html || '<p style="color:var(--text-muted);">No notes yet for this topic.</p>'}
           </div>
+
+          <!-- Key terms sidebar -->
           ${terms.size > 0 ? `
             <div style="background:linear-gradient(135deg,rgba(245,158,11,0.07),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.2);border-radius:16px;padding:16px;position:sticky;top:80px;">
-              <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700;margin-bottom:12px;">\u2b50 Key Terms (${terms.size})</div>
+              <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700;margin-bottom:12px;">⭐ Key Terms (${terms.size})</div>
               ${[...terms].map(t=>`
                 <div style="padding:7px 10px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:0.83rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;border-left:3px solid var(--accent);">${t}</div>
               `).join('')}
@@ -2924,6 +3557,7 @@ const Notes = {
     `;
   },
 
+  // ── Quiz Generation ──
   _generateQuiz(userId) {
     const editor = document.getElementById('notesEditor');
     if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
@@ -2935,6 +3569,7 @@ const Notes = {
     const cards = [];
     const usedTerms = new Set();
 
+    // Method 1: Sentences containing bolded terms
     tempDiv.querySelectorAll('p, li, div, h1, h2, h3').forEach(el => {
       const bolds = el.querySelectorAll('b, strong');
       bolds.forEach(b => {
@@ -2943,14 +3578,16 @@ const Notes = {
         usedTerms.add(term.toLowerCase());
         const sentence = el.textContent.trim();
         if (sentence.length < 10) return;
+        // Make fill-in-blank by removing the term
         const blanked = sentence.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), '________');
         cards.push({ type:'blank', question: blanked, answer: term, hint: sentence });
       });
     });
 
+    // Method 2: Definition patterns "X is Y" / "X = Y" / "X: Y" from text nodes
     const fullText = tempDiv.textContent;
     const defPatterns = [
-      /([A-Za-z\u03a9\u03bc\u00b0\u2220\u0394\u03c6 \d]+?)\s*=\s*([^.\n,]{5,60})/g,
+      /([A-Za-zΩμ°∠Δφ \d]+?)\s*=\s*([^.\n,]{5,60})/g,
       /([A-Z][a-z]+(?:\s[a-z]+)?)\s+(?:is|are|means?)\s+([^.\n]{10,80})/g,
     ];
     defPatterns.forEach(re => {
@@ -2963,8 +3600,12 @@ const Notes = {
       }
     });
 
-    if (cards.length === 0) { showToast('No quiz cards found! Bold important terms or write "X is Y" definitions.', 'info'); return; }
+    if (cards.length === 0) {
+      showToast('No quiz cards found! Bold important terms or write "X is Y" definitions.', 'info');
+      return;
+    }
 
+    // Shuffle
     this.quizCards = cards.sort(() => Math.random() - 0.5).slice(0, 20);
     this.quizIdx = 0;
     this.quizAnswers = {};
@@ -2973,12 +3614,611 @@ const Notes = {
     this.render(state);
   },
 
+  // AI-powered quiz generation via Claude API
+  async _generateQuizAI(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (editor) this._save(userId, this.currentTopic, editor.innerHTML);
+    const html = this._load(userId, this.currentTopic);
+    if (!html.trim()) { showToast('Write some notes first!', 'info'); return; }
+    const state  = Storage.get();
+    const text = html.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0, 6000);
+    showToast('⚡ Generating AI quiz…', 'info');
+    try {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: `You are a quiz generator for Alberta electrical apprentices. Based on these notes, generate 10 questions. Mix fill-in-the-blank, multiple-choice (4 options), and short-answer questions. For each question include the correct answer and a one-sentence explanation.\n\nReturn ONLY a JSON array like:\n[{"type":"blank","question":"The formula for Ohm's Law is ________","answer":"V = IR","explanation":"From the fundamentals section."},{"type":"mc","question":"What does XL represent?","options":["Inductive reactance","Capacitive reactance","Resistance","Impedance"],"answer":"Inductive reactance","explanation":"XL = inductive reactance."},{"type":"short","question":"Explain the difference between bonding and grounding.","answer":"Bonding connects conductive parts; grounding connects to earth.","explanation":"Covered in grounding section."}]\n\nNotes:\n${text}`,
+          history: []
+        })
+      });
+      const data = await res.json();
+      const rawText = data.answer || '';
+      const m = rawText.match(/\[[\s\S]*\]/);
+      if (!m) throw new Error('No JSON array');
+      const questions = JSON.parse(m[0]).slice(0, 10);
+      // Convert to internal quiz card format
+      this.quizCards = questions.map((q, i) => ({
+        type: q.type === 'mc' ? 'mc' : 'blank',
+        question: q.question,
+        answer: q.answer,
+        options: q.options || null,
+        hint: q.explanation || '',
+        id: i,
+      }));
+      this.quizIdx = 0;
+      this.quizAnswers = {};
+      this.mode = 'quiz';
+      this.render(Storage.get());
+      Points.award('Practice quiz completed', Points.ACTIONS.quiz_complete.base, true);
+    } catch(err) {
+      console.error('[Notes AI Quiz]', err);
+      showToast('AI quiz failed — falling back to local generator.', 'info');
+      this._generateQuiz(userId);
+    }
+  },
+
+  // Upload flow: ask user if content is Notes or Module, then process
+  async _uploadPages(event, userId) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    event.target.value = '';
+
+    // Show type selector modal
+    const selectedType = await this._showUploadTypeModal();
+    if (!selectedType) return; // user cancelled
+
+    const editor = document.getElementById('notesEditor');
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
+    let totalExtracted = 0;
+    const total = files.length;
+
+    showToast(`Processing ${total} file${total > 1 ? 's' : ''}...`, 'info');
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fname = file.name || 'upload';
+      try {
+        let extractedText = '';
+
+        if (file.type === 'application/pdf') {
+          extractedText = await this._extractPdfText(file);
+          if (extractedText.trim().length < 50) {
+            showToast(`📄 ${fname} is scanned — running OCR...`, 'info');
+            extractedText = await this._ocrPdf(file, BACKEND);
+          }
+        } else if (file.type.startsWith('image/')) {
+          showToast(`📷 Extracting text from ${fname}...`, 'info');
+          const base64 = await this._fileToBase64(file);
+          const res = await fetch(BACKEND + '/api/extract-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64, mimeType: file.type })
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          extractedText = data.text || '';
+        } else {
+          extractedText = await file.text();
+        }
+
+        if (extractedText.trim().length < 10) continue;
+
+        // ── AI SAFETY CHECK: verify classification matches user selection ──
+        let aiClassification = null;
+        if (extractedText.trim().length > 100) {
+          try {
+            const classRes = await fetch(BACKEND + '/api/classify-content', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: extractedText })
+            });
+            aiClassification = await classRes.json();
+          } catch(e) { /* classification failed — proceed with user's choice */ }
+        }
+
+        // If user said "notes" but AI detects module with high confidence, warn
+        if (selectedType === 'notes' && aiClassification && aiClassification.type === 'module' && aiClassification.confidence >= 0.75) {
+          const proceed = confirm(
+            '⚠️ This content looks like it may be from a copyrighted textbook or module.\n\n' +
+            'Reason: ' + (aiClassification.reason || 'Textbook formatting detected') + '\n\n' +
+            'Copyrighted module content cannot be shared with other students.\n\n' +
+            'Would you like to save this as a MODULE instead (private, not shared)?'
+          );
+          if (proceed) {
+            // Re-classify as module — stays local only
+            await this._saveAsModule(extractedText, fname, userId, editor);
+            totalExtracted++;
+            continue;
+          }
+          // User insists it's notes — let them, but mark as unverified
+        }
+
+        // If user said "module" but AI detects notes, that's fine — more restrictive is always safe
+        if (selectedType === 'module' || (aiClassification && aiClassification.type === 'module' && aiClassification.confidence >= 0.85)) {
+          // MODULES: save locally ONLY, never share
+          await this._saveAsModule(extractedText, fname, userId, editor);
+          totalExtracted++;
+        } else {
+          // NOTES: save locally and offer to share
+          if (editor) {
+            const heading = `<h2>${fname.replace(/\.[^.]+$/, '')}</h2>`;
+            const formatted = extractedText.replace(/\n/g, '<br>');
+            editor.innerHTML += (editor.innerHTML.trim() ? '<hr>' : '') + heading + formatted;
+            this._onInput(userId);
+          }
+          totalExtracted++;
+
+          // Ask to share notes with same-period students
+          const state = Storage.get();
+          if (state && !state.user.isOwner && extractedText.trim().length > 100) {
+            await this._offerToShareNotes(extractedText, fname, userId, state.user.period, state.user.name);
+          }
+        }
+      } catch (err) {
+        console.error('Upload error for', fname, err);
+        showToast(`Failed to process ${fname}: ${err.message}`, 'error');
+      }
+    }
+
+    if (totalExtracted > 0) {
+      showToast(`${totalExtracted} file${totalExtracted > 1 ? 's' : ''} processed!`, 'success');
+      syncAIContext(Storage.get());
+    }
+  },
+
+  // Module content: save as a user lesson in localStorage, NEVER to cloud
+  async _saveAsModule(text, fname, userId, editor) {
+    // Detect title from content using AI (ILM title pages have a consistent format)
+    let title = fname.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ').trim();
+    try {
+      const BACKEND = 'https://sparkystudy-production.up.railway.app';
+      const res = await fetch(BACKEND + '/api/detect-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.slice(0, 2000) })
+      });
+      const data = await res.json();
+      if (data.title && data.title.length > 3) title = data.title;
+    } catch(e) { /* use filename as fallback */ }
+    const moduleId = 'uploaded_' + Date.now().toString(36);
+    const state = Storage.get();
+    const period = state ? state.user.period : 2;
+
+    // Split text into sections by double newlines or headings
+    const rawSections = text.split(/\n{2,}/).filter(s => s.trim().length > 20);
+    const sections = [];
+    let currentSection = { title: 'Introduction', body: '' };
+
+    for (const block of rawSections) {
+      const trimmed = block.trim();
+      // Detect headings: short lines (< 80 chars) that look like titles
+      const lines = trimmed.split('\n');
+      if (lines.length === 1 && lines[0].length < 80 && !lines[0].endsWith('.') && /^[A-Z]/.test(lines[0])) {
+        if (currentSection.body.trim()) {
+          sections.push({ ...currentSection });
+        }
+        currentSection = { title: lines[0].trim(), body: '' };
+      } else {
+        currentSection.body += (currentSection.body ? '\n\n' : '') + trimmed;
+      }
+    }
+    if (currentSection.body.trim()) sections.push(currentSection);
+
+    // If no sections detected, create one big section
+    if (sections.length === 0) {
+      sections.push({ title: title, body: text.trim() });
+    }
+
+    // Build lesson object
+    const lesson = {
+      id: moduleId,
+      period: period,
+      title: title,
+      icon: '📕',
+      subtitle: 'Uploaded module · ' + sections.length + ' sections · ' + Math.round(text.length / 5) + ' words',
+      color: '#f59e0b',
+      gradient: 'linear-gradient(135deg,rgba(245,158,11,0.1),rgba(217,119,6,0.05))',
+      border: 'rgba(245,158,11,0.3)',
+      readTime: sections.length + ' sections',
+      uploaded: true,
+      uploadedAt: Date.now(),
+      sections: sections.map(s => ({
+        type: s.title.toLowerCase().includes('formula') || s.title.toLowerCase().includes('key') ? 'keypoint' : 'concept',
+        title: s.title,
+        body: s.body
+      }))
+    };
+
+    // Save module content to localStorage (separate from notes, NEVER to cloud)
+    const moduleKey = 'sparky_module_' + userId;
+    const existing = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    existing.push(lesson);
+    localStorage.setItem(moduleKey, JSON.stringify(existing));
+
+    // Also save raw text for AI context
+    localStorage.setItem('sparky_modtext_' + userId + '_' + moduleId, text.slice(0, 30000));
+
+    showToast('📕 Module saved as lesson! Find it in the Lessons page.', 'success');
+    syncAIContext(Storage.get());
+  },
+
+  // Show modal asking user to choose Notes vs Module
+  _showUploadTypeModal() {
+    return new Promise(resolve => {
+      const modal = document.createElement('div');
+      modal.id = 'uploadTypeModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.2s ease;';
+      modal.innerHTML = `
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:480px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+          <h2 style="margin:0 0 8px;font-size:1.2rem;">What are you uploading?</h2>
+          <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:24px;line-height:1.6;">
+            This helps us protect copyrighted material and share notes responsibly.
+          </p>
+
+          <div id="uploadTypeNotes" style="cursor:pointer;background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(16,185,129,0.04));border:2px solid rgba(34,197,94,0.3);border-radius:14px;padding:20px;margin-bottom:14px;transition:border-color 0.15s,transform 0.1s;" onmouseover="this.style.borderColor='rgba(34,197,94,0.6)';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='rgba(34,197,94,0.3)';this.style.transform=''">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="font-size:2rem;">📝</div>
+              <div>
+                <div style="font-weight:800;font-size:1rem;color:#22c55e;">My Own Notes</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;line-height:1.5;">
+                  Your handwritten notes, typed summaries, study cards, or class notes.
+                  <strong>Can be shared</strong> with classmates in the same period (with your permission).
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="uploadTypeModule" style="cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04));border:2px solid rgba(245,158,11,0.3);border-radius:14px;padding:20px;margin-bottom:20px;transition:border-color 0.15s,transform 0.1s;" onmouseover="this.style.borderColor='rgba(245,158,11,0.6)';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='rgba(245,158,11,0.3)';this.style.transform=''">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="font-size:2rem;">📕</div>
+              <div>
+                <div style="font-weight:800;font-size:1rem;color:#f59e0b;">Textbook / Module</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;line-height:1.5;">
+                  Published textbook pages, ILM modules, or any copyrighted course material.
+                  <strong>Stays private</strong> — never shared or uploaded to our servers.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin-bottom:16px;">
+            <span style="font-size:1.2rem;">🔒</span>
+            <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.5;">
+              <strong style="color:#ef4444;">Copyright protection:</strong> Module/textbook content is stored on your device only and is never uploaded, shared, or transmitted. Our AI also verifies content type as a safety measure.
+            </div>
+          </div>
+
+          <button id="uploadTypeCancel" style="width:100%;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-muted);cursor:pointer;font-size:0.88rem;">Cancel</button>
+        </div>`;
+
+      document.body.appendChild(modal);
+
+      modal.querySelector('#uploadTypeNotes').onclick = () => { modal.remove(); resolve('notes'); };
+      modal.querySelector('#uploadTypeModule').onclick = () => { modal.remove(); resolve('module'); };
+      modal.querySelector('#uploadTypeCancel').onclick = () => { modal.remove(); resolve(null); };
+      modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(null); } };
+    });
+  },
+
+  // Offer to share notes with same-period students
+  _offerToShareNotes(text, fname, userId, period, userName) {
+    return new Promise(resolve => {
+      const modal = document.createElement('div');
+      modal.id = 'shareNotesModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.2s ease;';
+      modal.innerHTML = `
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:440px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="font-size:2rem;">🤝</div>
+            <div>
+              <h3 style="margin:0;font-size:1.1rem;">Share with classmates?</h3>
+              <div style="font-size:0.82rem;color:var(--text-muted);">Help other Period ${period} students</div>
+            </div>
+          </div>
+          <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;">
+            Would you like to share these notes with other students in <strong>Period ${period}</strong>?
+            Your name will appear as the contributor. You can remove shared notes at any time from Settings.
+          </p>
+          <div style="display:flex;gap:10px;">
+            <button id="shareYes" style="flex:1;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Yes, share my notes</button>
+            <button id="shareNo" style="flex:1;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);cursor:pointer;font-size:0.9rem;">No, keep private</button>
+          </div>
+        </div>`;
+
+      document.body.appendChild(modal);
+
+      modal.querySelector('#shareYes').onclick = async () => {
+        modal.remove();
+        const noteId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const topicName = fname.replace(/\.[^.]+$/, '');
+        const sharedNote = {
+          id: noteId,
+          userId: userId,
+          userName: userName || 'Anonymous',
+          period: period,
+          topic: topicName,
+          content: text.slice(0, 15000), // cap at 15k chars
+          sharedAt: Date.now(),
+          wordCount: text.split(/\s+/).filter(Boolean).length
+        };
+        await FireDB.saveSharedNote(sharedNote);
+        showToast('📤 Notes shared with Period ' + period + ' students!', 'success');
+        resolve(true);
+      };
+      modal.querySelector('#shareNo').onclick = () => { modal.remove(); resolve(false); };
+      modal.onclick = (e) => { if (e.target === modal) { modal.remove(); resolve(false); } };
+    });
+  },
+
+  async _extractPdfText(file) {
+    // Use PDF.js to extract text from a text-based PDF
+    if (!window.pdfjsLib) return '';
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        if (pageText.trim()) fullText += pageText + '\n\n';
+      }
+      return fullText;
+    } catch (e) {
+      console.warn('PDF.js extraction failed:', e.message);
+      return '';
+    }
+  },
+
+  async _ocrPdf(file, backendUrl) {
+    // For scanned PDFs: render each page to a canvas, then send as image to backend OCR
+    if (!window.pdfjsLib) {
+      showToast('PDF processing not available — try uploading images instead.', 'error');
+      return '';
+    }
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      const maxPages = pdf.numPages; // process all pages
+
+      for (let i = 1; i <= maxPages; i++) {
+        showToast(`OCR: page ${i}/${maxPages}...`, 'info');
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        // Convert canvas to base64
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const base64 = dataUrl.split(',')[1];
+
+        const res = await fetch(backendUrl + '/api/extract-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64, mimeType: 'image/jpeg' })
+        });
+        const data = await res.json();
+        if (data.text) fullText += data.text + '\n\n';
+      }
+      return fullText;
+    } catch (e) {
+      console.error('PDF OCR failed:', e.message);
+      return '';
+    }
+  },
+
+  _fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  },
+
+  // Clean up notes: remove duplicates, strip auto-organized labels, consolidate
+  _cleanupNotes(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (!editor || !editor.innerHTML.trim()) {
+      showToast('No notes to clean up.', 'info');
+      return;
+    }
+
+    let html = editor.innerHTML;
+
+    // 1. Remove all "Auto-organized" labels and their containers
+    html = html.replace(/<hr[^>]*>\s*<div[^>]*>🗂️\s*Auto-organized[^<]*<\/div>/gi, '');
+    html = html.replace(/<div[^>]*>🗂️\s*Auto-organized[^<]*<\/div>/gi, '');
+    html = html.replace(/<hr[^>]*>\s*<div[^>]*>📋\s*Restored from:[^<]*<\/div>/gi, '');
+    html = html.replace(/<div[^>]*>📋\s*Restored from:[^<]*<\/div>/gi, '');
+
+    // 2. Split into text chunks and deduplicate
+    const parts = html.split(/<hr[^>]*>/gi);
+    const seen = new Set();
+    const unique = [];
+
+    parts.forEach(part => {
+      // Normalize: strip tags, collapse whitespace, lowercase for comparison
+      const normalized = part.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (normalized.length < 5) return; // skip empty chunks
+      // Check if we've seen this text (or something 90%+ similar)
+      const key = normalized.slice(0, 100); // use first 100 chars as dedup key
+      if (seen.has(key)) return; // skip duplicate
+      seen.add(key);
+      unique.push(part);
+    });
+
+    // 3. Also deduplicate within a single block (line-by-line)
+    const finalHtml = unique.map(block => {
+      const lines = block.split(/<br\s*\/?>/gi);
+      const seenLines = new Set();
+      const uniqueLines = [];
+      lines.forEach(line => {
+        const norm = line.replace(/<[^>]*>/g, '').trim().toLowerCase();
+        if (norm.length < 5) { uniqueLines.push(line); return; }
+        const lineKey = norm.slice(0, 80);
+        if (seenLines.has(lineKey)) return;
+        seenLines.add(lineKey);
+        uniqueLines.push(line);
+      });
+      return uniqueLines.join('<br>');
+    }).join('<hr>');
+
+    editor.innerHTML = finalHtml;
+    this._onInput(userId);
+
+    const removed = parts.length - unique.length;
+    showToast(`🧹 Cleaned up! Removed ${removed} duplicate${removed !== 1 ? 's' : ''} and formatting labels.`, 'success');
+  },
+
+  // AI-powered note organizer: takes all notes from current topic and sorts content
+  // into the appropriate topic sections based on what each line/paragraph is about
+  async _organizeAI(userId) {
+    const editor = document.getElementById('notesEditor');
+    if (!editor || !editor.innerHTML.trim()) {
+      showToast('No notes to organize. Add some content first!', 'info');
+      return;
+    }
+
+    // Split notes into chunks by line breaks, <hr>, or <br><br>
+    const html = editor.innerHTML;
+    // Split on <hr>, double <br>, or block-level elements to get chunks
+    const chunks = html
+      .split(/<hr[^>]*>|<br\s*\/?>\s*<br\s*\/?>|<\/(?:p|div|h[1-6]|li|ul|ol)>/gi)
+      .map(c => c.replace(/<[^>]*>/g, '').trim())
+      .filter(c => c.length > 10);
+
+    if (chunks.length === 0) {
+      showToast('Not enough content to organize.', 'info');
+      return;
+    }
+
+    showToast(`🗂️ Classifying ${chunks.length} note chunks... This may take a moment.`, 'info');
+
+    try {
+      const BACKEND = 'https://sparkystudy-production.up.railway.app';
+      // Send all chunks to AI for CLASSIFICATION ONLY — we keep the original text
+      const numbered = chunks.map((c, i) => `[${i}] ${c.slice(0, 200)}`).join('\n');
+      const res = await fetch(BACKEND + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: `Classify each numbered note into exactly one category. Categories:
+- theory (electrical theory, formulas, concepts, physics, module content, calculations)
+- lab (hands-on work, lab procedures, practical exercises, measurements)
+- code (CEC code rules, regulations, code references, standards)
+- general (personal notes, reminders, anything else)
+
+Return ONLY a JSON array of category strings in order, one per note. Example: ["theory","lab","theory","code","general"]
+No markdown, no explanation, no other text.
+
+Notes to classify:
+${numbered.slice(0, 7000)}`,
+          history: [],
+          systemContext: ''
+        })
+      });
+      if (!res.ok) throw new Error('Server error: ' + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      // Parse classifications
+      let classifications;
+      try {
+        let raw = data.answer || '';
+        raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+        const arrStart = raw.indexOf('[');
+        if (arrStart === -1) throw new Error('No array found');
+        let depth = 0, arrEnd = -1;
+        for (let ci = arrStart; ci < raw.length; ci++) {
+          if (raw[ci] === '[') depth++;
+          if (raw[ci] === ']') { depth--; if (depth === 0) { arrEnd = ci; break; } }
+        }
+        if (arrEnd === -1) throw new Error('Incomplete array');
+        classifications = JSON.parse(raw.substring(arrStart, arrEnd + 1));
+      } catch(e) {
+        console.error('Classify parse error:', e, data.answer);
+        showToast('AI couldn\'t classify the notes. Try again.', 'error');
+        return;
+      }
+
+      if (!Array.isArray(classifications) || classifications.length === 0) {
+        showToast('Classification failed. Notes unchanged.', 'info');
+        return;
+      }
+
+      // Now split the ORIGINAL HTML into chunks and move each to its classified category
+      const htmlChunks = html
+        .split(/(<hr[^>]*>|<br\s*\/?>\s*<br\s*\/?>)/gi)
+        .filter(c => c.replace(/<[^>]*>/g, '').trim().length > 10);
+
+      const validCats = new Set(['theory', 'lab', 'code', 'general']);
+      const buckets = { theory: [], lab: [], code: [], general: [] };
+      const state = Storage.get();
+
+      htmlChunks.forEach((chunk, i) => {
+        const cat = (classifications[i] || 'general').toLowerCase().trim();
+        const target = validCats.has(cat) ? cat : 'general';
+        // Don't move chunks that are already in the right category
+        if (target !== this.currentTopic) {
+          buckets[target].push(chunk);
+        }
+      });
+
+      // Save each bucket to its topic
+      let movedCount = 0;
+      const remaining = []; // chunks that stay in current topic
+      htmlChunks.forEach((chunk, i) => {
+        const cat = (classifications[i] || 'general').toLowerCase().trim();
+        const target = validCats.has(cat) ? cat : 'general';
+        if (target === this.currentTopic) {
+          remaining.push(chunk);
+        }
+      });
+
+      for (const [cat, catChunks] of Object.entries(buckets)) {
+        if (catChunks.length === 0) continue;
+        const key = this._storageKey(userId, cat);
+        const existing = localStorage.getItem(key) || '';
+        const existingNorm = existing.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').toLowerCase();
+        // Filter out chunks that already exist in the target topic (prevent duplicates)
+        const deduped = catChunks.filter(chunk => {
+          const chunkNorm = chunk.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+          return chunkNorm.length > 10 && !existingNorm.includes(chunkNorm.slice(0, 80));
+        });
+        if (deduped.length === 0) continue;
+        const newContent = deduped.join('<br><br>');
+        localStorage.setItem(key, existing
+          ? existing + '<hr>' + newContent
+          : newContent);
+        movedCount += catChunks.length;
+      }
+
+      // Keep only the chunks that belong in the current topic
+      editor.innerHTML = remaining.join('<br><br>');
+      this._onInput(userId);
+      syncAIContext(state);
+
+      showToast(`🗂️ Moved ${movedCount} chunk${movedCount !== 1 ? 's' : ''} to the right topics! ${remaining.length} stayed here.`, 'success');
+      this.render(Storage.get());
+    } catch(err) {
+      console.error('Organize error:', err);
+      showToast('Failed to organize: ' + err.message, 'error');
+    }
+  },
+
   _renderQuiz(container, userId) {
     const topic = this.TOPICS_LIST.find(t => t.id === this.currentTopic) || this.TOPICS_LIST[0];
     const cards = this.quizCards;
     const done = this.quizIdx >= cards.length;
 
     if (done) {
+      // Results
       let correct = 0;
       cards.forEach((c,i) => {
         const ua = (this.quizAnswers[i]||'').trim().toLowerCase();
@@ -2991,12 +4231,12 @@ const Notes = {
       container.innerHTML = `
         <div style="max-width:600px;margin:0 auto;text-align:center;padding:48px 20px;">
           <div style="font-size:4rem;font-weight:900;color:${pct>=80?'var(--success)':'var(--danger)'};">${pct}%</div>
-          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${pct>=90?'You nailed it! \ud83c\udfc6':pct>=70?'Solid work! \ud83c\udf89':'Keep reviewing! \ud83d\udcaa'}</div>
-          <div style="color:var(--text-muted);margin-bottom:28px;">${correct}/${cards.length} correct \u00b7 based on your own notes</div>
+          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${pct>=90?'You nailed it! 🏆':pct>=70?'Solid work! 🎉':'Keep reviewing! 💪'}</div>
+          <div style="color:var(--text-muted);margin-bottom:28px;">${correct}/${cards.length} correct · based on your own notes</div>
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="Notes._generateQuiz('${userId}')">\ud83d\udd01 New Quiz</button>
-            <button class="btn btn-secondary" onclick="Notes._studyMode('${userId}')">\ud83d\udcd6 Study Mode</button>
-            <button class="btn btn-secondary" onclick="Notes.mode='edit';Notes.render(Storage.get())">\u2190 Notes</button>
+            <button class="btn btn-primary" onclick="Notes._generateQuizAI('${userId}')">&#x1F501; New Quiz</button>
+            <button class="btn btn-secondary" onclick="Notes._studyMode('${userId}')">&#x1F4D6; Study Mode</button>
+            <button class="btn btn-secondary" onclick="Notes.mode='edit';Notes.render(Storage.get())">&#8592; Notes</button>
           </div>
           <div style="margin-top:32px;text-align:left;">
             <div style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:12px;">Answer Review</div>
@@ -3006,7 +4246,7 @@ const Notes = {
               const ok = ua && (ans.includes(ua)||ua.includes(ans)||ua===ans);
               return `<div style="background:var(--bg-card);border:1px solid ${ok?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.2)'};border-left:3px solid ${ok?'#22c55e':'#ef4444'};border-radius:10px;padding:12px 14px;margin-bottom:8px;">
                 <div style="font-size:0.83rem;color:var(--text-primary);margin-bottom:4px;">${c.question}</div>
-                <div style="font-size:0.8rem;color:#22c55e;">\u2713 ${c.answer}</div>
+                <div style="font-size:0.8rem;color:#22c55e;">✓ ${c.answer}</div>
                 ${!ok&&this.quizAnswers[i]?`<div style="font-size:0.78rem;color:#ef4444;">You wrote: ${this.quizAnswers[i]}</div>`:''}
               </div>`;
             }).join('')}
@@ -3022,11 +4262,13 @@ const Notes = {
       <div style="max-width:640px;margin:0 auto;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
           <div>
-            <h2 style="margin:0;font-size:1.05rem;font-weight:800;">\ud83d\udcdd Notes Quiz \u2014 ${topic.name}</h2>
+            <h2 style="margin:0;font-size:1.05rem;font-weight:800;">📝 Notes Quiz — ${topic.name}</h2>
             <div style="font-size:0.75rem;color:var(--text-muted);">Questions generated from your own notes</div>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">\u2715 Exit</button>
+          <button class="btn btn-ghost btn-sm" onclick="Notes.mode='edit';Notes.render(Storage.get())">✕ Exit</button>
         </div>
+
+        <!-- Progress -->
         <div style="margin-bottom:20px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.8rem;">
             <span style="color:var(--text-muted);">Card ${this.quizIdx+1} of ${cards.length}</span>
@@ -3036,35 +4278,65 @@ const Notes = {
             <div style="height:100%;width:${this.quizIdx/cards.length*100}%;background:var(--accent);border-radius:3px;transition:width 0.4s;"></div>
           </div>
         </div>
+
+        <!-- Card -->
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:16px;">
           <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:12px;">
-            ${card.type==='blank'?'FILL IN THE BLANK':'DEFINITION'}
+            ${card.type==='mc'?'MULTIPLE CHOICE':card.type==='short'?'SHORT ANSWER':'FILL IN THE BLANK'}
           </div>
           <div style="font-size:1.05rem;font-weight:600;line-height:1.7;color:var(--text-primary);">${card.question}</div>
         </div>
-        <div style="margin-bottom:16px;">
-          <input type="text" id="notesQuizInput" placeholder="Type your answer..."
-            style="width:100%;padding:14px 16px;background:var(--bg-card);border:2px solid ${answered?'rgba(34,197,94,0.4)':'var(--border)'};border-radius:12px;color:var(--text-primary);font-size:1rem;outline:none;box-sizing:border-box;"
-            value="${this.quizAnswers[this.quizIdx]||''}"
-            onkeydown="if(event.key==='Enter'){Notes._submitQuizAnswer('${userId}');}"
-            ${answered?'disabled':''}>
-        </div>
+
+        <!-- Answer input -->
+        ${card.type === 'mc' && card.options && card.options.length ? `
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+            ${card.options.map((opt, oi) => {
+              const sel = this.quizAnswers[this.quizIdx];
+              const isSelected = sel === opt;
+              const isCorrect  = answered && opt === card.answer;
+              const isWrong    = answered && isSelected && opt !== card.answer;
+              const bg = isCorrect ? 'rgba(34,197,94,0.12)' : isWrong ? 'rgba(239,68,68,0.1)' : isSelected ? 'rgba(245,158,11,0.08)' : 'var(--bg-card)';
+              const border = isCorrect ? '2px solid #22c55e' : isWrong ? '2px solid #ef4444' : isSelected ? '2px solid var(--accent)' : '1px solid var(--border)';
+              return `<button onclick="Notes._selectMC(${oi},'${userId}')" ${answered?'disabled':''} style="text-align:left;padding:12px 16px;background:${bg};border:${border};border-radius:10px;color:var(--text-primary);cursor:${answered?'default':'pointer'};font-size:0.9rem;transition:all 0.15s;">${opt}${isCorrect?' ✓':isWrong?' ✗':''}</button>`;
+            }).join('')}
+          </div>
+        ` : `
+          <div style="margin-bottom:16px;">
+            <input type="text" id="notesQuizInput" placeholder="Type your answer..."
+              style="width:100%;padding:14px 16px;background:var(--bg-card);border:2px solid ${answered?'rgba(34,197,94,0.4)':'var(--border)'};border-radius:12px;color:var(--text-primary);font-size:1rem;outline:none;box-sizing:border-box;"
+              value="${this.quizAnswers[this.quizIdx]||''}"
+              onkeydown="if(event.key==='Enter'){Notes._submitQuizAnswer('${userId}');}"
+              ${answered?'disabled':''}>
+          </div>
+        `}
+
         ${answered ? `
           <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
-            <div style="font-size:0.7rem;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;">\u2713 From your notes</div>
-            <div style="font-size:0.88rem;color:var(--text-primary);">${card.hint}</div>
+            <div style="font-size:0.7rem;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;">&#x2713; ${card.type==='mc'?'Correct answer':'From your notes'}</div>
+            <div style="font-size:0.88rem;color:var(--text-primary);margin-bottom:${card.hint?'8px':'0'};">${card.answer}</div>
+            ${card.hint?`<div style="font-size:0.8rem;color:var(--text-muted);">${card.hint}</div>`:''}
           </div>
           <button class="btn btn-primary" style="width:100%;" onclick="Notes._nextQuiz('${userId}')">
-            ${this.quizIdx+1<cards.length?'Next \u2192':'See Results'}
+            ${this.quizIdx+1<cards.length?'Next →':'See Results'}
           </button>
-        ` : `
+        ` : (card.type !== 'mc' || !card.options) ? `
           <button class="btn btn-primary" style="width:100%;" onclick="Notes._submitQuizAnswer('${userId}')">
             Confirm Answer
           </button>
-        `}
+        ` : ''}
       </div>
     `;
+    // Focus input
     setTimeout(() => document.getElementById('notesQuizInput')?.focus(), 50);
+  },
+
+  _selectMC(optionIdx, userId) {
+    const card = this.quizCards[this.quizIdx];
+    if (!card || !card.options || this.quizAnswers[this.quizIdx] !== undefined) return;
+    this.quizAnswers[this.quizIdx] = card.options[optionIdx];
+    const state = Storage.get();
+    this.render(state);
+    window.scrollTo(0,0);
   },
 
   _submitQuizAnswer(userId) {
@@ -3119,7 +4391,7 @@ const WrongAnswerStudy = {
     if (!container) return;
     if (!this.questions || this.questions.length === 0) {
       container.innerHTML = `<div style="text-align:center;padding:60px 20px;">
-        <div style="font-size:3rem;margin-bottom:16px;">ðŸŽ¯</div>
+        <div style="font-size:3rem;margin-bottom:16px;">🎯</div>
         <h2 style="color:var(--accent);">No Wrong Answers!</h2>
         <p style="color:var(--text-secondary);">You got everything right. Nothing to study.</p>
         <button class="btn btn-primary" onclick="App.navigate('exams')" style="margin-top:20px;">Back to Exams</button>
@@ -3143,7 +4415,7 @@ const WrongAnswerStudy = {
       <div style="max-width:800px;margin:0 auto;">
         <!-- Header -->
         <div style="background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(245,158,11,0.08));border:1px solid rgba(239,68,68,0.25);border-radius:16px;padding:24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-          <div style="font-size:2.5rem;">ðŸ“–</div>
+          <div style="font-size:2.5rem;">📖</div>
           <div style="flex:1;min-width:200px;">
             <h2 style="margin:0;font-size:1.3rem;font-weight:800;">Custom Study Guide</h2>
             <div style="color:var(--text-secondary);font-size:0.88rem;margin-top:4px;">Based on ${q.length} wrong answer${q.length!==1?'s':''} from your ${this.sourceLabel}</div>
@@ -3166,7 +4438,7 @@ const WrongAnswerStudy = {
             <a href="#topic-${i}" style="padding:6px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);text-decoration:none;transition:var(--transition);"
               onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
-              ${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'ðŸ“Œ'} ${tn} (${topicGroups[tn].length})
+              ${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'📌'} ${tn} (${topicGroups[tn].length})
             </a>
           `).join('')}
         </div>
@@ -3175,7 +4447,7 @@ const WrongAnswerStudy = {
         ${Object.entries(topicGroups).map(([tn, qs], gi) => `
           <div id="topic-${gi}" style="margin-bottom:32px;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid rgba(245,158,11,0.2);">
-              <span style="font-size:1.3rem;">${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'ðŸ“Œ'}</span>
+              <span style="font-size:1.3rem;">${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'📌'}</span>
               <h3 style="margin:0;font-size:1rem;font-weight:700;">${tn}</h3>
               <span style="background:rgba(239,68,68,0.12);color:#ef4444;font-size:0.75rem;font-weight:700;padding:2px 10px;border-radius:10px;">${qs.length} wrong</span>
             </div>
@@ -3190,8 +4462,8 @@ const WrongAnswerStudy = {
                     const isCorrect = oi === r.correct;
                     const wasSelected = oi === r.selected;
                     let bg = 'var(--bg-input)', border = 'var(--border)', textCol = 'var(--text-secondary)', prefix = '';
-                    if (isCorrect) { bg='rgba(34,197,94,0.1)'; border='rgba(34,197,94,0.4)'; textCol='#22c55e'; prefix='âœ“ '; }
-                    else if (wasSelected) { bg='rgba(239,68,68,0.08)'; border='rgba(239,68,68,0.35)'; textCol='#ef4444'; prefix='âœ— '; }
+                    if (isCorrect) { bg='rgba(34,197,94,0.1)'; border='rgba(34,197,94,0.4)'; textCol='#22c55e'; prefix='✓ '; }
+                    else if (wasSelected) { bg='rgba(239,68,68,0.08)'; border='rgba(239,68,68,0.35)'; textCol='#ef4444'; prefix='✗ '; }
                     return `<div style="padding:10px 14px;background:${bg};border:1px solid ${border};border-radius:8px;font-size:0.88rem;color:${textCol};font-weight:${isCorrect?'600':'400'};">
                       ${prefix}${opt}${wasSelected&&!isCorrect?' <span style="font-size:0.75rem;opacity:0.7;">(your answer)</span>':''}
                     </div>`;
@@ -3201,7 +4473,7 @@ const WrongAnswerStudy = {
                 <!-- Explanation -->
                 ${r.exp ? `
                   <div style="background:linear-gradient(135deg,rgba(245,158,11,0.07),rgba(245,158,11,0.03));border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px;">
-                    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:6px;">ðŸ’¡ Why this is correct</div>
+                    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:6px;">💡 Why this is correct</div>
                     <div style="font-size:0.88rem;color:var(--text-primary);line-height:1.6;">${r.exp}</div>
                   </div>
                 ` : ''}
@@ -3212,11 +4484,11 @@ const WrongAnswerStudy = {
 
         <!-- CTA to Quiz -->
         <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(139,92,246,0.08));border:1px solid rgba(245,158,11,0.25);border-radius:16px;padding:28px;text-align:center;margin-top:32px;">
-          <div style="font-size:2rem;margin-bottom:10px;">ðŸŽ¯</div>
+          <div style="font-size:2rem;margin-bottom:10px;">🎯</div>
           <h3 style="margin:0 0 8px;font-size:1.1rem;font-weight:700;">Ready to test yourself?</h3>
-          <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:20px;">Take a targeted quiz with only these ${q.length} question${q.length!==1?'s':''} â€” no distractors, just your weak spots.</p>
+          <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:20px;">Take a targeted quiz with only these ${q.length} question${q.length!==1?'s':''} — no distractors, just your weak spots.</p>
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">âš¡ Start Re-Quiz (${q.length} Questions)</button>
+            <button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">⚡ Start Re-Quiz (${q.length} Questions)</button>
             <button class="btn btn-secondary" onclick="App.navigate('exams')">Back to Exams</button>
           </div>
         </div>
@@ -3251,7 +4523,7 @@ const WrongAnswerStudy = {
       container.innerHTML = `
         <div style="max-width:640px;margin:0 auto;text-align:center;padding:40px 20px;">
           <div style="font-size:4.5rem;font-weight:900;color:${pct>=80?'var(--success)':'var(--danger)'};">${pct}%</div>
-          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${allCorrect?'Perfect! All Mastered! ðŸ†':pct>=80?'Great improvement! ðŸŽ‰':pct>=50?'Getting there! ðŸ’ª':'Keep grinding! âš¡'}</div>
+          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${allCorrect?'Perfect! All Mastered! 🏆':pct>=80?'Great improvement! 🎉':pct>=50?'Getting there! 💪':'Keep grinding! ⚡'}</div>
           <div style="color:var(--text-secondary);margin-bottom:28px;">${correct}/${q.length} correct on your targeted re-quiz</div>
 
           ${pct < 100 ? `
@@ -3259,16 +4531,16 @@ const WrongAnswerStudy = {
               <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);font-weight:700;margin-bottom:10px;">Still needs work (${q.length-correct})</div>
               ${q.filter((r,i)=>this.quizAnswers[i]!==r.correct).map(r=>`
                 <div style="text-align:left;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;">
-                  <div style="color:var(--text-primary);font-weight:500;margin-bottom:3px;">${r.q.length>80?r.q.slice(0,80)+'â€¦':r.q}</div>
-                  <div style="color:#22c55e;font-size:0.8rem;">âœ“ ${r.opts[r.correct]}</div>
+                  <div style="color:var(--text-primary);font-weight:500;margin-bottom:3px;">${r.q.length>80?r.q.slice(0,80)+'…':r.q}</div>
+                  <div style="color:#22c55e;font-size:0.8rem;">✓ ${r.opts[r.correct]}</div>
                 </div>
               `).join('')}
             </div>
-          ` : `<div style="font-size:1.1rem;color:var(--success);margin-bottom:24px;">You've mastered all of your weak areas! ðŸŒŸ</div>`}
+          ` : `<div style="font-size:1.1rem;color:var(--success);margin-bottom:24px;">You've mastered all of your weak areas! 🌟</div>`}
 
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-            ${pct < 100 ? `<button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">ðŸ” Retry Missed Questions</button>` : ''}
-            <button class="btn btn-secondary" onclick="WrongAnswerStudy.phase='study';WrongAnswerStudy.render()">ðŸ“– Review Study Guide</button>
+            ${pct < 100 ? `<button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">🔁 Retry Missed Questions</button>` : ''}
+            <button class="btn btn-secondary" onclick="WrongAnswerStudy.phase='study';WrongAnswerStudy.render()">📖 Review Study Guide</button>
             <button class="btn btn-secondary" onclick="App.navigate('exams')">Back to Exams</button>
           </div>
         </div>
@@ -3313,8 +4585,8 @@ const WrongAnswerStudy = {
             return `<button onclick="WrongAnswerStudy._selectAnswer(${oi})"
               style="width:100%;text-align:left;padding:14px 18px;background:${bg};border:2px solid ${border};border-radius:12px;color:${textCol};font-size:0.93rem;font-weight:500;cursor:${cursor};pointer-events:${pointerEvents};transition:border-color 0.15s,background 0.15s;line-height:1.4;">
               <span style="font-weight:700;margin-right:8px;opacity:0.6;">${String.fromCharCode(65+oi)}.</span>${opt}
-              ${showFb && oi===current.correct ? ' <span style="float:right;font-size:1rem;">âœ…</span>' : ''}
-              ${showFb && oi===sel && oi!==current.correct ? ' <span style="float:right;font-size:1rem;">âŒ</span>' : ''}
+              ${showFb && oi===current.correct ? ' <span style="float:right;font-size:1rem;">✅</span>' : ''}
+              ${showFb && oi===sel && oi!==current.correct ? ' <span style="float:right;font-size:1rem;">❌</span>' : ''}
             </button>`;
           }).join('')}
         </div>
@@ -3323,12 +4595,12 @@ const WrongAnswerStudy = {
         ${showFb ? `
           <div style="background:${sel===current.correct?'rgba(34,197,94,0.08)':'rgba(239,68,68,0.06)'};border:1px solid ${sel===current.correct?'rgba(34,197,94,0.25)':'rgba(239,68,68,0.2)'};border-radius:12px;padding:16px;margin-bottom:20px;">
             <div style="font-weight:700;font-size:0.9rem;color:${sel===current.correct?'#22c55e':'#ef4444'};margin-bottom:${current.exp?'8px':'0'};">
-              ${sel===current.correct?'âœ… Correct!':'âŒ Incorrect â€” the right answer was: '+current.opts[current.correct]}
+              ${sel===current.correct?'✅ Correct!':'❌ Incorrect — the right answer was: '+current.opts[current.correct]}
             </div>
             ${current.exp ? `<div style="font-size:0.87rem;color:var(--text-secondary);line-height:1.6;">${current.exp}</div>` : ''}
           </div>
           <button class="btn btn-primary" style="width:100%;" onclick="WrongAnswerStudy._next()">
-            ${this.quizIdx+1 < q.length ? 'Next Question â†’' : 'See Results'}
+            ${this.quizIdx+1 < q.length ? 'Next Question →' : 'See Results'}
           </button>
         ` : `
           <button class="btn btn-primary" style="width:100%;opacity:${sel===null?'0.45':'1'};pointer-events:${sel===null?'none':'auto'};" onclick="WrongAnswerStudy._confirmAnswer()">
@@ -4335,16 +5607,15 @@ const Tools = {
     { id: 'parallel-sim', name: 'Parallel Circuit Builder', icon: '&#x1F504;', desc: 'Build parallel circuits and watch branch currents split in real time', period: 1 },
     { id: 'wire-sizer', name: 'CEC Wire Sizer', icon: '&#x1F4D5;', desc: 'Look up CEC Table 2 wire ampacity, voltage drop, and conduit fill', period: 1 },
     { id: 'ac-wave', name: 'AC Waveform Viewer', icon: '&#x1F4C8;', desc: 'Animated sine wave showing peak, RMS, average, and frequency relationships', period: 2 },
-    { id: 'transformer-sim', name: 'Transformer Simulator', icon: '&#x1F504;', desc: 'Adjust turns ratio and load â€” see voltage, current, and power on both sides', period: 2 },
+    { id: 'transformer-sim', name: 'Transformer Simulator', icon: '&#x1F504;', desc: 'Adjust turns ratio and load — see voltage, current, and power on both sides', period: 2 },
     { id: 'motor-sim', name: 'Motor Speed & Torque', icon: '&#x2699;', desc: 'Change frequency, poles, and load to see sync speed, slip, and torque', period: 2 },
-    { id: 'pf-triangle', name: 'Power Triangle', icon: '&#x1F4CA;', desc: 'Interactive power triangle â€” drag to adjust true, reactive, and apparent power', period: 2 },
+    { id: 'pf-triangle', name: 'Power Triangle', icon: '&#x1F4CA;', desc: 'Interactive power triangle — drag to adjust true, reactive, and apparent power', period: 2 },
     { id: 'vd-calc', name: 'Voltage Drop Calculator', icon: '&#x1F9EE;', desc: 'Calculate voltage drop for copper and aluminum conductors per CEC standards', period: 1 },
-    { id: 'exam-checker', name: 'CEC Exam Checker', icon: '&#x1F4CB;', desc: 'Paste exam questions and get correct CEC answers with rule citations instantly', period: 1 },
-    { id: 'demand-factor', name: 'Demand Factor Practice', icon: '&#x1F3E0;', desc: 'Scenario-based CEC 8-200 practice tool â€” read a home description and calculate the service size', period: 1 },
-    { id: 'demand-factor-calc', name: 'Demand Factor Calculator', icon: '&#x1F9EE;', desc: 'CEC Rule 8-200 residential demand load calculator â€” enter your own loads and see the math', period: 1 },
+    { id: 'demand-factor', name: 'Demand Factor Practice', icon: '&#x1F3E0;', desc: 'Scenario-based CEC 8-200 practice tool — read a home description and calculate the service size', period: 1 },
+    { id: 'demand-factor-calc', name: 'Demand Factor Calculator', icon: '&#x1F9EE;', desc: 'CEC Rule 8-200 residential demand load calculator — enter your own loads and see the math', period: 1 },
     { id: 'conduit-fill', name: 'Conduit Fill Calculator', icon: '&#x1F4D0;', desc: 'Calculate conduit fill percentage per CEC Table 8 for common raceway types', period: 1 },
     { id: 'rlc-impedance', name: 'RLC Impedance Calculator', icon: '&#x1F300;', desc: 'Calculate impedance, phase angle, and resonance in series/parallel RLC circuits', period: 2 },
-    { id: 'diagram-sim', name: 'Drawing & Diagram Conversion', icon: '&#x1F4CB;', desc: 'Learn to read block diagrams, wiring diagrams, and schematics â€” and count conductors for any circuit', period: 1 },
+    { id: 'diagram-sim', name: 'Drawing & Diagram Conversion', icon: '&#x1F4CB;', desc: 'Learn to read block diagrams, wiring diagrams, and schematics — and count conductors for any circuit', period: 1 },
   ],
 
   render(state) {
@@ -4365,7 +5636,7 @@ const Tools = {
     const catIcons = { 'DC Fundamentals': '&#x26A1;', 'Code & Sizing': '&#x1F4D5;', 'AC & Power': '&#x1F4C8;', 'Equipment': '&#x2699;', 'Diagrams & Drawings': '&#x1F4CB;' };
     const cats = [
       { label: 'DC Fundamentals', ids: ['ohm-sim', 'series-sim', 'parallel-sim'] },
-      { label: 'Code & Sizing', ids: ['exam-checker', 'wire-sizer', 'vd-calc', 'demand-factor-calc', 'demand-factor', 'conduit-fill'] },
+      { label: 'Code & Sizing', ids: ['wire-sizer', 'vd-calc', 'demand-factor-calc', 'demand-factor', 'conduit-fill'] },
       { label: 'AC & Power', ids: ['ac-wave', 'pf-triangle', 'rlc-impedance'] },
       { label: 'Equipment', ids: ['transformer-sim', 'motor-sim'] },
       { label: 'Diagrams & Drawings', ids: ['diagram-sim'] },
@@ -4443,7 +5714,6 @@ const Tools = {
       case 'motor-sim': this._updateMotorSim(); break;
       case 'pf-triangle': this._updatePFSim(); break;
       case 'vd-calc': this._updateVDCalc(); break;
-      case 'exam-checker': break;
       case 'demand-factor': this._updateDemandFactor(); break;
       case 'demand-factor-calc': this._updateDemandCalc(); break;
       case 'conduit-fill': this._updateConduitFill(); break;
@@ -4476,7 +5746,6 @@ const Tools = {
       case 'motor-sim': return header + this._simMotor();
       case 'pf-triangle': return header + this._simPFTriangle();
       case 'vd-calc': return header + this._simVDCalc();
-      case 'exam-checker': return header + ExamChecker.renderContent();
       case 'demand-factor': return header + this._simDemandFactor();
       case 'demand-factor-calc': return header + this._simDemandCalc();
       case 'conduit-fill': return header + this._simConduitFill();
@@ -4910,10 +6179,10 @@ const Tools = {
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:0;overflow:hidden;">
         <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(135deg,rgba(245,158,11,0.06),transparent);">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            <div style="font-size:1.5rem;">âš¡</div>
+            <div style="font-size:1.5rem;">⚡</div>
             <div>
               <div style="font-weight:700;font-size:1rem;">Series Circuit Builder</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">Current is the same everywhere â€” voltage divides across resistors</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">Current is the same everywhere — voltage divides across resistors</div>
             </div>
           </div>
           <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
@@ -4955,7 +6224,7 @@ const Tools = {
     if (existing !== n) {
       inputDiv.innerHTML = Array.from({length: n}, (_, i) => `
         <div>
-          <label style="font-size:0.65rem;color:${colors[i % colors.length]};display:block;margin-bottom:4px;font-weight:700;">R${i+1} (Î©)</label>
+          <label style="font-size:0.65rem;color:${colors[i % colors.length]};display:block;margin-bottom:4px;font-weight:700;">R${i+1} (Ω)</label>
           <input type="number" id="serSimR${i}" value="${[100,200,300,150,250][i] || 100}" min="1" max="100000" style="width:76px;padding:7px 8px;background:var(--bg-input);border:2px solid ${colors[i % colors.length]}33;border-radius:8px;color:var(--text-primary);font-weight:600;font-size:0.9rem;" oninput="Tools._updateSeriesSim()">
         </div>
       `).join('');
@@ -5036,7 +6305,7 @@ const Tools = {
 
         // Resistor value inside
         ctx.fillStyle = color; ctx.font = 'bold 10px Inter,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(r + 'Î©', rx + resistorW / 2, wireY + 5);
+        ctx.fillText(r + 'Ω', rx + resistorW / 2, wireY + 5);
 
         // Voltage drop above (with arrow)
         ctx.fillStyle = color; ctx.font = 'bold 11px Inter,sans-serif';
@@ -5053,7 +6322,7 @@ const Tools = {
 
       // Current flow arrows on return wire
       ctx.fillStyle = '#22c55e'; ctx.font = 'bold 12px Inter,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('I = ' + (it >= 1 ? it.toFixed(3) + 'A' : (it * 1000).toFixed(2) + 'mA') + '   â†’', mx + mw / 2, retY + 16);
+      ctx.fillText('I = ' + (it >= 1 ? it.toFixed(3) + 'A' : (it * 1000).toFixed(2) + 'mA') + '   →', mx + mw / 2, retY + 16);
 
       // Animated electrons on the wire
       if (!this._serAnimFrame) {
@@ -5086,7 +6355,7 @@ const Tools = {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
             <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;text-align:center;">
               <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Total R</div>
-              <div style="font-size:1.1rem;font-weight:800;color:#f59e0b;">${rt.toFixed(1)}Î©</div>
+              <div style="font-size:1.1rem;font-weight:800;color:#f59e0b;">${rt.toFixed(1)}Ω</div>
             </div>
             <div style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;text-align:center;">
               <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Current</div>
@@ -5094,7 +6363,7 @@ const Tools = {
             </div>
           </div>
           <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.12);border-radius:8px;padding:8px 12px;font-size:0.75rem;color:#22c55e;font-weight:600;margin-bottom:12px;">
-            âœ“ Current is THE SAME through every component
+            ✓ Current is THE SAME through every component
           </div>
         </div>
         <div style="margin-bottom:14px;">
@@ -5102,14 +6371,14 @@ const Tools = {
           ${rs.map((r, i) => `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
               <div style="width:10px;height:10px;border-radius:50%;background:${colors[i % colors.length]};flex-shrink:0;"></div>
-              <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);">V<sub>${i+1}</sub> = ${it.toFixed(4)} Ã— ${r}Î©</div>
+              <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);">V<sub>${i+1}</sub> = ${it.toFixed(4)} × ${r}Ω</div>
               <div style="font-weight:700;color:${colors[i % colors.length]};font-size:0.85rem;">${drops[i].toFixed(2)}V</div>
             </div>
             <div style="height:4px;background:var(--bg-input);border-radius:2px;margin-bottom:8px;margin-left:18px;">
               <div style="height:100%;width:${(drops[i]/v*100).toFixed(1)}%;background:${colors[i % colors.length]};border-radius:2px;"></div>
             </div>
           `).join('')}
-          <div style="font-size:0.72rem;color:var(--text-muted);margin-left:18px;">Sum: ${drops.reduce((s,d)=>s+d,0).toFixed(2)}V = ${v}V âœ“</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-left:18px;">Sum: ${drops.reduce((s,d)=>s+d,0).toFixed(2)}V = ${v}V ✓</div>
         </div>
         <div>
           <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">Power Dissipation</div>
@@ -5154,10 +6423,10 @@ const Tools = {
         <!-- Header -->
         <div style="padding:20px 24px 18px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.04),transparent);">
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.1));border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">âš¡</div>
+            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.1));border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">⚡</div>
             <div>
               <div style="font-weight:800;font-size:1.05rem;color:var(--text-primary);">Parallel Circuit Simulator</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Same voltage across every branch â€” current divides proportionally</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Same voltage across every branch — current divides proportionally</div>
             </div>
           </div>
           <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
@@ -5200,7 +6469,7 @@ const Tools = {
     if (existing !== n) {
       inputDiv.innerHTML = Array.from({length:n},(_,i)=>`
         <div>
-          <label style="font-size:0.68rem;color:${colors[i%colors.length]};display:block;margin-bottom:5px;font-weight:800;letter-spacing:0.3px;">R${i+1} (Î©)</label>
+          <label style="font-size:0.68rem;color:${colors[i%colors.length]};display:block;margin-bottom:5px;font-weight:800;letter-spacing:0.3px;">R${i+1} (Ω)</label>
           <input type="number" id="parSimR${i}" value="${[100,200,300,150,250][i]||100}" min="1" max="100000"
             style="width:80px;padding:8px 10px;background:${colors[i%colors.length]}14;border:2px solid ${colors[i%colors.length]}44;border-radius:9px;color:var(--text-primary);font-weight:700;font-size:0.95rem;outline:none;"
             oninput="Tools._updateParallelSim()">
@@ -5214,7 +6483,7 @@ const Tools = {
     const powers = rs.map(r=>v*v/r);
     const maxI = Math.max(...branches);
 
-    // â”€â”€ Start / restart animation â”€â”€
+    // ── Start / restart animation ──
     if (this._parAnimFrame) { cancelAnimationFrame(this._parAnimFrame); this._parAnimFrame = null; }
     this._parPhase = 0;
     this._parV = v; this._parN = n; this._parRs = rs;
@@ -5229,7 +6498,7 @@ const Tools = {
     };
     animate();
 
-    // â”€â”€ Results panel â”€â”€
+    // ── Results panel ──
     const resultsDiv = document.getElementById('parSimResults');
     if (!resultsDiv) return;
     const totalP = powers.reduce((s,p)=>s+p,0);
@@ -5240,8 +6509,8 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
         <div style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.03));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:14px;text-align:center;">
           <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Total R</div>
-          <div style="font-size:1.25rem;font-weight:900;color:#a78bfa;">${rt.toFixed(2)}Î©</div>
-          <div style="font-size:0.65rem;color:var(--text-muted);margin-top:3px;">&lt; ${Math.min(...rs)}Î© smallest</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#a78bfa;">${rt.toFixed(2)}Ω</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);margin-top:3px;">&lt; ${Math.min(...rs)}Ω smallest</div>
         </div>
         <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.03));border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:14px;text-align:center;">
           <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Total I</div>
@@ -5251,7 +6520,7 @@ const Tools = {
       </div>
       <!-- Voltage rule -->
       <div style="background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.18);border-radius:10px;padding:10px 13px;font-size:0.78rem;color:#a78bfa;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:1rem;">ðŸ”</span> Every branch sees exactly <strong>${v}V</strong>
+        <span style="font-size:1rem;">🔁</span> Every branch sees exactly <strong>${v}V</strong>
       </div>
       <!-- Branch currents -->
       <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;margin-bottom:10px;">Branch Currents</div>
@@ -5263,7 +6532,7 @@ const Tools = {
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="width:11px;height:11px;border-radius:50%;background:${colors[i%colors.length]};box-shadow:0 0 6px ${colors[i%colors.length]}88;flex-shrink:0;"></div>
-              <span style="font-size:0.82rem;color:var(--text-secondary);">I<sub>${i+1}</sub> = ${v}V Ã· ${r}Î©</span>
+              <span style="font-size:0.82rem;color:var(--text-secondary);">I<sub>${i+1}</sub> = ${v}V ÷ ${r}Ω</span>
             </div>
             <span style="font-weight:800;color:${colors[i%colors.length]};font-size:0.88rem;">${iStr}</span>
           </div>
@@ -5274,7 +6543,7 @@ const Tools = {
         </div>`;
       }).join('')}
       <div style="font-size:0.72rem;color:var(--text-muted);padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);margin-top:2px;">
-        Sum: ${fmtI(branches.reduce((s,b)=>s+b,0))} = ${fmtI(it)} âœ“
+        Sum: ${fmtI(branches.reduce((s,b)=>s+b,0))} = ${fmtI(it)} ✓
       </div>
       <!-- Power -->
       <div style="margin-top:14px;">
@@ -5314,7 +6583,7 @@ const Tools = {
     const usableH = botY - topY;
     const branchSpacing = usableH / n;
 
-    // â”€â”€ Draw branches first (behind bus bars) â”€â”€
+    // ── Draw branches first (behind bus bars) ──
     rs.forEach((r,i) => {
       const branchY = topY + i * branchSpacing + branchSpacing / 2;
       const color = colors[i % colors.length];
@@ -5326,11 +6595,11 @@ const Tools = {
       const resCX = (busLX + busRX) / 2;
       const resX = resCX - resW/2, resY = branchY - resH/2;
 
-      // Left wire: busL â†’ resistor
+      // Left wire: busL → resistor
       ctx.strokeStyle = color + 'aa'; ctx.lineWidth = wireW;
       ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(busLX, branchY); ctx.lineTo(resX, branchY); ctx.stroke();
-      // Right wire: resistor â†’ busR
+      // Right wire: resistor → busR
       ctx.beginPath(); ctx.moveTo(resX+resW, branchY); ctx.lineTo(busRX, branchY); ctx.stroke();
 
       // Wire glow
@@ -5340,7 +6609,7 @@ const Tools = {
       ctx.beginPath(); ctx.moveTo(resX+resW, branchY); ctx.lineTo(busRX, branchY); ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // â”€â”€ Resistor body â”€â”€
+      // ── Resistor body ──
       // Outer glow rect
       ctx.shadowColor = color; ctx.shadowBlur = 18;
       const resGrad = ctx.createLinearGradient(resX, resY, resX+resW, resY+resH);
@@ -5365,7 +6634,7 @@ const Tools = {
       // Resistor value label above the box
       ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Inter,sans-serif'; ctx.textAlign = 'center';
       ctx.shadowColor = color; ctx.shadowBlur = 6;
-      ctx.fillText(r>=1000?(r/1000).toFixed(1)+'kÎ©':r+'Î©', resCX, resY-6);
+      ctx.fillText(r>=1000?(r/1000).toFixed(1)+'kΩ':r+'Ω', resCX, resY-6);
       ctx.shadowBlur = 0;
 
       // R label below
@@ -5377,7 +6646,7 @@ const Tools = {
       ctx.fillStyle = color; ctx.font = 'bold 11px Inter,sans-serif'; ctx.textAlign = 'left';
       ctx.fillText('I'+(i+1)+' = '+iStr, busLX+10, branchY-10);
 
-      // â”€â”€ Animated current particles â”€â”€
+      // ── Animated current particles ──
       const numParticles = Math.max(2, Math.round(branchFraction * 8));
       const totalLen = (resX - busLX) + resW + (busRX - (resX+resW));
       for(let p=0;p<numParticles;p++){
@@ -5406,7 +6675,7 @@ const Tools = {
       }
     });
 
-    // â”€â”€ Left bus bar (hot) â”€â”€
+    // ── Left bus bar (hot) ──
     const busGradL = ctx.createLinearGradient(0,topY,0,botY);
     busGradL.addColorStop(0,'#a78bfa'); busGradL.addColorStop(1,'#7c3aed');
     ctx.shadowColor = '#8b5cf6'; ctx.shadowBlur = 20;
@@ -5417,15 +6686,15 @@ const Tools = {
     ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 14px Inter,sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('+', busLX, topY-14);
 
-    // â”€â”€ Right bus bar (return) â”€â”€
+    // ── Right bus bar (return) ──
     ctx.shadowColor = '#475569'; ctx.shadowBlur = 8;
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(busRX,topY); ctx.lineTo(busRX,botY); ctx.stroke();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px Inter,sans-serif';
-    ctx.fillText('âˆ’', busRX, topY-14);
+    ctx.fillText('−', busRX, topY-14);
 
-    // â”€â”€ Battery (below left bus) â”€â”€
+    // ── Battery (below left bus) ──
     const batX = 52, batTopY = topY + 10, batBotY = botY - 10, batMid = (batTopY+batBotY)/2;
     // wire from bus top to battery top
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
@@ -5452,14 +6721,14 @@ const Tools = {
     ctx.fillText(v+'V', batX, batMid+34);
     ctx.shadowBlur=0;
 
-    // â”€â”€ Total current label at top â”€â”€
+    // ── Total current label at top ──
     const itStr = it>=1 ? it.toFixed(3)+'A' : (it*1000).toFixed(1)+'mA';
     ctx.fillStyle='#4ade80'; ctx.font='bold 13px Inter,sans-serif'; ctx.textAlign='left';
     ctx.shadowColor='#22c55e'; ctx.shadowBlur=8;
     ctx.fillText('IT = '+itStr, busLX+12, topY-14);
     ctx.shadowBlur=0;
 
-    // â”€â”€ V label at bottom â”€â”€
+    // ── V label at bottom ──
     ctx.fillStyle='rgba(167,139,250,0.6)'; ctx.font='600 10px Inter,sans-serif'; ctx.textAlign='center';
     ctx.fillText('V = '+v+'V across all branches', (busLX+busRX)/2, botY+20);
   },
@@ -5470,7 +6739,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(34,197,94,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">âš¡ Load Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">⚡ Load Parameters</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
               <div>
                 <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Load Current</label>
@@ -5482,23 +6751,23 @@ const Tools = {
               <div>
                 <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Insulation</label>
                 <select id="wireTemp" style="width:100%;padding:9px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-weight:600;" onchange="Tools._updateWireSizer()">
-                  <option value="60">60Â°C (TW)</option><option value="75" selected>75Â°C (T90)</option><option value="90">90Â°C (FT4)</option>
+                  <option value="60">60°C (TW)</option><option value="75" selected>75°C (T90)</option><option value="90">90°C (FT4)</option>
                 </select>
               </div>
             </div>
           </div>
           <div id="wireSizerResult" style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);"></div>
           <div style="padding:0 20px 20px;">
-            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:14px 0 8px;">CEC Table 2 â€” Copper Conductors</div>
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:14px 0 8px;">CEC Table 2 — Copper Conductors</div>
             <div style="overflow-x:auto;max-height:340px;overflow-y:auto;">
               <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
                 <thead style="position:sticky;top:0;z-index:1;">
                   <tr style="background:#1a1a2e;">
                     <th style="padding:7px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">AWG</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">mmÂ²</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">60Â°C</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">75Â°C</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">90Â°C</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">mm²</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">60°C</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">75°C</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">90°C</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5517,7 +6786,7 @@ const Tools = {
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;">
-          <div style="font-weight:700;font-size:0.95rem;">ðŸ“Š Conductor Size Comparison</div>
+          <div style="font-weight:700;font-size:0.95rem;">📊 Conductor Size Comparison</div>
           <canvas id="wireSizerCanvas" width="420" height="360" style="border-radius:10px;width:100%;"></canvas>
           <div style="padding:12px;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:10px;font-size:0.75rem;color:var(--text-secondary);line-height:1.8;">
             <strong style="color:#22c55e;">Tip:</strong> Canadian code (CEC Rule 4-004) requires conductors rated at 125% for continuous loads. Always check applicable derating factors for ambient temperature and conduit fill.
@@ -5567,10 +6836,10 @@ const Tools = {
             <div style="height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:6px;">
               <div style="height:100%;width:${utilPct}%;background:${utilColor};border-radius:3px;transition:width 0.3s;"></div>
             </div>
-            <div style="font-size:0.75rem;color:var(--text-secondary);">${match.area} mmÂ² Â· rated ${match[key]}A Â· ${temp}Â°C insulation</div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);">${match.area} mm² · rated ${match[key]}A · ${temp}°C insulation</div>
           </div>`;
       } else {
-        resultDiv.innerHTML = '<div style="padding:14px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:12px;"><strong style="color:#ef4444;">âš  Exceeds table range</strong><div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">Consult CEC Table 2 for conductors larger than 300 kcmil.</div></div>';
+        resultDiv.innerHTML = '<div style="padding:14px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:12px;"><strong style="color:#ef4444;">⚠ Exceeds table range</strong><div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">Consult CEC Table 2 for conductors larger than 300 kcmil.</div></div>';
       }
     }
     // Highlight matching row
@@ -5668,7 +6937,7 @@ const Tools = {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.font = '8.5px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText('AWG / kcmil â€” CEC Table 2 Ampacity', W / 2, H - 6);
+    ctx.fillText('AWG / kcmil — CEC Table 2 Ampacity', W / 2, H - 6);
   },
 
   // ===== AC WAVEFORM VIEWER =====
@@ -5859,7 +7128,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(139,92,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ”„ Transformer Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">🔄 Transformer Parameters</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div>
                 <label style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Primary Voltage</label>
@@ -5872,7 +7141,7 @@ const Tools = {
                 <label style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Load Resistance</label>
                 <div style="display:flex;align-items:center;gap:4px;">
                   <input type="number" id="txSimLoad" value="10" min="0.1" style="flex:1;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-weight:700;" oninput="Tools._updateTxSim()">
-                  <span style="font-size:0.75rem;color:var(--text-muted);">Î©</span>
+                  <span style="font-size:0.75rem;color:var(--text-muted);">Ω</span>
                 </div>
               </div>
               <div>
@@ -5894,12 +7163,12 @@ const Tools = {
           <div id="txSimResults" style="padding:16px 20px;font-size:0.85rem;"></div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">ðŸ” Transformer Diagram</div>
+          <div style="font-weight:700;font-size:0.95rem;">🔁 Transformer Diagram</div>
           <canvas id="txSimCanvas" width="420" height="340" style="border-radius:10px;width:100%;"></canvas>
           <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;">
-            <span style="color:#f59e0b;">â–  Primary (amber)</span>
-            <span style="color:#22c55e;">â–  Secondary (green)</span>
-            <span style="color:#8b5cf6;">â–  Iron Core</span>
+            <span style="color:#f59e0b;">■ Primary (amber)</span>
+            <span style="color:#22c55e;">■ Secondary (green)</span>
+            <span style="color:#8b5cf6;">■ Iron Core</span>
           </div>
         </div>
       </div>
@@ -5921,7 +7190,7 @@ const Tools = {
     const pLoss = pInput - pLoad;
     const type = ratio > 1 ? 'Step-Down' : ratio < 1 ? 'Step-Up' : 'Isolation';
 
-    // Draw transformer â€” premium version
+    // Draw transformer — premium version
     const c = document.getElementById('txSimCanvas');
     if (c) {
       const ctx = c.getContext('2d');
@@ -5995,7 +7264,7 @@ const Tools = {
       ctx.beginPath(); ctx.moveTo(coreX + coreW + 28, coreY + 10); ctx.lineTo(TW - 30, coreY + 10); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(coreX + coreW + 28, coreY + coreH - 10); ctx.lineTo(TW - 30, coreY + coreH - 10); ctx.stroke();
 
-      // Labels â€” Primary
+      // Labels — Primary
       ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
       ctx.fillStyle = '#f59e0b'; ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 4;
       ctx.fillText('PRIMARY', 30, coreY - 8);
@@ -6006,7 +7275,7 @@ const Tools = {
       ctx.fillText(ip.toFixed(2) + 'A', 30, TH / 2 + 10);
       ctx.fillText(np + ' turns', 30, TH / 2 + 24);
 
-      // Labels â€” Secondary
+      // Labels — Secondary
       ctx.font = 'bold 11px Inter'; ctx.fillStyle = '#22c55e';
       ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 4;
       ctx.fillText('SECONDARY', TW - 35, coreY - 8);
@@ -6220,7 +7489,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(139,92,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ“ Power Triangle Controls</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">📐 Power Triangle Controls</div>
             <div style="margin-bottom:14px;">
               <label style="font-size:0.75rem;color:var(--text-muted);display:flex;justify-content:space-between;margin-bottom:5px;"><span>True Power P (W)</span><strong id="pfSimW_val" style="color:#22c55e;">8000 W</strong></label>
               <input type="range" id="pfSimW" min="100" max="50000" value="8000" class="range-green" style="width:100%;" oninput="Tools._updatePFSim()">
@@ -6239,7 +7508,7 @@ const Tools = {
               ${[
                 {id:'pfSimVA', label:'Apparent S', color:'#f59e0b', val:'10000 VA'},
                 {id:'pfSimPF', label:'Power Factor', color:'#8b5cf6', val:'0.800'},
-                {id:'pfSimAngle', label:'Phase Angle', color:'#3b82f6', val:'36.9Â°'},
+                {id:'pfSimAngle', label:'Phase Angle', color:'#3b82f6', val:'36.9°'},
                 {id:'pfSimRating', label:'PF Rating', color:'#f59e0b', val:'Fair'},
               ].map(s => `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center;">
                 <div style="font-size:0.62rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;">${s.label}</div>
@@ -6248,17 +7517,17 @@ const Tools = {
             </div>
           </div>
           <div style="padding:14px 20px;">
-            <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">âš¡ PF Correction Capacitor</div>
+            <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">⚡ PF Correction Capacitor</div>
             <div id="pfCorrectionResult" style="font-size:0.82rem;color:var(--text-secondary);"></div>
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">ðŸ“Š Power Triangle Visualization</div>
+          <div style="font-weight:700;font-size:0.95rem;">📊 Power Triangle Visualization</div>
           <canvas id="pfSimCanvas" width="420" height="340" style="border-radius:10px;width:100%;"></canvas>
           <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;">
-            <span style="color:#22c55e;">â–  P â€” True Power (W)</span>
-            <span style="color:#ef4444;">â–  Q â€” Reactive (VAR)</span>
-            <span style="color:#f59e0b;">â–  S â€” Apparent (VA)</span>
+            <span style="color:#22c55e;">■ P — True Power (W)</span>
+            <span style="color:#ef4444;">■ Q — Reactive (VAR)</span>
+            <span style="color:#f59e0b;">■ S — Apparent (VA)</span>
           </div>
         </div>
       </div>
@@ -6294,7 +7563,7 @@ const Tools = {
     const pfCor = document.getElementById('pfCorrectionResult');
     if (pfCor) {
       if (pf >= 0.95) {
-        pfCor.innerHTML = '<span style="color:#22c55e;">âœ“ PF is already at or above 0.95 â€” no correction needed.</span>';
+        pfCor.innerHTML = '<span style="color:#22c55e;">✓ PF is already at or above 0.95 — no correction needed.</span>';
       } else {
         const qTarget = w * Math.tan(Math.acos(pfTarget));
         const qCorrect = var_ - qTarget;
@@ -6310,13 +7579,13 @@ const Tools = {
             </div>
             <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
               <span style="color:var(--text-muted);">Cap. at ${volt}V / 60Hz</span>
-              <strong style="color:#3b82f6;">${capUF.toFixed(1)} Î¼F</strong>
+              <strong style="color:#3b82f6;">${capUF.toFixed(1)} μF</strong>
             </div>
           </div>`;
       }
     }
 
-    // Draw triangle â€” premium version
+    // Draw triangle — premium version
     const c = document.getElementById('pfSimCanvas');
     if (!c) return;
     const ctx = c.getContext('2d');
@@ -6356,11 +7625,11 @@ const Tools = {
       }
     };
 
-    // P â€” true power (horizontal)
+    // P — true power (horizontal)
     drawVec(ox, oy, ox + wPx, oy, '#22c55e', 3, 'P = ' + (w/1000).toFixed(1) + ' kW', [0, -14]);
-    // Q â€” reactive (vertical)
+    // Q — reactive (vertical)
     if (varPx > 0) drawVec(ox + wPx, oy, ox + wPx, oy + varPx, '#ef4444', 3, 'Q = ' + (var_/1000).toFixed(1) + ' kVAR', [40, 0]);
-    // S â€” apparent (hyp)
+    // S — apparent (hyp)
     drawVec(ox, oy, ox + wPx, oy + varPx, '#f59e0b', 3.5, 'S = ' + (va/1000).toFixed(2) + ' kVA', [-30, 16]);
 
     // Right angle box
@@ -6374,7 +7643,7 @@ const Tools = {
     ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(ox, oy, 38, 0, angle * Math.PI / 180); ctx.stroke();
     ctx.fillStyle = '#8b5cf6'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'left';
-    ctx.fillText('Î¸=' + angle.toFixed(1) + 'Â°', ox + 42, oy + 18);
+    ctx.fillText('θ=' + angle.toFixed(1) + '°', ox + 42, oy + 18);
 
     // PF meter bar at bottom
     const barY = ch - 40, barX = 30, barW = cw - 60, barH = 14;
@@ -6396,12 +7665,12 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(59,130,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ”Œ Circuit Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">🔌 Circuit Parameters</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div>
                 <label style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">System Voltage</label>
                 <select id="vdVoltage" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-weight:600;font-size:0.85rem;" onchange="Tools._updateVDCalc()">
-                  <option value="120">120V (1Î¦)</option><option value="208">208V (3Î¦)</option><option value="240" selected>240V (1Î¦)</option><option value="347">347V (3Î¦)</option><option value="480">480V (3Î¦)</option><option value="600">600V (3Î¦)</option>
+                  <option value="120">120V (1Φ)</option><option value="208">208V (3Φ)</option><option value="240" selected>240V (1Φ)</option><option value="347">347V (3Φ)</option><option value="480">480V (3Φ)</option><option value="600">600V (3Φ)</option>
                 </select>
               </div>
               <div>
@@ -6435,14 +7704,14 @@ const Tools = {
           <div id="vdResult" style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);"></div>
           <div style="padding:14px 20px;background:rgba(59,130,246,0.03);">
             <div style="font-size:0.7rem;color:var(--text-muted);font-family:'Fira Code',monospace;line-height:2;">
-              Vd = (2 Ã— Ï Ã— L Ã— I) / A &nbsp;(1Î¦)<br>
-              Vd = (âˆš3 Ã— Ï Ã— L Ã— I) / A &nbsp;(3Î¦)<br>
-              <span style="color:#3b82f6;">CEC 8-102: â‰¤3% feeders Â· â‰¤5% total</span>
+              Vd = (2 × ρ × L × I) / A &nbsp;(1Φ)<br>
+              Vd = (√3 × ρ × L × I) / A &nbsp;(3Φ)<br>
+              <span style="color:#3b82f6;">CEC 8-102: ≤3% feeders · ≤5% total</span>
             </div>
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">âš¡ Voltage Distribution Visual</div>
+          <div style="font-weight:700;font-size:0.95rem;">⚡ Voltage Distribution Visual</div>
           <canvas id="vdCanvas" width="420" height="300" style="border-radius:10px;width:100%;"></canvas>
           <div id="vdWireInfo" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;"></div>
         </div>
@@ -6468,7 +7737,7 @@ const Tools = {
     const vLoad = voltage - vd;
 
     const color = pct <= 3 ? '#22c55e' : pct <= 5 ? '#f59e0b' : '#ef4444';
-    const status = pct <= 3 ? 'âœ“ Within 3% feeder limit' : pct <= 5 ? 'âš  Exceeds 3% feeder â€” check 5% total' : 'âœ— Exceeds 5% total â€” upsize conductor';
+    const status = pct <= 3 ? '✓ Within 3% feeder limit' : pct <= 5 ? '⚠ Exceeds 3% feeder — check 5% total' : '✗ Exceeds 5% total — upsize conductor';
 
     const r = document.getElementById('vdResult');
     if (r) {
@@ -6495,9 +7764,9 @@ const Tools = {
     if (wi) {
       const R_total = (multiplier * rho * dist) / (area * 1000);
       wi.innerHTML = [
-        { label: 'Resistance', val: R_total.toFixed(4) + ' Î©', c: '#8b5cf6' },
-        { label: 'Wire Area', val: area + ' mmÂ²', c: '#3b82f6' },
-        { label: mat === 'cu' ? 'Copper Ï' : 'Alum. Ï', val: rho + ' nÎ©Â·m', c: '#f59e0b' },
+        { label: 'Resistance', val: R_total.toFixed(4) + ' Ω', c: '#8b5cf6' },
+        { label: 'Wire Area', val: area + ' mm²', c: '#3b82f6' },
+        { label: mat === 'cu' ? 'Copper ρ' : 'Alum. ρ', val: rho + ' nΩ·m', c: '#f59e0b' },
       ].map(d => `<div style="background:var(--bg-input);border-radius:8px;padding:10px;text-align:center;">
         <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;">${d.label}</div>
         <div style="font-weight:700;color:${d.c};font-size:0.9rem;">${d.val}</div>
@@ -6538,7 +7807,7 @@ const Tools = {
     ctx.fillStyle = '#22c55e';
     ctx.font = 'bold 11px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText('âš¡', panelX + 19, wireY + wireH / 2 - 5);
+    ctx.fillText('⚡', panelX + 19, wireY + wireH / 2 - 5);
     ctx.font = 'bold 10px Inter';
     ctx.fillText(voltage + 'V', panelX + 19, wireY + wireH / 2 + 10);
 
@@ -6559,12 +7828,12 @@ const Tools = {
     ctx.font = '9px Inter';
     ctx.textAlign = 'center';
     const midWireX = panelX + 40 + wireLen / 2;
-    ctx.fillText(dist + 'm Â· AWG ' + wire + ' Â· ' + (mat === 'cu' ? 'Cu' : 'Al'), midWireX, wireY - 8);
+    ctx.fillText(dist + 'm · AWG ' + wire + ' · ' + (mat === 'cu' ? 'Cu' : 'Al'), midWireX, wireY - 8);
 
     // Drop label on wire
     ctx.fillStyle = color;
     ctx.font = 'bold 11px Inter';
-    ctx.fillText('â–¼ ' + vd.toFixed(2) + 'V drop (' + pct.toFixed(2) + '%)', midWireX, wireY + wireH + 20);
+    ctx.fillText('▼ ' + vd.toFixed(2) + 'V drop (' + pct.toFixed(2) + '%)', midWireX, wireY + wireH + 20);
 
     // 3% and 5% reference lines (vertical tick marks below)
     const limY = H - 25;
@@ -6608,8 +7877,8 @@ const Tools = {
     { desc: 'A 3,200 sq ft new construction home. Geothermal heat pump: 14,000W (counts as both heat and A/C). Electric range: 13,500W (over 12kW). Two electric dryers (garages): count first at 5,000W, second at 2,500W. Two hot water tanks: 4,500W each. EV charger: 7,200W other fixed load.', area: 3200, range: 13500, dryer: 5000, ac: 14000, heat: 14000, hw: 4500, other: 7200 },
     { desc: 'A 1,650 sq ft townhouse. No electric heat (natural gas). No A/C. Electric range: 9,000W. Electric dryer: 4,800W. Hot water tank: 3,000W. Electric floor heating (bathroom only): 800W.', area: 1650, range: 9000, dryer: 4800, ac: 0, heat: 0, hw: 3000, other: 800 },
     { desc: 'A 1,850 sq ft basement suite conversion. Electric baseboard heat: 7,500W. No A/C. No electric range (gas). Electric dryer: 5,000W. Hot water tank: 3,500W.', area: 1850, range: 0, dryer: 5000, ac: 0, heat: 7500, hw: 3500, other: 0 },
-    { desc: 'A 2,100 sq ft house with split systems. Air source heat pump: 10,000W (use as both A/C and heat â€” take the larger). Backup electric heat strips: 6,000W. Electric range: 11,000W. Dryer: 5,200W. Hot water tank: 4,000W.', area: 2100, range: 11000, dryer: 5200, ac: 10000, heat: 10000, hw: 4000, other: 0 },
-    { desc: 'A newly built 1,400 sq ft infill home. Mini-split heat pump: 5,000W (A/C function) and 5,000W (heating function â€” same unit). Electric range: 10,000W. Dryer: 4,500W. Tankless electric HWT: 15,000W (count as fixed load "other"). No separate baseboard heat.', area: 1400, range: 10000, dryer: 4500, ac: 5000, heat: 5000, hw: 0, other: 15000 },
+    { desc: 'A 2,100 sq ft house with split systems. Air source heat pump: 10,000W (use as both A/C and heat — take the larger). Backup electric heat strips: 6,000W. Electric range: 11,000W. Dryer: 5,200W. Hot water tank: 4,000W.', area: 2100, range: 11000, dryer: 5200, ac: 10000, heat: 10000, hw: 4000, other: 0 },
+    { desc: 'A newly built 1,400 sq ft infill home. Mini-split heat pump: 5,000W (A/C function) and 5,000W (heating function — same unit). Electric range: 10,000W. Dryer: 4,500W. Tankless electric HWT: 15,000W (count as fixed load "other"). No separate baseboard heat.', area: 1400, range: 10000, dryer: 4500, ac: 5000, heat: 5000, hw: 0, other: 15000 },
   ],
   _dfScenarioIdx: 0,
   _dfAnswerShown: false,
@@ -6620,14 +7889,14 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(59,130,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;">ðŸ  CEC Rule 8-200 Demand Factor Calculator</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;">🏠 CEC Rule 8-200 Demand Factor Calculator</div>
             <div style="font-size:0.75rem;color:var(--text-muted);">Enter residential loads to calculate service size demand</div>
           </div>
           <div style="padding:18px 20px;">
             <div style="display:flex;flex-direction:column;gap:10px;">
               ${[
                 { id:'dcArea', label:'Floor Area', unit:'sq ft', hint:'3 VA/sq ft (basic load)', col:'#3b82f6' },
-                { id:'dcRange', label:'Electric Range', unit:'W', hint:'â‰¤12000W = 6000W demand; >12kW = 6kW + 40% over 12kW', col:'#f59e0b' },
+                { id:'dcRange', label:'Electric Range', unit:'W', hint:'≤12000W = 6000W demand; >12kW = 6kW + 40% over 12kW', col:'#f59e0b' },
                 { id:'dcDryer', label:'Electric Dryer', unit:'W', hint:'First dryer at 25% of nameplate', col:'#8b5cf6' },
                 { id:'dcAC', label:'A/C (or Heat Pump)', unit:'W', hint:'Use larger of A/C or heat (not both)', col:'#22c55e' },
                 { id:'dcHeat', label:'Electric Heat', unit:'W', hint:'Use larger of A/C or heat (not both)', col:'#ef4444' },
@@ -6651,12 +7920,12 @@ const Tools = {
                 </select>
               </div>
             </div>
-            <button onclick="Tools._resetDemandCalc()" style="margin-top:16px;padding:8px 18px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;color:#ef4444;font-weight:600;font-size:0.8rem;cursor:pointer;">ðŸ—‘ Clear All</button>
+            <button onclick="Tools._resetDemandCalc()" style="margin-top:16px;padding:8px 18px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;color:#ef4444;font-weight:600;font-size:0.8rem;cursor:pointer;">🗑 Clear All</button>
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(34,197,94,0.05),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;">ðŸ“‹ CEC 8-200 Step-by-Step Calculation</div>
+            <div style="font-weight:700;font-size:0.95rem;">📋 CEC 8-200 Step-by-Step Calculation</div>
           </div>
           <div id="dcResult" style="padding:16px 20px;">
             <div style="color:var(--text-muted);font-size:0.85rem;padding:20px;text-align:center;">Enter values to see the demand calculation</div>
@@ -6716,16 +7985,16 @@ const Tools = {
 
     r.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:6px;">
-        ${row('Basic Load (3 VA/sq ft)', basicLoad.toFixed(0) + ' VA', '#3b82f6', area > 0 ? area + ' sq ft Ã— 3 VA = ' + basicLoad.toFixed(0) + ' VA' : 'Enter floor area')}
+        ${row('Basic Load (3 VA/sq ft)', basicLoad.toFixed(0) + ' VA', '#3b82f6', area > 0 ? area + ' sq ft × 3 VA = ' + basicLoad.toFixed(0) + ' VA' : 'Enter floor area')}
         ${row('Basic Load Demand', basicDemand.toFixed(0) + ' VA', '#3b82f6', basicLoad <= 5000 ? 'First 5000 VA at 100%' : 'First 5000 @ 100% + ' + (basicLoad-5000).toFixed(0) + ' VA @ 40%')}
-        ${range > 0 ? row('Range Demand', rangeDemand.toFixed(0) + ' VA', '#f59e0b', range <= 12000 ? range/1000 + ' kW range â†’ flat 6000 VA' : range/1000 + ' kW range â†’ 6000 + 40% over 12kW') : ''}
-        ${dryer > 0 ? row('Dryer Demand (25%)', dryerDemand.toFixed(0) + ' VA', '#8b5cf6', dryer.toFixed(0) + ' W Ã— 25% = ' + dryerDemand.toFixed(0) + ' VA') : ''}
+        ${range > 0 ? row('Range Demand', rangeDemand.toFixed(0) + ' VA', '#f59e0b', range <= 12000 ? range/1000 + ' kW range → flat 6000 VA' : range/1000 + ' kW range → 6000 + 40% over 12kW') : ''}
+        ${dryer > 0 ? row('Dryer Demand (25%)', dryerDemand.toFixed(0) + ' VA', '#8b5cf6', dryer.toFixed(0) + ' W × 25% = ' + dryerDemand.toFixed(0) + ' VA') : ''}
         ${hw > 0 ? row('Hot Water Tank (100%)', hwDemand.toFixed(0) + ' VA', '#f59e0b', hw.toFixed(0) + ' W at 100%') : ''}
-        ${(ac > 0 || heat > 0) ? row('A/C or Heat (larger)', acHeatDemand.toFixed(0) + ' VA', '#22c55e', 'A/C: ' + ac.toFixed(0) + ' W vs Heat: ' + heat.toFixed(0) + ' W â†’ use ' + Math.max(ac,heat).toFixed(0) + ' W') : ''}
+        ${(ac > 0 || heat > 0) ? row('A/C or Heat (larger)', acHeatDemand.toFixed(0) + ' VA', '#22c55e', 'A/C: ' + ac.toFixed(0) + ' W vs Heat: ' + heat.toFixed(0) + ' W → use ' + Math.max(ac,heat).toFixed(0) + ' W') : ''}
         ${other > 0 ? row('Other Fixed Loads', otherDemand.toFixed(0) + ' VA', '#ec4899', other.toFixed(0) + ' W at 100%') : ''}
         <div style="height:1px;background:rgba(255,255,255,0.08);margin:6px 0;"></div>
         ${row('Total Demand', (totalDemand/1000).toFixed(2) + ' kVA', '#f59e0b', 'Sum of all demand values')}
-        ${row('Service Amps @ ' + voltage + 'V', serviceAmps.toFixed(1) + ' A', '#f59e0b', totalDemand.toFixed(0) + ' VA Ã· ' + voltage + 'V')}
+        ${row('Service Amps @ ' + voltage + 'V', serviceAmps.toFixed(1) + ' A', '#f59e0b', totalDemand.toFixed(0) + ' VA ÷ ' + voltage + 'V')}
         <div style="margin-top:8px;padding:14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:10px;text-align:center;">
           <div style="font-size:0.65rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;">Recommended Service Size</div>
           <div style="font-size:2rem;font-weight:900;color:#22c55e;">${recommended}A</div>
@@ -6742,15 +8011,15 @@ const Tools = {
         <div style="padding:20px 24px;background:linear-gradient(135deg,rgba(245,158,11,0.08),transparent);border-bottom:1px solid rgba(255,255,255,0.06);">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
             <div style="display:flex;align-items:center;gap:12px;">
-              <div style="font-size:1.6rem;">ðŸ </div>
+              <div style="font-size:1.6rem;">🏠</div>
               <div>
                 <div style="font-weight:700;font-size:1rem;">CEC Rule 8-200 Demand Factor Simulator</div>
                 <div style="font-size:0.75rem;color:var(--text-muted);">Practice residential service sizing with real scenarios</div>
               </div>
             </div>
             <div style="display:flex;gap:8px;">
-              <button onclick="Tools._dfNewScenario()" style="padding:8px 16px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;font-weight:600;font-size:0.8rem;cursor:pointer;">ðŸ”„ New Scenario</button>
-              <button onclick="Tools._dfShowAnswer()" style="padding:8px 16px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:#22c55e;font-weight:600;font-size:0.8rem;cursor:pointer;">âœ“ Show Answer</button>
+              <button onclick="Tools._dfNewScenario()" style="padding:8px 16px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;font-weight:600;font-size:0.8rem;cursor:pointer;">🔄 New Scenario</button>
+              <button onclick="Tools._dfShowAnswer()" style="padding:8px 16px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:#22c55e;font-weight:600;font-size:0.8rem;cursor:pointer;">✓ Show Answer</button>
             </div>
           </div>
         </div>
@@ -6758,14 +8027,14 @@ const Tools = {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
           <div style="padding:20px;border-right:1px solid rgba(255,255,255,0.06);">
             <div id="dfScenarioCard" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:16px;margin-bottom:20px;">
-              <div id="dfScenarioNum" style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#f59e0b;margin-bottom:8px;font-weight:700;">ðŸ“‹ Scenario ${(this._dfScenarioIdx||0)+1} of ${this._dfScenarios.length}</div>
+              <div id="dfScenarioNum" style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#f59e0b;margin-bottom:8px;font-weight:700;">📋 Scenario ${(this._dfScenarioIdx||0)+1} of ${this._dfScenarios.length}</div>
               <div id="dfScenarioText" style="font-size:0.88rem;color:var(--text-primary);line-height:1.6;">${this._dfScenarios[this._dfScenarioIdx||0].desc}</div>
             </div>
             <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px;">Your Calculation Inputs (CEC Rule 8-200)</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
               ${[
                 {id:'dfArea', label:'Floor Area', unit:'sq ft', hint:'Basic load = 3 VA/sq ft'},
-                {id:'dfRange', label:'Electric Range', unit:'W', hint:'â‰¤12kW = 6000W demand; >12kW add 40% of excess'},
+                {id:'dfRange', label:'Electric Range', unit:'W', hint:'≤12kW = 6000W demand; >12kW add 40% of excess'},
                 {id:'dfDryer', label:'Electric Dryer', unit:'W', hint:'First dryer @ 25% of rating'},
                 {id:'dfAC', label:'A/C or Heat Pump', unit:'W', hint:'Take larger of A/C or heat'},
                 {id:'dfHeat', label:'Electric Heat', unit:'W', hint:'Take larger of A/C or heat'},
@@ -6793,17 +8062,17 @@ const Tools = {
               <div style="color:var(--text-muted);font-size:0.85rem;padding:20px;text-align:center;background:var(--bg-input);border-radius:10px;">Enter your values to see the running calculation</div>
             </div>
             <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:14px;">
-              <div style="font-size:0.7rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">ðŸ“– CEC Rule 8-200 Quick Reference</div>
+              <div style="font-size:0.7rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📖 CEC Rule 8-200 Quick Reference</div>
               <div style="font-size:0.75rem;color:var(--text-secondary);line-height:1.8;">
-                <div><strong style="color:var(--text-primary);">Step 1 â€” Basic Load:</strong> Area Ã— 3 VA/sq ft</div>
-                <div style="padding-left:12px;color:var(--text-muted);">â€¢ First 5,000 VA @ 100%</div>
-                <div style="padding-left:12px;color:var(--text-muted);">â€¢ Remainder @ 40%</div>
-                <div><strong style="color:var(--text-primary);">Step 2 â€” Range:</strong> â‰¤12kW â†’ 6,000W; >12kW â†’ 6,000 + 40% of excess</div>
-                <div><strong style="color:var(--text-primary);">Step 3 â€” Dryer:</strong> First dryer @ 25% of rated watts</div>
-                <div><strong style="color:var(--text-primary);">Step 4 â€” A/C or Heat:</strong> Take only the LARGER of the two @ 100%</div>
-                <div><strong style="color:var(--text-primary);">Step 5 â€” Hot Water:</strong> 100% of rated watts</div>
-                <div><strong style="color:var(--text-primary);">Step 6 â€” Other Fixed:</strong> Add 25% of each fixed load</div>
-                <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);"><strong style="color:#3b82f6;">Service A = Total Demand (VA) Ã· Voltage</strong></div>
+                <div><strong style="color:var(--text-primary);">Step 1 — Basic Load:</strong> Area × 3 VA/sq ft</div>
+                <div style="padding-left:12px;color:var(--text-muted);">• First 5,000 VA @ 100%</div>
+                <div style="padding-left:12px;color:var(--text-muted);">• Remainder @ 40%</div>
+                <div><strong style="color:var(--text-primary);">Step 2 — Range:</strong> ≤12kW → 6,000W; >12kW → 6,000 + 40% of excess</div>
+                <div><strong style="color:var(--text-primary);">Step 3 — Dryer:</strong> First dryer @ 25% of rated watts</div>
+                <div><strong style="color:var(--text-primary);">Step 4 — A/C or Heat:</strong> Take only the LARGER of the two @ 100%</div>
+                <div><strong style="color:var(--text-primary);">Step 5 — Hot Water:</strong> 100% of rated watts</div>
+                <div><strong style="color:var(--text-primary);">Step 6 — Other Fixed:</strong> Add 25% of each fixed load</div>
+                <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);"><strong style="color:#3b82f6;">Service A = Total Demand (VA) ÷ Voltage</strong></div>
               </div>
             </div>
             <div id="dfAnswerPanel" style="display:none;margin-top:16px;"></div>
@@ -6826,7 +8095,7 @@ const Tools = {
     const scText = document.getElementById('dfScenarioText');
     if (scText) scText.textContent = this._dfScenarios[next].desc;
     const numEl = document.getElementById('dfScenarioNum');
-    if (numEl) numEl.textContent = 'ðŸ“‹ Scenario ' + (next + 1) + ' of ' + this._dfScenarios.length;
+    if (numEl) numEl.textContent = '📋 Scenario ' + (next + 1) + ' of ' + this._dfScenarios.length;
     // Reset all input fields to 0
     ['dfArea','dfRange','dfDryer','dfAC','dfHeat','dfHW','dfOther'].forEach(id => {
       const el = document.getElementById(id);
@@ -6864,10 +8133,10 @@ const Tools = {
     panel.style.display = 'block';
     panel.innerHTML = `
       <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:16px;">
-        <div style="font-size:0.7rem;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">âœ… Correct Answer â€” CEC 8-200 Calculation</div>
+        <div style="font-size:0.7rem;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">✅ Correct Answer — CEC 8-200 Calculation</div>
         <div style="display:flex;flex-direction:column;gap:5px;font-size:0.8rem;margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="color:var(--text-secondary);">Basic Load (${area} Ã— 3)</span><span style="font-weight:600;">${basicLoad.toFixed(0)} VA</span>
+            <span style="color:var(--text-secondary);">Basic Load (${area} × 3)</span><span style="font-weight:600;">${basicLoad.toFixed(0)} VA</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
             <span style="color:var(--text-muted);padding-left:12px;">First 5000 VA @ 100%</span><span>${first5000.toFixed(0)} VA</span>
@@ -6875,11 +8144,11 @@ const Tools = {
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
             <span style="color:var(--text-muted);padding-left:12px;">Remainder @ 40%</span><span>${remainder.toFixed(0)} VA</span>
           </div>
-          ${rangeDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Range (${range}W â†’ ${range<=12000?'6000W':'6000+'+((range-12000)*0.4).toFixed(0)+'W'})</span><span style="font-weight:600;">${rangeDemand.toFixed(0)} VA</span></div>` : ''}
-          ${dryerCalc > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Dryer (${dryer}W Ã— 25%)</span><span style="font-weight:600;">${dryerCalc.toFixed(0)} VA</span></div>` : ''}
+          ${rangeDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Range (${range}W → ${range<=12000?'6000W':'6000+'+((range-12000)*0.4).toFixed(0)+'W'})</span><span style="font-weight:600;">${rangeDemand.toFixed(0)} VA</span></div>` : ''}
+          ${dryerCalc > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Dryer (${dryer}W × 25%)</span><span style="font-weight:600;">${dryerCalc.toFixed(0)} VA</span></div>` : ''}
           ${acHeatDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">A/C or Heat (larger of ${ac}W vs ${heat}W)</span><span style="font-weight:600;">${acHeatDemand.toFixed(0)} VA</span></div>` : ''}
           ${hwDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Hot Water (${hw}W @ 100%)</span><span style="font-weight:600;">${hwDemand.toFixed(0)} VA</span></div>` : ''}
-          ${otherDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Other Fixed (${other}W Ã— 25%)</span><span style="font-weight:600;">${otherDemand.toFixed(0)} VA</span></div>` : ''}
+          ${otherDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Other Fixed (${other}W × 25%)</span><span style="font-weight:600;">${otherDemand.toFixed(0)} VA</span></div>` : ''}
           <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid rgba(34,197,94,0.3);margin-top:4px;">
             <span style="font-weight:700;color:#22c55e;font-size:0.9rem;">Total Demand</span>
             <span style="font-weight:800;color:#22c55e;font-size:0.9rem;">${totalDemand.toFixed(0)} VA</span>
@@ -6961,7 +8230,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(245,158,11,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ”§ Conduit Configuration</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">🔧 Conduit Configuration</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                 <div>
@@ -7013,19 +8282,19 @@ const Tools = {
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">ðŸ”µ Cross-Section Visualization</div>
+          <div style="font-weight:700;font-size:0.95rem;">🔵 Cross-Section Visualization</div>
           <canvas id="cfCanvas" width="420" height="360" style="border-radius:10px;width:100%;"></canvas>
           <div style="padding:10px 14px;background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.1);border-radius:8px;font-size:0.73rem;color:var(--text-secondary);line-height:1.7;">
-            CEC fill limits: 1 conductor = 53% Â· 2 conductors = 31% Â· 3+ conductors = 40%
+            CEC fill limits: 1 conductor = 53% · 2 conductors = 31% · 3+ conductors = 40%
           </div>
         </div>
       </div>
     `;
   },
 
-  // Wire cross-section areas in mmÂ² (approximate for THHN)
+  // Wire cross-section areas in mm² (approximate for THHN)
   _wireAreas: { '14': 8.97, '12': 11.68, '10': 16.77, '8': 30.19, '6': 40.54, '4': 56.06, '3': 65.61, '2': 77.26, '1': 101.3, '1/0': 126.7, '2/0': 152.0, '3/0': 177.3, '4/0': 227.0, '250': 289.0, '350': 390.0, '500': 542.0 },
-  // Conduit internal area in mmÂ² (CEC Table 8 simplified)
+  // Conduit internal area in mm² (CEC Table 8 simplified)
   _conduitAreas: {
     emt:   { '0.5': 163, '0.75': 290, '1': 490, '1.25': 808, '1.5': 1065, '2': 1778, '2.5': 2892, '3': 4536, '4': 7854 },
     rigid: { '0.5': 176, '0.75': 305, '1': 508, '1.25': 843, '1.5': 1117, '2': 1855, '2.5': 3019, '3': 4717, '4': 8107 },
@@ -7162,7 +8431,7 @@ const Tools = {
 
     // Max wire limit badge
     ctx.fillStyle = 'rgba(245,158,11,0.8)'; ctx.font = '9.5px Inter'; ctx.textAlign = 'center';
-    ctx.fillText('Max ' + maxWires + ' Â· ' + type.toUpperCase() + ' ' + size + '"', cx, H - 10);
+    ctx.fillText('Max ' + maxWires + ' · ' + type.toUpperCase() + ' ' + size + '"', cx, H - 10);
   },
 
   // ===== RLC IMPEDANCE CALCULATOR =====
@@ -7171,16 +8440,16 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(139,92,246,0.07),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:12px;">ðŸŒ€ RLC Circuit Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:12px;">🌀 RLC Circuit Parameters</div>
             <div style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg-input);border-radius:8px;padding:3px;">
               <button id="rlcSerBtn" onclick="Tools._rlcMode='series';document.getElementById('rlcSerBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;background:var(--accent);color:#000;';document.getElementById('rlcParBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;background:transparent;color:var(--text-muted);';Tools._updateRLC()" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;background:var(--accent);color:#000;">Series</button>
               <button id="rlcParBtn" onclick="Tools._rlcMode='parallel';document.getElementById('rlcParBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;background:var(--accent);color:#000;';document.getElementById('rlcSerBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;background:transparent;color:var(--text-muted);';Tools._updateRLC()" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;background:transparent;color:var(--text-muted);">Parallel</button>
             </div>
             <div style="display:flex;flex-direction:column;gap:10px;">
               ${[
-                {id:'rlcR', label:'Resistance R', unit:'Î©', val:'100', col:'#22c55e'},
+                {id:'rlcR', label:'Resistance R', unit:'Ω', val:'100', col:'#22c55e'},
                 {id:'rlcL', label:'Inductance L', unit:'mH', val:'50', col:'#8b5cf6'},
-                {id:'rlcC', label:'Capacitance C', unit:'Î¼F', val:'10', col:'#3b82f6'},
+                {id:'rlcC', label:'Capacitance C', unit:'μF', val:'10', col:'#3b82f6'},
                 {id:'rlcF', label:'Frequency', unit:'Hz', val:'60', col:'#f59e0b'},
                 {id:'rlcV', label:'Source Voltage', unit:'V', val:'120', col:'#ef4444'},
               ].map(p => `<div style="display:flex;align-items:center;gap:8px;">
@@ -7195,13 +8464,13 @@ const Tools = {
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">ðŸ“ Phasor Diagram</div>
+          <div style="font-weight:700;font-size:0.95rem;">📐 Phasor Diagram</div>
           <canvas id="rlcCanvas" width="420" height="360" style="border-radius:10px;width:100%;"></canvas>
           <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;">
-            <span style="color:#22c55e;">â–  R (Resistance)</span>
-            <span style="color:#8b5cf6;">â–  X<sub>L</sub> (Inductive)</span>
-            <span style="color:#3b82f6;">â–  X<sub>C</sub> (Capacitive)</span>
-            <span style="color:#f59e0b;">â–  Z (Impedance)</span>
+            <span style="color:#22c55e;">■ R (Resistance)</span>
+            <span style="color:#8b5cf6;">■ X<sub>L</sub> (Inductive)</span>
+            <span style="color:#3b82f6;">■ X<sub>C</sub> (Capacitive)</span>
+            <span style="color:#f59e0b;">■ Z (Impedance)</span>
           </div>
         </div>
       </div>
@@ -7213,7 +8482,7 @@ const Tools = {
   _updateRLC() {
     const R = parseFloat(document.getElementById('rlcR').value) || 0;
     const L = (parseFloat(document.getElementById('rlcL').value) || 0) / 1000; // mH to H
-    const C = (parseFloat(document.getElementById('rlcC').value) || 0.001) / 1000000; // ÂµF to F
+    const C = (parseFloat(document.getElementById('rlcC').value) || 0.001) / 1000000; // µF to F
     const f = parseFloat(document.getElementById('rlcF').value) || 60;
     const V = parseFloat(document.getElementById('rlcV').value) || 120;
 
@@ -7249,7 +8518,7 @@ const Tools = {
     const r = document.getElementById('rlcResult');
     if (r) {
       r.innerHTML = `
-        <h3 style="margin:0 0 16px;font-size:1rem;">Impedance Results â€” ${this._rlcMode === 'series' ? 'Series' : 'Parallel'}</h3>
+        <h3 style="margin:0 0 16px;font-size:1rem;">Impedance Results — ${this._rlcMode === 'series' ? 'Series' : 'Parallel'}</h3>
         <div style="text-align:center;margin-bottom:20px;">
           <div style="font-size:2.2rem;font-weight:900;color:var(--accent);">${Z.toFixed(2)} &Omega;</div>
           <div style="font-size:0.85rem;color:${natureColor};font-weight:600;">${nature} &middot; &theta; = ${angle.toFixed(1)}&deg;</div>
@@ -7345,15 +8614,15 @@ const Tools = {
 
     // R vector (horizontal, green)
     const rPx = pR * scale;
-    drawArrow(ox, oy, ox + rPx, oy, '#22c55e', 'R=' + pR.toFixed(0) + 'Î©', false);
+    drawArrow(ox, oy, ox + rPx, oy, '#22c55e', 'R=' + pR.toFixed(0) + 'Ω', false);
 
     // XL vector (vertical up, purple)
     const xlPx = pXL * scale;
-    drawArrow(ox + rPx, oy, ox + rPx, oy - xlPx, '#8b5cf6', 'XL=' + pXL.toFixed(1) + 'Î©', false);
+    drawArrow(ox + rPx, oy, ox + rPx, oy - xlPx, '#8b5cf6', 'XL=' + pXL.toFixed(1) + 'Ω', false);
 
     // XC vector (vertical down, blue)
     const xcPx = pXC * scale;
-    drawArrow(ox + rPx, oy, ox + rPx, oy + xcPx, '#3b82f6', 'XC=' + pXC.toFixed(1) + 'Î©', false);
+    drawArrow(ox + rPx, oy, ox + rPx, oy + xcPx, '#3b82f6', 'XC=' + pXC.toFixed(1) + 'Ω', false);
 
     // Net X vector
     const netX = pXL - pXC;
@@ -7367,17 +8636,17 @@ const Tools = {
     // Z vector (hypotenuse, amber glow)
     const zPx = Z * scale;
     const angleRad = angle * Math.PI / 180;
-    drawArrow(ox, oy, ox + rPx, oy - xnetPx, '#f59e0b', 'Z=' + Z.toFixed(1) + 'Î©', true);
+    drawArrow(ox, oy, ox + rPx, oy - xnetPx, '#f59e0b', 'Z=' + Z.toFixed(1) + 'Ω', true);
 
     // Angle arc
     ctx.strokeStyle = 'rgba(245,158,11,0.5)'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(ox, oy, 28, -angleRad, 0); ctx.stroke();
     ctx.fillStyle = 'rgba(245,158,11,0.8)'; ctx.font = '9px Inter'; ctx.textAlign = 'center';
-    ctx.fillText('Î¸=' + angle.toFixed(0) + 'Â°', ox + 38, oy + (angle >= 0 ? -8 : 10));
+    ctx.fillText('θ=' + angle.toFixed(0) + '°', ox + 38, oy + (angle >= 0 ? -8 : 10));
 
     // Nature label
     ctx.fillStyle = natureColor; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
-    ctx.fillText(nature + ' Â· PF = ' + (Math.abs(PF)*100).toFixed(1) + '%', W/2, H - 8);
+    ctx.fillText(nature + ' · PF = ' + (Math.abs(PF)*100).toFixed(1) + '%', W/2, H - 8);
   },
 
   // ===== DRAWING & DIAGRAM CONVERSION SIMULATOR =====
@@ -7449,7 +8718,7 @@ const Tools = {
     </div>
     <!-- What am I looking at -->
     <div style="margin-bottom:14px;padding:12px 16px;background:rgba(${s===0?'245,158,11':s===1?'34,197,94':s===2?'59,130,246':'139,92,246'},0.07);border:1px solid rgba(${s===0?'245,158,11':s===1?'34,197,94':s===2?'59,130,246':'139,92,246'},0.2);border-radius:10px;font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">
-      <strong style="color:${sc.color};">${vLabels[v]} â€” what you're looking at:</strong><br>${explainText}
+      <strong style="color:${sc.color};">${vLabels[v]} — what you're looking at:</strong><br>${explainText}
     </div>
     <!-- SVG diagram -->
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;overflow:auto;">
@@ -7462,24 +8731,24 @@ const Tools = {
   _diagExplain(s, v) {
     const texts = {
       0: {
-        block: 'A block diagram shows the <strong>function</strong> of each part using labeled boxes and arrows. No wire colours, no box internals â€” just the logical flow of power from source to load.',
+        block: 'A block diagram shows the <strong>function</strong> of each part using labeled boxes and arrows. No wire colours, no box internals — just the logical flow of power from source to load.',
         wiring: 'A wiring diagram shows <strong>actual physical connections</strong>: which wire goes where, the real colours used, and how conductors are connected inside each box. This is what an electrician uses on the job.',
-        schematic: 'A schematic (ladder diagram) uses <strong>standard symbols</strong> on two rails (L1 and N). It shows the circuit logic clearly â€” easy to read fault conditions. Each rung is a complete series path from L1 to N.'
+        schematic: 'A schematic (ladder diagram) uses <strong>standard symbols</strong> on two rails (L1 and N). It shows the circuit logic clearly — easy to read fault conditions. Each rung is a complete series path from L1 to N.'
       },
       1: {
         block: 'The 3-way switch circuit uses <strong>two 3-way switches</strong> to control one light from two locations. The block diagram shows the order of components without wire details.',
-        wiring: 'Three cable runs are used. Sourceâ†’SW1 is 14/2, SW1â†’SW2 is <strong>14/3</strong> (adds a red traveler wire), SW2â†’Light is 14/2. The two conductors between switches are called <strong>travelers</strong>.',
-        schematic: 'The schematic shows both switches sharing two traveler conductors. Only one traveler is in the circuit at a time â€” flipping either switch changes which traveler is active, toggling the light.'
+        wiring: 'Three cable runs are used. Source→SW1 is 14/2, SW1→SW2 is <strong>14/3</strong> (adds a red traveler wire), SW2→Light is 14/2. The two conductors between switches are called <strong>travelers</strong>.',
+        schematic: 'The schematic shows both switches sharing two traveler conductors. Only one traveler is in the circuit at a time — flipping either switch changes which traveler is active, toggling the light.'
       },
       2: {
         block: 'A relay control circuit has two parts: the <strong>control circuit</strong> (low energy, switches the coil) and the <strong>power circuit</strong> (full voltage, switches the load via contacts). The block diagram separates these.',
         wiring: 'The control circuit runs 120V through a pushbutton to energize the relay coil. When the coil pulls in, the <strong>NO contact closes</strong>, completing the power circuit to the load. Two separate circuits share the same enclosure.',
-        schematic: 'The top rung is the control circuit (pushbutton â†’ coil). The bottom rung is the power circuit (contact â†’ load). This is standard ladder diagram format used in industry.'
+        schematic: 'The top rung is the control circuit (pushbutton → coil). The bottom rung is the power circuit (contact → load). This is standard ladder diagram format used in industry.'
       },
       3: {
         block: 'Three-wire control uses a <strong>seal-in contact</strong> (M) in parallel with the Start button so the motor runs after you release Start. Stop breaks the entire circuit. OL contacts protect against overload.',
         wiring: 'The push button station connects back to the starter. Stop (NC) is in series; Start (NO) is in parallel with the M contact. Wire count depends on whether neutral runs to the button station.',
-        schematic: 'Classic 3-wire ladder: Stop NC â†’ Start NO parallel with M â†’ M Coil. Main contacts feed three-phase power through OL heaters to the motor. OL NC contacts are in the control rung.'
+        schematic: 'Classic 3-wire ladder: Stop NC → Start NO parallel with M → M Coil. Main contacts feed three-phase power through OL heaters to the motor. OL NC contacts are in the control rung.'
       }
     };
     return texts[s][v];
@@ -7489,12 +8758,12 @@ const Tools = {
     const info = {
       0: {
         block: [
-          { label: 'Panel â†’ Switch Box', count: 2, wires: ['Black (hot)','White (neutral)'], note: 'Standard 14/2 NMD90' },
-          { label: 'Switch Box â†’ Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'White must be re-identified at switch box' },
+          { label: 'Panel → Switch Box', count: 2, wires: ['Black (hot)','White (neutral)'], note: 'Standard 14/2 NMD90' },
+          { label: 'Switch Box → Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'White must be re-identified at switch box' },
         ],
         wiring: [
-          { label: 'Panel â†’ Switch Box', count: 2, wires: ['Black (hot â†’ switch)','White (neutral â†’ pigtail)'], note: '14/2 NMD90 Â· 2 current-carrying conductors' },
-          { label: 'Switch Box â†’ Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'Re-identify white with black tape at switch' },
+          { label: 'Panel → Switch Box', count: 2, wires: ['Black (hot → switch)','White (neutral → pigtail)'], note: '14/2 NMD90 · 2 current-carrying conductors' },
+          { label: 'Switch Box → Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'Re-identify white with black tape at switch' },
         ],
         schematic: [
           { label: 'Control path', count: 2, wires: ['L1 through switch contact','Return on Neutral'], note: 'Switch interrupts the ungrounded (hot) conductor only' },
@@ -7502,14 +8771,14 @@ const Tools = {
       },
       1: {
         block: [
-          { label: 'Panel â†’ 3-Way SW1', count: 2, wires: ['Black (hot)','White (neutral)'], note: '14/2 NMD90' },
-          { label: 'SW1 â†’ 3-Way SW2', count: 3, wires: ['Black (traveler)','Red (traveler)','White (common)'], note: '14/3 NMD90 â€” the extra wire is key!' },
-          { label: 'SW2 â†’ Light', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: '14/2 NMD90' },
+          { label: 'Panel → 3-Way SW1', count: 2, wires: ['Black (hot)','White (neutral)'], note: '14/2 NMD90' },
+          { label: 'SW1 → 3-Way SW2', count: 3, wires: ['Black (traveler)','Red (traveler)','White (common)'], note: '14/3 NMD90 — the extra wire is key!' },
+          { label: 'SW2 → Light', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: '14/2 NMD90' },
         ],
         wiring: [
-          { label: 'Panel â†’ SW1', count: 2, wires: ['Black','White'], note: '14/2 Â· Hot goes to SW1 common terminal' },
-          { label: 'SW1 â†’ SW2 (travelers)', count: 3, wires: ['Black traveler','Red traveler','White (neutral)'], note: '14/3 Â· Black & Red connect traveler terminals; White passes neutral through' },
-          { label: 'SW2 â†’ Light', count: 2, wires: ['Black (switched hot from SW2 common)','White (neutral)'], note: '14/2 Â· White re-identified if used as hot' },
+          { label: 'Panel → SW1', count: 2, wires: ['Black','White'], note: '14/2 · Hot goes to SW1 common terminal' },
+          { label: 'SW1 → SW2 (travelers)', count: 3, wires: ['Black traveler','Red traveler','White (neutral)'], note: '14/3 · Black & Red connect traveler terminals; White passes neutral through' },
+          { label: 'SW2 → Light', count: 2, wires: ['Black (switched hot from SW2 common)','White (neutral)'], note: '14/2 · White re-identified if used as hot' },
         ],
         schematic: [
           { label: 'Traveler conductors', count: 2, wires: ['Traveler A','Traveler B'], note: 'Only one active path at a time' },
@@ -7519,30 +8788,30 @@ const Tools = {
       2: {
         block: [
           { label: 'Control circuit', count: 2, wires: ['Hot (L1)','Neutral'], note: '120V control, low amperage' },
-          { label: 'Power circuit', count: 2, wires: ['Line hot','Load neutral'], note: '120/240V to load â€” switched by relay contacts' },
+          { label: 'Power circuit', count: 2, wires: ['Line hot','Load neutral'], note: '120/240V to load — switched by relay contacts' },
         ],
         wiring: [
-          { label: 'Pushbutton â†’ Relay', count: 2, wires: ['Control hot','Control return'], note: 'Small gauge acceptable â€” coil is low current' },
-          { label: 'Relay contact â†’ Load', count: 2, wires: ['Line hot (through contact)','Neutral to load'], note: 'Must be rated for full load current' },
+          { label: 'Pushbutton → Relay', count: 2, wires: ['Control hot','Control return'], note: 'Small gauge acceptable — coil is low current' },
+          { label: 'Relay contact → Load', count: 2, wires: ['Line hot (through contact)','Neutral to load'], note: 'Must be rated for full load current' },
         ],
         schematic: [
-          { label: 'Control rung', count: 2, wires: ['L1 rail','N rail'], note: 'Pushbutton â†’ coil completes control rung' },
-          { label: 'Power rung', count: 2, wires: ['L1 rail','N rail'], note: 'NO contact â†’ load completes power rung' },
+          { label: 'Control rung', count: 2, wires: ['L1 rail','N rail'], note: 'Pushbutton → coil completes control rung' },
+          { label: 'Power rung', count: 2, wires: ['L1 rail','N rail'], note: 'NO contact → load completes power rung' },
         ]
       },
       3: {
         block: [
-          { label: 'Push button station', count: 3, wires: ['L1 control','Common (between Stop & Start)','Return to starter'], note: '3 wires to button station â€” gives 3-wire control name' },
-          { label: 'Starter â†’ Motor', count: 3, wires: ['T1','T2','T3'], note: '3-phase Â· runs through OL heaters' },
+          { label: 'Push button station', count: 3, wires: ['L1 control','Common (between Stop & Start)','Return to starter'], note: '3 wires to button station — gives 3-wire control name' },
+          { label: 'Starter → Motor', count: 3, wires: ['T1','T2','T3'], note: '3-phase · runs through OL heaters' },
         ],
         wiring: [
-          { label: 'Control source â†’ Stop PB', count: 2, wires: ['Control hot','Neutral'], note: 'Stop NC in series with everything' },
-          { label: 'Stop â†’ Start PB', count: 1, wires: ['Series conductor'], note: 'One wire between Stop and Start' },
-          { label: 'Start PB â†’ M Coil', count: 1, wires: ['Coil hot'], note: 'Parallel path: Start NO or M NO seal-in' },
-          { label: 'Starter â†’ Motor', count: 3, wires: ['T1 (L1 through M contact)','T2 (L2 through M contact)','T3 (L3 through M contact)'], note: 'All three phases interrupted by main contacts' },
+          { label: 'Control source → Stop PB', count: 2, wires: ['Control hot','Neutral'], note: 'Stop NC in series with everything' },
+          { label: 'Stop → Start PB', count: 1, wires: ['Series conductor'], note: 'One wire between Stop and Start' },
+          { label: 'Start PB → M Coil', count: 1, wires: ['Coil hot'], note: 'Parallel path: Start NO or M NO seal-in' },
+          { label: 'Starter → Motor', count: 3, wires: ['T1 (L1 through M contact)','T2 (L2 through M contact)','T3 (L3 through M contact)'], note: 'All three phases interrupted by main contacts' },
         ],
         schematic: [
-          { label: 'Control rung wires', count: 3, wires: ['L1 control rail','Junction at Start/M contact','N rail (coil return)'], note: '3-wire control â€” Stop, Start, M coil' },
+          { label: 'Control rung wires', count: 3, wires: ['L1 control rail','Junction at Start/M contact','N rail (coil return)'], note: '3-wire control — Stop, Start, M coil' },
           { label: 'Power circuit', count: 6, wires: ['L1/L2/L3 line side','T1/T2/T3 load side'], note: '3 lines in, 3 lines out through main contacts and OL heaters' },
         ]
       }
@@ -7560,7 +8829,7 @@ const Tools = {
             <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">${r.label}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:6px;">
-            ${r.wires.map(w => `<div style="font-size:0.75rem;color:var(--text-secondary);padding-left:4px;">â€¢ ${w}</div>`).join('')}
+            ${r.wires.map(w => `<div style="font-size:0.75rem;color:var(--text-secondary);padding-left:4px;">• ${w}</div>`).join('')}
           </div>
           <div style="font-size:0.72rem;color:var(--text-muted);background:var(--bg-input);padding:4px 8px;border-radius:6px;">${r.note}</div>
         </div>`).join('')}
@@ -7594,7 +8863,7 @@ const Tools = {
       <text x="580" y="88" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700">LIGHT BOX</text>
       <text x="580" y="104" text-anchor="middle" fill="#94a3b8" font-size="10">120V Lamp</text>
       <!-- Labels -->
-      <text x="360" y="165" text-anchor="middle" fill="#64748b" font-size="10">Power flows left â†’ right when switch is closed</text>
+      <text x="360" y="165" text-anchor="middle" fill="#64748b" font-size="10">Power flows left → right when switch is closed</text>
     </svg>`;
 
     if (s === 1) return `
@@ -7649,7 +8918,7 @@ const Tools = {
       <text x="10" y="148" fill="#22c55e" font-size="10" font-weight="700">POWER CIRCUIT (Full voltage)</text>
       <rect x="160" y="158" width="90" height="50" rx="7" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-width="1.5"/>
       <text x="205" y="181" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="700">M CONTACT</text>
-      <text x="205" y="194" text-anchor="middle" fill="#94a3b8" font-size="8">(NO â†’ Closes)</text>
+      <text x="205" y="194" text-anchor="middle" fill="#94a3b8" font-size="8">(NO → Closes)</text>
       <line x1="250" y1="183" x2="310" y2="183" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr)"/>
       <rect x="310" y="158" width="90" height="50" rx="7" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-width="1.5"/>
       <text x="355" y="181" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="700">LOAD</text>
@@ -7714,13 +8983,13 @@ const Tools = {
       <rect x="20" y="90" width="90" height="80" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2"/>
       <text x="65" y="126" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">PANEL</text>
       <text x="65" y="143" text-anchor="middle" fill="#64748b" font-size="9">15A Breaker</text>
-      <!-- Cables panelâ†’switch: black (hot) and white (neutral) -->
+      <!-- Cables panel→switch: black (hot) and white (neutral) -->
       <line x1="110" y1="115" x2="290" y2="115" stroke="#1f2937" stroke-width="5"/>
       <line x1="110" y1="115" x2="290" y2="115" stroke="#111827" stroke-width="3"/>
       <line x1="110" y1="125" x2="290" y2="125" stroke="#e5e7eb" stroke-width="3"/>
       <text x="200" y="108" text-anchor="middle" fill="#64748b" font-size="9">14/2 NMD90</text>
-      <text x="148" y="141" fill="#64748b" font-size="8">âš« Black (hot)</text>
-      <text x="148" y="152" fill="#9ca3af" font-size="8">âšª White (neutral)</text>
+      <text x="148" y="141" fill="#64748b" font-size="8">⚫ Black (hot)</text>
+      <text x="148" y="152" fill="#9ca3af" font-size="8">⚪ White (neutral)</text>
       <!-- Switch box -->
       <rect x="290" y="80" width="100" height="100" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2"/>
       <text x="340" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="700">SWITCH</text>
@@ -7734,8 +9003,8 @@ const Tools = {
       <text x="360" y="159" text-anchor="middle" fill="#000" font-size="7" font-weight="900">WN</text>
       <!-- Re-identification note -->
       <rect x="280" y="190" width="130" height="24" rx="4" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1"/>
-      <text x="345" y="204" text-anchor="middle" fill="#ef4444" font-size="8">White â†’ re-ID black tape</text>
-      <!-- Cables switchâ†’light: black switched and white -->
+      <text x="345" y="204" text-anchor="middle" fill="#ef4444" font-size="8">White → re-ID black tape</text>
+      <!-- Cables switch→light: black switched and white -->
       <line x1="390" y1="115" x2="560" y2="115" stroke="#1f2937" stroke-width="5"/>
       <line x1="390" y1="115" x2="560" y2="115" stroke="#111827" stroke-width="3"/>
       <line x1="390" y1="125" x2="560" y2="125" stroke="#e5e7eb" stroke-width="3"/>
@@ -7776,14 +9045,14 @@ const Tools = {
       <line x1="215" y1="150" x2="240" y2="156" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="244" cy="140" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="244" cy="156" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
-      <!-- 14/3 cable SW1â†’SW2 â€” 3 conductors -->
+      <!-- 14/3 cable SW1→SW2 — 3 conductors -->
       <text x="360" y="100" text-anchor="middle" fill="#ec4899" font-size="9" font-weight="700">14/3 NMD90 (3 conductors!)</text>
       <line x1="290" y1="112" x2="450" y2="112" stroke="#111827" stroke-width="4"/>
       <line x1="290" y1="120" x2="450" y2="120" stroke="#dc2626" stroke-width="3"/>
       <line x1="290" y1="128" x2="450" y2="128" stroke="#e5e7eb" stroke-width="3"/>
-      <text x="360" y="145" text-anchor="middle" fill="#64748b" font-size="8">âš« Black = traveler A</text>
-      <text x="360" y="156" text-anchor="middle" fill="#64748b" font-size="8">ðŸ”´ Red = traveler B</text>
-      <text x="360" y="167" text-anchor="middle" fill="#94a3b8" font-size="8">âšª White = neutral</text>
+      <text x="360" y="145" text-anchor="middle" fill="#64748b" font-size="8">⚫ Black = traveler A</text>
+      <text x="360" y="156" text-anchor="middle" fill="#64748b" font-size="8">🔴 Red = traveler B</text>
+      <text x="360" y="167" text-anchor="middle" fill="#94a3b8" font-size="8">⚪ White = neutral</text>
       <!-- SW2 box -->
       <rect x="450" y="80" width="110" height="100" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="2"/>
       <text x="505" y="108" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="700">3-WAY SW2</text>
@@ -7792,7 +9061,7 @@ const Tools = {
       <line x1="485" y1="150" x2="510" y2="156" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="514" cy="140" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="514" cy="156" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
-      <!-- 14/2 SW2â†’Light -->
+      <!-- 14/2 SW2→Light -->
       <line x1="560" y1="118" x2="650" y2="118" stroke="#111827" stroke-width="4"/>
       <line x1="560" y1="126" x2="650" y2="126" stroke="#e5e7eb" stroke-width="3"/>
       <text x="605" y="112" text-anchor="middle" fill="#64748b" font-size="8">14/2</text>
@@ -7837,7 +9106,7 @@ const Tools = {
       <line x1="420" y1="110" x2="435" y2="110" stroke="#22c55e" stroke-width="2"/>
       <line x1="380" y1="104" x2="420" y2="104" stroke="#22c55e" stroke-width="2"/>
       <text x="400" y="135" text-anchor="middle" fill="#22c55e" font-size="8">M Contact (NO)</text>
-      <!-- Dotted actuator line coilâ†’contact -->
+      <!-- Dotted actuator line coil→contact -->
       <line x1="400" y1="80" x2="400" y2="100" stroke="#64748b" stroke-width="1" stroke-dasharray="3,2"/>
       <!-- wire from contact to load -->
       <line x1="460" y1="110" x2="560" y2="110" stroke="#111827" stroke-width="3"/>
@@ -7857,7 +9126,7 @@ const Tools = {
       <line x1="560" y1="56" x2="560" y2="80" stroke="#111827" stroke-width="3"/>
       <!-- Note -->
       <rect x="10" y="220" width="800" height="40" rx="6" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="1"/>
-      <text x="410" y="237" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="700">TWO SEPARATE CIRCUITS share one enclosure. Control circuit (low energy) energizes the coil â€” coil actuates contact â€” contact carries full load current.</text>
+      <text x="410" y="237" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="700">TWO SEPARATE CIRCUITS share one enclosure. Control circuit (low energy) energizes the coil — coil actuates contact — contact carries full load current.</text>
       <text x="410" y="252" text-anchor="middle" fill="#64748b" font-size="9">This separation is why relay control is safe: you push a 120V button to switch 600V equipment without exposing the operator to high voltage.</text>
     </svg>`;
 
@@ -7892,7 +9161,7 @@ const Tools = {
       <text x="370" y="103" text-anchor="middle" fill="#8b5cf6" font-size="8">M COIL</text>
       <!-- OL heaters -->
       <rect x="430" y="85" width="55" height="28" rx="4" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1.5"/>
-      <text x="457" y="103" text-anchor="middle" fill="#ef4444" font-size="7" font-weight="700">OL (3Ã—)</text>
+      <text x="457" y="103" text-anchor="middle" fill="#ef4444" font-size="7" font-weight="700">OL (3×)</text>
       <!-- M auxiliary contact -->
       <line x1="330" y1="140" x2="345" y2="140" stroke="#22c55e" stroke-width="2"/>
       <line x1="345" y1="134" x2="375" y2="134" stroke="#22c55e" stroke-width="2"/>
@@ -7922,7 +9191,7 @@ const Tools = {
       <!-- Note -->
       <rect x="10" y="245" width="800" height="35" rx="6" fill="rgba(139,92,246,0.08)" stroke="#8b5cf6" stroke-width="1"/>
       <text x="410" y="261" text-anchor="middle" fill="#8b5cf6" font-size="9" font-weight="700">Why "3-wire" control? Three wires run to the push button station: L1 control hot, junction between Stop &amp; Start, and coil return. This allows the seal-in contact to hold the circuit without extra wiring.</text>
-      <text x="410" y="274" text-anchor="middle" fill="#64748b" font-size="9">Power circuit: 3 lines in â†’ 3 main contacts â†’ 3 OL heaters â†’ 3 motor terminals (T1/T2/T3)</text>
+      <text x="410" y="274" text-anchor="middle" fill="#64748b" font-size="9">Power circuit: 3 lines in → 3 main contacts → 3 OL heaters → 3 motor terminals (T1/T2/T3)</text>
     </svg>`;
   },
 
@@ -7955,7 +9224,7 @@ const Tools = {
       <!-- Wire to neutral -->
       <line x1="422" y1="90" x2="530" y2="90" stroke="#94a3b8" stroke-width="2"/>
       <!-- Annotation -->
-      <text x="300" y="160" text-anchor="middle" fill="#64748b" font-size="9">Switch interrupts the HOT (L1) conductor only â€” Neutral is continuous</text>
+      <text x="300" y="160" text-anchor="middle" fill="#64748b" font-size="9">Switch interrupts the HOT (L1) conductor only — Neutral is continuous</text>
     </svg>`;
 
     if (s === 1) return `
@@ -7967,7 +9236,7 @@ const Tools = {
       <text x="620" y="14" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">N</text>
       <!-- SW1 common -->
       <line x1="50" y1="80" x2="120" y2="80" stroke="#94a3b8" stroke-width="2"/>
-      <!-- SW1 symbol â€” pivot point -->
+      <!-- SW1 symbol — pivot point -->
       <circle cx="120" cy="80" r="4" fill="#22c55e"/>
       <text x="120" y="68" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="700">SW1 common</text>
       <!-- Traveler A (top path) -->
@@ -8005,7 +9274,7 @@ const Tools = {
       <line x1="600" y1="20" x2="600" y2="210" stroke="#e5e7eb" stroke-width="3"/>
       <text x="600" y="14" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">N</text>
       <!-- CONTROL RUNG (top) -->
-      <text x="50" y="55" fill="#64748b" font-size="8">Rung 1 â€” Control</text>
+      <text x="50" y="55" fill="#64748b" font-size="8">Rung 1 — Control</text>
       <line x1="50" y1="70" x2="140" y2="70" stroke="#94a3b8" stroke-width="2"/>
       <!-- PB NO contact -->
       <line x1="140" y1="70" x2="155" y2="70" stroke="#3b82f6" stroke-width="2"/>
@@ -8019,7 +9288,7 @@ const Tools = {
       <text x="510" y="73" text-anchor="middle" fill="#8b5cf6" font-size="10" font-weight="700">M</text>
       <line x1="540" y1="70" x2="600" y2="70" stroke="#94a3b8" stroke-width="2"/>
       <!-- POWER RUNG (bottom) -->
-      <text x="50" y="135" fill="#64748b" font-size="8">Rung 2 â€” Power circuit</text>
+      <text x="50" y="135" fill="#64748b" font-size="8">Rung 2 — Power circuit</text>
       <line x1="50" y1="148" x2="160" y2="148" stroke="#94a3b8" stroke-width="2"/>
       <!-- M NO contact in power rung -->
       <line x1="160" y1="148" x2="175" y2="148" stroke="#22c55e" stroke-width="2"/>
@@ -8038,7 +9307,7 @@ const Tools = {
       <line x1="510" y1="85" x2="510" y2="120" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="510" y1="120" x2="197" y2="120" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="197" y1="120" x2="197" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
-      <text x="360" y="116" text-anchor="middle" fill="#8b5cf6" font-size="8">coil energized â†’ closes M contact</text>
+      <text x="360" y="116" text-anchor="middle" fill="#8b5cf6" font-size="8">coil energized → closes M contact</text>
     </svg>`;
 
     // s === 3 Motor Starter
@@ -8128,7 +9397,7 @@ const Tools = {
       <!-- Motor symbol -->
       <circle cx="440" cy="180" r="32" fill="rgba(34,197,94,0.06)" stroke="#22c55e" stroke-width="2.5"/>
       <text x="440" y="176" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="900">M</text>
-      <text x="440" y="190" text-anchor="middle" fill="#64748b" font-size="8">3Ã˜</text>
+      <text x="440" y="190" text-anchor="middle" fill="#64748b" font-size="8">3Ø</text>
       <line x1="400" y1="155" x2="408" y2="155" stroke="#f59e0b" stroke-width="2.5"/>
       <line x1="400" y1="180" x2="408" y2="180" stroke="#dc2626" stroke-width="2.5"/>
       <line x1="400" y1="205" x2="408" y2="205" stroke="#1d4ed8" stroke-width="2.5"/>
@@ -8136,7 +9405,7 @@ const Tools = {
       <line x1="580" y1="68" x2="580" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="580" y1="130" x2="220" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="220" y1="130" x2="220" y2="143" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
-      <text x="400" y="127" text-anchor="middle" fill="#8b5cf6" font-size="7">M energized â†’ main contacts close â†’ motor runs</text>
+      <text x="400" y="127" text-anchor="middle" fill="#8b5cf6" font-size="7">M energized → main contacts close → motor runs</text>
     </svg>`;
   },
 
@@ -8144,11 +9413,11 @@ const Tools = {
   _diagQuizQuestions: [
     { q: 'A single-pole switch controls a light. Looking at the wiring diagram, how many conductors run from the switch box to the light?', opts: ['1','2','3','4'], correct: 1, exp: 'A switch-light circuit needs 2 conductors: switched hot (black) + neutral (white). Both must be present to complete the circuit.' },
     { q: 'On a blueprint, a cable run between two 3-way switches has 3 slash marks (///). What cable type is required?', opts: ['14/1','14/2','14/3','14/4'], correct: 2, exp: 'Each slash mark = one conductor. Three slashes = 3 conductors = 14/3 NMD90. The extra conductor (red) carries the second traveler wire.' },
-    { q: 'In a ladder diagram (schematic), why does the switch contact appear on the LEFT side of the rung?', opts: ['It\'s a drawing convention only','Contacts are inputs/conditions â€” they control whether current can reach the output (coil/load) on the right','Contacts are always drawn first alphabetically','The neutral rail is on the left'], correct: 1, exp: 'In a ladder diagram: left rail = L1 (hot), right rail = N/L2. Contacts (inputs) are placed left, coils/loads (outputs) are placed right. Current flows left-to-right through closed contacts to energize the load.' },
+    { q: 'In a ladder diagram (schematic), why does the switch contact appear on the LEFT side of the rung?', opts: ['It\'s a drawing convention only','Contacts are inputs/conditions — they control whether current can reach the output (coil/load) on the right','Contacts are always drawn first alphabetically','The neutral rail is on the left'], correct: 1, exp: 'In a ladder diagram: left rail = L1 (hot), right rail = N/L2. Contacts (inputs) are placed left, coils/loads (outputs) are placed right. Current flows left-to-right through closed contacts to energize the load.' },
     { q: 'A relay control circuit has two separate rungs. What does the TOP rung contain?', opts: ['The motor winding','The main contacts and OL heaters','The control circuit: pushbutton and relay coil','The grounding conductor'], correct: 2, exp: 'In relay/starter ladder diagrams: top rung = CONTROL circuit (pushbutton, auxiliary contacts, coil). Bottom rung = POWER circuit (main contacts, OL heaters, load/motor). Control uses low energy; power carries full load current.' },
     { q: 'In a 3-wire motor control circuit, why is a SEAL-IN (M) contact wired in parallel with the Start pushbutton?', opts: ['To increase motor speed','To provide a second start button','To hold the circuit energized after you release the Start button','To reduce voltage to the coil'], correct: 2, exp: 'When you press Start, current flows through the Start NO contact and energizes M coil. M coil closes the M auxiliary (seal-in) contact, which creates a parallel path. When you release Start, the seal-in contact keeps the circuit alive. Pressing Stop breaks this path.' },
-    { q: 'On a wiring diagram, what is the purpose of the wire nut (WN) shown in the switch box for a basic switch-light circuit?', opts: ['It switches the circuit','It joins the neutral conductor â€” neutral passes through the box without interruption','It connects to ground only','It terminates the hot wire'], correct: 1, exp: 'The neutral (white) runs continuously from panel to light. It does NOT pass through the switch. At the switch box, the neutral is wire-nutted (spliced) to pass through â€” the switch only interrupts the hot (black) conductor.' },
-    { q: 'A block diagram shows: [Panel] â†’ [Switch] â†’ [Light]. Converting this to a wiring diagram, what additional information is now visible?', opts: ['Only the panel amperage','The actual wire colours, the cable type, how wires connect inside each box, and where wire nuts are located','Only the light wattage','Only the circuit number'], correct: 1, exp: 'A block diagram shows WHAT components exist and their ORDER. A wiring diagram adds HOW they connect: wire colours (black/white/green), cable type (14/2 NMD90), splice locations (wire nuts), box entry points, and which terminal each wire attaches to.' },
+    { q: 'On a wiring diagram, what is the purpose of the wire nut (WN) shown in the switch box for a basic switch-light circuit?', opts: ['It switches the circuit','It joins the neutral conductor — neutral passes through the box without interruption','It connects to ground only','It terminates the hot wire'], correct: 1, exp: 'The neutral (white) runs continuously from panel to light. It does NOT pass through the switch. At the switch box, the neutral is wire-nutted (spliced) to pass through — the switch only interrupts the hot (black) conductor.' },
+    { q: 'A block diagram shows: [Panel] → [Switch] → [Light]. Converting this to a wiring diagram, what additional information is now visible?', opts: ['Only the panel amperage','The actual wire colours, the cable type, how wires connect inside each box, and where wire nuts are located','Only the light wattage','Only the circuit number'], correct: 1, exp: 'A block diagram shows WHAT components exist and their ORDER. A wiring diagram adds HOW they connect: wire colours (black/white/green), cable type (14/2 NMD90), splice locations (wire nuts), box entry points, and which terminal each wire attaches to.' },
     { q: 'In a 3-way switch schematic, how many conductors are drawn between the two switch symbols on the schematic?', opts: ['1','2','3','4'], correct: 1, exp: 'Two traveler conductors run between 3-way switches. The schematic shows both: Traveler A and Traveler B. Only one is active at a time depending on both switch positions. The common conductors (hot in and switched hot out) connect to the rails.' },
   ],
 
@@ -8161,9 +9430,9 @@ const Tools = {
       const color = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
       return `
       <div style="text-align:center;padding:40px 20px;">
-        <div style="font-size:3rem;margin-bottom:12px;">${pct >= 80 ? 'ðŸ†' : pct >= 60 ? 'ðŸ’ª' : 'ðŸ“š'}</div>
+        <div style="font-size:3rem;margin-bottom:12px;">${pct >= 80 ? '🏆' : pct >= 60 ? '💪' : '📚'}</div>
         <h2 style="font-size:1.5rem;margin:0 0 8px;color:${color};">Quiz Complete! ${score}/${qs.length} correct (${pct}%)</h2>
-        <p style="color:var(--text-secondary);margin:0 0 24px;">${pct >= 80 ? 'Excellent! You understand diagram conversion well.' : pct >= 60 ? 'Good work â€” review the wiring and schematic views to reinforce the concepts.' : 'Keep practicing! Use the Learn tab to study each view carefully, then try again.'}</p>
+        <p style="color:var(--text-secondary);margin:0 0 24px;">${pct >= 80 ? 'Excellent! You understand diagram conversion well.' : pct >= 60 ? 'Good work — review the wiring and schematic views to reinforce the concepts.' : 'Keep practicing! Use the Learn tab to study each view carefully, then try again.'}</p>
         <button onclick="Tools._diagTab='learn';Tools._renderDiagramContent()" style="padding:10px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;margin-right:10px;">&#x1F4DA; Back to Learn</button>
         <button onclick="Tools._diagQuizIdx=0;Tools._diagQuizAnswered=false;Tools._diagQuizScore=0;Tools._diagQuizTotal=0;Tools._renderDiagramContent()" style="padding:10px 24px;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:10px;font-weight:700;cursor:pointer;">&#x1F504; Try Again</button>
       </div>`;
@@ -8188,7 +9457,7 @@ const Tools = {
               if (i === q.correct) style = 'padding:12px 16px;border-radius:10px;border:2px solid #22c55e;cursor:default;font-size:0.88rem;text-align:left;width:100%;background:rgba(34,197,94,0.1);color:#22c55e;font-weight:700;';
               else style = 'padding:12px 16px;border-radius:10px;border:1px solid rgba(239,68,68,0.3);cursor:default;font-size:0.88rem;text-align:left;width:100%;background:rgba(239,68,68,0.05);color:var(--text-muted);';
             }
-            const check = answered && i === q.correct ? ' âœ“' : '';
+            const check = answered && i === q.correct ? ' ✓' : '';
             return `<button onclick="${answered ? '' : `Tools._diagQuizAnswered=true;if(${i}===${q.correct})Tools._diagQuizScore=(Tools._diagQuizScore||0)+1;Tools._renderDiagramContent()`}" style="${style}">${o}${check}</button>`;
           }).join('')}
         </div>
@@ -8196,7 +9465,7 @@ const Tools = {
         <div style="margin-top:16px;padding:12px 14px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">
           <strong style="color:#3b82f6;">Explanation:</strong> ${q.exp}
         </div>
-        <button onclick="Tools._diagQuizIdx=(Tools._diagQuizIdx||0)+1;Tools._diagQuizAnswered=false;Tools._renderDiagramContent()" style="margin-top:14px;padding:10px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;width:100%;">Next â†’</button>` : ''}
+        <button onclick="Tools._diagQuizIdx=(Tools._diagQuizIdx||0)+1;Tools._diagQuizAnswered=false;Tools._renderDiagramContent()" style="margin-top:14px;padding:10px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;width:100%;">Next →</button>` : ''}
       </div>
     </div>`;
   },
@@ -8473,752 +9742,1645 @@ const Review = {
 // ===== LESSONS MODULE =====
 
 const LESSONS_CONTENT = [
+  // ── Period 2 — AC Circuit Properties ─────────────────────────────────────
   {
-    id: 'm1',
-    title: 'AC Fundamentals',
-    icon: 'ã€œ',
-    subtitle: 'The Invisible River That Powers Everything',
-    color: '#f59e0b',
-    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(234,88,12,0.06))',
-    border: 'rgba(245,158,11,0.3)',
-    readTime: '12 min read',
-    sections: [
-      {
-        type: 'hook',
-        title: 'âš¡ Picture This',
-        body: `Right now, the electrons in your outlet aren't traveling from the power plant to your house â€” they're just jiggling back and forth, 60 times per second, barely moving anywhere at all.\n\nAnd yet your lights are on. Your phone is charging. Your coffee maker just finished its cycle.\n\nHow? Welcome to AC power â€” arguably the greatest electrical engineering trick ever pulled off.`
-      },
-      {
-        type: 'story',
-        title: 'ðŸ† The War of Currents',
-        body: `In the late 1880s, Thomas Edison and Nikola Tesla were locked in a bitter fight over which electrical system would power the world.\n\nEdison backed DC (direct current) â€” electrons flowing one direction, like water through a pipe. Safe, predictable. But DC couldn't be stepped up to high voltage efficiently, which meant it lost half its energy as heat over long distances. Edison's system needed a power station every mile or two.\n\nTesla backed AC (alternating current) â€” electrons oscillating back and forth. Edison called it dangerous and even publicly electrocuted animals to prove his point (truly a PR disaster). But AC had one killer advantage: it could be transformed.\n\nUsing a transformer, AC voltage could be stepped up to 100,000V to travel hundreds of kilometers with minimal loss, then stepped back down to a safe level at your house. Tesla and Westinghouse won. The world runs on AC to this day.`
-      },
-      {
-        type: 'concept',
-        title: 'ðŸ“ The Sine Wave: Nature\'s Favorite Shape',
-        body: `AC voltage follows a sine wave â€” the same mathematical curve you see in ocean waves, sound waves, and light waves. It's not a coincidence: it's what you get when something rotates.\n\nA generator is literally just a coil of wire spinning in a magnetic field. As the coil rotates, the voltage it produces traces a perfect sine wave:\nâ€¢ Starting at 0 when the coil is parallel to the magnetic field\nâ€¢ Rising to a positive peak when the coil is at 90Â°\nâ€¢ Back to 0 at 180Â°\nâ€¢ Dropping to a negative peak at 270Â°\nâ€¢ Back to 0 at 360Â° (one full rotation)\n\nIn North America, the generator completes 60 of these rotations every second â€” that's 60 Hz (hertz). Europe uses 50 Hz. Your equipment is designed specifically for the frequency it was built for.`,
-        formula: 'v(t) = Vpeak Ã— sin(2Ï€ft)\nWhere: f = 60 Hz, t = time in seconds'
-      },
-      {
-        type: 'keypoint',
-        title: 'âš¡ Peak vs. RMS: The Number That Actually Matters',
-        body: `Here's where people get confused. When we say a standard outlet is "120V," that's NOT the peak voltage. The actual peak is about 170V.\n\nSo why do we say 120V? Because of RMS â€” Root Mean Square â€” a mathematical average that represents the equivalent DC heating effect.\n\nA 120V RMS AC supply does the same work as a 120V DC supply on a resistive load. It's the practical, useful number. The peak voltage is 1.414 times the RMS value (that factor is âˆš2).\n\nThis matters enormously for equipment ratings, insulation ratings, and any calculations involving power.`,
-        formula: 'VRMS = Vpeak Ã· âˆš2 = Vpeak Ã— 0.707\nVpeak = VRMS Ã— âˆš2 = VRMS Ã— 1.414\nExample: 120V RMS â†’ Peak = 120 Ã— 1.414 = 169.7V'
-      },
-      {
-        type: 'analogy',
-        title: 'ðŸŒŠ Frequency & Period: Thinking in Time',
-        body: `Think of frequency like the tempo of a song. 60 Hz means the wave completes 60 full cycles per second â€” it's a very fast tempo. The period is the time for one complete cycle: 1/60 = 0.0167 seconds (about 16.7 milliseconds).\n\nWhy does this matter on the job? Because:\nâ€¢ Fluorescent lights flicker at 120 Hz (twice per cycle) â€” if you ever see a strobe effect on rotating equipment, that's why\nâ€¢ Induction motor speeds are directly tied to frequency: a 2-pole motor at 60 Hz runs at 3600 RPM (synchronous speed)\nâ€¢ Harmonic frequencies (120 Hz, 180 Hz, 240 Hz...) are multiples of the fundamental and can cause heating in transformers and neutral conductors`,
-        formula: 'f = 1/T   T = 1/f\nAt 60 Hz: T = 1/60 = 16.7 ms\nMotor sync speed = (120 Ã— f) Ã· number of poles'
-      },
-      {
-        type: 'concept',
-        title: 'ðŸ”„ Phase: Where Are You in the Cycle?',
-        body: `Phase describes the timing relationship between two sine waves. If two waves start at exactly the same time, they're "in phase" â€” they work together perfectly.\n\nIf one wave is shifted in time relative to another, there's a phase difference, measured in degrees (since one full cycle = 360Â°).\n\nThis becomes critical in three-phase power, where three sine waves are deliberately spaced 120Â° apart. Those three phases allow generators to produce constant power (not pulsing like single-phase), allow smaller conductors for the same power, and enable self-starting motors.\n\nOn the job: when connecting three-phase motors, phase rotation order (A-B-C vs A-C-B) determines which direction the motor spins. Get it wrong and the motor runs backwards.`
-      },
-      {
-        type: 'real-world',
-        title: 'ðŸ”§ Real World: Why Your Outlets Are 120V and 240V',
-        body: `Canadian residential service comes into your panel as 240V single-phase (two hot legs, each 120V to neutral, 240V between them). This clever setup means:\n\nâ€¢ Normal outlets (120V): use one hot leg + neutral\nâ€¢ High-power appliances (240V): use both hot legs\n\nThe two hot legs are 180Â° out of phase with each other â€” when one is at +170V peak, the other is at -170V peak. The difference between them is always 240V.\n\nThis is why a 240V circuit doesn't need a neutral for heating loads â€” it's just phase-to-phase. But 240V circuits with control electronics (like ovens with displays) DO use neutral for the low-voltage control circuits.`
-      },
-      {
-        type: 'quiz',
-        title: 'ðŸ§  Quick Check',
-        questions: [
-          { q: 'A 240V RMS supply has a peak voltage of approximately:', a: '340V (240 Ã— 1.414 = 339.4V)' },
-          { q: 'At 60 Hz, how long does one complete AC cycle take?', a: '16.7 milliseconds (1/60 second)' },
-          { q: 'Why does AC power win over DC for long-distance transmission?', a: 'AC voltage can be transformed (stepped up/down). High voltage = low current = low IÂ²R losses over long distances.' }
-        ]
-      },
-      {
-        type: 'protip',
-        title: 'ðŸ›  Pro Tips',
-        tips: [
-          'When measuring AC with a multimeter, you\'re always reading RMS unless the meter specifies otherwise.',
-          'Three-phase panels label phases as A, B, C (or L1, L2, L3). The voltage between any two phases is always 1.732 Ã— the phase-to-neutral voltage. At 120V/208V service: 120 Ã— âˆš3 = 207.8V â‰ˆ 208V.',
-          'Harmonics are a real problem in modern buildings loaded with computers and variable frequency drives. They cause neutral conductors to overheat even when balanced â€” always check neutral sizing in these environments.'
-        ]
-      },
-      {
-        type: 'objectives',
-        title: 'Module 1 Objectives',
-        objectives: [
-          'Describe the difference between alternating current (AC) and direct current (DC), and explain why AC is used for electrical power distribution.',
-          'Describe how a generator produces a sine wave through the rotation of a conductor in a magnetic field.',
-          'Identify the components of a sine wave: amplitude, peak value, peak-to-peak value, period, frequency, and phase angle.',
-          'Calculate peak voltage from RMS voltage using Vpk = VRMS Ã— âˆš2, and calculate RMS voltage from peak voltage using VRMS = Vpk Ã— 0.707.',
-          'Calculate peak-to-peak voltage (Vpp = 2 Ã— Vpk) and average voltage (Vavg = Vpk Ã— 0.637) for a sine wave.',
-          'Define frequency (Hz) as the number of complete cycles per second, and period (T) as the time for one complete cycle.',
-          'Apply the reciprocal relationship between frequency and period: f = 1/T and T = 1/f.',
-          'Explain why North American power systems operate at 60 Hz and describe the consequences of using 60 Hz equipment on a 50 Hz system.',
-          'Define phase angle and explain what it means for two waveforms to be in phase or out of phase with each other.',
-          'Describe how three-phase power is generated, identifying the 120Â° phase separation between the three waveforms.',
-          'Identify the advantages of three-phase power over single-phase power: constant power delivery, smaller conductors for the same power, and self-starting induction motors.',
-          'Apply the relationship between line voltage and phase voltage in a three-phase wye-connected system: VL = VÎ¦ Ã— âˆš3.',
-          'Describe the construction of Canadian residential single-phase 120/240V service, identifying the two hot legs, neutral, and their voltage relationships.',
-          'Apply Ohm\'s Law calculations to AC resistive circuits using RMS values for voltage and current.'
-        ],
-        questions: [
-          { q: 'A 347V RMS AC supply has a peak voltage of approximately:', a: '347 Ã— 1.414 = 490.7V peak. (VRMS Ã— âˆš2 = Vpeak)' },
-          { q: 'In a 120/240V residential service, what is the voltage between the two hot legs?', a: '240V. The two hot legs are 180Â° out of phase â€” each is 120V to neutral, but measured between them the difference is always 240V.' },
-          { q: 'At 60 Hz, the period of one complete AC cycle is:', a: 'T = 1/f = 1/60 = 0.0167 seconds (16.7 milliseconds).' },
-          { q: 'Why is the RMS value of an AC voltage more useful than the peak voltage for most calculations?', a: 'RMS represents the equivalent DC heating effect â€” a 120V RMS AC supply does the same work on a resistive load as 120V DC. It\'s the practical measure for power, heat, and load calculations.' },
-          { q: 'A three-phase 208V system has a phase-to-neutral voltage of:', a: '208 Ã· âˆš3 = 120V per phase. Line voltage = phase voltage Ã— âˆš3, so phase voltage = line voltage Ã· âˆš3.' }
-        ]
-      },
-      {
-        type: 'outcome',
-        title: 'Module Desired Outcome',
-        outcome: 'The student will describe the characteristics and measurements of alternating current (AC) waveforms and apply these to basic AC calculations.',
-        questions: [
-          { q: 'An electrician measures 169.7V peak on a circuit. What is the RMS voltage, and is this circuit suitable for 120V-rated equipment?', a: 'VRMS = 169.7 Ã— 0.707 = 120V. Yes â€” this is a standard 120V RMS circuit. The peak of 169.7V â‰ˆ 170V is normal for 120V RMS AC.' },
-          { q: 'A 600V/208V transformer secondary produces 208V line-to-line. What is the voltage from one phase to neutral? What is the peak voltage of the line-to-line waveform?', a: 'Phase-to-neutral: 208 Ã· âˆš3 = 120V. Peak of line-to-line: 208 Ã— âˆš2 = 294.2V peak. The insulation of conductors must be rated for at least the peak voltage.' },
-          { q: 'A motor rated for 60 Hz is connected to a 50 Hz supply at the same voltage. Describe what happens and why.', a: 'The motor runs at 50/60 = 83.3% of its rated speed (synchronous speed = 120f/poles). It also draws more current because the lower frequency means higher inductive reactanceâ€¦ wait, lower XL = lower impedance = more current. The motor will overheat. Additionally, fans and pumps driving it may lose required performance. Equipment must be matched to the supply frequency.' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'm2',
-    title: 'Properties of Inductors & Capacitors',
-    icon: 'ðŸ”„',
-    subtitle: 'The Components That Make AC Interesting',
+    id: 'm11', period: 2,
+    title: 'Fundamentals of Alternating Current',
+    icon: '〰️',
+    subtitle: 'ILM 030201a — Sine Waves, Frequency, Poles, and AC Calculations',
     color: '#8b5cf6',
-    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(59,130,246,0.06))',
+    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
     border: 'rgba(139,92,246,0.3)',
-    readTime: '14 min read',
+    readTime: '45 min read',
     sections: [
       {
         type: 'hook',
-        title: 'âš¡ The Components That Fight Back',
-        body: `Resistors are boring. Feed them voltage, they resist, they heat up. Simple.\n\nBut inductors and capacitors? These components have attitude. They store energy. They fight changes in the circuit. They shift the phase of current. And together, they make possible everything from radio tuners to motor starters to power factor correction systems that utilities charge you thousands of dollars for.\n\nUnderstanding L and C is what separates an apprentice who can run wire from a journeyman who understands why the system works.`
-      },
-      {
-        type: 'story',
-        title: 'ðŸŒ€ The Inductor: Magnetism Fights Back',
-        body: `An inductor is just a coil of wire â€” but wrapping wire into a coil creates a magnetic field when current flows through it. And here's the key insight: magnetic fields store energy.\n\nWhen you try to increase current through an inductor, the growing magnetic field induces a voltage that opposes the increase (Lenz's Law). When you try to decrease current, the collapsing field tries to maintain the current.\n\nIn other words: an inductor resists changes in current. It's electrical inertia.\n\nThe unit is the henry (H), named after Joseph Henry who discovered electromagnetic induction (yes, Faraday gets more credit, but Henry actually discovered it first â€” he just published later).\n\nReal-world inductors include motor windings, transformer primary coils, fluorescent lamp ballasts, and relay coils. Basically anything that uses a magnetic field to do work is an inductor.`
+        title: 'Why AC Matters',
+        body: 'Alternating current (ac) circuits are the backbone of electrical energy distribution. Most of your work as an electrician involves ac circuits. In first period training, you were introduced to ac resistive circuits. In second period training, you will learn additional ac circuit properties that are crucial to your understanding of electrical theory and the electrician trade.\n\nThis module covers three core objectives:\n1. Describe the generation of an ac sine wave — relative motion, emf, conductor paths, alternations, and cycles.\n2. Determine the output frequency of an ac generator — poles, rotational speed, and the frequency formula.\n3. Calculate standard ac sine wave values — peak, instantaneous, RMS/effective, average, and all conversions.\n\nMastering these fundamentals prepares you for further exploration of ac circuits including inductance, capacitance, reactance, and power factor.'
       },
       {
         type: 'concept',
-        title: 'ðŸ“Š Inductive Reactance: Resistance That Cares About Frequency',
-        body: `Inductors don't have resistance in the traditional sense â€” they have reactance. And unlike resistance (which is fixed), inductive reactance changes with frequency.\n\nHigher frequency â†’ inductor changes current faster â†’ it fights back harder â†’ more reactance.\n\nLower frequency (or DC) â†’ slower change â†’ inductor barely resists â†’ nearly zero reactance at DC.\n\nThis is why inductors are used as "chokes" to block high-frequency signals while passing DC â€” perfect for power supply filters in electronics.`,
-        formula: 'XL = 2Ï€fL\nWhere: XL = inductive reactance (Î©), f = frequency (Hz), L = inductance (H)\n\nExample: L = 100mH at 60 Hz\nXL = 2Ï€ Ã— 60 Ã— 0.1 = 37.7 Î©'
-      },
-      {
-        type: 'keypoint',
-        title: 'â° Inductive Phase Shift: Current Lags',
-        body: `Here's the most important characteristic for your exam: in a purely inductive circuit, current LAGS voltage by 90Â°.\n\nMnemonic: ELI the ICE man\nâ€¢ ELI: in an inductive (L) circuit, voltage (E) leads current (I)\nâ€¢ ICE: in a capacitive (C) circuit, current (I) leads voltage (E)\n\nPhysically, this makes sense: voltage is applied first, but the inductor's opposition means current builds up slowly afterward. The voltage is always "ahead" of the current by a quarter-cycle (90Â°).\n\nThis phase shift is the root cause of poor power factor in industrial facilities. Inductive motors, transformers, and ballasts all cause lagging current, and utilities charge extra for it.`,
-        formula: 'In a pure inductor: Î¸ = 90Â° (current lags voltage)'
-      },
-      {
-        type: 'story',
-        title: 'âš¡ The Capacitor: Electric Fields Fight Back',
-        body: `A capacitor stores energy in an electric field rather than a magnetic field. The basic structure is two conductive plates separated by an insulator (the dielectric). Push charge onto the plates, an electric field builds up between them â€” and energy is stored.\n\nCapacitors resist changes in voltage. Try to change the voltage across a capacitor quickly, and the capacitor absorbs or releases charge to fight you.\n\nWhen you disconnect a capacitor from a circuit, it holds its charge â€” sometimes for a very long time. This is why capacitors in equipment like large drives and power supplies can be lethally dangerous even hours after power is removed. Always verify capacitors are discharged with a properly rated discharge resistor before working inside high-voltage equipment.\n\nThe unit is the farad (F), but practical capacitors are usually in microfarads (Î¼F) or nanofarads (nF) â€” a full farad is enormous.`
+        title: 'Objective 1: Relative Motion and EMF Generation',
+        body: 'An electromotive force (emf) or voltage is generated whenever there is relative motion between a conductor and a magnetic field. This means either:\n\u2022 The conductor is moving past a stationary magnetic field, OR\n\u2022 A magnetic field is moving past a stationary conductor.\n\nThe amount of emf generated depends on three factors:\n1. The density of the magnetic flux \u2014 stronger magnetic field means more emf.\n2. The length of conductor within the magnetic field \u2014 longer conductor means more emf.\n3. The rate at which the conductor cuts lines of magnetic force \u2014 this rate is determined by BOTH the speed of the conductor AND the angle at which it crosses the lines of force.\n\nCritical rule about angle of cut:\n\u2022 A conductor moving PARALLEL to the lines of force (0\u00b0) cuts NO lines of force \u2014 zero emf is generated, regardless of speed.\n\u2022 A conductor cutting DIRECTLY ACROSS the lines of force at 90\u00b0 generates MAXIMUM emf.\n\u2022 At any angle between 0\u00b0 and 90\u00b0, the emf is between zero and maximum.'
       },
       {
         type: 'concept',
-        title: 'ðŸ“Š Capacitive Reactance: The Opposite of Inductive',
-        body: `Capacitive reactance is the opposite of inductive reactance in almost every way:\n\nâ€¢ Higher frequency â†’ capacitor charges/discharges faster â†’ less time to fight â†’ LESS reactance\nâ€¢ Lower frequency (or DC) â†’ very slow charging â†’ capacitor barely lets anything through â†’ infinite reactance at DC\n\nThis is why capacitors block DC but pass AC â€” essential in virtually every electronic circuit for signal coupling and filtering.`,
-        formula: 'XC = 1 / (2Ï€fC)\nWhere: XC = capacitive reactance (Î©), f = frequency (Hz), C = capacitance (F)\n\nExample: C = 100Î¼F at 60 Hz\nXC = 1 / (2Ï€ Ã— 60 Ã— 0.0001) = 26.5 Î©\n\nNote: XC decreases as frequency increases (opposite of XL)'
+        title: 'Objective 1: Circular Motion of a Conductor',
+        body: 'In a generator, a conductor travels at a constant speed on a circular path around a centre point between two magnetic poles. Even though the velocity (speed) is constant, the angle at which the conductor cuts the magnetic flux lines is constantly changing.\n\nThis means:\n\u2022 The angle at which the flux lines are cut constantly changes.\n\u2022 The number of lines cut per second continuously changes.\n\u2022 Therefore, the instantaneous value of voltage induced continuously changes.\n\nAs the angle of cut increases toward 90\u00b0, the rate of cutting magnetic lines of force increases. The maximum or peak emf (symbolized as Emax, Em, or Epeak) is generated when the conductor cuts across the magnetic field at right angles (90\u00b0).\n\nThe maximum emf is generated at TWO points on the 360\u00b0 circular path:\n\u2022 At 90\u00b0 \u2014 maximum positive emf\n\u2022 At 270\u00b0 \u2014 maximum negative emf\n\nAt 0\u00b0, 180\u00b0, and 360\u00b0, the conductor moves parallel to the field lines, so the emf is zero at these points.'
       },
       {
-        type: 'keypoint',
-        title: 'â° Capacitive Phase Shift: Current Leads',
-        body: `In a purely capacitive circuit, current LEADS voltage by 90Â°.\n\nPhysical intuition: when you first connect voltage to a capacitor, current rushes in immediately to charge the plates â€” before the voltage has had time to build up. Current is "eager," getting there before voltage.\n\nThis leading current is the exact opposite of inductive lagging current, which is why capacitors are used to correct power factor: they cancel out the lagging effect of inductive loads.\n\nPower factor correction capacitor banks are installed at industrial facilities, transformer substations, and motor control panels. They reduce the reactive current the utility has to supply, reducing losses and avoiding demand charges.`,
-        formula: 'In a pure capacitor: Î¸ = -90Â° (current leads voltage)'
+        type: 'concept',
+        title: 'Objective 1: Alternations and Cycles',
+        body: 'As a conductor loop rotates in the magnetic field of a generator, it passes by alternate north and south magnetic poles.\n\n\u2022 Each time the conductor loop passes ONE pole (north or south), one ALTERNATION is completed.\n\u2022 When it passes one PAIR of poles (one north and one south), it has completed TWO alternations, which equals ONE ELECTRICAL CYCLE.\n\u2022 One alternation occurs within 180\u00b0 of an electrical sine wave.\n\u2022 One complete cycle equals 360 electrical degrees.\n\nDirection of current and polarity:\n\u2022 From 0\u00b0 to 180\u00b0 (first alternation): the conductor travels from right to left through the magnetic field, producing POSITIVE emf values. This is the positive alternation.\n\u2022 From 180\u00b0 to 360\u00b0 (second alternation): the conductor travels from left to right, reversing the direction of motion through the field. This reversal changes the POLARITY of the induced voltage, producing NEGATIVE emf values. This is the negative alternation.\n\nIf the conductor is joined at either end forming a complete circuit, a current flows in the same direction as the induced voltage. Since the emf changes polarity with each alternation, so does the resultant current \u2014 this is why it is called alternating current (ac).'
       },
       {
-        type: 'real-world',
-        title: 'ðŸ”§ Real World: The Motor Start Capacitor',
-        body: `Single-phase induction motors can't self-start without help â€” the single-phase supply creates a pulsating (not rotating) magnetic field. A start capacitor solves this by creating a second, phase-shifted current in a separate start winding.\n\nThe capacitor shifts the current in the start winding by about 90Â°, creating a phase difference between the run and start windings. The two magnetic fields, 90Â° apart in time and space, create a rotating field that kicks the motor off.\n\nOnce up to speed, a centrifugal switch disconnects the start capacitor (which is only rated for intermittent duty). Run capacitors (smaller, continuous duty rated) stay in circuit to improve power factor and efficiency.\n\nIf a single-phase motor hums but won't start, or starts only when you give it a spin by hand â€” the start capacitor is bad. Test it with a capacitance meter.`
-      },
-      {
-        type: 'quiz',
-        title: 'ðŸ§  Quick Check',
-        questions: [
-          { q: 'A 50 mH inductor at 60 Hz has a reactance of:', a: 'XL = 2Ï€ Ã— 60 Ã— 0.05 = 18.85 Î©' },
-          { q: 'In a purely inductive circuit, current _____ voltage by 90Â°.', a: 'LAGS (use ELI: voltage E leads current I in inductor L)' },
-          { q: 'A 47 Î¼F capacitor at 60 Hz has a reactance of:', a: 'XC = 1/(2Ï€ Ã— 60 Ã— 0.000047) = 56.4 Î©' },
-          { q: 'Why is capacitive reactance high at DC (0 Hz)?', a: 'XC = 1/(2Ï€fC) â€” dividing by frequency approaching zero gives infinity. DC cannot charge/discharge a capacitor continuously, so it blocks DC.' }
-        ]
+        type: 'concept',
+        title: 'Objective 1: Development of the Sine Wave',
+        body: 'When all instantaneous values of voltage induced in a conductor travelling on a circular path are plotted on a graph (voltage vs. time measured in electrical degrees), the result is called a SINE WAVE.\n\nHow the sine wave builds:\n1. At 0\u00b0: the conductor moves parallel to the magnetic field \u2014 emf = 0.\n2. From 0\u00b0 to 90\u00b0: the emf builds from 0 to its positive maximum as the conductor moves from parallel to perpendicular (cutting more and more lines of force).\n3. At 90\u00b0: the conductor cuts directly across the field at right angles \u2014 MAXIMUM positive emf (Emax).\n4. From 90\u00b0 to 180\u00b0: the emf decreases from maximum back to 0 as the conductor returns toward parallel.\n5. At 180\u00b0: emf = 0 again. The conductor has completed one alternation (positive).\n6. From 180\u00b0 to 270\u00b0: the conductor now moves in the opposite direction through the field. The emf builds from 0 to maximum NEGATIVE value.\n7. At 270\u00b0: MAXIMUM negative emf (\u2212Emax).\n8. From 270\u00b0 to 360\u00b0: the emf returns from maximum negative back to 0.\n9. At 360\u00b0: one complete cycle is finished, and the pattern repeats.\n\nThe shape of the wave reflects the continuously changing angle of cut, and therefore the continuously changing rate at which lines of force are being cut. The maximum voltage (Emax) varies with both the velocity of the conductor and the strength of the magnetic field (flux density).\n\nInstantaneous values are identified by LOWERCASE letters: e (induced voltage), v (voltage), i (current). The instantaneous value at any point equals the maximum value multiplied by the sine of the angle (sin \u03b8).'
       },
       {
         type: 'protip',
-        title: 'ðŸ›  Pro Tips',
-        tips: [
-          'Remember ELI the ICE man â€” it\'s the most exam-tested concept related to L and C. ELI = E leads I in Inductor. ICE = I leads E in Capacitor.',
-          'Capacitors store dangerous charge. On anything with a large capacitor bank (drives, UPS systems, motor start panels), verify voltage with your meter before touching. Some will hold a lethal charge for many minutes.',
-          'Inductive reactance and capacitive reactance cancel each other out at resonance (when XL = XC). Resonance is exploited in radio tuning circuits and power factor correction, but can also cause dangerous overvoltages in unintended resonant conditions.'
-        ]
+        title: 'Objective 1 Key Facts to Remember',
+        body: '\u2022 Three factors affect emf: flux density, conductor length in the field, and rate of cutting (speed + angle).\n\u2022 Parallel motion (0\u00b0) = zero emf. Perpendicular motion (90\u00b0) = maximum emf.\n\u2022 One alternation = 180 electrical degrees (one half-cycle).\n\u2022 One cycle = two alternations = 360 electrical degrees.\n\u2022 One cycle is produced when the conductor passes one PAIR of poles (one north + one south).\n\u2022 The sine wave shape comes from the continuously changing angle of cut as the conductor rotates.\n\u2022 The polarity reverses every 180\u00b0 because the conductor reverses its direction of travel through the magnetic field.'
       },
       {
-        type: 'objectives',
-        title: 'Module 2 Objectives',
-        objectives: [
-          'Define inductance (L) and explain the principle of self-induction using Faraday\'s and Lenz\'s Laws.',
-          'Describe how a magnetic field stores energy in an inductor and explain why an inductor opposes changes in current.',
-          'Identify the factors that determine the inductance of a coil: number of turns, core permeability, cross-sectional area, and coil length.',
-          'Calculate inductive reactance using XL = 2Ï€fL and explain how XL changes with frequency and inductance.',
-          'Describe the phase relationship between voltage and current in a purely inductive circuit (current lags voltage by 90Â°).',
-          'Apply the ELI mnemonic (E leads I in L) to remember inductor phase relationships.',
-          'Define capacitance (C) and describe how an electric field stores energy between the plates of a capacitor.',
-          'Identify the factors that determine capacitance: plate area, plate separation, and dielectric material.',
-          'Calculate capacitive reactance using XC = 1/(2Ï€fC) and explain how XC changes with frequency and capacitance.',
-          'Describe the phase relationship between voltage and current in a purely capacitive circuit (current leads voltage by 90Â°).',
-          'Apply the ICE mnemonic (I leads E in C) to remember capacitor phase relationships.',
-          'Explain why inductors pass DC but block high-frequency AC signals, and why capacitors block DC but pass AC.',
-          'Identify common applications of inductors in electrical systems: motor windings, transformer coils, fluorescent ballasts, reactor coils, and relay coils.',
-          'Identify common applications of capacitors: power factor correction, motor starting, filter circuits, and energy storage.',
-          'Describe the safety hazard of stored charge in large capacitors and explain the proper procedure for discharging capacitors before working on equipment.'
-        ],
-        questions: [
-          { q: 'A 200mH inductor is connected to a 60 Hz supply. What is its inductive reactance?', a: 'XL = 2Ï€fL = 2Ï€ Ã— 60 Ã— 0.2 = 75.4 Î©' },
-          { q: 'A 100Î¼F capacitor is connected to a 60 Hz supply. What is its capacitive reactance?', a: 'XC = 1/(2Ï€fC) = 1/(2Ï€ Ã— 60 Ã— 0.0001) = 26.5 Î©' },
-          { q: 'In a purely inductive circuit, current lags voltage by how many degrees? Apply ELI to confirm.', a: '90Â°. ELI: in an inductor (L), voltage (E) leads current (I) â€” meaning current lags voltage by 90Â°.' },
-          { q: 'Why must large capacitors in industrial equipment be discharged before working on them?', a: 'Capacitors store charge and hold it even after power is removed. Large capacitors in drives, UPS systems, and power supplies can retain lethal voltage for many minutes or hours. They must be discharged through a rated resistor and verified with a voltmeter before touching.' },
-          { q: 'What happens to inductive reactance if the frequency doubles? What happens to capacitive reactance if the frequency doubles?', a: 'XL doubles (XL = 2Ï€fL â€” directly proportional to f). XC halves (XC = 1/(2Ï€fC) â€” inversely proportional to f). This is why inductors increasingly block higher frequencies and capacitors increasingly pass them.' }
-        ]
+        type: 'concept',
+        title: 'Objective 2: Frequency \u2014 Definition and Units',
+        body: 'One complete electrical cycle graphed is one complete sine wave. This graph includes one positive and one negative alternation produced as the conductor passes by one pair of north and south magnetic poles.\n\nThe production of usable electricity requires a generator (also called an alternator for ac). An electrical generator has coils of conductors mounted on a shaft that turns within magnetic fields produced by electromagnets.\n\nKey definitions:\n\u2022 FREQUENCY (f): The number of electrical cycles completed in one second. The SI symbol is f.\n\u2022 HERTZ (Hz): The unit of measurement for frequency. 1 Hz = 1 cycle per second. You may also see the older term \u201ccycles per second\u201d \u2014 60 cycles per second = 60 Hz.\n\u2022 PERIOD (T): The time required to complete one electrical cycle. Period and frequency are inversely related: T = 1/f.\n\nIf an alternator coil rotates past one pair of magnetic poles (north and south), then for every rotation of the generator shaft, one electrical cycle is completed. If the coil spins at 60 rotations per second, it produces 60 cycles per second = 60 Hz.'
       },
       {
-        type: 'outcome',
-        title: 'Module Desired Outcome',
-        outcome: 'The student will describe the properties of inductors and capacitors and explain their effects on current and voltage in AC circuits.',
+        type: 'concept',
+        title: 'Objective 2: Frequency and Magnetic Poles',
+        body: 'The number of poles in an alternator determines how many electrical cycles are produced per revolution of the shaft.\n\nTWO-POLE MACHINE:\n\u2022 Has one pair of poles (one north, one south).\n\u2022 In one revolution (360 mechanical degrees), the conductor passes one pair of poles.\n\u2022 This produces 1 cycle (360 electrical degrees) per revolution.\n\u2022 At 60 revolutions per second (3600 r/min), it produces 60 Hz.\n\nFOUR-POLE MACHINE:\n\u2022 Has two pairs of poles.\n\u2022 In one revolution (360 mechanical degrees), the conductor passes two pairs of poles.\n\u2022 This produces 2 cycles (720 electrical degrees) per revolution.\n\u2022 At only 180 mechanical degrees (half a revolution), the conductor has already passed one pair of poles and completed one full cycle (360 electrical degrees).\n\u2022 At 30 revolutions per second (1800 r/min), it produces 60 Hz.\n\nEIGHT-POLE MACHINE:\n\u2022 Has four pairs of poles.\n\u2022 In one revolution, the conductor passes four pairs of poles.\n\u2022 This produces 4 cycles per revolution.\n\u2022 At only 15 revolutions per second (900 r/min), it produces 60 Hz.\n\nIMPORTANT: Remember that 360 electrical degrees are produced when a conductor passes by TWO opposite poles (one pair). In any alternator, as a conductor completes one revolution, it passes through 360 mechanical degrees \u2014 but the electrical degrees depend on the number of pole pairs.\n\nKey insight: More poles means you need LESS rotational speed to achieve the same output frequency.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Objective 2: The Frequency Formula',
+        body: 'The output frequency of an ac generator is determined by two factors:\n1. The number of poles (or pole pairs)\n2. The revolutions per minute (r/min) of the driven shaft\n\nThe rotational speed is typically rated in revolutions per minute (r/min, though rpm is still common in industry).\n\nDeriving the formula:\n\u2022 Frequency = (pairs of poles \u00d7 revolutions per minute) / 60\n\u2022 Since machine nameplates show INDIVIDUAL poles (not pairs), we multiply the denominator by 2:\n\nf = (p \u00d7 n) / 120\n\nWhere:\n\u2022 f = frequency in hertz (Hz)\n\u2022 p = number of individual poles\n\u2022 n = rotational frequency in r/min\n\u2022 120 = 60 seconds \u00d7 2 (because you need TWO poles for one cycle)\n\nThis formula can be transposed to solve for any unknown:\n\u2022 To find speed: n = (f \u00d7 120) / p\n\u2022 To find poles: p = (f \u00d7 120) / n',
+        formula: 'f = (p \u00d7 n) / 120\nn = (f \u00d7 120) / p\np = (f \u00d7 120) / n'
+      },
+      {
+        type: 'concept',
+        title: 'Objective 2: Worked Examples \u2014 Frequency Calculations',
+        body: 'EXAMPLE 2.1 \u2014 Finding Frequency:\nAn alternator has four poles and a rotational frequency of 1800 r/min. What is its output frequency?\n\u2022 Known: p = 4, n = 1800 r/min\n\u2022 f = (p \u00d7 n) / 120\n\u2022 f = (4 \u00d7 1800) / 120\n\u2022 f = 7200 / 120\n\u2022 f = 60 Hz\n\nEXAMPLE 2.2 \u2014 Finding Rotational Speed:\nA two-pole alternator has an output frequency of 50 Hz. What is its rotational frequency?\n\u2022 Known: f = 50 Hz, p = 2\n\u2022 n = (f \u00d7 120) / p\n\u2022 n = (50 \u00d7 120) / 2\n\u2022 n = 6000 / 2\n\u2022 n = 3000 r/min\n\nEXAMPLE 2.3 \u2014 Finding Number of Poles:\nThe output frequency of an alternator is 400 Hz when driven at 1200 r/min. How many poles does this alternator have?\n\u2022 Known: f = 400 Hz, n = 1200 r/min\n\u2022 p = (f \u00d7 120) / n\n\u2022 p = (400 \u00d7 120) / 1200\n\u2022 p = 48000 / 1200\n\u2022 p = 40 poles'
+      },
+      {
+        type: 'protip',
+        title: 'Objective 2: Frequency Comparison Table',
+        body: 'Common generator configurations to produce 60 Hz:\n\n| Poles | Pairs | r/min needed for 60 Hz | Cycles/revolution |\n|-------|-------|------------------------|--------------------|\n|   2   |   1   |       3600 r/min       |         1          |\n|   4   |   2   |       1800 r/min       |         2          |\n|   6   |   3   |       1200 r/min       |         3          |\n|   8   |   4   |        900 r/min       |         4          |\n|  12   |   6   |        600 r/min       |         6          |\n\nSpeed comparisons at slow speeds:\n\u2022 2-pole at 60 r/min \u2192 f = (2\u00d760)/120 = 1 Hz\n\u2022 4-pole at 60 r/min \u2192 f = (4\u00d760)/120 = 2 Hz\n\u2022 2-pole at 120 r/min \u2192 f = (2\u00d7120)/120 = 2 Hz\n\u2022 4-pole at 120 r/min \u2192 f = (4\u00d7120)/120 = 4 Hz\n\nAdditional practice:\n\u2022 4-pole at 1500 r/min \u2192 f = (4\u00d71500)/120 = 50 Hz\n\u2022 6-pole alternator turned through 1080 mechanical degrees (3 full revolutions) with 3 pairs of poles: 3 rev \u00d7 3 cycles/rev = 9 cycles = 3240 electrical degrees.\n\u2022 To get 1440 electrical degrees in 2 revolutions: 1440/360 = 4 cycles needed; 4 cycles / 2 revolutions = 2 cycles per revolution = 2 pairs = 4 poles.\n\nIf the r/min of an alternator is increased, the output frequency increases because more pole pairs are passed in the same amount of time.'
+      },
+      {
+        type: 'concept',
+        title: 'Objective 3: Sine Wave Values \u2014 Overview',
+        body: 'The emf produced by an alternator always follows the same sequence:\n1. Rises to a positive peak\n2. Falls to zero\n3. Reverses polarity\n4. Rises to a negative peak\n5. Falls to zero\n\nThis sequence repeats continuously. As this happens, the conductor cuts lines of force at continually changing angles. The alternator develops its maximum (peak) value only ONCE in each alternation, and produces something less than the maximum voltage at all other instants.\n\nThere are several standard values used to describe and measure ac sine waves:\n\u2022 Peak (maximum) value \u2014 the greatest magnitude reached\n\u2022 Peak-to-peak value \u2014 the total swing from positive peak to negative peak\n\u2022 Instantaneous value \u2014 the value at any specific point in the cycle\n\u2022 Effective (RMS) value \u2014 the equivalent dc heating value\n\u2022 Average value \u2014 the mathematical average of all instantaneous values\n\nEach of these values has specific formulas and applications that every electrician must know.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Objective 3: Maximum (Peak) Values',
+        body: 'When a conductor rotates past the magnetic poles, the voltage induced varies depending on the number of lines of force being cut at each instant.\n\n\u2022 At 0\u00b0 (and 180\u00b0, 360\u00b0): the conductor moves parallel to the lines of force \u2014 NO voltage is induced (emf = 0).\n\u2022 At 90\u00b0 (and 270\u00b0): the conductor cuts the lines of force at a right angle \u2014 MAXIMUM (peak) voltage is induced.\n\nThe peak value occurs TWICE in each cycle:\n\u2022 Positive peak at 90\u00b0\n\u2022 Negative peak at 270\u00b0\n\nSymbols for peak values:\n\u2022 Voltage: Vm, Em, Emax, or Epeak (uppercase letter with subscript)\n\u2022 Current: Im, Imax, or Ipeak\n\nPeak-to-peak value:\nThe peak-to-peak voltage (Vp-p) is the total voltage swing measured from the positive peak to the negative peak. For a symmetrical sine wave:\n\u2022 Vp-p = 2 \u00d7 Vmax\n\u2022 Example: If Emax = 169.7 V, then Ep-p = 2 \u00d7 169.7 = 339.4 V'
+      },
+      {
+        type: 'keypoint',
+        title: 'Objective 3: Instantaneous Values \u2014 Formula and Examples',
+        body: 'The value of voltage (or current) at any given instant in the cycle is called the INSTANTANEOUS VALUE. It is identified by a lowercase symbol: e (induced voltage), v (voltage), or i (current).\n\nThe instantaneous value at any angle equals the maximum emf multiplied by the sine of that angle:\n\ne = Emax \u00d7 sin \u03b8\n\nThis formula works because the sine function mathematically describes the relationship between the angle of rotation and the rate of cutting magnetic lines of force.\n\nEXAMPLE \u2014 Instantaneous values when Emax = 10 V:\n\u2022 At 20\u00b0: e = 10 V \u00d7 sin 20\u00b0 = 10 \u00d7 0.342 = 3.42 V\n\u2022 At 110\u00b0: e = 10 V \u00d7 sin 110\u00b0 = 10 \u00d7 0.9397 = 9.4 V\n\u2022 At 210\u00b0: e = 10 V \u00d7 sin 210\u00b0 = 10 \u00d7 (\u22120.5) = \u22125 V\n\nNote how 210\u00b0 gives a NEGATIVE value \u2014 this is because the conductor is in the negative alternation (between 180\u00b0 and 360\u00b0).\n\nKey angle values to remember:\n\u2022 sin 0\u00b0 = 0 \u2192 e = 0\n\u2022 sin 30\u00b0 = 0.5 \u2192 e = 0.5 \u00d7 Emax\n\u2022 sin 45\u00b0 = 0.707 \u2192 e = 0.707 \u00d7 Emax (this is the RMS value!)\n\u2022 sin 60\u00b0 = 0.866 \u2192 e = 0.866 \u00d7 Emax\n\u2022 sin 90\u00b0 = 1.0 \u2192 e = Emax (peak)\n\u2022 sin 180\u00b0 = 0 \u2192 e = 0\n\u2022 sin 270\u00b0 = \u22121.0 \u2192 e = \u2212Emax (negative peak)',
+        formula: 'e = Emax \u00d7 sin \u03b8\ni = Imax \u00d7 sin \u03b8\n\nWhere \u03b8 is the angle in the electrical cycle (0\u00b0 to 360\u00b0)'
+      },
+      {
+        type: 'concept',
+        title: 'Objective 3: More Instantaneous Value Examples',
+        body: 'EXAMPLE 3.1 \u2014 Finding instantaneous value at 60\u00b0:\nThe maximum value of voltage is 100 V. Find the instantaneous value at 60\u00b0.\n\u2022 e = Emax \u00d7 sin 60\u00b0\n\u2022 e = 100 V \u00d7 sin 60\u00b0\n\u2022 e = 100 V \u00d7 0.866\n\u2022 e = 86.6 V\n\nEXAMPLE 3.2 \u2014 Finding instantaneous CURRENT:\nWhat is the instantaneous value of current at 25\u00b0 where Imax = 10 A?\n\u2022 i = Imax \u00d7 sin 25\u00b0\n\u2022 i = 10 A \u00d7 0.4226\n\u2022 i = 4.226 A\n\nIMPORTANT \u2014 Current and voltage in a resistive circuit:\nIn a purely resistive ac circuit, voltage causes current to flow, and the current changes in time with the voltage. The current has the same sine wave shape as the voltage. The same instantaneous value formula applies to both voltage and current.\n\nThe instantaneous value formula can also be TRANSPOSED to find the maximum value if you know the instantaneous value and the angle:\n\u2022 Emax = e / sin \u03b8\n\nExample: If i = 11.6 A at 31.5\u00b0, then Imax = 11.6 / sin 31.5\u00b0 = 11.6 / 0.5225 = 22.2 A'
+      },
+      {
+        type: 'concept',
+        title: 'Objective 3: Effective (RMS) Values \u2014 The Concept',
+        body: 'An alternating voltage is constantly changing and reversing, so the current in an ac circuit is also constantly changing and reversing. Since the values never stay constant, we need a standard value to rate electrical equipment and circuits.\n\nBy convention, we use a value that represents the SAME HEATING EFFECT in an ac circuit as that produced in a dc circuit. This is called the EFFECTIVE VALUE.\n\nWhat this means practically:\n\u2022 A resistive ac circuit labelled 100 V ac produces the SAME amount of heat as a 100 V dc circuit with the same resistance.\n\u2022 The effective value of ac voltage may be 100 V, but the maximum (peak) voltage is actually HIGHER.\n\nThe effective value is also called the RMS value. RMS stands for Root Mean Square \u2014 it is the square root of the mean (average) of the squares of all instantaneous values of the waveform. For pure sine waves, the effective value and the RMS value are identical.\n\nWhere does the RMS value occur on the sine wave?\nThe effective (RMS) value always occurs at 45\u00b0 from any zero crossing. You can find it at: 45\u00b0, 135\u00b0, 225\u00b0, and 315\u00b0 \u2014 all of which are exactly 45\u00b0 from a zero-crossing point.\n\nThis is because sin 45\u00b0 = 0.707, and the RMS value = 0.707 \u00d7 Emax.\n\nIMPORTANT: Since most ac meters are calibrated to read RMS (effective) values, it is normal practice to use E, V, or I WITHOUT subscripts as indicators for RMS values. If you are told the supply voltage to a building is 120 V, that 120 V IS the effective (RMS) value.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Objective 3: Calculating Peak from RMS (Three Methods)',
+        body: 'There are THREE ways to calculate the maximum (peak) value when you know the effective (RMS) value:\n\nMethod 1 \u2014 Divide by sin 45\u00b0:\nEmax = ERMS / sin 45\u00b0\nExample: Emax = 120 V / sin 45\u00b0 = 120 / 0.707 = 169.7 V\n\nMethod 2 \u2014 Divide by 0.707:\nEmax = ERMS / 0.707\nExample: Emax = 120 V / 0.707 = 169.7 V\n(This is the same as Method 1, since sin 45\u00b0 = 0.707)\n\nMethod 3 \u2014 Multiply by square root of 2:\nEmax = ERMS \u00d7 \u221a2\nExample: Emax = 120 V \u00d7 \u221a2 = 120 \u00d7 1.414 = 169.7 V\n(This works because 1/0.707 = 1.414 = \u221a2)\n\nAll three methods give the same result. Use whichever you find easiest.\nThe same methods work for current: Imax = IRMS / 0.707 = IRMS \u00d7 \u221a2',
+        formula: 'Peak from RMS (three equivalent methods):\nEmax = ERMS / sin 45\u00b0\nEmax = ERMS / 0.707\nEmax = ERMS \u00d7 \u221a2 \u2248 ERMS \u00d7 1.414'
+      },
+      {
+        type: 'keypoint',
+        title: 'Objective 3: Calculating RMS from Peak (Three Methods)',
+        body: 'There are THREE ways to calculate the effective (RMS) value when you know the maximum (peak) value:\n\nMethod 1 \u2014 Multiply by sin 45\u00b0:\nERMS = Emax \u00d7 sin 45\u00b0\nExample: ERMS = 169.7 V \u00d7 sin 45\u00b0 = 169.7 \u00d7 0.707 = 120 V\n\nMethod 2 \u2014 Multiply by 0.707:\nERMS = Emax \u00d7 0.707\nExample: ERMS = 169.7 V \u00d7 0.707 = 120 V\n(Same as Method 1, since sin 45\u00b0 = 0.707)\n\nMethod 3 \u2014 Divide by square root of 2:\nERMS = Emax / \u221a2\nExample: ERMS = 169.7 V / \u221a2 = 169.7 / 1.414 = 120 V\n(This works because 0.707 = 1/\u221a2)\n\nAll three methods give the same result.\nThe same methods work for current: IRMS = Imax \u00d7 0.707 = Imax / \u221a2\n\nUnless otherwise indicated, an ac meter reads effective (RMS) values.',
+        formula: 'RMS from Peak (three equivalent methods):\nERMS = Emax \u00d7 sin 45\u00b0\nERMS = Emax \u00d7 0.707\nERMS = Emax / \u221a2 \u2248 Emax / 1.414'
+      },
+      {
+        type: 'concept',
+        title: 'Objective 3: Conversion Summary Table',
+        body: 'AC SINE WAVE VALUE CONVERSION REFERENCE:\n\n| Known Value | To Find | Formula |\n|---|---|---|\n| RMS (effective) | Peak (max) | Emax = ERMS \u00d7 1.414 |\n| RMS (effective) | Peak (max) | Emax = ERMS / 0.707 |\n| Peak (max) | RMS (effective) | ERMS = Emax \u00d7 0.707 |\n| Peak (max) | RMS (effective) | ERMS = Emax / 1.414 |\n| Peak (max) | Peak-to-peak | Ep-p = 2 \u00d7 Emax |\n| Peak (max) | Instantaneous | e = Emax \u00d7 sin \u03b8 |\n| Instantaneous + angle | Peak (max) | Emax = e / sin \u03b8 |\n| RMS + angle | Instantaneous | Step 1: Emax = ERMS \u00d7 1.414, Step 2: e = Emax \u00d7 sin \u03b8 |\n| Instantaneous + angle | RMS | Step 1: Emax = e / sin \u03b8, Step 2: ERMS = Emax \u00d7 0.707 |\n\nKey constants:\n\u2022 sin 45\u00b0 = 0.707\n\u2022 1 / sin 45\u00b0 = 1.414\n\u2022 \u221a2 = 1.414\n\u2022 1/\u221a2 = 0.707'
+      },
+      {
+        type: 'concept',
+        title: 'Objective 3: Worked Examples \u2014 RMS and Peak Conversions',
+        body: 'EXAMPLE 3.3 \u2014 Peak to RMS (meter reading):\nThe sine wave voltage at an alternator has a peak value of 679 V. What would an ac meter read?\n\u2022 E = Emax \u00d7 sin 45\u00b0\n\u2022 E = 679 V \u00d7 sin 45\u00b0\n\u2022 E = 679 V \u00d7 0.707\n\u2022 E = 480 V (this is what the meter would display)\n\nEXAMPLE 3.4 \u2014 RMS to Instantaneous (two-step problem):\nA voltmeter reads 120 V. Determine the instantaneous voltage at 20\u00b0.\nStep 1 \u2014 Find maximum voltage:\n\u2022 Emax = E \u00d7 \u221a2\n\u2022 Emax = 120 V \u00d7 \u221a2 = 120 \u00d7 1.414\n\u2022 Emax = 169.7 V\nStep 2 \u2014 Find instantaneous value at 20\u00b0:\n\u2022 e = Emax \u00d7 sin 20\u00b0\n\u2022 e = 169.7 V \u00d7 sin 20\u00b0\n\u2022 e = 169.7 \u00d7 0.342\n\u2022 e = 58 V\n\nEXAMPLE 3.5 \u2014 Instantaneous to RMS (two-step problem, reverse):\nIf the instantaneous voltage of a circuit is 10 V at 110\u00b0, what would a voltmeter read?\nStep 1 \u2014 Find maximum value by transposing e = Emax \u00d7 sin \u03b8:\n\u2022 Emax = e / sin \u03b8\n\u2022 Emax = 10 V / sin 110\u00b0\n\u2022 Emax = 10 / 0.9397\n\u2022 Emax = 10.64 V\nStep 2 \u2014 Find RMS (effective) value:\n\u2022 E = Emax / \u221a2\n\u2022 E = 10.64 / 1.414\n\u2022 E = 7.524 V (this is what a voltmeter would read)'
+      },
+      {
+        type: 'concept',
+        title: 'Objective 3: Additional Practice Problems with Solutions',
+        body: 'PROBLEM: A current waveform has a value of 11.6 A at 31.5\u00b0. What is the maximum value?\n\u2022 Imax = i / sin \u03b8 = 11.6 / sin 31.5\u00b0 = 11.6 / 0.5225 = 22.2 A\n\nPROBLEM: When a conductor cuts a field at right angles, its voltage is 90 V. What voltage is induced at 198\u00b0?\n\u2022 The voltage at right angles (90\u00b0) IS the peak voltage, so Emax = 90 V.\n\u2022 e = Emax \u00d7 sin 198\u00b0 = 90 \u00d7 sin 198\u00b0 = 90 \u00d7 (\u22120.309) = \u221227.8 V\n\u2022 (Note: 198\u00b0 is in the negative alternation, so the value is negative)\n\nPROBLEM: If the maximum value of a voltage waveform is 169.7 V, what is the effective value?\n\u2022 E = Emax \u00d7 0.707 = 169.7 \u00d7 0.707 = 120 V\n\nPROBLEM: A standard voltmeter reads 208 V. What is the instantaneous value at 36\u00b0?\n\u2022 Step 1: Emax = 208 \u00d7 \u221a2 = 208 \u00d7 1.414 = 294.1 V\n\u2022 Step 2: e = 294.1 \u00d7 sin 36\u00b0 = 294.1 \u00d7 0.5878 = 172.9 V\n\nPROBLEM: An electric heater is connected to 240 V ac. If it is disconnected and reconnected to a 240 V dc circuit, the heat produced is the SAME \u2014 because the RMS value of ac is defined as the dc equivalent that produces the same heating effect.'
+      },
+      {
+        type: 'protip',
+        title: 'Critical Formulas Summary',
+        body: 'FREQUENCY:\n\u2022 f = (p \u00d7 n) / 120 \u2014 find frequency from poles and speed\n\u2022 n = (f \u00d7 120) / p \u2014 find speed from frequency and poles\n\u2022 p = (f \u00d7 120) / n \u2014 find poles from frequency and speed\n\u2022 T = 1/f \u2014 period is the inverse of frequency\n\nINSTANTANEOUS VALUES:\n\u2022 e = Emax \u00d7 sin \u03b8 \u2014 voltage at any angle\n\u2022 i = Imax \u00d7 sin \u03b8 \u2014 current at any angle\n\u2022 Emax = e / sin \u03b8 \u2014 find peak from any instantaneous value\n\nRMS / PEAK CONVERSIONS:\n\u2022 Emax = ERMS \u00d7 \u221a2 = ERMS \u00d7 1.414 = ERMS / 0.707\n\u2022 ERMS = Emax \u00d7 0.707 = Emax / \u221a2 = Emax / 1.414\n\u2022 Ep-p = 2 \u00d7 Emax\n\nMEMORY AIDS:\n\u2022 0.707 and 1.414 are reciprocals: 0.707 \u00d7 1.414 = 1\n\u2022 Both equal sin 45\u00b0 and 1/sin 45\u00b0 respectively\n\u2022 Both equal 1/\u221a2 and \u221a2 respectively\n\u2022 Effective (RMS) value always occurs at 45\u00b0 from any zero crossing\n\u2022 Peak value always occurs at 90\u00b0 and 270\u00b0'
+      },
+      {
+        type: 'quiz',
+        title: 'Comprehensive Review Quiz',
         questions: [
-          { q: 'A technician connects a 50mH coil directly across a 120V, 60Hz supply. Calculate the inductive reactance and the current that will flow. Is this a safe thing to do without knowing the coil\'s resistance?', a: 'XL = 2Ï€ Ã— 60 Ã— 0.05 = 18.85 Î©. Assuming ideal inductor: I = V/XL = 120/18.85 = 6.37A. In practice, a real coil has DC resistance too â€” total current depends on Z = âˆš(RÂ² + XLÂ²). Without knowing resistance, you could draw much more current than the coil is rated for. Always check the coil\'s rated current before connecting.' },
-          { q: 'Explain why a large variable frequency drive should have its capacitor bank discharged before a technician works inside, even 30 minutes after power is removed. How would you verify it is safe?', a: 'Large DC bus capacitors in drives can hold hundreds of volts for extended periods after power off â€” the bus voltage decays slowly through high-resistance discharge resistors. To verify: wait the manufacturer\'s specified discharge time (typically 5-15 min), then measure DC bus voltage with a properly rated meter between the DC+ and DC- terminals. Voltage must be below 50V (or per the drive\'s safety threshold) before proceeding.' }
+          { q: 'When a conductor rotates in a magnetic field, what angle produces the maximum electromotive force?', a: '90\u00b0 \u2014 when the conductor cuts directly across the lines of force at right angles. (Self-Test Q1: answer c)' },
+          { q: 'Which of the following does NOT affect the amount of emf generated: (a) flux density, (b) resistance of the conductor, (c) conductor length, (d) rate of cutting?', a: '(b) Resistance of the conductor does NOT affect emf generation. The three factors are flux density, conductor length in the field, and rate of cutting. (Self-Test Q2: answer b)' },
+          { q: 'Increasing the rotational speed of a generator has what effect on output frequency?', a: 'The output frequency INCREASES because more pole pairs are passed in the same amount of time. (Self-Test Q3: answer a)' },
+          { q: 'If a two-pole generator spins at 3600 r/min, what is the output frequency?', a: 'f = (p \u00d7 n) / 120 = (2 \u00d7 3600) / 120 = 7200 / 120 = 60 Hz. (Self-Test Q4: answer c)' },
+          { q: 'An alternator with an output frequency of 50 Hz spins at 750 r/min. How many pairs of poles does it have?', a: 'p = (f \u00d7 120) / n = (50 \u00d7 120) / 750 = 6000 / 750 = 8 individual poles = 4 pairs of poles. (Self-Test Q5: answer b \u2014 four pairs)' },
+          { q: 'A four-pole alternator makes three full physical rotations. How many electrical degrees are completed?', a: 'A four-pole machine produces 2 cycles (720 electrical degrees) per revolution. In 3 revolutions: 3 \u00d7 720 = 2160 electrical degrees. (Self-Test Q6: answer d)' },
+          { q: 'Using a voltmeter, you read 121 V ac. What is the peak voltage of the sine wave?', a: 'Emax = ERMS \u00d7 \u221a2 = 121 \u00d7 1.414 = 171 V. (Self-Test Q7: answer b)' },
+          { q: 'Using a voltmeter, you read 206.8 V ac. What is the effective voltage?', a: 'The voltmeter already reads the effective (RMS) value, so the effective voltage IS 206.8 V. (Self-Test Q8: answer c)' },
+          { q: 'When a conductor cuts a field at right angles, the voltage is 265 V. What voltage is induced at 213\u00b0?', a: 'Emax = 265 V (voltage at 90\u00b0). e = 265 \u00d7 sin 213\u00b0 = 265 \u00d7 (\u22120.5446) = \u2212144.3 V, approximately \u2212146 V. (Self-Test Q9: answer a)' },
+          { q: 'An ac circuit has an RMS voltage of 400 V. At what angle will the instantaneous value be 490 V?', a: 'First find Emax = 400 \u00d7 1.414 = 565.6 V. Then: sin \u03b8 = e / Emax = 490 / 565.6 = 0.8664. \u03b8 = arcsin(0.8664) \u2248 60\u00b0. But note this could also be the supplementary angle 120\u00b0 since sin 60\u00b0 = sin 120\u00b0. (Self-Test Q10)' },
+          { q: 'An electric heater connected to 240 V ac is reconnected to 240 V dc. What happens to the heat produced?', a: 'The heat produced stays the SAME. The RMS (effective) value of ac is defined as the dc voltage that produces the same heating effect. (Self-Test Q11: answer b)' },
+          { q: 'A four-pole alternator turns at 1500 r/min. Calculate the output frequency.', a: 'f = (p \u00d7 n) / 120 = (4 \u00d7 1500) / 120 = 6000 / 120 = 50 Hz. (Objective 2 Activity Q8)' },
+          { q: 'What is the instantaneous value at 60\u00b0 if Emax = 100 V?', a: 'e = 100 \u00d7 sin 60\u00b0 = 100 \u00d7 0.866 = 86.6 V. (Example 3.1)' },
+          { q: 'A voltmeter reads 120 V. What is the instantaneous voltage at 20\u00b0?', a: 'Step 1: Emax = 120 \u00d7 1.414 = 169.7 V. Step 2: e = 169.7 \u00d7 sin 20\u00b0 = 169.7 \u00d7 0.342 = 58 V. (Example 3.4)' },
+          { q: 'The instantaneous voltage is 10 V at 110\u00b0. What would a voltmeter read?', a: 'Step 1: Emax = 10 / sin 110\u00b0 = 10 / 0.9397 = 10.64 V. Step 2: ERMS = 10.64 / 1.414 = 7.524 V. (Example 3.5)' },
+          { q: 'One alternation occurs within how many degrees of an electrical sine wave?', a: '180\u00b0 \u2014 one alternation is one half-cycle (0\u00b0 to 180\u00b0 or 180\u00b0 to 360\u00b0). One complete cycle = two alternations = 360\u00b0.' }
         ]
       }
     ]
   },
   {
-    id: 'm3',
-    title: 'Inductors & Capacitors in Circuits',
-    icon: 'âš¡',
-    subtitle: 'Reactance, Impedance, and the Power Triangle',
-    color: '#06b6d4',
-    gradient: 'linear-gradient(135deg,rgba(6,182,212,0.12),rgba(59,130,246,0.06))',
-    border: 'rgba(6,182,212,0.3)',
-    readTime: '15 min read',
+    id: 'm12', period: 2,
+    title: 'Properties of Inductors and Capacitors',
+    icon: '🔋',
+    subtitle: 'ILM 030201b — Physical Properties, Construction, and Energy Storage',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
+    border: 'rgba(139,92,246,0.3)',
+    readTime: '35 min read',
     sections: [
       {
         type: 'hook',
-        title: 'âš¡ Resistance Isn\'t Everything',
-        body: `In a DC circuit, life is simple: Ohm's Law, resistance, done. But in an AC circuit with inductors and capacitors, resistance is just one piece of the puzzle.\n\nWhen you combine resistance (R) with reactance (XL or XC), you get impedance (Z) â€” the total opposition to current flow in an AC circuit. And impedance doesn't just determine how much current flows â€” it determines when it flows.\n\nMaster impedance and you understand why motors draw reactive current, why long fluorescent ballast circuits need power factor capacitors, and why neutral conductors in some commercial buildings carry more current than the phase conductors.`
+        title: 'Why Properties Matter',
+        body: 'Before you can work with inductors and capacitors in circuits, you need to understand what they are physically, how they\'re built, and what determines their values. This module covers the construction, properties, ratings, and types of both components.\n\nObjectives:\n1. Describe the properties of inductors including self-inductance, mutual inductance, and the factors that determine inductance value.\n2. Describe the properties of capacitors including capacitance, dielectric properties, and the factors that determine capacitance value.\n3. Identify common inductor and capacitor types and their applications.\n4. Understand series and parallel combinations of inductors and capacitors.\n5. Calculate energy stored in inductors and capacitors.'
       },
       {
         type: 'concept',
-        title: 'ðŸ“ Impedance: The Full Picture',
-        body: `You cannot simply add resistance and reactance together â€” they're at different angles. R is always at 0Â° (in phase with voltage), while XL is at +90Â° and XC is at -90Â°.\n\nTo combine them, use the Pythagorean theorem on the impedance triangle:\nâ€¢ Z = âˆš(RÂ² + (XL - XC)Â²)\n\nWhen XL > XC: net reactance is inductive, current lags voltage\nWhen XC > XL: net reactance is capacitive, current leads voltage\nWhen XL = XC: resonance â€” Z = R only, current is in phase with voltage\n\nThe phase angle Î¸ tells you how far current is shifted from voltage:\nÎ¸ = arctan((XL - XC) / R)`,
-        formula: 'Z = âˆš(RÂ² + XÂ²)\nwhere X = XL - XC (net reactance)\n\nFor an RL circuit: Z = âˆš(RÂ² + XLÂ²)\nFor an RC circuit: Z = âˆš(RÂ² + XCÂ²)\nFor an RLC circuit: Z = âˆš(RÂ² + (XL - XC)Â²)'
-      },
-      {
-        type: 'concept',
-        title: 'âš¡ Series RL Circuit: Motors and Ballasts',
-        body: `Almost every inductive load you'll work with is a series RL circuit: resistance from the copper windings plus inductance from the coil. Motors, transformers, relay coils, and fluorescent ballasts are all RL loads.\n\nIn a series RL circuit:\nâ€¢ Voltage across R is in phase with current\nâ€¢ Voltage across L leads current by 90Â°\nâ€¢ Total supply voltage is the phasor sum: VS = âˆš(VRÂ² + VLÂ²)\nâ€¢ Current lags supply voltage by angle Î¸ = arctan(XL/R)\n\nExample: A motor coil has R = 8Î© and XL = 6Î© at 60 Hz.\nZ = âˆš(8Â² + 6Â²) = âˆš(64 + 36) = âˆš100 = 10 Î©\nCurrent lags voltage by Î¸ = arctan(6/8) = 36.87Â°`,
-        formula: 'Series RL:\nZ = âˆš(RÂ² + XLÂ²)\nVR = I Ã— R\nVL = I Ã— XL\nVS = âˆš(VRÂ² + VLÂ²)\nÎ¸ = arctan(XL / R)   [current lags]'
-      },
-      {
-        type: 'concept',
-        title: 'ðŸ”‹ Series RC Circuit: Timers and Filters',
-        body: `Series RC circuits appear in motor start circuits, timing circuits, and filter networks. Current leads voltage in a capacitive circuit, which is the exact opposite of an RL load.\n\nExample: A circuit has R = 30Î© and C = 100Î¼F at 60 Hz.\nXC = 1/(2Ï€ Ã— 60 Ã— 0.0001) = 26.5 Î©\nZ = âˆš(30Â² + 26.5Â²) = âˆš(900 + 702) = âˆš1602 = 40.0 Î©\nÎ¸ = arctan(26.5/30) = 41.4Â° (current leads voltage)`,
-        formula: 'Series RC:\nZ = âˆš(RÂ² + XCÂ²)\nVR = I Ã— R\nVC = I Ã— XC\nVS = âˆš(VRÂ² + VCÂ²)\nÎ¸ = arctan(XC / R)   [current leads]'
+        title: 'What Is Inductance?',
+        body: 'Inductance is the property of a conductor or coil that opposes any CHANGE in current flowing through it. When current through a coil changes, the changing magnetic field induces a voltage (counter-emf or cemf) that opposes the change — this is Lenz\'s Law.\n\nThe unit of inductance is the henry (H), named after Joseph Henry. One henry is the inductance that produces one volt of cemf when the current changes at a rate of one ampere per second.\n\nSelf-inductance: A single coil inducing voltage in itself due to its own changing current. Every coil has self-inductance, even a straight wire has a tiny amount.\n\nMutual inductance: When changing current in one coil (the primary) induces a voltage in a nearby coil (the secondary). This is the operating principle of transformers. Mutual inductance depends on how much of the primary\'s magnetic flux links (cuts through) the secondary coil — called the coefficient of coupling (k).\n\n• k = 1.0: perfect coupling (all flux links both coils) — iron-core transformers approach this\n• k = 0: no coupling — coils too far apart or shielded\n• Air-core coils: typically k = 0.01 to 0.3',
+        formula: 'cemf = -L × (ΔI/Δt)\nWhere: L = inductance (H), ΔI/Δt = rate of current change (A/s)'
       },
       {
         type: 'keypoint',
-        title: 'ðŸ”º The Power Triangle: Real, Reactive, Apparent',
-        body: `Power in AC circuits comes in three flavors:\n\nâ€¢ True Power (P) â€” measured in Watts (W). This is REAL power that does actual work: heats elements, spins motors, powers computers. Calculated from IÂ²R (the resistive component only).\n\nâ€¢ Reactive Power (Q) â€” measured in VAR (Volt-Amps Reactive). This power is NOT consumed â€” it just sloshes back and forth between the source and the inductor/capacitor. It does no useful work, but it occupies conductor and transformer capacity.\n\nâ€¢ Apparent Power (S) â€” measured in VA (Volt-Amps). This is what the utility actually has to supply: it's the total current times the total voltage, regardless of phase angle. S = V Ã— I.\n\nThese three form a right triangle (just like the impedance triangle):\n S = âˆš(PÂ² + QÂ²)\n\nPower factor = P / S = cos(Î¸)`,
-        formula: 'P = IÂ² Ã— R = S Ã— cos(Î¸)     [Watts â€” does work]\nQ = IÂ² Ã— X = S Ã— sin(Î¸)     [VAR â€” does no work]\nS = V Ã— I = âˆš(PÂ² + QÂ²)      [VA â€” what the utility supplies]\n\nPF = P/S = cos(Î¸)\nPF = 1.0 = perfect (resistive only)\nPF = 0.8 = typical induction motor (lagging)'
-      },
-      {
-        type: 'real-world',
-        title: 'ðŸ­ Real World: Power Factor Correction',
-        body: `A large factory runs 200A of current on a 600V system. Power factor is 0.72 lagging (very common with lots of induction motors).\n\nApparent power: S = 600 Ã— 200 = 120 kVA\nTrue power: P = 120 Ã— 0.72 = 86.4 kW\n\nThe utility charges based on the 120 kVA demand (they have to supply that much current), but only 86.4 kW of useful work is being done. The remaining 33.6 kVAR is reactive power wasting conductor capacity.\n\nSolution: install capacitor banks sized to cancel the inductive reactive power (Q). This brings PF closer to 1.0, reducing the apparent current the utility must supply â€” which reduces your demand charges and line losses.\n\nAs an electrician, you'll install and maintain these power factor correction banks. The capacitors are usually switched in and out automatically based on load.`
+        title: 'Factors Affecting Inductance',
+        body: 'Four physical factors determine the inductance of a coil:\n\n1. Number of turns (N): Inductance is proportional to N². Doubling the turns QUADRUPLES the inductance because both the number of flux-producing turns and the number of flux-linking turns double.\n\n2. Core permeability (μ): The core material\'s ability to support magnetic flux. Air has μ = 1 (reference). Soft iron can have μ = 1,000 to 8,000. An iron core dramatically increases inductance compared to an air core.\n\n3. Cross-sectional area (A): Larger core area = more flux = more inductance. Direct relationship.\n\n4. Length of coil (l): Longer coil = flux spread over greater distance = less inductance. Inverse relationship — a shorter, fatter coil has more inductance than a long, thin one.\n\nThese four factors combine in the inductance formula. Changes in any one factor proportionally affect the inductance value.',
+        formula: 'L = (N² × μ × A) / l\n\nWhere:\n• L = inductance in henries (H)\n• N = number of turns\n• μ = permeability of core (H/m)\n• A = cross-sectional area of core (m²)\n• l = length of coil (m)\n\nPractical units: millihenry (mH = 10⁻³ H), microhenry (μH = 10⁻⁶ H)'
       },
       {
         type: 'concept',
-        title: 'ðŸŽ¯ Resonance: When XL = XC',
-        body: `Resonance occurs when inductive and capacitive reactances are equal and opposite â€” they cancel each other out, leaving only resistance. The results are dramatic:\n\nâ€¢ Series resonance: impedance drops to minimum (Z = R only), current reaches maximum\nâ€¢ Parallel resonance: impedance rises to maximum, current from source is minimum\n\nResonant frequency: fr = 1 / (2Ï€âˆš(LC))\n\nThis principle is used intentionally in radio tuners (adjusting C to resonate at a specific station's frequency) and power factor correction banks. Unintentionally, harmonics from VFDs can excite resonance in power factor correction capacitors, causing damaging overvoltages and capacitor failures.`,
-        formula: 'Resonant frequency:\nfr = 1 / (2Ï€ Ã— âˆš(L Ã— C))\n\nAt resonance: XL = XC, Z = R, PF = 1.0\nSeries resonance: maximum current\nParallel resonance: minimum current from source'
+        title: 'Types of Inductors',
+        body: 'Inductors are classified by their core material and construction:\n\nAir-core inductors:\n• No magnetic core — coil wound on non-magnetic form (plastic, ceramic)\n• Low inductance values (μH range)\n• Used at high frequencies: radio, communications, tuning circuits\n• Advantage: no core saturation, no core losses\n• Symbol: simple coil without core lines\n\nIron-core inductors:\n• Laminated silicon steel core (thin sheets insulated from each other to reduce eddy currents)\n• High inductance values (mH to H range)\n• Used at power frequencies (50/60 Hz): transformers, chokes, ballasts, motor windings\n• Can saturate at high currents — core cannot support more flux\n• Symbol: coil with parallel lines representing laminated core\n\nFerrite-core inductors:\n• Ferrite is a ceramic magnetic material (iron oxide compounds)\n• Used at medium to high frequencies (kHz to MHz range)\n• Higher permeability than air but lower losses than iron at high frequencies\n• Common in switching power supplies, EMI filters, RF circuits\n\nVariable inductors:\n• Inductance adjusted by moving a core slug in or out of the coil\n• Used for tuning and calibration\n• Symbol: coil with arrow through it\n\nToroidal inductors:\n• Donut-shaped core (toroid) — magnetic flux is almost entirely contained within the core\n• Very low stray magnetic field — does not interfere with nearby components\n• Higher inductance per turn than straight cores'
       },
       {
-        type: 'quiz',
-        title: 'ðŸ§  Quick Check',
-        questions: [
-          { q: 'A series RL circuit has R = 6Î© and XL = 8Î©. What is the impedance?', a: 'Z = âˆš(6Â² + 8Â²) = âˆš(36 + 64) = âˆš100 = 10 Î©' },
-          { q: 'A motor draws 20A at 240V with a power factor of 0.85. What is the true power?', a: 'S = 240 Ã— 20 = 4800 VA; P = 4800 Ã— 0.85 = 4080 W' },
-          { q: 'Why does reactive power (VAR) not appear on your electricity bill?', a: 'Reactive power does no useful work â€” it just oscillates between source and load. But utilities often charge for high reactive demand because it increases their current supply requirements.' }
-        ]
+        type: 'keypoint',
+        title: 'Inductors in Series and Parallel',
+        body: 'When inductors are connected with NO mutual coupling (spaced far apart or shielded):\n\nSeries: Total inductance is the SUM (same rule as resistors in series)\nLT = L1 + L2 + L3 + ...\n\nExample: 0.1 H + 0.2 H + 0.15 H = 0.45 H total\n\nParallel: Total inductance is calculated like parallel resistors\n1/LT = 1/L1 + 1/L2 + 1/L3 + ...\nFor two inductors: LT = (L1 × L2) / (L1 + L2)\n\nExample: 0.3 H and 0.6 H in parallel:\nLT = (0.3 × 0.6) / (0.3 + 0.6) = 0.18 / 0.9 = 0.2 H\n\nIMPORTANT: If inductors are close enough for mutual inductance, the total depends on whether fields aid or oppose. Aiding: LT = L1 + L2 + 2M. Opposing: LT = L1 + L2 - 2M. Where M = mutual inductance.\n\nEnergy stored in an inductor:\nW = ½LI²\nExample: L = 0.5 H, I = 3 A → W = 0.5 × 0.5 × 9 = 2.25 joules',
+        formula: 'Series: LT = L1 + L2 + L3\nParallel: 1/LT = 1/L1 + 1/L2 + 1/L3\nTwo in parallel: LT = (L1 × L2) / (L1 + L2)\nEnergy: W = ½LI²'
+      },
+      {
+        type: 'concept',
+        title: 'What Is Capacitance?',
+        body: 'Capacitance is the ability of a device to store electric charge. A capacitor is constructed from two conducting plates (electrodes) separated by an insulating material (dielectric).\n\nHow a capacitor stores charge:\n1. When voltage is applied, electrons are pushed onto the negative plate and pulled off the positive plate\n2. The dielectric between the plates prevents electrons from crossing directly\n3. An electric field is established between the plates\n4. The capacitor is "charged" when the voltage across its plates equals the supply voltage\n5. When the voltage source is removed, the charge remains stored — the capacitor holds its voltage\n\nThe unit of capacitance is the farad (F), named after Michael Faraday. One farad stores one coulomb of charge at one volt. The farad is an extremely large unit — practical capacitors are measured in:\n• Microfarads: μF = 10⁻⁶ F (most common in power circuits)\n• Nanofarads: nF = 10⁻⁹ F\n• Picofarads: pF = 10⁻¹² F (used in electronics and RF)\n\nElectric charge: Q = C × V (charge in coulombs = capacitance × voltage)\nAlternatively: Q = I × t (charge = current × time)',
+        formula: 'Q = C × V (coulombs = farads × volts)\nQ = I × t (coulombs = amperes × seconds)\n\nExample: How much charge is stored in a 50 μF capacitor charged to 22 V?\nQ = C × V = 0.00005 × 22 = 0.0011 C = 1.1 mC'
+      },
+      {
+        type: 'keypoint',
+        title: 'Factors Affecting Capacitance',
+        body: 'Three physical factors determine the capacitance of a capacitor:\n\n1. Plate area (A): Larger plates = more surface for charge = more capacitance. Direct relationship. Doubling the plate area doubles the capacitance.\n\n2. Distance between plates (d): Closer plates = stronger electric field = more capacitance. INVERSE relationship. Halving the distance doubles the capacitance. However, closer plates also reduce the maximum voltage the capacitor can withstand (dielectric breakdown).\n\n3. Dielectric material (ε): Different insulating materials have different abilities to support an electric field. This is measured by the dielectric constant (also called relative permittivity, εr):\n• Vacuum: εr = 1.0 (reference)\n• Air: εr = 1.0006 (essentially 1)\n• Paper: εr = 2.0–4.0\n• Mylar (polyester): εr = 3.0\n• Mica: εr = 5.0–7.0\n• Ceramic: εr = 20–15,000 (varies widely by formulation)\n• Electrolytic oxide: εr = 8–10 with extremely thin layer → very high capacitance\n\nHigher dielectric constant = more capacitance for the same plate area and spacing.',
+        formula: 'C = (ε₀ × εr × A) / d\n\nWhere:\n• C = capacitance (F)\n• ε₀ = permittivity of free space (8.854 × 10⁻¹² F/m)\n• εr = relative permittivity (dielectric constant)\n• A = plate area (m²)\n• d = distance between plates (m)'
+      },
+      {
+        type: 'concept',
+        title: 'Types of Capacitors',
+        body: 'Capacitors are classified by their dielectric material:\n\nElectrolytic capacitors (aluminum or tantalum):\n• POLARIZED — must observe correct polarity or they can explode\n• Very high capacitance values: 1 μF to 100,000 μF\n• The dielectric is an extremely thin oxide layer formed electrochemically\n• Used in: power supply filtering, smoothing, energy storage, motor start circuits\n• Limitations: polarity-sensitive, limited life, higher ESR, temperature-sensitive\n• DANGER: reverse polarity or exceeding voltage rating can cause violent failure\n\nCeramic capacitors:\n• Non-polarized — can be connected either way\n• Values: 1 pF to several μF\n• Very stable, low losses, small size\n• Used in: high-frequency bypassing, timing, coupling, decoupling\n\nFilm capacitors (polyester, polypropylene, polycarbonate):\n• Non-polarized, excellent stability and reliability\n• Values: 100 pF to several μF\n• Used in: timing circuits, coupling, AC motor run capacitors, power factor correction\n• Very long life — can last decades\n\nMica capacitors:\n• Very stable, very low losses\n• Values: 1 pF to 10 nF\n• Used in: precision RF circuits, high-frequency applications\n\nVariable capacitors:\n• Adjustable plates that can be moved to change the overlapping area\n• Used in: tuning circuits, calibration\n\nCapacitor ratings — every capacitor has:\n• Capacitance value (μF, nF, or pF)\n• Voltage rating (WVDC — Working Voltage DC, the maximum safe continuous voltage)\n• Temperature rating (operating range)\n• Tolerance (±% of stated value)\n• Polarity marking (electrolytic only)'
+      },
+      {
+        type: 'keypoint',
+        title: 'Capacitors in Series and Parallel',
+        body: 'IMPORTANT: Capacitors combine OPPOSITE to resistors!\n\nParallel: Total capacitance is the SUM (like resistors in series)\nCT = C1 + C2 + C3 + ...\nWhy: Connecting capacitors in parallel effectively increases the total plate area.\n\nExample: 10 μF + 22 μF + 47 μF = 79 μF total\n\nSeries: Total capacitance is calculated like parallel resistors\n1/CT = 1/C1 + 1/C2 + 1/C3 + ...\nFor two capacitors: CT = (C1 × C2) / (C1 + C2)\nWhy: Connecting in series effectively increases the distance between plates.\n\nExample: 10 μF and 22 μF in series:\nCT = (10 × 22) / (10 + 22) = 220 / 32 = 6.875 μF\n\nSeries connection advantage: The voltage rating of the combination is the SUM of individual ratings. Two 250 V capacitors in series can withstand 500 V (but total capacitance decreases).\n\nEnergy stored in a capacitor:\nW = ½CV²\nExample: C = 100 μF, V = 400 V → W = 0.5 × 0.0001 × 160000 = 8 joules\n\nThis stored energy is why capacitors are dangerous — 8 joules at 400 V can be lethal.',
+        formula: 'Parallel: CT = C1 + C2 + C3\nSeries: 1/CT = 1/C1 + 1/C2 + 1/C3\nTwo in series: CT = (C1 × C2) / (C1 + C2)\nEnergy: W = ½CV²'
+      },
+      {
+        type: 'concept',
+        title: 'Safety with Inductors and Capacitors',
+        body: 'Inductors — inductive kick hazard:\n• When current through an inductor is suddenly interrupted (switch opened, breaker trips), the collapsing magnetic field induces an extremely high voltage spike\n• This "inductive kick" can be thousands or even millions of volts\n• It can damage insulation, destroy semiconductor components, cause dangerous arcs, and injure personnel\n• Protection methods: discharge resistor in parallel with the coil, snubber circuit (RC network), flyback diode (for dc circuits), varistor/MOV\n• Example: L = 0.2 H, I = 4 A, switch opens in 0.4 μs → e = (4/0.0000004) × 0.2 = 2,000,000 V (2 MV!)\n• With a 100 Ω discharge resistor: Vi = 4 × 100 = 400 V (manageable)\n\nCapacitors — stored energy hazard:\n• Capacitors hold their charge after power is removed — they are essentially batteries\n• Large capacitors in motor drives, power supplies, and power factor correction banks can store lethal amounts of energy\n• ALWAYS verify zero voltage with a voltmeter before touching capacitor terminals\n• Use a discharge resistor (bleed resistor) — NEVER short-circuit the terminals (this causes an explosive discharge)\n• Electrolytic capacitors: connecting with reverse polarity can cause violent rupture\n• Capacitors rated above their voltage can fail with internal arcing, heating, and potential explosion\n• Many industrial capacitors have built-in discharge resistors — but ALWAYS verify with a meter'
       },
       {
         type: 'protip',
-        title: 'ðŸ›  Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'The impedance triangle and power triangle are the SAME shape at the SAME angle. If you know Z, R, and X for the circuit, you know the ratio of P, S, and Q too.',
-          'Power factor of 0.8 lagging is the absolute minimum for most industrial facilities before the utility starts charging demand penalties. If you see power factor capacitors in a commercial or industrial panel, their job is to bring PF back above 0.9 or 0.95.',
-          'On exam questions involving power: always identify whether the given voltage/current is per-phase or line-to-line in a three-phase system. Three-phase power = 3 Ã— Vphase Ã— Iphase Ã— PF, or equivalently âˆš3 Ã— Vline Ã— Iline Ã— PF.'
+          'Inductance is proportional to N² — doubling the turns gives FOUR times the inductance. This is why even a small change in winding count matters.',
+          'When troubleshooting a motor that won\'t start, a shorted turn in the stator winding reduces the inductance and changes the impedance — drawing excessive current. This is why motor current testing is so diagnostic.',
+          'Capacitors in series have LOWER total capacitance than the smallest individual capacitor — the opposite of what many students expect. Think of it as increasing the effective plate spacing.',
+          'The energy stored in a capacitor increases with the SQUARE of the voltage. A capacitor at 480 V stores 16 times more energy than the same capacitor at 120 V. This is why high-voltage capacitors are so much more dangerous.',
+          'When you see a large motor contactor with a small RC "snubber" network across the coil terminals, that\'s protecting against inductive kick when the coil de-energizes.',
+          'Electrolytic capacitors have a limited lifespan (typically 2,000-10,000 hours at rated temperature). They dry out over time. If a piece of equipment has been sitting unused for years, the electrolytics may need to be reformed (slowly brought up to voltage) before full operation.'
+        ]
+      },
+      {
+        type: 'quiz',
+        title: 'Quick Check',
+        questions: [
+          { q: 'An inductor has 200 turns and inductance of 0.4 H. If the turns are doubled to 400, what is the new inductance?', a: 'Inductance is proportional to N². Doubling turns: (400/200)² = 4× → 0.4 H × 4 = 1.6 H' },
+          { q: 'Three capacitors of 10 μF, 20 μF, and 30 μF are connected in parallel. What is the total capacitance?', a: 'Parallel capacitors add: CT = 10 + 20 + 30 = 60 μF' },
+          { q: 'The same three capacitors (10, 20, 30 μF) are connected in series. What is the total?', a: '1/CT = 1/10 + 1/20 + 1/30 = 6/60 + 3/60 + 2/60 = 11/60. CT = 60/11 = 5.45 μF' },
+          { q: 'A coil has L = 0.5 H and carries 6 A of steady current. How much energy is stored?', a: 'W = ½LI² = 0.5 × 0.5 × 36 = 9 joules' },
+          { q: 'A 220 μF capacitor is charged to 350 V. How much energy is stored? Is this dangerous?', a: 'W = ½CV² = 0.5 × 0.00022 × 122500 = 13.475 joules. YES — this is potentially lethal. Energy above about 1 joule at voltages above 50 V can cause serious injury or death.' },
+          { q: 'Why does an iron-core inductor have much higher inductance than an air-core inductor with the same number of turns?', a: 'Iron has much higher permeability (μ) than air — typically 1,000 to 8,000 times higher. Since L is directly proportional to μ, an iron core increases inductance by the same factor.' },
+          { q: 'A capacitor is rated 100 μF, 250 WVDC. You apply 300 V across it. What happens?', a: 'The voltage exceeds the capacitor\'s rating. The dielectric breaks down — an internal arc forms through the insulating material. This can cause the capacitor to overheat, vent gas, or explode. Never exceed the WVDC rating.' },
+          { q: 'An inductive circuit has L = 0.2 H and carries 4 A when a switch opens in 0.4 μs. Calculate the induced voltage. What can protect against this?', a: 'e = L × (ΔI/Δt) = 0.2 × (4/0.0000004) = 2,000,000 V = 2 MV. A discharge resistor in parallel with the coil (e.g., 100 Ω) would limit the voltage to Vi = I × R = 4 × 100 = 400 V.' }
         ]
       },
       {
         type: 'objectives',
-        title: 'Module 3 Objectives',
+        title: 'Module Objectives',
         objectives: [
-          'Define impedance (Z) as the total opposition to AC current flow, combining resistance and reactance.',
-          'Calculate series circuit impedance using the impedance formula: Z = âˆš(RÂ² + XÂ²) where X = XL âˆ’ XC.',
-          'Analyze a series RLC circuit to calculate total impedance, circuit current, and individual component voltage drops.',
-          'Calculate parallel circuit impedance using branch currents (IR, IL, IC) and total current IT = âˆš(IRÂ² + (IL âˆ’ IC)Â²).',
-          'Construct and interpret the impedance triangle, identifying the relationships between R, X, Z, and phase angle Î¸.',
-          'Define true power (P) in watts as the power consumed by resistance and producing real work: P = IÂ²R = VÂ²/R.',
-          'Define reactive power (Q) in volt-amperes reactive (VAR) as the power oscillating between source and reactive components: Q = IÂ²X.',
-          'Define apparent power (S) in volt-amperes (VA) as the total power supplied by the source: S = V Ã— I.',
-          'Construct and interpret the power triangle, applying the Pythagorean relationship: SÂ² = PÂ² + QÂ².',
-          'Define power factor (PF) as the ratio of true power to apparent power: PF = P/S = cos Î¸.',
-          'Classify power factor as leading (capacitive load) or lagging (inductive load) and explain its significance.',
-          'Identify the causes of poor power factor in industrial electrical systems (inductive loads: motors, transformers, ballasts).',
-          'Describe how power factor correction capacitors improve power factor and reduce reactive current demand.',
-          'Calculate the capacitance required for power factor correction given initial and target power factors.',
-          'Solve AC circuit problems involving series and parallel combinations of R, L, and C components.'
-        ],
-        questions: [
-          { q: 'A series RLC circuit has R = 30Î©, XL = 60Î©, XC = 20Î©. What is the total impedance?', a: 'X = XL âˆ’ XC = 60 âˆ’ 20 = 40Î©. Z = âˆš(RÂ² + XÂ²) = âˆš(30Â² + 40Â²) = âˆš(900 + 1600) = âˆš2500 = 50Î©.' },
-          { q: 'A circuit draws 10A at 120V with a power factor of 0.8 lagging. Calculate P, Q, and S.', a: 'S = V Ã— I = 120 Ã— 10 = 1200 VA. P = S Ã— PF = 1200 Ã— 0.8 = 960W. Q = âˆš(SÂ² âˆ’ PÂ²) = âˆš(1200Â² âˆ’ 960Â²) = 720 VAR.' },
-          { q: 'What does a lagging power factor mean in terms of current and voltage phase relationship?', a: 'Lagging PF means current lags behind voltage â€” the load is inductive. The current waveform peaks after the voltage waveform. This increases reactive current and causes the utility to supply more apparent power than the real power consumed.' },
-          { q: 'Why do utilities charge industrial customers for poor power factor?', a: 'Poor power factor means the utility must supply more current (more apparent power) to deliver the same real power. More current means larger conductors, more transformer capacity, and more IÂ²R losses in the distribution system â€” all of which cost money. Industrial customers with PF below 0.85-0.90 typically face demand surcharges.' },
-          { q: 'At resonance in a series RLC circuit, what happens to impedance and why?', a: 'At resonance, XL = XC, so they cancel: X = XL âˆ’ XC = 0. Total impedance Z = âˆš(RÂ² + 0Â²) = R â€” the circuit is purely resistive with minimum impedance. Current is at maximum. This is why resonance circuits are used as tuned filters.' }
-        ]
-      },
-      {
-        type: 'outcome',
-        title: 'Module Desired Outcome',
-        outcome: 'The student will analyze AC circuits containing resistors, inductors, and capacitors, and calculate impedance, current, voltage, and power relationships.',
-        questions: [
-          { q: 'A 120V, 60Hz circuit contains a 40Î© resistor in series with a 0.1H inductor and a 100Î¼F capacitor. Calculate XL, XC, Z, and the current. Is the circuit inductive or capacitive?', a: 'XL = 2Ï€ Ã— 60 Ã— 0.1 = 37.7Î©. XC = 1/(2Ï€ Ã— 60 Ã— 0.0001) = 26.5Î©. X = XL âˆ’ XC = 37.7 âˆ’ 26.5 = 11.2Î© (net inductive). Z = âˆš(40Â² + 11.2Â²) = âˆš(1600 + 125.4) = âˆš1725.4 = 41.5Î©. I = V/Z = 120/41.5 = 2.89A. The circuit is inductive (XL > XC).' },
-          { q: 'An industrial facility has a total load of 500kW at 0.70 power factor lagging. Calculate the apparent power, reactive power, and the reactive current. Why is this a problem for the utility?', a: 'S = P/PF = 500,000/0.70 = 714.3 kVA. Q = âˆš(SÂ² âˆ’ PÂ²) = âˆš(714.3Â² âˆ’ 500Â²) = 510.2 kVAR. At 480V 3-phase: IL = S/(âˆš3 Ã— VL) = 714,300/(1.732 Ã— 480) = 859A. Only 500,000/(1.732 Ã— 480) = 601A of that does real work. The utility must size its equipment for 859A, not 601A â€” the extra 258A is purely reactive current producing no useful work, creating extra losses and requiring larger equipment.' }
+          'Define self-inductance and explain how a coil opposes changes in current through counter-emf (Lenz\'s Law).',
+          'Identify the four factors that determine inductance: number of turns (N²), core permeability (μ), cross-sectional area (A), and coil length (l).',
+          'Define mutual inductance and explain the coefficient of coupling (k) between coils.',
+          'Identify common inductor types: air-core, iron-core (laminated), ferrite-core, variable, and toroidal.',
+          'Calculate total inductance for series and parallel combinations (with no mutual coupling).',
+          'Define capacitance and explain how a capacitor stores electric charge in an electric field.',
+          'Identify the three factors that determine capacitance: plate area (A), plate spacing (d), and dielectric constant (εr).',
+          'Identify common capacitor types: electrolytic, ceramic, film, mica, and variable — and their applications.',
+          'Calculate total capacitance for series (reciprocal sum) and parallel (direct sum) combinations.',
+          'Calculate energy stored in inductors (W = ½LI²) and capacitors (W = ½CV²).',
+          'Describe safety hazards: inductive kick voltage spikes and stored charge in capacitors.',
+          'Identify protection methods: discharge resistors for inductors, bleed resistors for capacitors.'
         ]
       }
     ]
   },
   {
-    id: 'm21',
+    id: 'm13', period: 2,
+    title: 'Inductors and Capacitors in Circuits',
+    icon: '⚡',
+    subtitle: 'ILM 030201c — DC & AC Behaviour, Reactance, Phase, and Calculations',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(109,40,217,0.06))',
+    border: 'rgba(139,92,246,0.3)',
+    readTime: '55 min read',
+    sections: [
+      {
+        type: 'hook',
+        title: 'AC Changes Everything',
+        body: 'In a dc circuit an inductor is just a coil of wire — once current reaches steady state it behaves like a short piece of conductor. A capacitor is the opposite — once fully charged it blocks current entirely and acts like an open circuit. Simple enough.\n\nBut feed those same components with ac and everything changes. The inductor now continuously opposes the changing current, creating inductive reactance (XL) that rises with frequency. The capacitor continuously charges and discharges, creating capacitive reactance (XC) that falls with frequency. Both shift voltage and current out of phase with each other.\n\nThis module covers all 8 ILM objectives:\n• Obj 1-2: Inductors in dc circuits — RL time constants, cemf, inductive kick\n• Obj 3-4: Capacitors in dc circuits — charge/discharge, RC time constants\n• Obj 5: Inductive reactance in ac — XL = 2πfL, phase lag\n• Obj 6: Calculating XL, finding unknown L or f\n• Obj 7: Capacitive reactance in ac — XC = 1/(2πfC), phase lead\n• Obj 8: Calculating XC, finding unknown C or f\n\nMaster these and you own the foundation for impedance, power factor, and every ac circuit you will ever troubleshoot.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductors in DC Circuits',
+        body: 'When a dc voltage is first applied to an RL circuit the inductor opposes the change in current by generating a counter-emf (cemf). Current cannot jump to its final value instantly — it rises along an exponential curve governed by the RL time constant.\n\n**RL Time Constant**\nT = L / R\n\nOne time constant is the time for current to reach 63.2% of its steady-state value. It always takes 5 time constants (5T) to reach effective steady state (99.3%).\n\nTime-constant progression (charging):\n• 1T → 63.2%\n• 2T → 86.5%\n• 3T → 95.0%\n• 4T → 98.2%\n• 5T → 99.3%\n\n**Worked Example**\nA coil has L = 0.16 H and R = 4 Ω, connected across a 24 V dc supply.\n\nStep 1 — Time constant: T = L/R = 0.16/4 = 0.04 s (40 ms)\nStep 2 — Steady-state current: I = E/R = 24/4 = 6 A\nStep 3 — Current at each time constant:\n  1T (0.04 s): 6 × 0.632 = 3.79 A\n  2T (0.08 s): 6 × 0.865 = 5.19 A\n  3T (0.12 s): 6 × 0.950 = 5.70 A\n  4T (0.16 s): 6 × 0.982 = 5.89 A\n  5T (0.20 s): 6 × 0.993 = 5.96 A (≈ 6 A steady state)\n\n**Effect of Changing L**\nIncreasing inductance increases the time constant — the inductor opposes current change more strongly, so it takes longer to reach steady state. The final steady-state current is unchanged (still E/R) because inductance has zero dc resistance at steady state.\n\n**Effect of Changing R**\nIncreasing resistance does two things: (1) lowers the steady-state current (I = E/R), and (2) shortens the time constant (T = L/R). The circuit reaches its (lower) final current faster.\n\nAt steady state the inductor\'s cemf has dropped to zero and it behaves like a plain piece of wire with only its dc winding resistance limiting current.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductive Kick',
+        body: 'Opening an inductive circuit forces current to zero very quickly. The inductor responds by generating a massive voltage spike — the "inductive kick" — because the induced voltage is proportional to the rate of current change:\n\ne = (ΔI / Δt) × L\n\n**Why It Is Dangerous**\nConsider an inductor carrying 4 A of steady-state current. If the switch contacts open and create a 500 kΩ air gap in 0.4 μs:\n\ne = (4 / 0.0000004) × 0.2 = 10,000,000 × 0.2 = 2,000,000 V (2 MV!)\n\nThis extreme voltage arcs across the switch contacts, pitting and destroying them, and can damage insulation and semiconductor components throughout the circuit.\n\n**Discharge Resistors**\nA discharge resistor wired in parallel with the inductor provides an alternative current path when the switch opens. Instead of forcing current through a 500 kΩ air gap, the current flows through the discharge resistor.\n\nExample: Same inductor (L = 0.2 H, I = 4 A), but with a 100 Ω discharge resistor in parallel:\nPeak voltage at opening = I × R_discharge = 4 × 100 = 400 V\n\nThat is still a noticeable spike but is 5,000 times smaller than the unprotected 2 MV. The energy stored in the inductor (½LI²) dissipates safely as heat in the resistor.\n\n**Protection Methods**\n• Discharge resistor — simplest, most common for relay and contactor coils\n• Snubber (RC network) — absorbs the spike and damps oscillation\n• Flyback / freewheeling diode — clamps the spike to one diode drop (used in dc circuits with semiconductor switching)\n\nRule: never open an inductive circuit without providing a discharge path.'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitors in DC Circuits',
+        body: 'A capacitor stores energy as an electric field between its plates. The fundamental relationships are:\n\nQ = C × V  (charge = capacitance × voltage)\nQ = I × t  (charge = current × time)\n\n**Example:** A 50 μF capacitor charged to 22 V stores:\nQ = 50 × 10⁻⁶ × 22 = 1.1 × 10⁻³ C = 1.1 mC\n\n**RC Time Constant**\nT = R × C\n\nJust like the RL circuit, a capacitor charges (or discharges) through 5 time constants to reach effective steady state. The same percentage progression applies:\n• 1T → 63.2% of final voltage\n• 2T → 86.5%\n• 3T → 95.0%\n• 4T → 98.2%\n• 5T → 99.3%\n\n**Worked Example 1**\nR = 200 Ω, C = 15 μF:\nT = 200 × 15 × 10⁻⁶ = 0.003 s = 3 ms\nFull charge time ≈ 5T = 15 ms\n\n**Worked Example 2**\nR = 30 Ω, C = 80 μF:\nT = 30 × 80 × 10⁻⁶ = 0.0024 s = 2.4 ms\nFull charge time ≈ 5T = 12 ms\n\n**Charging Process**\nWhen the switch closes, maximum current flows immediately (limited only by R). As the capacitor charges, its rising voltage opposes the source, reducing current flow. At 5T the capacitor voltage essentially equals the source voltage, current drops to near zero, and the capacitor acts as an open circuit.\n\n**Discharging Process**\nWhen the charged capacitor is connected across a resistance (source removed), it acts as its own voltage source. Current flows in the reverse direction, decaying along the same exponential curve. At 5T the voltage has fallen to essentially zero.\n\n**Steady-State DC Behaviour**\nA fully charged capacitor blocks dc current entirely — it is an open circuit at steady state. This is the opposite of an inductor, which is a short circuit (wire) at dc steady state.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductive Reactance in AC',
+        body: 'In an ac circuit the current is continuously changing direction and magnitude. An inductor continuously opposes these changes by generating cemf. This ongoing opposition is called inductive reactance (XL), measured in ohms.\n\nXL = 2πfL\n\n**Key Relationships (both DIRECT)**\n• Higher inductance (L) → higher XL (more opposition)\n• Higher frequency (f) → higher XL (current changes faster, inductor opposes more)\n\nIf you double L, XL doubles. If you double f, XL doubles. At 0 Hz (dc) XL = 0 — the inductor is just a wire.\n\n**Phase Relationship — Current LAGS Voltage by 90°**\nIn a pure inductive circuit (no resistance), the current reaches its peak one-quarter cycle (90°) after the voltage reaches its peak. This happens because the inductor\'s cemf delays the current buildup.\n\nOn a phasor diagram the current phasor points 90° behind (clockwise from) the voltage phasor.\n\nIn a practical RL circuit (resistance + inductance), the phase angle is between 0° and 90° — the more inductive the circuit, the closer to 90° the lag.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating XL',
+        body: 'Formula: XL = 2πfL\n\nAlways convert units before calculating:\n• f in hertz (Hz)\n• L in henrys (H) — 1 mH = 0.001 H\n• XL comes out in ohms (Ω)\n\n**Example 1 — Find XL**\nL = 0.3 H, f = 60 Hz\nXL = 2π × 60 × 0.3 = 2 × 3.1416 × 60 × 0.3 = 113.1 Ω\n\n**Example 2 — Find XL**\nL = 450 mH = 0.45 H, f = 100 Hz\nXL = 2π × 100 × 0.45 = 282.7 Ω\n\n**Example 3 — Find L from XL**\nXL = 65 Ω, f = 50 Hz\nRearrange: L = XL / (2πf) = 65 / (2π × 50) = 65 / 314.16 = 0.207 H = 207 mH\n\n**Example 4 — Find XL**\nL = 0.22 H, f = 60 Hz\nXL = 2π × 60 × 0.22 = 82.9 Ω\n\nRemember: XL increases with both f and L (direct relationships).'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitive Reactance in AC',
+        body: 'In an ac circuit a capacitor continuously charges and discharges as the voltage alternates. This creates an opposition to voltage change called capacitive reactance (XC), measured in ohms.\n\nXC = 1 / (2πfC)\n\n**Key Relationships (both INVERSE)**\n• Higher capacitance (C) → LOWER XC (larger plates pass more ac current)\n• Higher frequency (f) → LOWER XC (less time to fully charge, so more current flows)\n\nThis is the opposite of inductive reactance. Doubling C halves XC. Doubling f halves XC. At infinite frequency XC approaches 0 — the capacitor looks like a short circuit. At 0 Hz (dc) XC is infinite — the capacitor is an open circuit.\n\n**Phase Relationship — Current LEADS Voltage by 90°**\nIn a pure capacitive circuit (no resistance), the current reaches its peak one-quarter cycle (90°) before the voltage reaches its peak. Current must flow first to charge the plates before voltage can build up.\n\nOn a phasor diagram the current phasor points 90° ahead (counter-clockwise from) the voltage phasor.\n\nIn a practical RC circuit (resistance + capacitance), the phase angle is between 0° and 90° — the more capacitive the circuit, the closer to 90° the lead.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating XC',
+        body: 'Formula: XC = 1 / (2πfC)\n\nAlways convert units before calculating:\n• f in hertz (Hz)\n• C in farads (F) — 1 μF = 1 × 10⁻⁶ F\n• XC comes out in ohms (Ω)\n\n**Example 1 — Find XC**\nC = 500 μF = 500 × 10⁻⁶ F, f = 60 Hz\nXC = 1 / (2π × 60 × 500 × 10⁻⁶) = 1 / 0.18850 = 5.31 Ω\n\n**Example 2 — Find C from XC**\nXC = 10 Ω, f = 60 Hz\nRearrange: C = 1 / (2πfXC) = 1 / (2π × 60 × 10) = 1 / 3769.9 = 265.3 × 10⁻⁶ F = 265 μF\n\n**Example 3 — Find XC**\nC = 800 μF = 800 × 10⁻⁶ F, f = 60 Hz\nXC = 1 / (2π × 60 × 800 × 10⁻⁶) = 1 / 0.30159 = 3.32 Ω\n\nRemember: XC decreases with both f and C (inverse relationships). This is the opposite of XL.'
+      },
+      {
+        type: 'keypoint',
+        title: 'ELI the ICE Man',
+        body: 'This is the single most important memory aid for ac phase relationships:\n\n**ELI** — In an inductor (L), voltage (E) leads current (I)\n  → Or equivalently: current I lags voltage E in an inductor\n  → E comes before I, with L in the middle: E-L-I\n\n**ICE** — In a capacitor (C), current (I) leads voltage (E)\n  → Or equivalently: voltage E lags current I in a capacitor\n  → I comes before E, with C in the middle: I-C-E\n\n**Phase Angle Summary**\n• Pure resistive circuit (R only): V and I are in phase (0° shift)\n• Pure inductive circuit (L only): V leads I by exactly 90°\n• Pure capacitive circuit (C only): I leads V by exactly 90°\n• RL circuit: V leads I by some angle between 0° and 90° (depends on R/XL ratio)\n• RC circuit: I leads V by some angle between 0° and 90° (depends on R/XC ratio)\n\nThe more reactive (L or C) relative to R, the closer the phase angle gets to 90°. The more resistive relative to reactance, the closer to 0°.'
+      },
+      {
+        type: 'keypoint',
+        title: 'DC vs AC Summary Table',
+        body: '**Component Behaviour — DC vs AC**\n\n| Component | DC (Steady State) | AC |\n|-----------|-------------------|----|\n| Inductor | Wire (short circuit) — zero opposition once current is steady | Creates XL — opposition rises with f and L |\n| Capacitor | Open circuit — blocks all dc once charged | Creates XC — opposition falls with f and C |\n| Resistor | R ohms (same) | R ohms (same, no phase shift) |\n\n**DC Transient Behaviour**\n• Inductor: opposes current change during switching (RL time constant T = L/R)\n• Capacitor: charges/discharges during switching (RC time constant T = R×C)\n• Both reach steady state after 5 time constants\n\n**AC Continuous Behaviour**\n• Inductor: continuously generates cemf → XL = 2πfL, current lags voltage\n• Capacitor: continuously charges/discharges → XC = 1/(2πfC), current leads voltage\n\nKey insight: In dc, transient behaviour matters only during switching. In ac, the "switching" never stops — the source is always changing — so reactance is always present.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Time Constants Reference',
+        body: '**RL Time Constant:** T = L / R\n  • L in henrys, R in ohms → T in seconds\n  • Larger L → longer time constant (more energy to store)\n  • Larger R → shorter time constant (higher resistance limits current, less energy stored)\n\n**RC Time Constant:** T = R × C\n  • R in ohms, C in farads → T in seconds\n  • Larger R → longer time constant (less current to charge capacitor)\n  • Larger C → longer time constant (more charge to store)\n\n**Universal Time Constant Chart (applies to both RL and RC):**\n\n| Time Constants | % of Final Value (Charging) | % Remaining (Discharging) |\n|---------------|----------------------------|---------------------------|\n| 1T | 63.2% | 36.8% |\n| 2T | 86.5% | 13.5% |\n| 3T | 95.0% | 5.0% |\n| 4T | 98.2% | 1.8% |\n| 5T | 99.3% | 0.7% |\n\nThe curve is exponential: each time constant covers 63.2% of the remaining gap. After 5T the circuit is considered at steady state for all practical purposes.'
+      },
+      {
+        type: 'quiz',
+        title: 'Module Self-Test',
+        questions: [
+          { q: 'A coil with L = 0.2 H and R = 10 Ω is connected to a 50 V dc supply. What is the time constant, and what is the steady-state current?', a: 'T = L/R = 0.2/10 = 0.02 s (20 ms). Steady-state current I = E/R = 50/10 = 5 A.' },
+          { q: 'In the previous circuit, what is the current after 1 time constant?', a: 'After 1T, current reaches 63.2% of steady state: I = 5 × 0.632 = 3.16 A.' },
+          { q: 'An inductor carrying 3 A is opened in 0.5 μs. If L = 0.1 H, what voltage is induced?', a: 'e = (ΔI/Δt) × L = (3/0.0000005) × 0.1 = 6,000,000 × 0.1 = 600,000 V = 600 kV. This is the inductive kick — extremely dangerous without a discharge path.' },
+          { q: 'What is the purpose of a discharge resistor across an inductor?', a: 'It provides an alternative current path when the circuit opens, limiting the inductive kick voltage to I × R_discharge instead of the potentially destructive voltage caused by the high-impedance air gap.' },
+          { q: 'A 100 μF capacitor is charged to 50 V. How much charge is stored?', a: 'Q = C × V = 100 × 10⁻⁶ × 50 = 5 × 10⁻³ C = 5 mC.' },
+          { q: 'R = 500 Ω, C = 20 μF. Find the RC time constant and total charge time.', a: 'T = R × C = 500 × 20 × 10⁻⁶ = 0.01 s = 10 ms. Total charge time ≈ 5T = 50 ms.' },
+          { q: 'Calculate XL for a 0.5 H inductor at 60 Hz.', a: 'XL = 2πfL = 2π × 60 × 0.5 = 188.5 Ω.' },
+          { q: 'If XL = 200 Ω at 50 Hz, what is the inductance?', a: 'L = XL/(2πf) = 200/(2π × 50) = 200/314.16 = 0.637 H = 637 mH.' },
+          { q: 'Calculate XC for a 200 μF capacitor at 60 Hz.', a: 'XC = 1/(2πfC) = 1/(2π × 60 × 200 × 10⁻⁶) = 1/0.07540 = 13.26 Ω.' },
+          { q: 'In an ac circuit, does current lead or lag voltage in a pure inductive circuit? By how much?', a: 'Current LAGS voltage by 90° in a pure inductive circuit. Remember ELI: E (voltage) leads I (current) in an inductor L.' },
+          { q: 'In an ac circuit, does current lead or lag voltage in a pure capacitive circuit? By how much?', a: 'Current LEADS voltage by 90° in a pure capacitive circuit. Remember ICE: I (current) leads E (voltage) in a capacitor C.' },
+          { q: 'At dc steady state, an inductor acts as a _____ and a capacitor acts as a _____.', a: 'An inductor acts as a short circuit (wire) — zero opposition. A capacitor acts as an open circuit — blocks all dc current.' },
+          { q: 'SELF-TEST Q1: A dc circuit contains a coil with 2.5 Ω of resistance and 300 mH of inductance. What is the time constant?', a: 'T = L/R = 0.3 H / 2.5 Ω = 0.12 seconds. (Answer: a)' },
+          { q: 'SELF-TEST Q2: 100 V dc is applied to a coil with 300 mH and 5 Ω. The inductive current drops to zero in 1.4 μs after opening. Calculate the inductive kick.', a: 'Steady state I = E/R = 100/5 = 20 A. e = (ΔI/Δt) × L = (20/0.0000014) × 0.3 = 14,285,714 × 0.3 = 4,285,714 V ≈ 4.29 MV. (Answer: c)' },
+          { q: 'SELF-TEST Q3: Calculate the voltage across a capacitor after one time constant if connected to a 24 V dc source.', a: 'After 1 TC, voltage reaches 63.2% of supply: V = 24 × 0.632 = 15.17 V. (Answer: b)' },
+          { q: 'SELF-TEST Q4: A dc circuit has a 300 μF capacitor in series with a 4 Ω resistor. What is one time constant?', a: 'T = R × C = 4 × 0.0003 = 0.0012 s = 1.2 ms. (Answer: b)' },
+          { q: 'SELF-TEST Q5: An ac circuit contains a coil. What happens to inductive reactance if frequency decreases?', a: 'XL = 2πfL. If f decreases, XL decreases (direct relationship). Note: inductance L does NOT change — only XL changes. (Answer: d)' },
+          { q: 'SELF-TEST Q7: The inductance of a coil is 600 mH. What is XL when connected to 60 Hz?', a: 'XL = 2πfL = 2π × 60 × 0.6 = 226.2 Ω. (Answer: b)' },
+          { q: 'SELF-TEST Q8: What happens to XC if the frequency decreases in an ac circuit with a capacitor?', a: 'XC = 1/(2πfC). If f decreases, XC INCREASES (inverse relationship). (Answer: d)' },
+          { q: 'SELF-TEST Q10: What is the capacitance in a 30 Hz circuit with XC = 75 Ω?', a: 'C = 1/(2πfXC) = 1/(2π × 30 × 75) = 1/14137.2 = 0.00007074 F = 70.74 μF ≈ 70.7 μF. (Answer: not exactly listed — closest is a) 42.44 μF at different values)' },
+          { q: 'SELF-TEST Q11: What happens to XC if frequency increases from 50 Hz to 60 Hz?', a: 'XC would DECREASE. Higher frequency means the capacitor charges/discharges more rapidly, allowing more current flow, which means less opposition (lower XC). (Answer: b)' },
+          { q: 'ACTIVITY: Calculate XL for L = 0.22 H at 60 Hz.', a: 'XL = 2πfL = 2π × 60 × 0.22 = 82.938 Ω ≈ 82.9 Ω' },
+          { q: 'ACTIVITY: Find L if XL = 60.3 Ω at 60 Hz.', a: 'L = XL/(2πf) = 60.3/(2π × 60) = 60.3/376.99 = 0.16 H = 160 mH' },
+          { q: 'ACTIVITY: Calculate XC for an 800 μF capacitor at 60 Hz.', a: 'XC = 1/(2πfC) = 1/(2π × 60 × 0.0008) = 1/0.30159 = 3.316 Ω' },
+          { q: 'ACTIVITY: Find C if XC = 44.8 Ω at 60 Hz.', a: 'C = 1/(2πfXC) = 1/(2π × 60 × 44.8) = 1/16889.2 = 0.0000592 F = 59.2 μF' },
+          { q: 'ACTIVITY: Q = I × t. If I = 5 A flows for 4 seconds, what is the charge?', a: 'Q = 5 × 4 = 20 C (20 coulombs)' },
+          { q: 'ACTIVITY: Q = C × V. A 100 μF capacitor is charged to 200 V. What is the stored charge?', a: 'Q = 0.0001 × 200 = 0.02 C = 20 mC' },
+          { q: 'ACTIVITY: A 50 μF capacitor in series with 1200 Ω is connected to 100 V dc. What is the voltage after 1 TC?', a: 'T = R×C = 1200 × 0.00005 = 0.06 s. After 1 TC: V = 100 × 0.632 = 63.2 V' }
+        ]
+      },
+      {
+        type: 'protip',
+        title: 'Pro Tips for This Module',
+        body: '1. **Unit traps:** Always convert mH to H (÷1000) and μF to F (÷1,000,000) BEFORE plugging into formulas. The most common exam mistake is forgetting the conversion.\n\n2. **ELI the ICE man** is your best friend. Write it at the top of every exam page. E-L-I = voltage leads in inductors. I-C-E = current leads in capacitors.\n\n3. **Time constant direction:** RL uses division (T = L/R) but RC uses multiplication (T = R×C). Think: inductors fight current so dividing by R makes sense (less R = longer fight). Capacitors store charge so multiplying makes sense (more R = slower charging).\n\n4. **Direct vs Inverse:** XL has DIRECT relationships (↑f or ↑L means ↑XL). XC has INVERSE relationships (↑f or ↑C means ↓XC). The formulas show this: XL = 2πfL (multiplication = direct), XC = 1/(2πfC) (division = inverse).\n\n5. **Inductive kick protection** is not optional — it is a safety and equipment requirement. Every inductive load (relay coil, contactor, solenoid) needs a discharge path. On an exam, if asked about opening an inductive circuit, always mention the voltage spike hazard.\n\n6. **5 time constants** is the universal answer for "how long to reach steady state" in both RL and RC circuits. The 63.2% at 1T is the most commonly tested value.'
+      }
+    ]
+  },
+  {
+    id: 'm21', period: 2,
     title: 'Relays & Contactors',
-    icon: 'ðŸ”Œ',
-    subtitle: 'The Brain and Muscle of Industrial Control',
+    icon: '🔌',
+    subtitle: 'ILM 030204a — The Brain and Muscle of Industrial Control',
     color: '#10b981',
     gradient: 'linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.06))',
     border: 'rgba(16,185,129,0.3)',
-    readTime: '13 min read',
+    readTime: '35 min read',
     sections: [
       {
         type: 'hook',
-        title: 'âš¡ Small Signal, Big Power',
-        body: `Imagine you want to turn on a 100-horsepower motor from across a factory floor. You can't run a wire carrying 150 amps to a little pushbutton at a control station â€” that would melt the wiring and probably kill the operator.\n\nSo instead, you run a low-voltage, low-current control circuit to a relay or contactor. A tiny 24V signal energizes a coil, which creates a magnetic field, which pulls in a set of contacts, which closes a circuit carrying the full motor current.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. And relays and contactors are what make it possible.`
+        title: 'Small Signal, Big Power',
+        body: `Imagine you want to start a 100-horsepower motor from a control panel across a factory floor. You cannot run conductors carrying 150 amps to a tiny pushbutton at a control station — that would require enormous conductors, create a serious shock hazard, and make every button a potential arc-flash source.\n\nSo instead, you run a low-voltage, low-current control wire to a relay or contactor. A 24V signal energizes a coil, which creates a magnetic field, which pulls in a metal armature, which closes a set of contacts, which completes the circuit carrying full motor power.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. Relays handle the thinking; contactors supply the muscle. Understanding these devices is the foundation of everything else in industrial electrical work.`
+      },
+      {
+        type: 'story',
+        title: 'How a Relay Actually Works',
+        body: `Strip away the plastic shell and every relay or contactor has the same four key parts working together:\n\nThe coil is a conductor wound into many loops around an iron core. When current flows through the coil, the core becomes an electromagnet.\n\nThe core is the stationary iron or steel piece that becomes magnetized when the coil is energized. It is made from laminated sheets of steel insulated from each other — this is critical and covered later.\n\nThe armature is the moveable metal piece. When the coil is energized, the magnetized core attracts the armature and pulls it in. This mechanical movement is what changes the contact positions from normal to operated.\n\nThe armature springs return the armature to its normal (de-energized) position when the coil is de-energized. The contact springs absorb the impact of closing contacts, provide a wiping action to keep contact surfaces clean, and prevent contact bounce.`
       },
       {
         type: 'concept',
-        title: 'ðŸ”Œ Relay vs. Contactor: Same Idea, Different Scale',
-        body: `A relay and a contactor work on exactly the same principle â€” an electromagnetic coil pulls in an armature to open or close contacts. The difference is scale and purpose:\n\nâ€¢ Relays: designed for control circuits. Low current (typically < 10A), multiple sets of contacts, used to route signals and interlock circuits. Think of a relay as the logic device.\n\nâ€¢ Contactors: designed for power circuits. High current (10A to thousands of amps), fewer contact sets (usually 3 main power contacts + a few auxiliary), built for starting and stopping motors and loads. Think of a contactor as the muscle.\n\nContactors have arc suppression features that relays don't â€” when you interrupt 150A at 600V, there's a tremendous arc. Special materials, magnet blow-out coils, and arc chutes deal with this energy. A relay's contacts would weld together.`
+        title: 'Types of Relays: Plug-in, Power, Industrial, Latching, and Reed',
+        body: `Not all relays are created equal. There are several distinct families, each suited to different applications:\n\n• Plug-in relays (general-purpose): the most common type in control panels. Come in tubular (round pin) and spade pin configurations. Rated for relatively low currents (typically 5-15A). Sockets allow easy replacement without rewiring. Contacts available as NO, NC, or Form C (changeover). Common base styles: 8-pin octal (DPDT), 11-pin octal (3PDT), and 14-pin (4PDT).\n\n• Power relays: physically larger, designed for heavier loads than plug-in types but lighter than full contactors. Used for switching moderate industrial loads, heating elements, and lighting circuits.\n\n• Industrial control relays (machine tool relays, NEMA/IEC rated): designed specifically for control circuit service in industrial environments. Feature adder decks — additional contact assemblies that can be snapped on to increase the number of available contacts without changing the relay body. Rugged construction for factory floor vibration and dust.\n\n• Latching relays (impulse relays): a relay that stays in its last switched position after the coil is de-energized — it does not need continuous power to hold its contacts. Toggled between states by short current pulses. Uses a permanent magnet or mechanical latch to hold position. Two-coil latching relays have separate set and reset coils. Single-coil types toggle with each pulse. Used in lighting control, memory circuits, and applications where power consumption must be minimized.\n\n• Reed relays: consist of two thin ferromagnetic reeds sealed inside a glass tube filled with inert gas. When a coil around the tube is energized, the reeds magnetize and snap together, closing the contact. Extremely fast switching speed (under 1 ms), very long contact life (millions of operations), and hermetically sealed contacts immune to contamination. Limited to very low current (typically under 1A). Used in test equipment, telecommunications, and instrumentation.\n\n• Low-voltage lighting relays: specialized relays with coils rated below 30V AC or below 60V DC, used in lighting management and low-voltage switching systems such as those found in commercial buildings and ballast switching applications.`
       },
       {
         type: 'concept',
-        title: 'ðŸ“ Contact Types: NO, NC, and Why It Matters',
-        body: `Every relay and contactor has contacts in one of two resting states:\n\nâ€¢ Normally Open (NO): contacts are open when the coil is de-energized. When the coil energizes, they close. This is the most common type for motor starters â€” you want the motor off by default.\n\nâ€¢ Normally Closed (NC): contacts are closed when the coil is de-energized. When the coil energizes, they open. Used for safety circuits: if power fails, the NC contact stays closed (safe state) or opens to de-energize a dangerous load.\n\nCritical: "normally" refers to the state with NO power applied. A pushbutton, relay contact, or limit switch is described by its state at rest. This seems obvious but trips up electricians constantly during troubleshooting â€” a closed NC contact means the coil is NOT energized.`
+        title: 'Contactors: Power-Duty Switching',
+        body: `A contactor is an electromagnetically operated switch designed for repetitive switching of power circuit loads. While relays handle control signals, contactors handle the main load current directly.\n\n• Magnetic contactors for motor loads (AC3 duty): designed for the high inrush currents of induction motor starting and the arc suppression requirements of interrupting motor current.\n\n• Magnetic contactors for non-motor loads (AC1 duty): used for resistive and mildly inductive loads such as heaters and lighting banks. Rated differently because there is no inrush and the power factor is higher.\n\n• Non-reversing contactors: single contactor unit for loads that only need to run in one direction. One set of main contacts (typically 3 poles for three-phase) plus auxiliary contacts.\n\n• Reversing contactors: two interlocked contactor units — one for forward, one for reverse. A mechanical interlock physically prevents both contactors from closing simultaneously, which would create a phase-to-phase short circuit. Electrical interlocking via NC auxiliary contacts is also used, and best practice is to use both.`,
+        formula: 'NEMA vs IEC: IEC contactors are smaller for equivalent current ratings due to higher temperature ratings and smaller required creepage distances. IEC must be derated for North American conditions.'
       },
       {
         type: 'keypoint',
-        title: 'ðŸ”’ Seal-In Contacts: The Self-Latching Trick',
-        body: `Here's one of the most important circuits you'll build: the motor starter with seal-in contacts.\n\nProblem: you use a momentary pushbutton (springs back when released) to start a motor. But once you release the button, the control circuit opens and the motor stops. How do you keep the motor running?\n\nSolution: add an auxiliary NO contact from the contactor, wired in parallel with the start button. When you press Start, the contactor energizes. The auxiliary contact (now closed, since the coil is energized) bridges across the start button â€” creating an alternate current path that holds the coil energized even after you release Start.\n\nPress Stop (an NC pushbutton in series) and the circuit opens â€” contactor drops out, motor stops, and the now-open auxiliary contact removes the seal-in. Circuit is back to its normal, off state.\n\nThis is called a three-wire control circuit. It's also inherently safe: if power fails, the contactor drops out and won't restart automatically when power returns (unlike a two-wire circuit).`
+        title: 'Contact Form Designations',
+        body: `Contact configurations are described using standardized Form designations. You will encounter these on specification sheets and data books:\n\n• Form A (SPST-NO): Single-Pole Single-Throw, Normally Open. The most common contact type. Open at rest, closes when coil energizes.\n\n• Form B (SPST-NC): Single-Pole Single-Throw, Normally Closed. Closed at rest, opens when coil energizes. Used in safety and interlock circuits.\n\n• Form C (SPDT): Single-Pole Double-Throw, also called a changeover contact. Has a common terminal, one NO contact, and one NC contact. When coil energizes, common transfers from NC to NO.\n\n• Form X (SPST-NO double-make): a normally open contact that makes in two places simultaneously. Reduces the voltage across each make point and spreads arcing over two surfaces.\n\n• Form Y (SPST-NC double-break): a normally closed contact that breaks in two places simultaneously. Used in higher-voltage applications where single-break would struggle to extinguish the arc.`,
+        formula: 'Form A = SPST-NO | Form B = SPST-NC | Form C = SPDT (changeover) | Form X = double-make NO | Form Y = double-break NC'
       },
       {
-        type: 'real-world',
-        title: 'ðŸ”€ Interlock Circuits: Preventing Disasters',
-        body: `Interlocking is the technique of using contacts to prevent dangerous simultaneous operations. The classic example is a reversing motor starter:\n\nA forward contactor (F) and reverse contactor (R) cannot EVER be energized at the same time â€” doing so would connect two phases together and short the power supply. So you wire it so each contactor's NC auxiliary contact is in series with the coil of the other.\n\nThis means: if F is energized (its NC contact is now open), the circuit path to R's coil is broken â€” you physically cannot energize R while F is on. This is electrical interlock.\n\nFor extra safety, add mechanical interlock â€” a physical lever that prevents both contactors from pulling in simultaneously. Belt-and-suspenders approach.\n\nAs an apprentice, you'll be asked to wire these interlocks. Get them wrong and you risk a phase-to-phase fault, a very unpleasant explosion, and a failed inspection.`
+        type: 'keypoint',
+        title: 'Multi-Pole Contact Configurations',
+        body: `Relays and contactors come in various pole configurations. The number of poles tells you how many independent circuits the device can switch simultaneously:\n\n• SPST (Single-Pole Single-Throw): switches one circuit on or off. One moving contact, one stationary contact. The simplest configuration.\n\n• SPDT (Single-Pole Double-Throw): one common terminal switches between two circuits (Form C). The moving contact transfers from one stationary contact to the other.\n\n• DPDT (Double-Pole Double-Throw): two independent Form C contact sets operated by the same coil. Switches two separate circuits simultaneously, each with changeover capability. Very common in general-purpose plug-in relays (8-pin octal base).\n\n• 3PDT (Triple-Pole Double-Throw): three independent Form C contact sets. Available on 11-pin octal base relays. Provides three changeover contacts from a single coil.\n\n• 4PDT (Four-Pole Double-Throw): four independent Form C contact sets. Available on 14-pin relay bases. Provides maximum switching flexibility from a single relay.\n\nKey exam fact: each pole is an independent switching path. Adding poles does NOT increase current capacity — it adds more circuits. A DPDT relay rated at 10A means each pole can carry 10A independently, not 20A total across both poles. Power contactors for three-phase motors are always 3-pole (one pole per phase).`,
+        formula: 'SPST = 1 circuit | SPDT = 1 circuit, 2 positions | DPDT = 2 circuits | 3PDT = 3 circuits | 4PDT = 4 circuits\n8-pin octal = DPDT | 11-pin octal = 3PDT | 14-pin = 4PDT'
       },
       {
         type: 'concept',
-        title: 'ðŸŒ¡ï¸ Overload Relays: Protecting the Motor',
-        body: `Every motor starter includes an overload relay (OL relay) to protect the motor from overheating. The overload relay monitors current and trips if the current exceeds a threshold for a sustained period.\n\nTwo main types:\n\nâ€¢ Thermal overload: a bimetallic strip or eutectic alloy that deforms as it heats up (proportional to IÂ² Ã— t). Heats up like the motor does. Trips after a time delay proportional to the overcurrent â€” brief spikes don't trip it, but sustained overloads do.\n\nâ€¢ Electronic overload: measures actual current through the motor, calculates thermal model mathematically, trips more accurately and consistently than thermal types. Can also provide phase loss protection and trip history.\n\nThe OL relay's contacts are wired in series with the contactor coil circuit. When the OL trips, it opens its NC contact, which de-energizes the contactor coil, which opens the power contacts, which stops the motor. The motor cannot restart until the OL is manually reset.`,
-        formula: 'Overload relay setting range: typically 0.8 Ã— to 1.25 Ã— motor FLA\nCEC requires OL protection for motors: set at no more than 125% of FLA for motors with SF â‰¥ 1.15 and temperature rise â‰¤ 40Â°C'
+        title: 'Nameplate Information and Terminal Numbering (IEC/NEMA)',
+        body: `Every relay and contactor has a nameplate or data label that contains the essential ratings. You must be able to read these before installation:\n\n• Coil voltage rating: the voltage at which the coil is designed to operate (e.g., 120V AC, 24V DC, 240V AC). Operating outside this range causes premature failure.\n\n• Contact voltage rating: the maximum voltage the contacts are rated to switch. Must equal or exceed the circuit voltage.\n\n• Continuous current rating: the maximum current the contacts can carry continuously without overheating. Expressed in amperes.\n\n• Horsepower rating: for motor contactors, the maximum horsepower load at a specified voltage (e.g., 10 HP at 208V, 15 HP at 480V).\n\n• NEMA pilot duty rating: the current available for control circuits from the contacts, expressed in VA at a specific power factor.\n\nTerminal numbering: coil terminals are typically labeled A1 and A2. Main power contacts are labeled 1/2 (L1/T1), 3/4 (L2/T2), 5/6 (L3/T3). Auxiliary contacts are labeled 13/14 (NO), 21/22 (NC), etc. IEC and NEMA may use different schemes — always consult the device wiring diagram.\n\nIEC auxiliary contact numbering system: the first digit indicates the contact sequence number (1st, 2nd, 3rd contact on the device). The second digit indicates function: 1/2 = NC contact, 3/4 = NO contact, 5/6 = NC with special function, 7/8 = NO with special function. Example: contact 13/14 means the first NO auxiliary contact. Contact 21/22 means the second NC auxiliary contact. Contact 43/44 means the fourth NO auxiliary contact.`
+      },
+      {
+        type: 'concept',
+        title: 'Arc Chutes and Blow-Out Coils',
+        body: `When contacts open under load, an electric arc forms across the gap. In high-current devices like contactors, this arc must be extinguished quickly or it will destroy the contacts and housing. Two main technologies are used:\n\nArc chutes (deion chambers): a stack of steel or ceramic plates mounted around the contact area. When an arc forms, the magnetic field of the arc current drives the arc upward into the arc chute. The plates split the arc into many smaller arcs in series. Each plate acts as a heat sink, cooling the arc plasma. The total voltage required to sustain many small arcs exceeds the supply voltage, and the arc extinguishes. Arc chutes are standard on NEMA-size contactors and are removable for inspection.\n\nBlow-out coils (magnetic blow-out): a coil wired in series with the main contacts creates a magnetic field perpendicular to the arc. This field forces the arc sideways (by the motor effect — current-carrying conductor in a magnetic field experiences a force) into the arc chute, stretching and cooling it. Blow-out coils are especially important on DC contactors where there is no natural current zero-crossing to help extinguish the arc. AC arcs naturally extinguish at each current zero (120 times per second at 60 Hz), making arc suppression easier on AC devices.\n\nKey exam fact: DC arcs are much harder to extinguish than AC arcs because DC current never passes through zero. DC contactors require more aggressive arc suppression (larger arc chutes, blow-out coils) and are derated compared to their AC ratings.`
+      },
+      {
+        type: 'concept',
+        title: 'Laminations and Shading Coils',
+        body: `Two features of AC contactors and relays exist specifically to deal with problems caused by alternating current:\n\nLaminations: The iron core and armature are not solid blocks of steel. They are built from many thin sheets (laminations) of silicon steel, each sheet insulated from its neighbors by an oxide coating or varnish. This is necessary because a magnetic field changing at 60 Hz would induce eddy currents in a solid iron core — circulating currents that produce heat and reduce efficiency. Laminated construction confines eddy currents to tiny loops within each thin sheet, dramatically reducing losses and heating.\n\nShading coils: A copper ring (shading coil) is installed across a portion of the pole face on the core and armature. Without it, the 60 Hz alternating current would cause the magnetic flux to pass through zero 120 times per second, releasing the armature briefly each time. The result would be a 120 Hz chattering noise and rapid wear. The shading coil creates a phase-shifted flux in the shaded portion of the pole face, so when the main flux is at zero, the shaded flux is still holding the armature in. With both in place, the armature never releases during normal operation.`
+      },
+      {
+        type: 'concept',
+        title: 'Contact Materials and Their Properties',
+        body: `Contact materials are chosen based on the trade-offs between conductivity, durability, resistance to welding, and oxidation behaviour:\n\n• Silver contacts: the most common material for control relays. Silver oxide (which forms on the surface) is electrically conductive, so silver contacts are self-cleaning — the oxide does not increase contact resistance the way copper oxide does. However, silver contacts can weld together under high inrush currents.\n\n• Copper contacts: used in high-current applications. Copper has a hard surface that is more resistant to contact welding than silver. However, copper oxide is non-conductive, so copper contacts are prone to pitting and increased contact resistance if they arc frequently or are used in contaminated environments.\n\n• Cadmium contacts (silver-cadmium oxide): a versatile alloy combining silver's conductivity with cadmium's arc resistance. Does not conduct quite as well as pure silver but handles a wide variety of current and voltage applications. Widely used in industrial contactors.\n\n• Tungsten contacts: the hardest and most arc-resistant contact material. Tungsten has a very high melting point (3,422 degrees C — highest of any metal), making it extremely resistant to arc erosion and contact welding. However, tungsten has higher electrical resistance than silver, so it is used where arc resistance is more important than low contact resistance. Common in high-voltage DC applications, automotive relays, and heavy-duty switching where severe arcing is expected. Tungsten is also used as a facing material bonded to a copper or silver base to combine arc resistance with good conductivity.`
+      },
+      {
+        type: 'concept',
+        title: 'Bridge Contacts and Bifurcated Contacts',
+        body: `Standard contacts make and break in one place — a simple bridge. But there are more sophisticated designs for specific applications:\n\n• Bridge contacts: the moving contact bridges across two stationary contacts, making the circuit in two places simultaneously. This creates a double-break action, distributing arcing across two gaps and improving arc extinction.\n\n• Bifurcated bridge contacts: the contact assembly is split into two parallel paths, each with its own bridge. This gives four contact points per pole. Bifurcated contacts split the arc over multiple surfaces, dramatically reducing the energy at any single point. They are used in applications requiring long contact life with frequent switching.\n\nContact life expectancy: all contact life decreases with increasing frequency of operation and with arcing. Arcing occurs when contacts interrupt current — the collapsing magnetic field in inductive loads drives current to arc across the opening gap. Each arc erodes the contact surface slightly. Contactors designed for motor starting must handle this arc repeatedly and still meet their rated life.`
+      },
+      {
+        type: 'concept',
+        title: 'Spring Tension: Critical to Correct Operation',
+        body: `Both armature springs and contact springs have calibrated tension that must be within specification for the relay to operate correctly. This is a critical maintenance concept:\n\n• Armature springs (return springs): when the coil de-energizes, these springs push the armature back to its normal position, restoring all contacts to their normal state. If spring tension is too loose, the armature may not fully return — contacts may remain partially operated. If springs are broken or missing, contacts will not return at all.\n\n• Contact springs: these press the contacts together with sufficient force to ensure low-resistance contact, and also absorb the mechanical shock of the contacts closing (reducing bounce). If contact springs are too loose, contact resistance increases and arcing worsens on opening. If contact springs are too tight, the magnetic force of the coil may not be sufficient to overcome spring tension — the armature cannot pull in fully, causing chattering or failure to operate.\n\nSpring tension is factory-set and generally not field-adjustable. If springs are suspect, replace the relay — do not attempt to bend or adjust them.`
+      },
+      {
+        type: 'keypoint',
+        title: 'Seal-In Voltage and Drop-Out Voltage',
+        body: `Relays and contactors do not have a single "operate voltage" — they have two distinct thresholds that are important to understand:\n\nSeal-in voltage (pull-in voltage): the minimum voltage required to pull the armature fully in and hold it. For AC coils, this is approximately 85% of the rated coil voltage. Example: for a 240V coil, seal-in voltage ≈ 240 × 0.85 = 204V. Below this voltage, the armature may not fully seat.\n\nDrop-out voltage: the voltage at which the magnetic field becomes too weak to hold the armature against the spring force, and the armature releases. This is approximately 50% of rated coil voltage. Example: for a 240V coil, drop-out ≈ 120V.\n\nThe seal-in voltage is always significantly higher than the drop-out voltage. This hysteresis is by design: once sealed in, the air gap between core and armature is very small, and the magnetic reluctance is low — the coil can hold the armature with much less flux than was required to initially pull it in.`,
+        formula: 'Seal-in voltage ≈ 0.85 × rated coil voltage\nDrop-out voltage ≈ 0.50 × rated coil voltage\nExample (240V coil): Seal-in ≈ 204V, Drop-out ≈ 120V'
+      },
+      {
+        type: 'concept',
+        title: 'Inductance Changes During Operation',
+        body: `One of the most important electrical characteristics of relay and contactor coils is how their current draw changes during the pull-in cycle:\n\nBefore the armature seals: there is a large air gap between the core and the armature. A large air gap means high magnetic reluctance, which means low inductance. Low inductance means low inductive reactance (XL = 2πfL), which means the coil presents low impedance to the supply voltage. The result: the coil draws very high current — typically 4 to 10 times the sealed current.\n\nAfter the armature seals: the air gap is eliminated (the armature is in contact with the core). Very small air gap = very low reluctance = very high inductance. High inductance = high inductive reactance = high impedance. The result: coil current drops dramatically to its normal sealed value.\n\nThis is why a contactor that is held open mechanically (or chattering due to low voltage) draws enormous current and will burn out the coil quickly. The coil is only designed for sustained current at the sealed inductance — not the high pull-in current.`,
+        formula: 'Coil current: Inrush = 4-10 × I_sealed\nXL = 2πfL (inductance L increases dramatically when armature seals in)\nBurnt coil = usually held open or chattering — sustained inrush current'
+      },
+      {
+        type: 'keypoint',
+        title: 'Effects of Incorrect Coil Voltage',
+        body: `Operating a relay or contactor coil at the wrong voltage causes predictable and serious failures. Knowing these helps with troubleshooting:\n\nVoltage too high (above ~110% of rated): The coil draws excess current, heating the coil windings. The armature is pulled in violently, causing mechanical shock to the contacts and shortening their life. Contact surfaces may weld together. Over time, insulation breaks down and the coil burns out. Maximum allowable supply is typically 110% of rated coil voltage.\n\nVoltage too low (below ~85% of rated): The magnetic field is insufficient to fully seat the armature. The armature chatters — partially pulled in, spring pushes it back, partially pulled in again — at 120 times per second (twice per AC cycle). This chattering causes the coil to draw high inrush current continuously, generates heat, and erodes the contact surfaces rapidly. The coil will burn out quickly. The shading coil cannot prevent chattering caused by insufficient voltage — it only prevents the normal AC flux zero-crossings from causing release when the armature IS fully seated.`,
+        formula: 'Safe operating range: 85% to 110% of rated coil voltage\nFor 240V coil: minimum = 204V, maximum = 264V\nChattering = low voltage. Violent operation/welded contacts = high voltage'
+      },
+      {
+        type: 'real-world',
+        title: 'NEMA vs IEC Contactors: Choosing the Right Standard',
+        body: `North American electrical work uses two different standards for contactors and motor starters, and you will encounter both:\n\nNEMA (National Electrical Manufacturers Association): the traditional North American standard. NEMA contactors are categorized by size numbers (Size 0 through Size 9). They are generally oversized compared to their IEC equivalents for the same load — this gives them excellent tolerance for high ambient temperatures, severe duty cycles, and less-than-ideal maintenance conditions. Easy to apply: choose the NEMA size for the motor HP and voltage from a table.\n\nIEC (International Electrotechnical Commission): the international standard, now widely used in North America especially in industrial OEM equipment. IEC contactors are smaller and lighter than NEMA equivalents. They have higher temperature ratings and tighter manufacturing tolerances. IEC contactors must be carefully applied — using one in a higher ambient temperature or more severe duty cycle than specified will cause premature failure. Smaller creepage distances (the surface path between conductors) require careful attention to contamination.\n\nAs a rule: NEMA is more forgiving of adverse conditions. IEC requires more careful application engineering.`
+      },
+      {
+        type: 'concept',
+        title: 'NEMA Contactor Sizes: The Complete Table',
+        body: `NEMA sizes are standardized across all manufacturers. Each size corresponds to specific HP and current ratings at standard voltages:\n\n• Size 00: up to 1.5 HP at 200V, 2 HP at 230V, 2 HP at 460V, 2 HP at 575V. Max continuous current: 9A.\n• Size 0: up to 3 HP at 200V, 3 HP at 230V, 5 HP at 460V, 5 HP at 575V. Max continuous current: 18A.\n• Size 1: up to 7.5 HP at 200V, 7.5 HP at 230V, 10 HP at 460V, 10 HP at 575V. Max continuous current: 27A.\n• Size 2: up to 10 HP at 200V, 15 HP at 230V, 25 HP at 460V, 25 HP at 575V. Max continuous current: 45A.\n• Size 3: up to 25 HP at 200V, 30 HP at 230V, 50 HP at 460V, 50 HP at 575V. Max continuous current: 90A.\n• Size 4: up to 40 HP at 200V, 50 HP at 230V, 100 HP at 460V, 100 HP at 575V. Max continuous current: 135A.\n• Size 5: up to 75 HP at 200V, 100 HP at 230V, 200 HP at 460V, 200 HP at 575V. Max continuous current: 270A.\n• Size 6: up to 150 HP at 200V, 200 HP at 230V, 400 HP at 460V, 400 HP at 575V. Max continuous current: 540A.\n• Size 7: up to 300 HP at 200V, 400 HP at 230V, 600 HP at 460V, 600 HP at 575V. Max continuous current: 810A.\n• Size 8: up to 450 HP at 200V, 500 HP at 230V, 900 HP at 460V, 900 HP at 575V. Max continuous current: 1215A.\n• Size 9: up to 800 HP at 200V, 750 HP at 230V, 1600 HP at 460V, 1600 HP at 575V. Max continuous current: 2250A.\n\nAs voltage increases, the same NEMA size handles a larger HP motor because current decreases with increasing voltage for the same power.`,
+        formula: 'Size 00=9A | Size 0=18A | Size 1=27A | Size 2=45A | Size 3=90A | Size 4=135A | Size 5=270A | Size 6=540A | Size 7=810A | Size 8=1215A | Size 9=2250A'
+      },
+      {
+        type: 'concept',
+        title: 'Contactor Construction: E-Frame and U-Frame Cores',
+        body: `The magnetic core of a contactor is built in specific shapes that determine how the armature moves and how the magnetic circuit performs:\n\nE-frame (clapper-type) construction: the core is shaped like the letter E when viewed from the side. The coil sits on the center leg of the E. The armature is hinged at one end and swings closed like a clapper against the pole faces of the E-core. E-frame contactors are the most common design for NEMA sizes 00 through 4. The hinge action provides a wiping motion on the contacts that helps keep them clean. Compact design, reliable, and cost-effective for moderate current ratings.\n\nU-frame (bell-crank or vertical-action) construction: the core is shaped like the letter U. The coil sits inside the U. The armature is pulled straight down (or up) into the U-core, and this linear motion is transferred to the contacts through a mechanical linkage. U-frame construction is used for larger contactors (NEMA sizes 5 through 9) because the straight-pull action provides greater magnetic force for heavier contact assemblies. The vertical motion allows for stronger contact pressure at higher current ratings.\n\nDC contactor cores: unlike AC contactors, DC contactor cores do NOT need laminations because the magnetic field is constant (not alternating). DC cores can be solid iron, which is simpler and provides maximum magnetic force. However, solid cores cause the armature to stick momentarily when the coil is de-energized (residual magnetism). A non-magnetic shim or air gap is used to prevent sticking.`
+      },
+      {
+        type: 'concept',
+        title: 'Motor Starters: Contactor Plus Overload Relay',
+        body: `A motor starter is not a single device — it is a contactor combined with an overload relay. Understanding this distinction is critical:\n\nThe contactor provides the switching function — it connects and disconnects the motor from the power supply. It handles the inrush current of starting and the interruption of running current. The contactor alone provides NO overload protection.\n\nThe overload relay provides motor protection — it monitors the current flowing to the motor and trips (opens a set of contacts in the control circuit) if current exceeds a preset value for a specified time. Overload relays allow brief overcurrents (like motor starting inrush) but trip on sustained overcurrents that would overheat the motor windings.\n\nTypes of overload relays:\n- Bimetallic (thermal): two dissimilar metals bonded together bend when heated by motor current. When bending reaches a threshold, it trips the overload contacts. Must cool down before resetting.\n- Melting alloy (solder pot or eutectic): a calibrated alloy melts at a specific temperature corresponding to overcurrent. The ratchet wheel releases and the overload trips. Very reliable and tamper-resistant.\n- Electronic: uses current transformers to sense motor current and a microprocessor to calculate thermal capacity. Faster response, adjustable trip class, and can provide single-phase protection.\n\nTrip classes: Class 10 trips within 10 seconds at 6x FLA. Class 20 trips within 20 seconds. Class 30 trips within 30 seconds. Class 10 is standard for most motors. Class 20 or 30 is used for high-inertia loads that need longer starting time.\n\nA combination motor starter adds a disconnect switch or circuit breaker ahead of the contactor, providing both overcurrent (short-circuit) protection and overload protection in a single enclosure.`,
+        formula: 'Motor Starter = Contactor + Overload Relay\nCombination Starter = Disconnect + Contactor + Overload Relay\nClass 10 = trips in 10s at 6x FLA | Class 20 = 20s | Class 30 = 30s'
+      },
+      {
+        type: 'analogy',
+        title: 'The Relay as a Remote-Controlled Switch',
+        body: `Think of a relay as exactly what it is: a remote-controlled switch. The coil is the remote control — it can be operated by a low-power signal from any distance over small control wires. The contacts are the switch — they can handle the full load current of the controlled circuit.\n\nThe crucial advantage: the control circuit and the controlled circuit are completely electrically isolated. The control circuit might be 24V DC from a PLC output card. The controlled circuit might be 600V AC driving a large motor. These two circuits never touch each other electrically — the only connection is through the magnetic field in the relay.\n\nThis isolation is also a safety feature: a person touching the 24V control wiring is not in danger from the 600V power circuit, even though their touch controls the motor. Separation of control and power is one of the fundamental principles of safe industrial design.`
       },
       {
         type: 'quiz',
-        title: 'ðŸ§  Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'What is the purpose of seal-in (holding) contacts in a motor starter?', a: 'To maintain the contactor coil circuit energized after the momentary start pushbutton is released. The NC auxiliary contact wired in parallel with the start button holds the circuit.' },
-          { q: 'What happens to an NC contact when its coil is energized?', a: 'It opens. NC = Normally Closed = closed when de-energized. Energizing the coil causes the armature to pull in, opening the NC contact.' },
-          { q: 'Why is a reversing starter interlocked?', a: 'To prevent both forward and reverse contactors from energizing simultaneously, which would cause a phase-to-phase short circuit.' }
+          { q: 'What is the purpose of laminations in a relay core and armature?', a: 'Laminations break up the iron core into thin sheets insulated from each other. This restricts eddy currents (induced circulating currents) to tiny loops within each sheet, reducing eddy current losses that would otherwise cause heat and reduce efficiency in AC devices.' },
+          { q: 'A 240V AC contactor coil has a seal-in voltage of approximately:', a: '204V (240 × 0.85 = 204V). Below this voltage the armature cannot fully seat. Drop-out is approximately 120V (240 × 0.50).' },
+          { q: 'Why does a relay coil draw much higher current before the armature seals in compared to after?', a: 'Before sealing: large air gap = high magnetic reluctance = low inductance = low XL = low impedance = high current. After sealing: air gap eliminated = low reluctance = high inductance = high XL = high impedance = low current. Inrush is typically 4-10× sealed current.' },
+          { q: 'A Form C contact has three terminals. Name them and describe the contact action when the coil energizes.', a: 'Common (C), Normally Open (NO), and Normally Closed (NC). With coil de-energized: Common is connected to NC. When coil energizes: armature pulls in, Common transfers to NO (NC opens simultaneously). This is a changeover or SPDT action.' },
+          { q: 'What is the difference between electrical interlock and mechanical interlock on a reversing contactor?', a: 'Electrical interlock: NC auxiliary contact of each contactor is wired in series with the coil circuit of the other — if one is energized, its NC contact opens to break the other\'s coil circuit. Mechanical interlock: a physical linkage prevents both contactor armatures from seating simultaneously. Best practice uses both for redundant protection against phase-to-phase shorts.' },
+          { q: 'What NEMA size contactor is needed for a 50 HP motor at 460V?', a: 'NEMA Size 3. Size 3 is rated for up to 50 HP at 460V with a maximum continuous current of 90A.' },
+          { q: 'What is the purpose of an arc chute on a contactor?', a: 'An arc chute (deion chamber) is a stack of steel or ceramic plates that splits the arc into many smaller arcs in series when contacts open under load. Each plate cools the arc plasma and the total voltage needed to sustain many small arcs exceeds the supply voltage, extinguishing the arc quickly and protecting the contacts.' },
+          { q: 'What makes a motor starter different from a contactor?', a: 'A motor starter = contactor + overload relay. The contactor provides switching; the overload relay provides motor protection against sustained overcurrent. A contactor alone has NO overload protection.' },
+          { q: 'How does a latching relay differ from a standard relay?', a: 'A latching relay stays in its last switched position after the coil is de-energized — it does not require continuous power to hold its contacts. It uses a permanent magnet or mechanical latch to hold position. It is toggled by short current pulses rather than continuous energization.' },
+          { q: 'What is the difference between E-frame and U-frame contactor construction?', a: 'E-frame (clapper-type): core shaped like an E, armature hinges and swings closed. Used for smaller contactors (NEMA sizes 00-4). U-frame: core shaped like a U, armature pulls straight in with greater force. Used for larger contactors (NEMA sizes 5-9) that need stronger contact pressure.' },
+          { q: 'Why are DC arcs harder to extinguish than AC arcs?', a: 'AC current naturally passes through zero 120 times per second (at 60 Hz), giving the arc a chance to extinguish at each zero-crossing. DC current never passes through zero, so the arc must be forcibly stretched and cooled using arc chutes and blow-out coils.' },
+          { q: 'An IEC auxiliary contact is labeled 21/22. What does this mean?', a: 'The first digit (2) is the contact sequence number (second contact on the device). The second digit indicates function: 1/2 = NC contact. So 21/22 is the second NC auxiliary contact.' }
         ]
       },
       {
         type: 'protip',
-        title: 'ðŸ›  Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'When troubleshooting a contactor that chatters or "machine-guns" â€” check coil voltage first. Low voltage (below ~85% of rated) means the coil can\'t fully pull in the armature. The armature drops out, coil voltage rises, pulls back in, repeat. Also check for a shorted shading ring (in AC contactors).',
-          'Always check the "normal" state of contacts before a job: an NC contact with the system off should have continuity. If it doesn\'t, the coil is either still energized, or the contact is damaged.',
-          'Three-wire vs. two-wire control: three-wire (momentary pushbutton with seal-in) is safety preferred â€” loss of power means motor won\'t auto-restart. Two-wire (maintained contact) will restart automatically when power returns. Use two-wire only where that\'s the intended behavior and is safe.'
+          'A chattering or buzzing contactor always has one of two causes: coil voltage too low (below ~85% rated) or a broken shading coil. Check supply voltage at the coil terminals first. If voltage is correct, inspect the shading ring — it is a copper ring embedded in the pole face of the core or armature. A broken shading ring causes 120 Hz chatter even at correct voltage.',
+          'When you replace a relay or contactor, always check the coil voltage rating on the new device nameplate before installing it. Installing a 120V coil in a 240V circuit will destroy it instantly. Installing a 240V coil in a 120V circuit means it will never pull in.',
+          'IEC-style contactors used in North American installations must be evaluated for duty cycle and ambient temperature. An IEC contactor rated for a 10 HP motor at 40°C must be derated if the panel ambient exceeds that temperature. NEMA contactors are much more tolerant of adverse conditions.',
+          'The adder deck system on industrial control relays is extremely useful: you can add normally open or normally closed contact blocks to a relay without replacing the coil assembly. This saves cost when adding interlocks to an existing installation.',
+          'Never file or sand relay contacts. Filing removes the thin layer of contact material (silver, silver-cadmium oxide) bonded to the contact base, exposing the inferior base metal underneath. If contacts are pitted or burned, replace the contact assembly or the entire relay.',
+          'When sizing a NEMA contactor, always size for the motor HP and voltage — not just the current. NEMA size tables account for inrush current and duty cycle that a simple current comparison would miss. A Size 1 at 27A continuous is not equivalent to any 27A-rated switch.',
+          'Arc chutes must be inspected and replaced if the ceramic plates are cracked, broken, or heavily carbon-tracked. A damaged arc chute cannot properly extinguish arcs, leading to contact welding and potential fire.',
+          'Silver contacts are self-cleaning because silver oxide is conductive. Copper contacts are NOT — copper oxide is an insulator. This is why copper contacts in dirty or humid environments develop high contact resistance and must be inspected more frequently.'
         ]
       },
       {
         type: 'objectives',
         title: 'Module 21 Objectives',
         objectives: [
-          'Describe the operating principle of an electromagnetic relay, identifying the coil, armature, and contact assembly.',
-          'Distinguish between a relay and a contactor based on current ratings, contact types, and intended applications.',
-          'Define Normally Open (NO) and Normally Closed (NC) contacts and identify their state when the coil is de-energized ("normal" condition).',
-          'Identify the standard contact configurations: Form A (NO only), Form B (NC only), and Form C (changeover: NO + NC).',
-          'Describe the purpose of seal-in (holding) contacts and draw a three-wire control circuit using seal-in contacts for a motor starter.',
-          'Explain the safety advantage of three-wire control (momentary pushbutton with seal-in) versus two-wire control (maintained contact) for motor circuits.',
-          'Describe the purpose of electrical interlock circuits and explain how NC auxiliary contacts are used to prevent simultaneous energization of forward and reverse contactors.',
-          'Describe the purpose of mechanical interlocks and explain why both electrical and mechanical interlocks are used together.',
-          'Draw and explain the operation of a reversing motor starter control circuit including both start/stop control and proper interlock.',
-          'Describe the construction and operation of a thermal overload relay, identifying the bimetallic element and its response to sustained overcurrent.',
-          'Describe the construction and operation of an electronic overload relay and explain its advantages over the thermal type.',
-          'Explain how to set an overload relay based on motor full-load amperes (FLA) and identify the consequences of setting it too high or too low.',
-          'Describe the role of auxiliary contacts in relaying status information, interlocking, and control circuit functions.',
-          'Identify the key nameplate specifications of a contactor: coil voltage, contact ampere rating (AC3 or AC4 duty), and auxiliary contact count.',
-          'Troubleshoot a basic motor control circuit using knowledge of normal contact states, coil energization, and seal-in operation.'
+          'Describe the operating principle of an electromagnetic relay, identifying the coil, core, armature, armature springs, and contact springs.',
+          'Explain the purpose of laminations in relay and contactor cores and armatures, and describe how they reduce eddy current losses.',
+          'Explain the purpose of the shading coil in an AC relay or contactor and describe what would happen without it.',
+          'Identify and describe the six main relay types: plug-in (general-purpose), power, industrial control (with adder decks), latching (impulse), reed, and low-voltage lighting relays.',
+          'Distinguish between a relay and a contactor based on current ratings, arc suppression, and intended applications.',
+          'Define and compare NEMA and IEC contactor ratings, identifying the key differences in sizing philosophy, temperature rating, and creepage distance.',
+          'Identify non-reversing and reversing contactor configurations and explain why reversing contactors require both mechanical and electrical interlocking.',
+          'Define contact form designations: Form A (SPST-NO), Form B (SPST-NC), Form C (SPDT), Form X (double-make NO), Form Y (double-break NC).',
+          'Describe the properties of silver, copper, silver-cadmium oxide, and tungsten contact materials and identify their relative strengths and weaknesses.',
+          'Describe bridge contacts and bifurcated bridge contacts and explain how they improve contact life.',
+          'Read relay and contactor nameplate information including coil voltage, contact voltage rating, continuous current rating, HP rating, and NEMA pilot duty rating.',
+          'Identify standard terminal numbering for contactor coils (A1/A2) and main contacts (1/2, 3/4, 5/6) and auxiliary contacts (13/14, 21/22).',
+          'Define seal-in voltage and drop-out voltage and calculate each for a given coil voltage rating.',
+          'Explain the inductance change that occurs when the armature seals, and describe why inrush current is 4-10× the sealed current.',
+          'Describe the effects of operating a coil above 110% and below 85% of its rated voltage.',
+          'Describe the purpose of seal-in (holding) contacts and explain the three-wire control circuit operation.',
+          'Identify the safety advantage of three-wire control (momentary start with seal-in) versus two-wire control (maintained contact).',
+          'Identify multi-pole contact configurations: SPST, SPDT, DPDT, 3PDT, 4PDT, and their corresponding relay pin bases (8-pin, 11-pin, 14-pin).',
+          'Describe the function of arc chutes and blow-out coils, and explain why DC arcs are harder to extinguish than AC arcs.',
+          'List NEMA contactor sizes 00 through 9 and associate each with its continuous current rating.',
+          'Compare E-frame (clapper) and U-frame (vertical-action) contactor construction and identify which NEMA sizes use each type.',
+          'Define a motor starter as contactor plus overload relay and identify the three types of overload relays (bimetallic, melting alloy, electronic).',
+          'Explain trip classes (Class 10, 20, 30) for overload relays and when each is used.',
+          'Describe the IEC auxiliary contact numbering system and interpret contact labels such as 13/14 and 21/22.',
+          'Describe latching relay operation and identify applications where latching relays are preferred over standard relays.',
+          'Describe reed relay construction, advantages (speed, contact life, sealed contacts), and current limitations.'
         ],
         questions: [
-          { q: 'A relay has 4 contacts: 2 NO and 2 NC. When the coil is energized, what is the state of each contact?', a: 'When the coil energizes: the 2 NO contacts CLOSE, and the 2 NC contacts OPEN. "Normal" refers to the state with no coil power applied.' },
-          { q: 'Why does a reversing motor starter require interlocking between the forward and reverse contactors?', a: 'If both F and R contactors energized simultaneously, they would connect two AC phases together, creating a phase-to-phase short circuit â€” an extremely high fault current that would destroy the contactors and pose a severe safety hazard. Interlocks (electrical and mechanical) prevent this.' },
-          { q: 'A motor\'s FLA is 15A. The overload relay has an adjustment range of 10-18A. Where should it be set?', a: 'Per CEC, OL relays are typically set at 100-125% of FLA for standard motors. For 15A FLA, set to 15-18.75A â€” so the upper end of the range (18A) if the motor has a 1.15 service factor, or closer to 15A for a standard motor. Must not exceed 125% of FLA for motors with 40Â°C rise and SF â‰¥ 1.15.' },
-          { q: 'What is the difference between three-wire and two-wire motor control, and which is preferred for personnel safety?', a: 'Three-wire: uses momentary pushbuttons with seal-in contact â€” motor stops if power is lost and must be manually restarted. Two-wire: uses a maintained contact â€” motor restarts automatically when power returns. Three-wire is preferred for safety: automatic restart after an unexpected power loss can injure personnel near equipment.' },
-          { q: 'A contactor chatters repeatedly (buzzing sound while operating). List two possible causes.', a: '1) Coil voltage too low (below ~85% rated) â€” the magnetic field is too weak to fully seat the armature, so it drops in and out at twice the line frequency. 2) Broken or missing shading ring â€” the shading ring maintains flux during AC zero-crossings; without it, the armature releases 120 times per second.' }
+          { q: 'A relay coil is rated 120V AC. Calculate the approximate seal-in voltage and drop-out voltage.', a: 'Seal-in ≈ 120 × 0.85 = 102V. Drop-out ≈ 120 × 0.50 = 60V.' },
+          { q: 'Why does a contactor coil burn out when the armature is held open (cannot seat)?', a: 'With the armature open, the large air gap keeps inductance very low. Low inductance = low XL = low impedance = very high coil current (4-10× normal sealed current). The coil is rated only for the much lower sealed current. Sustained inrush current overheats and destroys the coil insulation.' },
+          { q: 'A reversing motor starter is wired with only electrical interlock (no mechanical). An apprentice energizes both forward and reverse coils simultaneously. What happens?', a: 'Both sets of main contacts close simultaneously. This connects two different AC phases directly together through the motor — a phase-to-phase bolted fault. Extremely high fault current flows. The result is destruction of the contactors, potential arc blast, blown fuses or tripped breaker, and possible personnel injury. Both electrical AND mechanical interlocks are required as a redundant safety measure.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will describe the function of relays and contactors and demonstrate understanding of their application in industrial motor control circuits.',
+        outcome: 'The student will describe the construction, operating principles, ratings, and application of relays and contactors in industrial motor control, including coil voltage effects, contact materials, and interlocking requirements.',
         questions: [
-          { q: 'You are asked to wire a motor starter with two start/stop stations (one local, one remote), interlocked against a second motor so only one can run at a time. Describe the wiring approach for the interlocks and the multiple stations.', a: 'Multiple stops: wire both STOP buttons (NC) in series with each other and in the coil circuit â€” any one can shut down the motor. Multiple starts: wire both START buttons (NO) in parallel â€” any one can start the motor. Seal-in: wire an auxiliary NO contact from this contactor in parallel with the START buttons. Interlock with second motor: wire an NC auxiliary contact from the second motor\'s contactor in series with this motor\'s coil circuit â€” if the second motor runs, its NC contact opens and prevents this motor from starting.' },
-          { q: 'A technician replaces a thermal overload relay\'s heaters with the next larger size because the relay was nuisance-tripping. Explain what is wrong with this approach and what the correct solution is.', a: 'Installing larger heaters raises the overload trip threshold above the motor\'s actual thermal limit. The motor can now draw sustained overcurrent without the OL tripping â€” it will overheat, degrade insulation, and eventually fail. The correct approach is to measure the actual current and compare to FLA: if the motor is drawing normal current and the OL trips, the heaters are incorrect (too small) for the motor. Replace with heaters matched to the motor\'s FLA. If the motor is drawing high current, find the cause â€” mechanical overload, low voltage, phase loss, or a failing motor.' }
+          { q: 'During commissioning of a new motor starter, the electrician observes that the contactor makes a buzzing noise and the motor barely turns. Diagnose the likely cause and describe the correct repair procedure.', a: 'The buzzing indicates the contactor armature is chattering — it cannot fully seat. Most likely cause: supply voltage to the coil is below the seal-in threshold (85% of rated). Measure voltage at coil terminals A1-A2 while the start button is held. Compare to nameplate rating. If voltage is correct but chattering continues, inspect the shading rings on the core pole faces — a broken shading ring causes chattering even at correct voltage. Do not operate the contactor in this condition as the sustained inrush current will burn out the coil.' },
+          { q: 'Explain why a contactor\'s coil draws 6 times its normal current at the moment of initial energization but settles to 1/6 of that value once the armature seats. What is the practical consequence for coil selection?', a: 'At energization the armature is fully separated from the core. The large air gap creates high magnetic reluctance, resulting in very low inductance. Low inductance means low inductive reactance (XL = 2πfL), so the coil presents low impedance and draws high current. Once the armature seats, the air gap disappears, reluctance drops dramatically, inductance rises correspondingly, XL increases, impedance rises, and current falls to the low sealed value. Practical consequence: the coil must be rated for intermittent inrush without overheating, but the sustained sealed current must not exceed the coil\'s continuous current rating. A coil that chatters draws the high inrush current continuously and will fail.' }
         ]
       }
     ]
   },
   {
-    id: 'm22',
+    id: 'm22', period: 2,
     title: 'Timers & Smart Relays',
-    icon: 'â±',
-    subtitle: 'Time-Based Control and Programmable Logic',
+    icon: '⏱',
+    subtitle: 'ILM 030204d — Time-Based Control and Programmable Logic',
     color: '#f97316',
-    gradient: 'linear-gradient(135deg,rgba(249,115,22,0.12),rgba(245,158,11,0.06))',
+    gradient: 'linear-gradient(135deg,rgba(249,115,22,0.12),rgba(234,88,12,0.06))',
     border: 'rgba(249,115,22,0.3)',
-    readTime: '12 min read',
+    readTime: '22 min read',
     sections: [
       {
         type: 'hook',
-        title: 'â° When "Now" Isn\'t Good Enough',
-        body: `Not everything in a control system should happen instantaneously. A conveyor needs to run for 5 seconds before a downstream process starts. A blower should keep running for 2 minutes after an oven shuts off to prevent heat damage. A pump needs a rest period between starts to avoid overheating.\n\nTimers solve all of these problems. They add the dimension of time to control logic, turning simple on/off decisions into time-sequenced operations. And smart relays take this further â€” they're essentially tiny programmable computers that can replace dozens of timers, counters, and relays with a single compact device.`
+        title: 'When Now Is Not Good Enough',
+        body: `A lubrication pump must run for three minutes before the main spindle drive starts. A cooling fan must keep running for two minutes after the oven shuts off, or the heating elements will overheat. An alarm horn needs to beep for five seconds, silence, then beep again — indefinitely — until acknowledged.\n\nNone of these functions can be done with a simple relay. They require time. And that is exactly what timing relays and smart relays provide: the ability to add the dimension of time to control logic.\n\nFrom the simplest spring-wound mechanical timer to fully programmable smart relays that replace an entire panel of discrete devices, timing control is one of the most fundamental tools in industrial electrical work.`
       },
       {
         type: 'concept',
-        title: 'ðŸ“Š ON-Delay Timer (TON): Wait, Then Act',
-        body: `The most common timer type. An ON-delay timer waits a preset time after receiving an input signal before energizing its output.\n\nSequence:\n1. Input signal arrives (coil energizes)\n2. Timing begins\n3. After preset time, output contact closes (timed contact)\n4. If input is removed before timing completes, timer resets â€” nothing happens\n5. When input is removed after timing, output immediately opens\n\nReal world uses: motor startup delay (allow pressures/temperatures to stabilize before starting), conveyor sequencing (upstream conveyor starts, downstream conveyor delays 3 seconds), HVAC damper control (open damper before starting fan).\n\nInstantaneous contacts: some timers also have an "instantaneous" contact that closes the moment the coil energizes (before timing starts) â€” useful for starting a different operation while timing proceeds.`,
-        formula: 'ON-delay: Input ON â†’ timer counts â†’ output ON after preset time\nInput OFF (anytime) â†’ timer resets â†’ output OFF immediately'
+        title: 'Timer Types: From Mechanical to Electronic',
+        body: `Timing mechanisms have evolved through several generations, each with different accuracy and application suitability. The three basic types of timing devices are spring-wound interval timers, mechanical/electronic time switches, and timing relays.\n\n• Spring-wound interval timers: a clockwork mechanism wound by turning a knob or dial. Commonly available in a wall-switch style that replaces a standard toggle switch in a single-gang box. The user turns the dial to set a timed-on interval (typically 5 to 60 minutes), and the timer runs down to zero, then switches off. Timing accuracy is limited — acceptable for applications where exact timing is not critical. Common applications include bathroom exhaust fans (CEC often requires timed ventilation), sauna and steam room heaters (safety shutoff after a set period), and heat lamps. Not suitable for precision control or process sequences.\n\n• Mechanical and electronic time switches: real-clock-based devices that switch outputs on and off at preset times of day or week. Mechanical versions use a small synchronous clock motor that rotates a dial once every 24 hours (or once every 7 days for weekly models). Adjustable cams or trippers are positioned around the dial at the desired on and off times — pushing a cam outward sets an on-time, pulling it inward sets an off-time. Electronic time switches replace the clock motor and cams with a microprocessor and digital display, allowing more switching events per day and battery backup to maintain time during power outages. Used for daily/weekly scheduling such as lighting control, HVAC scheduling, sign lighting, and irrigation systems. Not suitable for triggering control sequences based on process events.\n\n• Timing relays: the precision tool for control sequences. They respond to a control input with a precisely adjustable time delay. Available with pneumatic, fluid dashpot, or electronic timing mechanisms. Used wherever accurate, repeatable time delays are required in a control circuit.`
       },
       {
         type: 'concept',
-        title: 'â² OFF-Delay Timer (TOF): Keeps Running After Stop',
-        body: `An OFF-delay timer does the opposite: it keeps its output energized for a preset time after the input signal is REMOVED.\n\nSequence:\n1. Input signal arrives â†’ output immediately energizes\n2. Input signal removed â†’ timing begins\n3. After preset time, output de-energizes\n\nReal world uses: cooling fan delay (keep fan running after motor stops to remove heat), exhaust hood (keep running after cooking stops), parking garage lighting (lights stay on for 5 minutes after you leave the area), anti-short-cycle protection on compressors.`,
-        formula: 'OFF-delay: Input ON â†’ output immediately ON\nInput OFF â†’ timer counts â†’ output OFF after preset time'
-      },
-      {
-        type: 'concept',
-        title: 'ðŸ” Recycling (Repeat Cycle) Timers: Pulse Generators',
-        body: `A recycling timer automatically and repeatedly cycles its output on and off at adjustable intervals. Think of it as a built-in pulse generator.\n\nTwo adjustable settings:\nâ€¢ ON time: how long output stays energized\nâ€¢ OFF time: how long output stays de-energized\n\nReal world uses: intermittent windshield wiper control, irrigation systems (water for 2 min, pause 30 min), alarm horns (beep-pause-beep), automatic lubrication systems (pump for 10 seconds every 15 minutes).`
+        title: 'Timing Control Methods: How the Delay Is Generated',
+        body: `Inside a timing relay, the delay is produced by one of three mechanisms — each with different characteristics:\n\n• Pneumatic timing: a bellows or piston mechanism with an adjustable needle valve controls how fast air flows through an orifice. The slower the airflow, the longer the delay. Pneumatic timers are rugged and immune to electrical interference, but drift with temperature and are not highly precise. Adjustment range is typically limited.\n\n• Fluid dashpot (oil-dashpot): a piston moves through a chamber filled with constant-viscosity oil (silicone-based). The needle valve controls how fast oil transfers between two chambers. The use of constant-viscosity oil is critical — it maintains consistent timing across a range of temperatures, unlike ordinary oil whose viscosity changes with temperature. Similar characteristics to pneumatic — reliable but not highly precise. Less common in modern installations.\n\n• Electronic timing: uses an RC (resistor-capacitor) circuit or a digital timer chip. The RC circuit charges a capacitor through a resistor, and the timing is set by changing the resistance value. Digital electronic timers use a crystal oscillator reference and are extremely accurate and repeatable. Adjustment is easy (potentiometer or digital keypad), range is wide, and accuracy is far superior to pneumatic or dashpot types.`
       },
       {
         type: 'keypoint',
-        title: 'ðŸ’» Smart Relays: Tiny PLCs',
-        body: `A smart relay (also called a programmable logic relay or PLR) is a compact, inexpensive device that combines inputs, outputs, and programmable logic in one unit. Common brands: Siemens LOGO!, Schneider Electric Zelio, Allen-Bradley Pico.\n\nCapabilities in a package the size of a large relay:\nâ€¢ 8-24 digital inputs\nâ€¢ 4-16 digital outputs\nâ€¢ Analog inputs (some models)\nâ€¢ Built-in clock/calendar\nâ€¢ Multiple timer functions (ON, OFF, repeat cycle, single-shot)\nâ€¢ Counter functions\nâ€¢ Logic gates (AND, OR, NOT, XOR)\nâ€¢ Simple arithmetic\nâ€¢ Communication (some models)\n\nA single smart relay can replace a panel stuffed with 10-15 individual relays, timers, and counters â€” at a fraction of the cost and panel space. They're programmed either through a front panel display or via laptop with free software.`
+        title: 'TDOE: Time Delay on Energization (On-Delay)',
+        body: `TDOE (Time Delay On Energization) is also called an on-delay timer. It is the most common timer type in industrial control.\n\nOperation sequence:\n1. Control signal energizes the coil — timing begins immediately.\n2. Instant contacts (if present) change state immediately at energization.\n3. Timed contacts remain in their normal position during the timing period.\n4. After the preset time elapses, timed contacts change state (NO closes, NC opens).\n5. When the coil is de-energized, timed contacts return to normal immediately — there is no delay off.\n\nIf the coil is de-energized before the timing period completes, the timer resets and the timed contacts never change state.\n\nTypical applications: lubrication pump pre-run (pump runs 3 minutes before main machinery starts), conveyor sequencing (upstream conveyor starts, wait 5 seconds, downstream starts), HVAC damper pre-open (damper opens, wait 30 seconds, fan starts).`,
+        formula: 'On-delay: Coil ON → timing starts → after preset time, timed contacts change state\nCoil OFF (any time) → timer resets immediately → timed contacts return to normal immediately'
+      },
+      {
+        type: 'keypoint',
+        title: 'TDOD: Time Delay on De-energization (Off-Delay)',
+        body: `TDOD (Time Delay On De-energization) is also called an off-delay timer. It keeps its timed output active for a set period after the input signal is removed.\n\nOperation sequence:\n1. Control signal energizes the coil — timed contacts change state immediately (NO closes, NC opens).\n2. While the coil remains energized, timed contacts remain changed.\n3. When the coil is de-energized, timing begins.\n4. After the preset time elapses, timed contacts return to their normal state.\n\nImportant safety consideration: any circuit using a TDOD timer MUST include an emergency stop that can immediately de-energize the timed output. Because the timed contacts remain changed during the timing period after the coil drops out, the load continues to run even though the operator has removed the control signal. An emergency stop must be able to override the timer and kill the output instantly.\n\nTypical applications: motor cooling fan run-on (fan keeps running 2 minutes after motor stops), oven exhaust hood (hood stays on 3 minutes after cooking stops), anti-short-cycle timer for compressors (prevents restarting within a minimum off time).`,
+        formula: 'Off-delay: Coil ON → timed contacts change state immediately\nCoil OFF → timing starts → after preset time, timed contacts return to normal'
+      },
+      {
+        type: 'concept',
+        title: 'Interval and One-Shot Timing',
+        body: `Beyond on-delay and off-delay, there are two additional timing modes that are useful in specific applications:\n\nInterval timing: the coil energizes → timed contacts immediately change state → after the preset time, contacts return to normal (regardless of whether the coil is still energized). The contacts stay normal until the coil is de-energized and re-energized again. The key distinction from on-delay: contacts change instantly at energization rather than after a delay. Applications: furnace purge cycle (combustion blower runs for a fixed purge period before ignition is allowed — contacts change immediately to start the blower, then revert after the purge time expires), warning horn sounds for exactly 10 seconds when a door is opened.\n\nOne-shot timing: requires a start signal each time — triggered by a momentary signal applied to the start terminal (not by continuous coil energization). When the start signal is received, the coil energizes and stays energized for the preset time period. Timed contacts change state for that period, then return to normal when the coil de-energizes. A new start pulse is required to initiate each cycle — the timer does not repeat on its own. Applications: lathe oil spray (operator presses a button to spray cutting oil on the workpiece for a preset time, then it stops automatically regardless of whether the button is still held), automatic door openers (door opens for a set time then closes).`
+      },
+      {
+        type: 'concept',
+        title: 'Repeat Cycle Timing (Flicker)',
+        body: `A repeat cycle timer (also called a flicker relay or recycling timer) continuously cycles its output between the changed and normal state as long as it is energized.\n\nTwo types:\n• Symmetrical: the on-time and off-time are equal. The output is a square wave with a 50% duty cycle.\n• Non-symmetrical: the on-time and off-time are independently adjustable. This allows precise control of the ratio of on to off time.\n\nApplications:\n• Air exhaust cycles (exhaust fan runs for 5 minutes, off for 10 minutes, repeating — non-symmetrical)\n• Alarm horn cycling (beep pattern — symmetrical)\n• Automatic lubrication systems (pump for 15 seconds every 10 minutes — non-symmetrical)\n• Pilot light flashing to indicate a specific alarm or status (symmetrical)\n• Intermittent windshield wiper control\n• Irrigation zone cycling\n\nNote: for very precise pulse generation, electronic repeat-cycle timers are far more accurate than pneumatic types.`
+      },
+      {
+        type: 'concept',
+        title: 'Multi-Function Timing Relays',
+        body: `Modern electronic timing relays are available in multi-function versions that can provide several different timing modes from a single unit. A rotary mode switch on the relay body selects the timing function. Common mode switch positions are designated by letters:\n\n• A — On-delay (TDOE)\n• B — Off-delay (TDOD)\n• C — One-shot (single pulse)\n• E — Interval timing\n• G — Repeat cycle, symmetrical (equal on/off)\n• I — Repeat cycle, non-symmetrical (independent on/off adjustment)\n• K — Extended on-delay with signal memory\n• P — Repeat cycle starting with pause (off period first)\n\nFeatures of multi-function timing relays:\n• All timing modes available in one relay — selected by the mode switch position.\n• Independently adjustable on-time and off-time (for non-symmetrical repeat cycle modes).\n• Digital display showing elapsed time or preset time.\n• Wide timing range: from milliseconds to hours in a single unit.\n• Supply voltage flexibility: many models accept a wide input voltage range (24-240V AC/DC).\n\nReset terminals: many multi-function timing relays include a reset terminal. Applying a signal to the reset terminal interrupts and restarts the timing sequence at any point before it completes. This is useful when an external event must restart the timed cycle — for example, resetting a purge timer if a safety interlock trips before purge is complete.\n\nA multi-function timer reduces inventory requirements — one part number covers many different timing applications in a facility.`
+      },
+      {
+        type: 'keypoint',
+        title: 'Smart Relays: Simplified Programmable Controllers',
+        body: `A smart relay (also called a programmable logic relay or PLR) evolved from programmable logic controllers (PLCs). As PLC technology advanced, manufacturers developed simplified, lower-cost versions for smaller applications that did not need the full power and I/O capacity of a traditional PLC. The result is a compact, self-contained device that combines digital inputs, digital outputs, onboard program memory, and a real-time clock in a single DIN-rail-mounted package.\n\nPhysical characteristics:\n• 8 to 24 digital inputs\n• 4 to 16 digital or relay outputs\n• Analog inputs on some models\n• Built-in real-time clock with calendar\n• Front-panel display and navigation buttons for programming and monitoring\n• Optional computer interface for programming via laptop (free software)\n• Power supply typically 24V DC or 100-240V AC\n\nProgramming methods: function block diagrams (connect pre-built function blocks graphically) or ladder logic (standard IEC 61131-3 LD language). Most smart relays can be programmed from the front panel keypad for simple applications, or from a laptop for complex ones.\n\nA single smart relay can replace 10-15 discrete relays, timers, and counters, at a fraction of the panel space and cost. Logic changes require software changes, not rewiring.`,
+        formula: 'Smart relay advantage: reprogrammable without rewiring. Logic changes = software changes only.'
+      },
+      {
+        type: 'concept',
+        title: 'Smart Relay Functions and Applications',
+        body: `Smart relays support all standard timing functions plus advanced features not available in discrete devices:\n\nStandard functions available:\n• Standard relay (non-timed on/off)\n• TDOE (on-delay)\n• TDOD (off-delay)\n• Interval timing\n• One-shot timing\n• Repeat cycle symmetrical\n• Repeat cycle non-symmetrical\n• Real-time scheduling (daily/weekly/monthly calendar switching)\n• Totalizing timer with reset (accumulates on-time over multiple start/stop cycles — useful for maintenance scheduling based on total run-hours)\n\nTypical smart relay applications:\n• Building automation: coordinated control of lighting, ventilation, security, and energy management from a single device\n• Car wash automation: sequential start of water pump, brushes, rinse, dryer based on sensor inputs and timing\n• Commercial lighting management: schedule-based control with override inputs\n• Access control and door locking: time-based unlock with sensor confirmation\n• Small machinery automation: replace an entire relay panel for a simple machine\n• HVAC control: economizer cycles, damper sequencing, setback scheduling\n• Pumping stations: level-based starts with anti-short-cycle protection\n\nKey advantages over discrete devices: smart relays can be reprogrammed without rewiring — logic changes are software-only. Programs can be saved, backed up, and transferred to replacement units. Multiple I/O points and onboard memory eliminate the need for separate relays, timers, and counters.`
       },
       {
         type: 'real-world',
-        title: 'ðŸ­ Ladder Logic: The Language of Control',
-        body: `Industrial control programs are written in ladder logic â€” a visual programming language that looks like a schematic of relay contacts and coils laid out in rungs, like a ladder.\n\nEach rung is a logical statement:\nâ€¢ Contacts on the left side = conditions (inputs)\nâ€¢ Coils on the right side = outputs\nâ€¢ Current "flows" left to right if all contacts are satisfied\n\nA normally open contact in ladder logic = an input that must be TRUE to pass logic.\nA normally closed contact = an input that must be FALSE to pass logic.\n\nLadder logic translates directly from hardwired relay logic â€” if you understand relay control circuits, you already understand the fundamentals of ladder logic programming. This is why learning relay control is so valuable for the modern electrician: PLCs and smart relays have taken over, but they still speak the language of relays.`
+        title: 'Applying Timers: A Conveyor Sequence Example',
+        body: `A manufacturing line requires a precise startup sequence:\n\n1. When the Start button is pressed, a warning horn sounds immediately.\n2. After 5 seconds, the infeed conveyor starts.\n3. After another 3 seconds, the main processing conveyor starts.\n4. After another 3 seconds, the outfeed conveyor starts.\n5. When Stop is pressed, all conveyors stop. The cooling fan runs for 2 minutes after Stop.\n\nSolution using discrete timers:\n• T1 (on-delay, 5 sec): energized by Start. When T1 times out, starts infeed conveyor.\n• T2 (on-delay, 8 sec): energized by Start. When T2 times out, starts processing conveyor.\n• T3 (on-delay, 11 sec): energized by Start. When T3 times out, starts outfeed conveyor.\n• T4 (off-delay, 2 min): cooling fan stays on 2 minutes after Stop.\n\nSolution using a smart relay: all four timing functions replaced by four function blocks in a single smart relay. One device, no additional wiring between timers. Easy to adjust timing values without opening the panel.`
       },
       {
         type: 'quiz',
-        title: 'ðŸ§  Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'An ON-delay timer starts timing when the input turns ON. True or False: if the input turns off before timing completes, the output will energize for the remaining delay time.', a: 'FALSE. If the input is removed before the preset time expires, the timer resets and the output never energizes.' },
-          { q: 'A blower motor needs to keep running for 3 minutes after an oven shuts off. Which timer type is used?', a: 'OFF-delay timer (TOF). The blower energizes immediately when the oven runs, then stays on for 3 minutes after the oven shuts off.' },
-          { q: 'What is the key advantage of a smart relay (PLR) over hardwired relay logic?', a: 'Flexibility and space savings. A single smart relay replaces many individual relays, timers, and counters. The logic is software-defined and can be reprogrammed without rewiring.' }
+          { q: 'An on-delay timer (TDOE) has its coil energized. Its timed contacts have not yet changed state. What happens if the coil is de-energized before the timer times out?', a: 'The timer resets completely. The timed contacts never change state. The output remains in its normal position as if the coil was never energized. This is the key feature of TDOE — it requires the coil to stay energized for the full preset time before anything happens.' },
+          { q: 'A motor cooling fan must keep running for 3 minutes after the motor stops. Which timer type is used, and describe its connection?', a: 'Off-delay timer (TDOD). The timer coil is energized while the motor runs (wired in parallel with the motor contactor coil, or from the motor running auxiliary contact). When the motor stops (coil de-energizes), the off-delay timer starts timing. After 3 minutes, the timer\'s timed NO contact opens, de-energizing the fan contactor.' },
+          { q: 'What advantage does a smart relay have over a panel of discrete relays and timers for a multi-step sequence?', a: 'Reprogrammability without rewiring. If the sequence timing or logic needs to change, only the software program is changed. With discrete relays, any change requires physical rewiring. Smart relays also eliminate the space and wiring of 10-15 separate devices, improving reliability and reducing cost.' },
+          { q: 'Describe the difference between interval timing and on-delay timing.', a: 'On-delay: timed contacts change state AFTER the preset time, and remain changed as long as the coil is energized. Interval: timed contacts change state IMMEDIATELY when the coil energizes, then return to normal after the preset time (regardless of coil state). After an interval, contacts stay normal until coil is cycled.' }
         ]
       },
       {
         type: 'protip',
-        title: 'ðŸ›  Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'When troubleshooting timer circuits, separate the timing function from the contact function. First verify the coil is energizing (voltage across coil terminals). Then verify the timer is actually timing (LED or display indicator). Then check the output contacts.',
-          'ON-delay or OFF-delay? Ask yourself: "does the output come ON after a delay, or does it go OFF after a delay?" That question answers it every time.',
-          'Smart relays use the IEC61131-3 standard for ladder logic â€” the same standard as full PLCs. Time you spend learning Siemens LOGO! or Zelio programming translates directly into understanding Allen-Bradley, Siemens S7, and other industrial PLC platforms.'
+          'On-delay or off-delay? Ask yourself one question: does the output come ON after a delay, or does it go OFF after a delay? The answer is the timer type. On-delay = output comes on after waiting. Off-delay = output goes off after waiting.',
+          'When troubleshooting a timer that appears not to be timing: verify coil voltage first (measure across A1/A2 or coil terminals). Then verify the timer is actually timing — most electronic timers have an LED that flashes during timing. If the LED is not flashing, the coil is not energized. If the LED is flashing but contacts do not change, the output contacts may be failed.',
+          'Smart relay programs can be saved and transferred. Always back up the program from any smart relay before maintenance. If the device is replaced, the program can be loaded into the new unit in minutes rather than spending hours re-commissioning from scratch.',
+          'Totalizing timers in smart relays are valuable for maintenance scheduling: they accumulate total motor run-hours across many start/stop cycles and can trigger an output when service is due. This eliminates the need for separate hour meters.'
+        ]
+      },
+      {
+        type: 'quiz',
+        title: 'Self-Test and Activity Answers',
+        questions: [
+          { q: 'Name the three basic types of timing devices.', a: 'Spring-wound interval timers, mechanical/electronic time switches, and timing relays.' },
+          { q: 'What type of timer is a wall-switch style device used for bathroom fans and sauna heaters?', a: 'A spring-wound interval timer. The user turns the dial to set a timed-on interval, and the device switches off automatically when the time expires.' },
+          { q: 'How does a mechanical time switch select on and off times?', a: 'A synchronous clock motor rotates a dial once every 24 hours (or 7 days for weekly models). Adjustable cams or trippers are positioned around the dial — pushing a cam outward sets an on-time, pulling it inward sets an off-time.' },
+          { q: 'What fluid is used in a dashpot timing relay and why?', a: 'Constant-viscosity silicone-based oil. It maintains consistent timing across temperature changes, unlike ordinary oil whose viscosity varies with temperature.' },
+          { q: 'Describe the complete TDOE operation sequence.', a: 'Coil energizes — timing begins. Instant contacts (if any) change immediately. Timed contacts remain normal during timing. After preset time, timed contacts change state (NO closes, NC opens). When coil de-energizes, timed contacts return to normal immediately — no delay on de-energization.' },
+          { q: 'What happens if a TDOE coil is de-energized before the preset time expires?', a: 'The timer resets completely. Timed contacts never change state — they remain in their normal position.' },
+          { q: 'Give a typical application of a TDOE (on-delay) timer.', a: 'Lubrication pump pre-run: the lube pump must run for a preset time (e.g., 3 minutes) before the main spindle drive starts, ensuring all bearings are lubricated.' },
+          { q: 'Describe the complete TDOD operation sequence.', a: 'Coil energizes — timed contacts change state immediately (NO closes, NC opens). Contacts remain changed while coil is energized. When coil de-energizes, timing begins. After preset time, timed contacts return to normal state.' },
+          { q: 'Why must a TDOD circuit include an emergency stop?', a: 'Because after the coil de-energizes, the timed contacts remain changed during the timing period — the load continues running even though the operator removed the control signal. An emergency stop must override the timer and kill the output instantly.' },
+          { q: 'Give a typical application of a TDOD (off-delay) timer.', a: 'Motor run-on: a cooling fan continues running for a set time after the motor stops to allow adequate cool-down of the heating elements.' },
+          { q: 'How does interval timing differ from one-shot timing?', a: 'Interval timing is triggered by continuous coil energization — contacts change instantly and revert after preset time. One-shot requires a momentary start signal each time, the coil stays energized for the preset period, and a new trigger is needed for each cycle.' },
+          { q: 'Give an application of interval timing.', a: 'Furnace purge cycle: combustion blower runs for a fixed purge period before ignition is allowed.' },
+          { q: 'Give an application of one-shot timing.', a: 'Lathe oil spray: operator presses a button to spray cutting oil for a preset time, then it stops automatically regardless of whether the button is still held.' },
+          { q: 'What is the difference between symmetrical and non-symmetrical repeat cycle timers?', a: 'Symmetrical: on-time equals off-time (50% duty cycle). Non-symmetrical: on-time and off-time are independently adjustable, allowing different durations for each.' },
+          { q: 'Give an application of repeat cycle timing.', a: 'Air exhaust cycles: exhaust fan runs for 5 minutes, off for 10 minutes, repeating continuously (non-symmetrical repeat cycle).' },
+          { q: 'What do the mode switch letters A, B, C, E, G, I, K, and P represent on a multi-function timing relay?', a: 'A = On-delay (TDOE), B = Off-delay (TDOD), C = One-shot, E = Interval timing, G = Symmetrical repeat cycle, I = Non-symmetrical repeat cycle, K = Extended on-delay with signal memory, P = Repeat cycle starting with pause (off period first).' },
+          { q: 'What is the purpose of a reset terminal on a timing relay?', a: 'It allows the timing sequence to be interrupted and restarted before completion. Applying a signal to the reset terminal restarts the timer from zero — useful when an external event must restart the timed cycle.' },
+          { q: 'What device did smart relays evolve from?', a: 'Programmable logic controllers (PLCs). As PLC technology advanced, manufacturers developed simplified, lower-cost versions for smaller applications.' },
+          { q: 'Name two programming methods for smart relays.', a: 'Ladder logic (IEC 61131-3 LD language) and function block diagrams (FBD — connecting pre-built function blocks graphically). Most can also be programmed from the front panel keypad.' },
+          { q: 'List typical smart relay applications.', a: 'Building automation, car wash automation, HVAC control, commercial lighting management, access control and door locking, small machinery automation, and pumping stations.' },
+          { q: 'What timing functions are available in a smart relay?', a: 'Standard relay (non-timed on/off), TDOE, TDOD, interval, one-shot, repeat cycle (symmetrical and non-symmetrical), real-time scheduling (daily/weekly/monthly), and totalizing timer with reset.' },
+          { q: 'What is a totalizing timer and what is it used for?', a: 'A timer that accumulates total on-time across multiple start/stop cycles. Used for maintenance scheduling — triggering a service alert after a motor accumulates a set number of run-hours, eliminating the need for separate hour meters.' },
+          { q: 'What is the key advantage of smart relays over discrete relay panels?', a: 'Reprogrammability without rewiring. Logic changes require only software changes. Programs can be saved, backed up, and transferred to replacement units.' }
         ]
       },
       {
         type: 'objectives',
         title: 'Module 22 Objectives',
         objectives: [
-          'Define ON-delay (TDOE â€“ Time Delay On Energization) timer operation, describing contact behavior during timing and after the time period elapses.',
-          'Define OFF-delay (TDOD â€“ Time Delay On De-energization) timer operation, describing contact behavior and when the timing period begins.',
-          'Identify typical industrial applications for ON-delay timers: star-delta motor starting, conveyor sequencing, process heating warm-up, and alarm time delays.',
-          'Identify typical industrial applications for OFF-delay timers: motor cooling fan run-on, conveyor coast-down, oil pressure pre-lube, and alarm/fault clearance delays.',
-          'Describe the operating principle of pneumatic (dashpot) timers, identifying the bellows, needle valve, and how they produce the timing delay.',
-          'Describe the operating principle of electronic timers, explaining how RC circuits or digital clocks generate timing delays.',
-          'Identify the advantages of electronic and programmable timers over pneumatic types: greater accuracy, wider range, digital display, and easier adjustment.',
-          'Define a smart relay (programmable relay or micro-PLC) and describe its physical structure: inputs, outputs, power supply, and program memory.',
-          'Describe the basic structure of ladder logic programming, identifying rungs, contacts (NO and NC), coils, and the left and right power rails.',
-          'Explain the correspondence between hardwired relay control circuits and ladder logic diagrams.',
-          'Read basic ladder logic diagrams and predict the output state for a given set of input conditions.',
-          'Identify timer function blocks in ladder logic: TON (on-delay) and TOF (off-delay), and describe their preset time (PT) and elapsed time (ET) parameters.',
-          'Identify counter function blocks in ladder logic: CTU (count-up) and CTD (count-down), and describe their preset value (PV) and current value (CV) parameters.',
-          'Describe the IEC 61131-3 standard and identify the five programming languages it defines: LD (ladder), FBD (function block diagram), SFC, ST, and IL.'
+          'Identify three types of timer mechanisms: spring-wound, mechanical/electronic time switch, and timing relay, and describe the appropriate application for each.',
+          'Describe three timing control methods: pneumatic (air orifice), fluid dashpot (needle valve), and electronic (RC circuit or digital), and compare their relative accuracy.',
+          'Define TDOE (Time Delay on Energization) and describe the complete operation sequence of timed contacts from coil energization through de-energization.',
+          'Define TDOD (Time Delay on De-energization) and describe the complete operation sequence of timed contacts from coil energization through de-energization.',
+          'Identify typical industrial applications for on-delay timers and off-delay timers.',
+          'Describe interval timing operation: timed contacts change state immediately at energization, return to normal after preset time regardless of coil state.',
+          'Describe one-shot timing operation: triggered by a momentary start signal, contacts change for preset time then return to normal.',
+          'Describe repeat cycle (flicker) timer operation, and distinguish between symmetrical and non-symmetrical repeat cycle.',
+          'Describe multi-function timing relays and explain the advantage of having multiple timing modes in one device.',
+          'Define a smart relay (PLR) and describe its physical structure: inputs, outputs, memory, real-time clock, and programming interface.',
+          'Identify the timing functions available in a smart relay: standard relay, TDOE, TDOD, interval, one-shot, repeat cycle, real-time scheduling, totalizing timer.',
+          'Identify typical smart relay applications: car wash automation, lighting management, access control, HVAC, and small machine control.',
+          'Describe the programming methods for smart relays: front-panel keypad, function block diagram (FBD), and ladder logic (LD).',
+          'Explain the key advantage of smart relays over discrete relay panels: reprogrammability without rewiring.'
         ],
         questions: [
-          { q: 'A TON (on-delay) timer is energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TON input energizes, NO contacts remain OPEN and NC contacts remain CLOSED â€” output doesn\'t change yet. After the preset time elapses, the NO contacts CLOSE and NC contacts OPEN. When the input de-energizes, all contacts return to normal state immediately (no delay off).' },
-          { q: 'A TOF (off-delay) timer is de-energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TOF input de-energizes, the output contacts DO NOT return to normal immediately â€” timing begins. After the preset time elapses, the NO contacts OPEN and NC contacts CLOSE (returning to normal state).' },
-          { q: 'In a star-delta motor starting circuit, what does the timer control?', a: 'The timer controls the transition from star (wye) connection to delta connection. The motor starts in star (reduced voltage), and after the preset time (typically 5-15 seconds, when the motor has accelerated to near full speed), the timer transfers to delta (full voltage). Switching too early causes high inrush; switching too late provides no benefit.' },
-          { q: 'In a ladder logic rung, two NO contacts are drawn in series before a coil. What logic does this represent?', a: 'AND logic â€” BOTH contacts must be closed (TRUE) for the coil to energize. In relay control terms, this means both switches must be ON simultaneously.' },
-          { q: 'What is the key advantage of using a smart relay instead of discrete relays and timers for a multi-step sequential process?', a: 'Smart relays can be reprogrammed without rewiring â€” logic changes are made in software. Discrete relay panels require physical rewiring, addition of new relays, and re-tracing logic every time the process changes. Smart relays also take less panel space, are more reliable (no contact wear for logic functions), and provide built-in timers, counters, and displays.' }
+          { q: 'A TDOE timer coil is energized. After 8 seconds (the preset), its timed NO contact closes. The coil is then de-energized. What happens to the timed NO contact?', a: 'The timed NO contact immediately returns to open (its normal state) when the coil de-energizes. TDOE has no delay on de-energization — once the coil drops out, timed contacts return to normal instantly.' },
+          { q: 'A TDOD timer coil is de-energized after running for 30 seconds. The preset is 2 minutes. Describe contact behavior.', a: 'When the TDOD coil de-energizes, the timed contacts remain changed (NO stays closed, NC stays open) and timing begins. After 2 minutes, the contacts return to their normal state (NO opens, NC closes).' },
+          { q: 'An alarm horn must sound for exactly 10 seconds when a door opens, regardless of whether the door is still open. Which timer mode is appropriate?', a: 'Interval timing. The coil energizes when the door opens, the timed output immediately activates the horn. After 10 seconds, the timed contact returns to normal regardless of whether the door (coil) is still energized. The horn stops after exactly 10 seconds.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will describe timer types and their application in industrial control, and demonstrate basic understanding of smart relay and programmable logic control.',
+        outcome: 'The student will identify timer types and timing control methods, describe the operation of TDOE, TDOD, interval, one-shot, and repeat-cycle timers, and explain the function and advantages of smart relays in industrial control applications.',
         questions: [
-          { q: 'A conveyor system requires that: 1) a warning horn sounds for 5 seconds before the conveyor starts, 2) the conveyor runs for its cycle, and 3) after the stop button is pressed, the cooling fan runs for an additional 60 seconds. Describe which timer types you would use for each function.', a: 'Function 1 (pre-start warning): ON-delay timer â€” when start is pressed, the horn output energizes immediately (NO contact closes), and after 5 seconds the timer\'s timed contact energizes the conveyor. Function 3 (fan run-on): OFF-delay timer â€” the fan output is energized while the conveyor runs, and when the stop button is pressed, the OFF-delay timer continues powering the fan for 60 seconds before returning to off state.' },
-          { q: 'Draw a ladder logic rung (describe it in words) that energizes a pump (Output Y1) when: float switch (Input X1) is activated AND pressure switch (Input X2) is NOT activated, and a stop button (Input X3) has not been pressed (NC contact in circuit).', a: 'Rung: [X1 NO]â€”[X2 NC]â€”[X3 NC]â€”(Y1). Reading left to right: X1 must be CLOSED (float switch activated), X2 must be OPEN/deactivated (NC contact: the pressure switch NC contact must still be passing â€” meaning high pressure NOT present), X3 must be CLOSED (stop button NC contact: not pressed). All three in series before the Y1 coil. When all three conditions are met, the pump output Y1 energizes.' }
+          { q: 'A conveyor startup sequence requires: warning horn for 5 seconds before any conveyor starts, then infeed starts, then main conveyor starts 3 seconds later, then outfeed starts 3 seconds after that. When Stop is pressed, all conveyors stop immediately but the cooling fan runs for 2 minutes. Identify the timer type for each timed function and describe how the timing is achieved.', a: 'Horn (5 sec pre-start): ON-delay timer T1. At Start, T1 begins timing. Horn is energized immediately (instant contact). After 5 seconds, T1 timed contact closes to energize infeed contactor. Infeed-to-main (3 sec): ON-delay timer T2, preset 8 sec (5+3), or T2 starts from T1 timed contact. After 3 sec, main conveyor starts. Main-to-outfeed (3 sec): ON-delay timer T3, or cascaded from T2, adding another 3 sec. Cooling fan run-on (2 min): OFF-delay timer T4. Fan is energized while any conveyor runs. When Stop is pressed, OFF-delay begins. Fan stays on 2 minutes, then drops out.' },
+          { q: 'A facility manager wants to change the warning horn duration from 5 seconds to 10 seconds. Describe how this is done on a discrete timer panel versus a smart relay panel.', a: 'Discrete timer: locate the physical T1 timer relay in the panel, adjust the timing potentiometer or dial from 5 to 10 seconds, re-test the sequence. Smart relay: connect a laptop, open the program in the free software, locate the T1 timer function block, change the preset value from 5 sec to 10 sec, upload the program to the smart relay, test. The smart relay approach requires no tools or physical panel access beyond a computer connection.' }
         ]
       }
     ]
   },
   {
-    id: 'm23',
+    id: 'm23', period: 2,
     title: 'Pilot & Overcurrent Devices',
-    icon: 'ðŸ›¡',
-    subtitle: 'The Guardians of Every Circuit',
+    icon: '🛡',
+    subtitle: 'ILM 030204c — The Guardians of Every Circuit',
     color: '#ef4444',
     gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
     border: 'rgba(239,68,68,0.3)',
-    readTime: '14 min read',
+    readTime: '24 min read',
     sections: [
       {
         type: 'hook',
-        title: 'âš¡ Every Circuit Needs Protection',
-        body: `Every electrical circuit has a potential failure mode: too much current. Overcurrent destroys insulation, melts conductors, starts fires, and kills people.\n\nThe overcurrent protection device (OCPD) â€” whether a fuse or circuit breaker â€” is the last line of defense. It monitors current, and when current exceeds its rating for a sufficient time, it interrupts the circuit.\n\nBut protection isn't the only job in a control system. Someone also has to initiate, stop, and direct the flow of current to the loads. That's the job of pilot devices â€” the pushbuttons, switches, and sensors that give humans and machines control over electrical systems.`
+        title: 'Every Circuit Needs a Guardian',
+        body: `Two things must always be true of an electrical circuit: it must be controllable, and it must be protected. Without control, you cannot turn it on or off, direct it, or sequence it. Without protection, a fault anywhere in the system becomes a catastrophe — insulation burns, conductors melt, fires start, and people die.\n\nPilot devices provide control without carrying the full load current. Overcurrent devices provide protection by interrupting the circuit when current rises beyond safe limits.\n\nTogether, they are the fundamental safety infrastructure of every electrical installation. Every pushbutton you press, every fuse you change, every breaker you reset — these are the devices this module is about.`
       },
       {
         type: 'concept',
-        title: 'ðŸ”˜ Pilot Devices: Control Without Power',
-        body: `A pilot device is a control component that controls a circuit but doesn't carry the main load current. The name comes from "pilot," meaning guide or direct.\n\nKey pilot devices you'll work with:\n\nâ€¢ Pushbuttons: momentary (springs back) or maintained (stays in place). NO types start things; NC types stop things. Color code: green/black = start, red = stop.\n\nâ€¢ Selector switches: 2 or 3 position, maintained. For mode selection (Hand/Off/Auto, Local/Remote).\n\nâ€¢ Limit switches: mechanically actuated by equipment position. Used to detect "door open," "conveyor at end of travel," "cylinder fully extended." Can be NO or NC, maintained or momentary.\n\nâ€¢ Float switches: actuated by liquid level. Used to control pumps and sump systems.\n\nâ€¢ Pressure switches: actuated by fluid or air pressure. Compressor control, hydraulic systems.\n\nâ€¢ Pilot lights: indicate status (motor running, fault condition, power present). Wired in parallel with the load they're indicating.`
+        title: 'Start and Stop Buttons: The Basic Control Interface',
+        body: `The most fundamental pilot devices in motor control are the start and stop pushbuttons:\n\n• Start button: a normally open (NO) momentary pushbutton. In its rest state, no current flows through it. When pressed, it closes momentarily, allowing current to flow to the contactor coil. When released, the spring returns it to open. The motor keeps running because the seal-in (holding) contacts maintain the circuit.\n\n• Stop button: a normally closed (NC) momentary pushbutton. In its rest state, current flows through it continuously (completing the control circuit). When pressed, it opens, interrupting current to the contactor coil, which de-energizes the contactor and stops the motor. When released, it springs back to closed.\n\n• Basic stop/start circuit: Start NO is in parallel with the M1 holding contacts (seal-in). Stop NC is in series with the entire circuit. OL (overload relay) NC contacts are in series. Any series break stops the motor. Either parallel path (Start button OR M1 seal-in) can establish the circuit.`,
+        formula: 'Stop buttons: NC, wired in SERIES — any stop can break the circuit\nStart buttons: NO, wired in PARALLEL with seal-in — any start can complete the circuit'
+      },
+      {
+        type: 'concept',
+        title: 'Multiple Control Stations',
+        body: `Many industrial machines require control from more than one location — a local panel on the machine and a remote operator station, for example. The wiring rule is universal:\n\n• Multiple stop buttons: always connected in SERIES with each other. This means any one stop button can break the circuit and stop the motor, regardless of where the operator is. This is a fail-safe arrangement — more stops means more ways to stop.\n\n• Multiple start buttons: always connected in PARALLEL with each other and with the seal-in contacts. Any one start button can complete the circuit and start the motor.\n\nThis series/parallel arrangement is the same regardless of how many stations are added. Two stops in series, three stops in series, five stops in series — the rule never changes. Adding more stops never reduces safety. Adding more starts never prevents stopping.\n\nFor safety interlocks between machines: use an NC auxiliary contact from one machine's contactor in series with the other machine's coil circuit. If machine A is running, its NC contact opens, preventing machine B from starting.`
+      },
+      {
+        type: 'concept',
+        title: 'Maintained vs Momentary Contact Pilot Devices',
+        body: `Pilot devices are classified by whether their contacts stay in the operated position after the actuating force is removed:\n\n• Momentary contact devices: contacts return to their normal position when the actuating force is removed. Spring-return is built in. Examples: standard pushbuttons, joystick controllers with return springs. Used where you want a one-time signal to start a control sequence.\n\n• Maintained contact devices: contacts stay in the operated (changed) position after the actuating force is removed, and stay there until operated again in the opposite direction. Examples: toggle switches, selector switches (key-operated or standard rotary), latching pushbuttons, mushroom-head emergency stops with a twist-to-release feature.\n\nUsed where: selector switches maintain the selected mode (Hand/Off/Auto). A key switch maintains lockout. An emergency stop maintained NC ensures the machine cannot restart without deliberate operator action (twist to reset).\n\nTwo-wire control (maintained contact): the maintained contact directly energizes the contactor coil. If power fails and returns, the motor restarts automatically because the contact is still closed. Use only where automatic restart is safe and intended.`
+      },
+      {
+        type: 'concept',
+        title: 'Automatic Pilot Devices: Sensors',
+        body: `Automatic pilot devices detect physical conditions and convert them to contact operations without human action. They extend the control system into the physical process:\n\n• Pressure switches: use a bellows, diaphragm, or piston actuator to convert fluid or air pressure into contact movement. Can be single-stage (one setpoint) or dual-stage (two setpoints for alarm and shutdown). Used in air compressors to cycle the motor between two pressure setpoints, to signal a clogged filter, prove exhaust fan flow, or detect a broken fan belt.\n\n• Float switches: detect liquid levels. Lever type: a float on a lever arm operates contacts as liquid rises and falls. Tethered bulb type: the switch is inside the float and connected by a cable; as the liquid level changes the float position, it changes state. Used in sump pumps, tank level control, and process vessels.\n\n• Limit switches: require physical contact to operate. The actuator (lever, roller, plunger, or rod) is moved by a cam, product, or machine part. Used to detect end-of-travel, door position, product presence, or cylinder position.`
+      },
+      {
+        type: 'concept',
+        title: 'Proximity and Photoelectric Switches',
+        body: `Non-contact sensing eliminates mechanical wear and allows sensing in contaminated or inaccessible environments:\n\n• Magnetic proximity switches: detect the presence of a magnetic field. Used in security systems and door/window sensors. Very simple — a magnet on the moving part, switch on the stationary part.\n\n• Inductive proximity switches: generate a high-frequency magnetic field from a coil in the sensor face. When a ferrous metal target enters the field, eddy currents are induced in the target, loading the oscillator circuit. This change triggers the output. Used only for metallic targets. Classic application: traffic light loop detectors embedded in pavement.\n\n• Capacitive proximity switches: use an electrostatic field rather than magnetic. Can detect any material — metal, plastic, wood, liquid, granules — even through non-metallic container walls. Used to detect liquid levels in tanks without opening the vessel, granular material in bins, and targets in contaminated environments.\n\n• Photoelectric sensors: use a light beam (visible or infrared, often modulated to reject ambient light) for detection. Three configurations: through-beam (transmitter and receiver separate, object interrupts beam), retroreflective (transmitter and receiver in same housing, beam reflects off a reflector), diffuse (detects light reflected from the target itself). Used in garage door safety systems, conveyor product detection, part counting.`
+      },
+      {
+        type: 'concept',
+        title: 'Temperature Sensors',
+        body: `Temperature measurement and switching devices appear in control circuits for process control, motor protection, and equipment monitoring:\n\n• Bimetallic devices: two bonded metals with different coefficients of thermal expansion. When heated, the strip bends toward the lower-expansion metal. At a setpoint temperature, the bending is enough to make or break contacts. Simple, inexpensive, self-powered. Used in thermostats and overload relays.\n\n• Thermocouples: two dissimilar metals joined at one end generate a small voltage (Seebeck effect) proportional to the temperature difference between the hot junction and the reference junction. Nonlinear output. Used for high-temperature measurement and as flame detectors (confirming pilot light presence in burner systems).\n\n• RTDs (Resistance Temperature Detectors): a precision resistor (usually platinum) whose resistance increases linearly with temperature. The most accurate temperature sensor for industrial control. Positive temperature coefficient. Used in motor protection and precise process control.\n\n• Thermistors: semiconductor devices with a large, nonlinear change in resistance with temperature. Negative temperature coefficient (resistance drops as temperature rises). Very sensitive to small temperature changes. Used in motor winding protection (embedded in the stator winding).\n\n• Infrared (non-contact) sensors: measure the thermal radiation emitted by objects. No contact required. Excellent for measuring temperature of moving objects, electrical conductors, or in environments where a physical sensor would be contaminated or damaged.`
+      },
+      {
+        type: 'concept',
+        title: 'Overcurrent: Short Circuits vs Overloads',
+        body: `Not all overcurrent is the same. The type of overcurrent determines which protection device must respond:\n\n• Short circuits: occur when a live (ungrounded) conductor contacts another conductor, a ground, or bonded conductive equipment. The fault path has very low resistance. Current rises to thousands or tens of thousands of amperes — far above normal operating current. This enormous current can damage conductors and equipment in milliseconds. Short circuit protection must respond in milliseconds.\n\n• Overloads: the motor or load draws current moderately above its normal rating. A motor in an overload condition might draw 150% or 200% of full-load amps. This causes heat to build up in the motor windings over time — seconds to minutes. Overload protection must respond on a time-delay basis (to allow motor inrush) but must trip before the motor overheats.\n\nNo single protection device handles both perfectly — which is why motor circuits use both a short-circuit overcurrent device (fuse or breaker, sized for fault current) and a separate overload relay (sized for the motor\'s thermal characteristics).`
+      },
+      {
+        type: 'concept',
+        title: 'Overcurrent Device Ratings',
+        body: `Every overcurrent device has two fundamental ratings that must both be respected:\n\n• Continuous current rating: the maximum current the device can carry continuously without opening. This is selected based on conductor ampacity from CEC Table 13. A 30A fuse or breaker protects a conductor rated for 30A at the applicable temperature.\n\n• Interrupting rating (AIC — Amperes Interrupting Capacity): the maximum fault current the device can safely interrupt without failing. This is not about how much current it normally carries — it is about how much fault current it can shut off without being destroyed.\n\nIf available fault current exceeds the device\'s interrupting rating, the device may explode or sustain an arc instead of clearing the fault. This is a life-safety issue. Available fault current at any point in a system depends on:\n• The kVA rating of the supply transformer (larger = more energy)\n• The secondary voltage (higher voltage = more current capability)\n• The percent impedance (%Z or %IZ) of the transformer (lower %Z = higher fault current)\n• The impedance of the conductors between the transformer and the device (longer conductors = more impedance = lower fault current)`,
+        formula: 'Available fault current decreases with distance from source\nFault current ≈ transformer secondary voltage ÷ (system impedance)\nHigher kVA, lower %Z transformer = higher available fault current'
+      },
+      {
+        type: 'concept',
+        title: 'Fuse Types: Single-Element and Dual-Element',
+        body: `Fuses are the simplest overcurrent protection devices — a calibrated metal element that melts when current exceeds its rating, permanently interrupting the circuit.\n\n• Non-time-delay fuses (single-element): contain a single fuse link that melts when current exceeds the rating. Very fast response — can clear high short circuits in less than 1/4 of an electrical cycle (less than 4 milliseconds at 60 Hz). This makes them current-limiting: they interrupt so fast that the fault current never reaches its prospective peak. Excellent for short-circuit protection, but they will blow on motor inrush currents. Must be oversized for motor circuits, which reduces their protection effectiveness.\n\n• Time-delay fuses (dual-element): contain two separate elements: a thermal cut-out element (a solder-held connector) for overload protection, and a fast-acting fuse link for short-circuit protection. The solder element melts slowly under sustained overload current — it mimics the inverse-time heating of the protected conductor. The fast-acting link responds to short circuits with the same speed as a single-element fuse. This dual response allows the time-delay fuse to be sized close to the motor FLA, providing both motor overload protection AND short-circuit protection in a single fuse.`,
+        formula: 'Dual-element fuse: thermal element (overload, slow) + fuse link (short circuit, fast)\nCEC motor circuit fuse sizing: time-delay up to 175% of FLA; non-time-delay up to 300% of FLA'
+      },
+      {
+        type: 'concept',
+        title: 'Instantaneous-Trip and Inverse-Time Circuit Breakers',
+        body: `Circuit breakers perform the same function as fuses but can be reset rather than replaced. Two types are critical for industrial motor control:\n\n• Instantaneous-trip (magnetic-only) circuit breakers: contain only an electromagnetic trip element. A solenoid responds to the high magnetic field created by short-circuit current and trips the breaker almost instantly (within one cycle). These breakers do NOT provide overload protection — they respond only to short-circuit currents well above normal. Used with separate overload relays in motor control. Sometimes called motor circuit protectors (MCP).\n\n• Inverse-time circuit breakers (thermal-magnetic): the most common type. A bimetallic strip provides time-delay overload protection (strip bends with heat over time, eventually touching a tripper bar). An electromagnetic element provides fast trip on high fault currents. Trip-free mechanism: the breaker WILL trip even if the operating handle is held in the ON position. This prevents an operator from overriding protective tripping.\n\nThe inverse-time characteristic means: the greater the overcurrent, the faster the breaker trips. Small overloads take many seconds. Large overloads trip in seconds. Short circuits trip nearly instantaneously. This inverse response matches the thermal behavior of conductors.`
       },
       {
         type: 'keypoint',
-        title: 'ðŸŸ¢ Color Codes and Standards',
-        body: `Pilot device colors are standardized by NEMA ICS and the CEC:\n\nâ€¢ Red: Stop, emergency stop, power off. NC pushbutton.\nâ€¢ Green or Black: Start, run, power on. NO pushbutton.\nâ€¢ Yellow: Caution, abnormal condition.\nâ€¢ Blue: Mandatory action (lockout).\nâ€¢ White/Grey: no specific function.\n\nPilot lights follow similar conventions:\nâ€¢ Red = machine running or dangerous condition present\nâ€¢ Green = safe condition, machine stopped, power available\nâ€¢ Amber = abnormal condition, attention needed\n\nKnowing color codes lets you read an unfamiliar control panel quickly. A green lit light with a red lit light simultaneously? Something's wrong â€” those shouldn't both be on if they represent opposite states.`
-      },
-      {
-        type: 'concept',
-        title: 'âš¡ Fuses: Simple, Fast, Sacrificial',
-        body: `A fuse is the simplest overcurrent protection device: a piece of calibrated metal that melts at a specific current, breaking the circuit. One-shot device â€” once blown, it must be replaced.\n\nFuse characteristics that matter:\n\nâ€¢ Current rating: the continuous current the fuse handles without opening. Size to 100-125% of load.\n\nâ€¢ Voltage rating: maximum voltage the fuse can safely interrupt. A 250V fuse on a 600V circuit is dangerous â€” the arc won't extinguish.\n\nâ€¢ Interrupting rating: the maximum fault current the fuse can safely clear. A fuse rated 10 kAIC on a bus capable of 50 kA fault current WILL explode violently.\n\nâ€¢ Current-limiting: fast-acting fuses (Class CC, J, RK1, RK5, L) limit the peak let-through current by clearing in less than a half-cycle. This protects equipment from the destructive energy of high fault currents.\n\nâ€¢ Time-delay (dual-element): have a thermal delay element that ignores brief motor inrush (5-7Ã— FLA) while still protecting against sustained overloads. Essential for motor circuits.`,
-        formula: 'Motor circuit fuse sizing (CEC Rule 28-200):\nTime-delay fuses: up to 175% of motor FLA\nNon-time-delay: up to 300% of motor FLA (but must not exceed 600% for short-circuit protection)'
-      },
-      {
-        type: 'concept',
-        title: 'ðŸ”Œ Circuit Breakers: Resettable Protection',
-        body: `A circuit breaker performs the same overcurrent protection function as a fuse, but mechanically trips rather than melting â€” it can be reset after a fault is cleared.\n\nThermal-magnetic circuit breaker (most common):\nâ€¢ Bimetallic strip: provides time-delay overload protection. As overcurrent heats the strip, it bends and trips the mechanism. Simulates thermal damage to the protected conductor.\nâ€¢ Magnetic (electromagnetic) trip: a solenoid that trips the breaker almost instantaneously on very high fault currents. Protects against short circuits.\n\nElectronic trip breakers (LSIG):\nâ€¢ Long-time (L): overload protection with inverse time-current curve\nâ€¢ Short-time (S): short-time delay for selective coordination\nâ€¢ Instantaneous (I): immediate trip for high-level faults\nâ€¢ Ground fault (G): ground fault protection at adjustable threshold\n\nGFCI (Ground Fault Circuit Interrupter): detects as little as 5mA of ground fault current and trips in <1/40 second. Protects people from electrocution on 15/20A branch circuits. Required by CEC near water.\n\nGFP (Ground Fault Protection of Equipment): detects ground faults typically in the 150mA-1200mA range. Protects equipment from arcing ground faults on large systems. Required on 1000A+ services per CEC.`
+        title: 'Fault Current Factors',
+        body: `The available fault current at any point in a system is critical for selecting overcurrent devices with adequate interrupting ratings. Four factors control it:\n\n• kVA rating of the transformer: a larger transformer can supply more fault current. A 1000 kVA transformer can supply roughly ten times more fault current than a 100 kVA transformer at the same voltage.\n\n• Secondary voltage of the transformer: fault current is proportional to voltage. A 600V system has higher available fault current than a 208V system from the same transformer.\n\n• Percent impedance (%Z or %IZ) of the transformer: this is the percentage of rated voltage that must be applied to the primary to drive rated current through a shorted secondary. Lower %Z = less internal opposition = higher available fault current. Typical distribution transformers have %Z of 2-5%. A 2% transformer supplies twice the fault current of a 4% transformer of the same size.\n\n• Distance from the source: longer conductors between the transformer and the fault point add impedance. Fault current decreases as the fault point moves further from the source. A fault at the main panel is much more severe than a fault at the end of a 200m branch circuit.`,
+        formula: 'Available fault current (approx) = kVA × 1000 ÷ (%Z ÷ 100) ÷ (√3 × V_secondary)\nLower %Z, higher kVA, shorter distance = higher fault current = higher AIC requirement'
       },
       {
         type: 'real-world',
-        title: 'ðŸ”— Selective Coordination: The Art of Only Tripping What Needs to Trip',
-        body: `In a properly coordinated system, a fault on a branch circuit should trip only the branch circuit breaker â€” not the feeder breaker, not the main breaker. Otherwise a small fault in one room takes down the whole building.\n\nAchieving coordination means sizing and selecting breakers so each upstream device has a significantly slower (or higher threshold) trip characteristic than the downstream device. Engineers use time-current curves to verify coordination.\n\nFor electricians: never "upsize" a breaker to stop nuisance tripping. If a 20A breaker keeps tripping, the LOAD is drawing more than 20A â€” fix the load, or investigate the fault. Upsizing the breaker destroys the protection the system was designed to provide.`
+        title: 'Sizing Overcurrent Protection for Motor Circuits',
+        body: `Motor circuits require a specific sizing approach because motors have high starting inrush currents (5-7× FLA) that would trip a normally sized device on every start:\n\nBranch circuit overcurrent protection (CEC Rule 28-200): sized to allow motor starting:\n• Time-delay (dual-element) fuses: up to 175% of motor FLA\n• Non-time-delay fuses: up to 300% of motor FLA\n• Inverse-time circuit breakers: up to 250% of motor FLA\n• Motor circuit protectors (instantaneous only): up to 1300% of motor FLA, within settings\n\nMotor overload protection (CEC Rule 28-304): the OL relay protects the motor windings:\n• Sized at approximately 100-125% of motor FLA depending on service factor and temperature rating\n• For motors with service factor ≥ 1.15 or temperature rise ≤ 40°C: maximum 125% FLA\n• For all other motors: maximum 115% FLA\n\nThe branch circuit OCPD protects the conductors against short circuits. The overload relay protects the motor against thermal damage. Both are required — they serve different functions at different current levels.`
       },
       {
         type: 'quiz',
-        title: 'ðŸ§  Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'A fuse is rated 600V, 30A, with an interrupting rating of 10 kAIC. The available fault current is 15 kA. Can this fuse be used?', a: 'NO. The interrupting rating (10 kAIC) is less than the available fault current (15 kA). The fuse would explode violently and fail to safely clear the fault.' },
-          { q: 'What is the difference between GFCI and GFP?', a: 'GFCI detects very small ground faults (5mA) to protect people. GFP detects larger ground faults (150mA+) to protect equipment from arcing damage. Both interrupt the circuit, but they serve different purposes at different current thresholds.' },
-          { q: 'A time-delay fuse for a motor is used instead of a fast-acting fuse. Why?', a: 'Motors draw 5-7Ã— their full-load current during starting. A fast-acting fuse would blow on every motor start. A time-delay fuse rides through brief inrush current while still protecting against sustained overloads and short circuits.' }
+          { q: 'A stop button is NC. If the control wire to a stop button is cut (open circuit), what happens to the motor?', a: 'The motor stops. A cut wire in the NC stop button circuit creates an open circuit — the same effect as pressing the stop button. This is the fail-safe nature of NC stop buttons: any wiring failure in the stop circuit causes the motor to stop rather than run uncontrolled.' },
+          { q: 'Why must a fuse\'s interrupting rating (AIC) exceed the available fault current at the installation point?', a: 'If fault current exceeds the fuse\'s interrupting rating, the fuse element melts but the fuse body cannot extinguish the arc. The housing may rupture violently, spraying molten metal. The fault current continues to flow. The device fails to protect the circuit and poses a severe arc blast hazard.' },
+          { q: 'A dual-element time-delay fuse has two elements. Describe what each element does.', a: 'Thermal (solder) element: provides overload protection with inverse-time response. Solder melts slowly under sustained overload, mimicking the thermal damage curve of the conductor. Fast-acting fuse link: provides short-circuit protection, responding in less than a half-cycle to high fault currents. Together, one fuse handles both overload and short-circuit protection.' },
+          { q: 'An inductive proximity switch is used to detect aluminum targets. Will it work?', a: 'An inductive proximity switch detects ferrous metals through eddy currents induced by a magnetic field. Aluminum is non-ferrous but IS conductive — it will have eddy currents induced in it. However, inductive sensors are generally much less sensitive to non-ferrous metals like aluminum and copper compared to steel. Sensing distance is significantly reduced. A capacitive proximity switch would be more reliable for aluminum detection.' },
+          { q: 'Why are motor overload relays and branch circuit fuses or breakers both required for a motor circuit?', a: 'They protect different things at different current levels. The branch circuit OCPD (fuse or breaker) is sized at 150-300% of FLA to allow motor starting inrush — it protects conductors against short circuits but would not trip on a sustained motor overload (which might be only 150% of FLA). The overload relay is sized at 100-125% of FLA to protect the motor windings from thermal damage at moderate overcurrents. Without both, either the motor or the conductors would be unprotected.' }
         ]
       },
       {
+        type: 'concept',
+        title: 'Molded-Case Circuit Breakers (MCCB)',
+        body: 'MCCBs are the most common circuit breakers in commercial and industrial applications.\n\nFrame sizes: 100A, 225A, 400A, 600A, 800A, 1200A, 2000A, 3000A, 4000A, 6000A.\n\nTrip units can be:\n• Thermal-magnetic (standard) — bimetallic strip for overload + electromagnetic for short circuit\n• Electronic (adjustable settings) — current transformers and microprocessor, fully adjustable\n• Motor circuit protector (instantaneous only) — used with separate motor starters that have overload relays\n\nAdjustable electronic trip units allow setting:\n• Long-time delay (overload protection)\n• Short-time delay (for downstream coordination)\n• Instantaneous trip (short circuit)\n• Ground fault protection (optional)\n\nSeries ratings: A downstream breaker can have a lower AIC rating if protected by a properly rated upstream breaker. This must be a listed and tested series combination — you cannot assume series protection without verification.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Coordination and Selective Protection',
+        body: 'Selective coordination: Only the protective device nearest the fault opens. All upstream devices remain closed — minimizing the extent of a power outage.\n\nTime-current curves: Show the relationship between fault current magnitude and trip time for each device. Used to verify that devices are properly coordinated.\n\nCoordination rules:\n• Upstream device must be slower than downstream device at ALL fault current levels\n• Fuses: upstream fuse must be at least 2:1 ratio for full coordination\n• Breakers: time-current curves must not overlap at any current level\n\nArc flash considerations:\n• Higher available fault current = more arc flash energy (incident energy)\n• Faster clearing time = less arc flash energy exposure\n• Current-limiting fuses and breakers significantly reduce arc flash energy\n• Zone-selective interlocking (ZSI): downstream device signals upstream to delay its trip, improving coordination while reducing arc flash energy at the fault point'
+      },
+      {
         type: 'protip',
-        title: 'ðŸ›  Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'The CEC requires overcurrent protection to be sized based on the conductor ampacity, not the load. If you have a 12 AWG conductor (rated 20A in NMD90), you cannot install a 30A breaker even if the load only draws 15A. The breaker protects the wire, not the load.',
-          'Fuse classes use size rejection features to prevent installing the wrong fuse. A Class J fuse physically cannot fit in a Class H fuseholder. Never force a fuse into a holder it wasn\'t designed for, and never bridge a fuse with wire.',
-          'When a fuse blows, the fuse is doing its job. Find and fix the fault before replacing the fuse. Putting in a new fuse without clearing the fault means the new fuse will blow too â€” or worse, if you installed a higher-rated fuse to "fix" the problem, now the conductor is unprotected and it may be the wire that fails next time.'
+          'The CEC requires overcurrent protection to be sized based on conductor ampacity, not load current. A 12 AWG conductor rated 20A must be protected by a maximum 20A OCPD, even if the load only draws 10A. The OCPD protects the wire, not the load.',
+          'Never upsize a fuse or breaker to stop nuisance tripping. If a 20A breaker keeps tripping, the load is drawing more than 20A — or there is a fault. Investigate the cause. Upsizing the OCPD removes protection from the conductors and increases fire risk.',
+          'When you replace a blown fuse, ALWAYS find out why it blew before installing the new one. A fuse that blew is doing exactly its job. Installing a new fuse into an uncorrected fault means the new fuse will blow immediately — or if you install the wrong (higher) rating, the fault current will flow until the conductors fail.',
+          'Available fault current at the main panel of a commercial building is often 30,000-65,000A. Most standard breakers and Class H fuses are only rated 10,000A AIC. Always verify that the interrupting rating of installed devices matches the available fault current — this is checked during arc flash studies.',
+          'The trip-free mechanism on a circuit breaker is a safety feature. Never hold a breaker handle in the ON position if it wants to trip. If a breaker trips back immediately when reset, there is still a fault — isolate the circuit and investigate before resetting again.'
         ]
       },
       {
         type: 'objectives',
-        title: 'Module Objectives',
+        title: 'Module 23 Objectives',
         objectives: [
-          'Define "pilot device" and explain its role in separating the control circuit from the power circuit.',
-          'Identify the types of pilot devices: pushbuttons, selector switches, limit switches, float switches, pressure switches, flow switches, proximity switches, and pilot lights.',
-          'Describe the difference between normally open (NO) and normally closed (NC) pilot device contacts and their normal state.',
-          'Identify NEMA/IEC color coding standards for pushbuttons and pilot lights.',
-          'Describe the difference between momentary-contact and maintained-contact pushbuttons and give an application for each.',
-          'Identify the electrical and mechanical requirements for emergency stop (E-stop) devices.',
-          'Explain why multiple STOP pushbuttons are wired in series and multiple START pushbuttons are wired in parallel.',
-          'Identify the sensing principles of automatic pilot devices: limit switches (mechanical), float switches (level), pressure switches (pressure), flow switches (fluid flow), inductive proximity (metallic targets), capacitive proximity (any material), and photoelectric (light beam).',
-          'Describe the purpose of pilot lights and identify standard color codes for pilot light indication.',
-          'Define overcurrent and identify the two main categories: overload and short circuit.',
-          'Describe the construction and operating principle of a fuse and explain what causes it to open.',
-          'Identify the difference between non-time-delay and time-delay (dual-element) fuses.',
-          'Describe the purpose of the thermal element and the fast-acting element in a dual-element fuse.',
-          'Define "current-limiting fuse" and describe how it reduces IÂ²t energy let-through during a fault.',
-          'Identify the common fuse classes (H, CC, J, RK1, RK5, T, L) and explain the purpose of physical rejection features.',
-          'Explain why a fuse must be rated at or above the circuit voltage and describe the consequence of installing an under-rated fuse.',
-          'Define interrupting rating (AIC) and explain why it must exceed the available fault current at the installation point.',
-          'Describe the construction and operation of a thermal-magnetic circuit breaker, identifying the role of both the thermal and magnetic trip elements.',
-          'Explain the inverse-time trip characteristic and describe why it is suitable for protecting conductors.',
-          'Define the instantaneous trip function and identify the fault conditions that activate it.',
-          'Define "trip-free" design and explain why it is an important safety feature.',
-          'Define GFCI, state the trip current threshold (5mA), and identify locations where the CEC requires GFCI protection.',
-          'Define GFP (Ground Fault Protection of Equipment), state its typical trip range, and explain how it differs from GFCI in purpose and threshold.',
-          'State the CEC requirements for sizing motor branch circuit overcurrent protection and motor overload protection.',
-          'Define selective coordination and explain its importance in minimizing system disruption during a fault.',
-          'Explain why upsizing an overcurrent device to prevent nuisance tripping is dangerous and what the correct approach is.',
-          'Identify the CEC requirement for a motor disconnect and describe its location and function.'
+          'Describe the function and wiring of a start button (NO momentary) and stop button (NC momentary) in a basic motor control circuit.',
+          'Explain why stop buttons are wired in series and start buttons in parallel when multiple control stations are used.',
+          'Describe the seal-in (holding contact) circuit and explain how it maintains the contactor coil energized after the start button is released.',
+          'Distinguish between momentary contact and maintained contact pilot devices and identify an application for each.',
+          'Identify automatic pilot devices: pressure switches, float switches (lever and tethered types), and limit switches, and describe the sensing principle of each.',
+          'Identify non-contact sensing devices: magnetic proximity, inductive proximity, capacitive proximity, and photoelectric sensors, and describe the detection principle of each.',
+          'Identify temperature sensing devices: bimetallic, thermocouple, RTD, thermistor, infrared, and describe the operating principle and typical application of each.',
+          'Define overcurrent and distinguish between short circuits (high current, milliseconds) and overloads (moderate current, seconds to minutes).',
+          'Define continuous current rating and interrupting rating (AIC) of an overcurrent device and explain why both must be specified correctly.',
+          'Identify the four factors that affect available fault current: transformer kVA, secondary voltage, percent impedance, and conductor distance.',
+          'Describe single-element (non-time-delay) fuses and explain their speed of response and limitations for motor circuits.',
+          'Describe dual-element (time-delay) fuses, identifying the thermal element (overload) and fuse link (short circuit) and how each responds.',
+          'Describe the current-limiting action of fast-acting fuses and explain why this reduces let-through energy to downstream equipment.',
+          'Describe instantaneous-trip (magnetic-only) circuit breakers and explain why they require a separate overload relay.',
+          'Describe the construction and operation of an inverse-time (thermal-magnetic) circuit breaker, identifying the thermal element, magnetic element, and trip-free mechanism.',
+          'Apply CEC sizing rules for motor branch circuit overcurrent protection (175% FLA for time-delay fuses, 250% for breakers) and motor overload protection (125% FLA).',
+          'Explain the consequence of installing an overcurrent device with an interrupting rating below the available fault current.'
         ],
         questions: [
-          { q: 'What is the key function of a pilot device in a motor control circuit?', a: 'A pilot device controls the operation of a power circuit without carrying the full load current â€” it operates in the lower-voltage control circuit and signals contactors or starters to energize or de-energize the motor.' },
-          { q: 'Stop buttons are wired in series and start buttons in parallel. Why?', a: 'Series stops: any one station can break the circuit and stop the motor (fail-safe). Parallel starts: any one station can energize the coil to start the motor (convenience). This arrangement is universal in motor control.' },
-          { q: 'What is the difference between a Class J and a Class H fuse?', a: 'Class J is current-limiting (clears in <Â½ cycle), rated 200,000A AIC, with rejection features. Class H (glass tube) is NOT current-limiting, typically rated only 10,000A AIC, and can be replaced with any cylindrical fuse. Class J provides vastly superior fault protection.' },
-          { q: 'Why must a fuse\'s voltage rating meet or exceed the circuit voltage?', a: 'After the fuse element melts, an arc forms across the gap. The fuse must be able to extinguish this arc. A fuse rated below circuit voltage cannot reliably extinguish the arc â€” the housing may rupture and the fault current continues to flow.' },
-          { q: 'A GFP device trips at 300mA. A GFCI trips at 5mA. Why are both used instead of just GFCI everywhere?', a: 'GFCI at 5mA would nuisance-trip on the normal leakage currents of large commercial/industrial systems. GFP at 150mAâ€“1200mA detects only genuine arcing ground faults on large conductors without nuisance tripping, while GFCI is used on branch circuits for personnel protection.' }
+          { q: 'A motor control panel has two remote stop stations (NC) and two start stations (NO). Describe the correct wiring arrangement.', a: 'Both NC stop buttons wired in series with each other and in series with the coil circuit — any one stop button can break the circuit and stop the motor. Both NO start buttons wired in parallel with each other and with the M1 seal-in contacts — any one start button can complete the circuit path to the coil.' },
+          { q: 'A 30A, 600V non-time-delay fuse is installed in a panel where available fault current is 42,000A. The fuse has an interrupting rating of 10,000A. What is the danger and what is the correct solution?', a: 'The fault current (42 kA) far exceeds the fuse interrupting rating (10 kA). Under a short circuit, the fuse will not clear the fault safely — the housing will rupture with explosive force, creating an arc blast and fire hazard. The correct solution: replace with a fuse rated for at least 42,000A AIC — such as a Class J (200 kAIC) or Class RK1 (200 kAIC) time-delay fuse.' },
+          { q: 'What is the maximum time-delay fuse size for a motor with an FLA of 24A? What is the maximum non-time-delay fuse size?', a: 'Time-delay: 24 × 1.75 = 42A → use the next standard size up, 45A. Non-time-delay: 24 × 3.00 = 72A → use the next standard size up, 80A (or check if 72A is a standard size). Note: the non-time-delay fuse must be sized much larger to ride through starting inrush, which significantly reduces its overload protection capability.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will identify pilot devices and overcurrent protection devices used in industrial motor control circuits, and correctly size overcurrent protection for conductors and motors.',
+        outcome: 'The student will identify pilot devices and overcurrent protection devices used in industrial motor control, describe their operating principles and ratings, and correctly select overcurrent protection for conductors and motor circuits.',
         questions: [
-          { q: 'A motor control panel has a red mushroom-head button, a green momentary button, an amber selector switch, and a green pilot light. Identify each device\'s likely function.', a: 'Red mushroom-head = Emergency Stop (maintained, hardwired). Green momentary = Start pushbutton (NO, momentary). Amber selector = Mode/caution function (e.g., Hand-Off-Auto or speed select). Green pilot light = Motor running or power available indicator.' },
-          { q: 'A 30A, 600V, Class H fuse is installed in a panel where the available fault current is 25,000A. The fuse is rated 10,000A interrupting capacity. Describe the risk and the correct solution.', a: 'The fuse\'s interrupting rating (10 kAIC) is far below the available fault current (25 kA). Under a short circuit, the fuse will rupture violently and fail to clear the fault. The correct solution is to replace it with a fuse rated for at least 25 kAIC â€” such as Class J (200 kAIC) or Class RK1 (200 kAIC).' },
-          { q: 'Describe a scenario where a time-delay fuse is required instead of a non-time-delay fuse, and explain the consequence of using the wrong type.', a: 'A motor circuit drawing 20A FLA with 5-7Ã— starting inrush (100-140A for ~3 seconds). A non-time-delay fuse sized for 20A continuous current would blow on every start due to the inrush. It must be oversized to ~300% (60A), which severely reduces short-circuit protection. A time-delay fuse sized at 125-175% of FLA (25-35A) rides through the inrush while providing superior fault protection.' },
-          { q: 'A 20A circuit breaker trips repeatedly on a circuit feeding an electric heater. The electrician replaces it with a 30A breaker to "fix" the problem. Explain what is wrong with this and what the correct approach should be.', a: 'Wrong approach: the 12 AWG wiring on a typical 20A circuit is only rated for 20A. A 30A breaker will allow 30A to flow through conductors rated for 20A, causing overheating, insulation breakdown, and potentially a fire. Correct approach: measure the actual current draw of the heater. If it exceeds 20A, the heater is oversized for the circuit â€” either replace the heater or upgrade the circuit (wiring and breaker together) to the appropriate ampacity.' }
+          { q: 'A motor with FLA of 18A is installed on a branch circuit. Select the correct time-delay fuse size for branch circuit protection and the correct overload relay setting. Explain your reasoning.', a: 'Branch circuit fuse (CEC 28-200): 18A × 1.75 = 31.5A. Next standard size: 35A time-delay fuse. This allows the motor to start (riding through ~90A inrush for a few seconds) while protecting conductors against faults. Overload relay (CEC 28-304): if the motor has SF ≥ 1.15 or temperature rise ≤ 40°C, set at maximum 125% of FLA = 18 × 1.25 = 22.5A. For standard motors: 18 × 1.15 = 20.7A maximum. Set the OL relay as close to FLA as possible without causing nuisance tripping on normal starts.' },
+          { q: 'A thermocouple is used to confirm that a pilot light flame is present in a gas burner system. A technician suggests replacing it with an RTD for better accuracy. Is this a good idea? Explain.', a: 'Not appropriate. Thermocouples generate their own voltage (the Seebeck effect) without requiring an external power supply to the sensor. This makes them suitable as self-powered flame detectors — if the flame is present, the thermocouple generates sufficient voltage to hold open a gas valve or safety relay. An RTD is a passive resistance device that requires an external current source to measure its resistance change — it cannot generate a safety signal by itself without a signal conditioner. Additionally, RTDs are typically more fragile than thermocouples and have lower maximum temperature ratings. The thermocouple is the correct technology for flame detection.' }
         ]
       }
     ]
-  }
-  ,{
-    id: 'm24',
+  },
+  {
+    id: 'm24', period: 2,
     title: 'Drawing & Diagram Conversion',
-    icon: 'ðŸ“‹',
-    subtitle: 'Reading the Language Every Electrician Must Speak',
+    icon: '📋',
+    subtitle: 'ILM 030204b — Reading the Language Every Electrician Must Speak',
     color: '#ec4899',
-    gradient: 'linear-gradient(135deg,rgba(236,72,153,0.12),rgba(139,92,246,0.06))',
+    gradient: 'linear-gradient(135deg,rgba(236,72,153,0.12),rgba(219,39,119,0.06))',
     border: 'rgba(236,72,153,0.3)',
-    readTime: '13 min read',
+    readTime: '25 min read',
     sections: [
       {
         type: 'hook',
-        title: 'âš¡ The Drawing Is the Circuit',
-        body: `Before a single wire is pulled, before a single conduit is bent, the electrician reads the drawing.\n\nThe drawing tells you what to build. And every drawing speaks a specific language â€” a language of symbols, conventions, and diagram types that took over a century to standardize across the entire electrical industry.\n\nMiss one wire on the wiring diagram? The light doesn't work. Misread a contact symbol on the schematic? The motor won't start â€” or worse, won't stop. Mistake a 14/2 cable run for a 14/3 on a blueprint? You'll be back in the wall.\n\nThis module is about reading that language fluently.`
+        title: 'The Drawing Is the Circuit',
+        body: `Before a single wire is pulled, before a single conduit is bent, the electrician reads the drawing.\n\nEvery electrical installation exists twice: once on paper (or screen), and once in the real world. The drawing is the authoritative description of the circuit. Miss one wire on the wiring diagram and the light does not work. Misread a contact symbol on the schematic and the motor will not start — or will not stop. Mistake the conductor count on a blueprint and you will be back in the wall.\n\nThis module is about reading that language fluently. Electrical diagrams are not decoration — they are the specification, the instruction, and the troubleshooting tool, all in one.`
       },
       {
         type: 'story',
-        title: 'ðŸ— Three Ways to Describe the Same Circuit',
-        body: `Imagine you need to explain a simple switch-light circuit to three different people.\n\nTo a project manager, you draw boxes: [Panel] â†’ [Switch] â†’ [Light]. Simple. Clean. Shows the logic without any messy details.\n\nTo the apprentice who's pulling wire, you draw a wiring diagram: which wire goes to which terminal, what colour is which, where the wire nut is, and which cable carries how many conductors.\n\nTo the troubleshooter who shows up at 2 AM when the light doesn't work, you hand them a schematic: L1 on the left rail, N on the right, SW1 contact in the rung, lamp symbol at the end. They trace continuity from left to right in 10 seconds and find the problem.\n\nSame circuit. Three completely different drawings. Each one is exactly right for its purpose â€” and you need to be able to work with all three.`
+        title: 'Three Ways to Describe the Same Circuit',
+        body: `Imagine explaining a simple motor control circuit to three different people.\n\nTo the project manager who needs to understand what the system does: you draw a block diagram — boxes labeled Control Panel, Start/Stop Station, Motor Starter, and Motor, connected by arrows. Clean, logical, no details.\n\nTo the apprentice who is pulling the wire: you draw a wiring diagram — every wire shown with its colour, every terminal labeled, every splice shown with a wire nut. Physical and complete.\n\nTo the electrician who arrives at 2 AM when the motor will not run: you hand them a ladder schematic — L1 on the left, N/L2 on the right, contacts in series and parallel across rungs, coil on the right side of the rung. They trace the circuit in 30 seconds and find the open NC overload contact.\n\nSame circuit. Three diagrams. Each one perfectly suited to its purpose.`
       },
       {
         type: 'concept',
-        title: 'ðŸ“¦ Block Diagrams: The Big Picture',
-        body: `A block diagram is the simplest of the three. It uses labeled rectangles (blocks) connected by arrows to show the functional flow of a circuit.\n\nEach block represents one function:\nâ€¢ [Power Source] â†’ [Switch] â†’ [Load]\nâ€¢ [Control Source] â†’ [Pushbutton] â†’ [Relay Coil]\nâ€¢ [L1/L2/L3] â†’ [Main Contacts] â†’ [OL Heaters] â†’ [Motor]\n\nBlock diagrams tell you:\nâœ“ What components are in the circuit\nâœ“ What order they appear in\nâœ“ Which is the control path and which is the power path\n\nBlock diagrams do NOT tell you:\nâœ— Wire colours\nâœ— Cable types or sizes\nâœ— Physical routing\nâœ— Terminal connections\nâœ— Whether contacts are NO or NC\n\nUse block diagrams for planning, documentation, and quick communication. They are often the first step in circuit design.`
+        title: 'Types of Electrical Diagrams',
+        body: `Six standard diagram types are used in the electrical industry, each showing different aspects of the same system:\n\n• Pictorial diagrams: show the actual physical appearance of devices and conductors as they would look in real life. Useful for very simple circuits and consumer explanations, but impractical for complex systems.\n\n• Wiring diagrams: show physical connections and layout of all conductors and devices. Every wire is shown with its correct colour and every terminal is identified. Used for installation and maintenance.\n\n• Schematic diagrams: show electrical function without regard to physical location. Devices may be far apart on the drawing even if they are in the same enclosure. Components are shown as standard symbols connected by lines. Used for understanding circuit operation.\n\n• Ladder (line) diagrams: a specialized schematic format for control circuits. Power rails run vertically on left and right, rungs of contacts and coils connect them horizontally. Traces current paths easily from top to bottom, left to right.\n\n• Three-line diagrams: show three-phase power circuits with all three phases represented as separate lines. Shows main disconnect, fuses or breakers, contactors, overloads, and motors in a format that makes the power flow obvious.\n\n• Single-line (one-line) diagrams: a simplified overview of an entire electrical system, with three-phase systems shown as a single line. Used for system planning and distribution network documentation.`
       },
       {
         type: 'keypoint',
-        title: 'ðŸ§µ Wiring Diagrams: What the Apprentice Uses',
-        body: `A wiring diagram shows how the circuit is actually built â€” wire by wire, terminal by terminal.\n\nEvery conductor is shown with its correct colour. Every splice shows a wire nut. Every device shows all its terminals and what connects where. The physical layout of boxes often approximates the actual installation.\n\nCanadian conductor colour code:\nâ€¢ Black = hot (ungrounded) conductor\nâ€¢ White = neutral (grounded) conductor\nâ€¢ Red = second hot in a multi-wire circuit (14/3 or 12/3 cable)\nâ€¢ Green or bare = equipment grounding conductor (EGC)\n\nSwitch loops (switch legs): In older wiring, the cable from a light box to a switch box carries the hot in the black wire and returns the switched hot in the white wire. The white wire must be re-identified with black tape or paint at both ends â€” it is acting as a hot conductor, not a neutral.\n\nCounting conductors: each wire in a cable counts. 14/2 has 2 insulated conductors (black + white) plus a bare EGC. 14/3 has 3 insulated conductors (black + red + white) plus a bare EGC. The number after the slash tells you how many insulated conductors.`
+        title: 'Ladder Diagrams: Structure and Reading Rules',
+        body: `The ladder diagram is the universal language of industrial control circuit documentation and troubleshooting. You must be able to read it without hesitation.\n\nStructure:\n• Left vertical rail: L1 (hot side, control supply)\n• Right vertical rail: L2 or N (neutral or second hot, control supply return)\n• Horizontal rungs: connect the two rails; each rung is one control function\n• Reading direction: left to right, top to bottom\n• Contacts (inputs): always on the LEFT portion of each rung\n• Loads/coils (outputs): always on the RIGHT side of each rung, adjacent to the right rail\n\nCurrent flow logic: trace from L1 through contacts to the coil at N/L2. If ALL series contacts in the path are closed, the coil energizes. If ANY series contact is open, the coil de-energizes.\n\nParallel contacts: if two contacts are connected in parallel (both paths connecting the same two points), either one can allow current to flow — this is OR logic.\n\nSeries contacts: all must be closed for current to pass — this is AND logic.`,
+        formula: 'Series contacts: ALL must be closed (AND logic) → coil energizes\nParallel contacts: ANY ONE may be closed (OR logic) → path is complete\nContacts: LEFT side of rung | Coils: RIGHT side of rung'
       },
       {
         type: 'concept',
-        title: 'ðŸªœ Schematic (Ladder) Diagrams: The Troubleshooter\'s Map',
-        body: `The schematic diagram is drawn in ladder format and is the universal language of motor control troubleshooting.\n\nStructure:\nâ€¢ Two vertical rails: L1 (hot, left) and N/L2 (neutral or second hot, right)\nâ€¢ Horizontal rungs connect the two rails\nâ€¢ Each rung is a complete circuit path from L1 through contacts to a load at N/L2\n\nContact symbols:\nâ€¢ NO contact: two short vertical lines (open gap) â€” must close for current to flow\nâ€¢ NC contact: two short vertical lines with a diagonal slash â€” must NOT open for current to flow\n\nOutput symbols:\nâ€¢ Coil: letter in parentheses or a circle â€” (M), (CR), (T)\nâ€¢ Lamp: circle with X inside\nâ€¢ Motor: circle with M\n\nReading rule: trace from L1, through each contact in series, to the output at N/L2. If ALL series contacts are closed, the output energizes. Contacts in parallel = OR logic (either one provides a path).\n\nThe most important convention: CONTACTS are on the LEFT side of the rung. OUTPUTS (coils, loads) are on the RIGHT side. Always.`,
-        formula: 'Series contacts: ALL must be closed (AND logic)\nParallel contacts: ANY ONE can close (OR logic)\nA coil energizes when current reaches it from L1 to N/L2'
-      },
-      {
-        type: 'keypoint',
-        title: 'ðŸ”¢ Counting Wires â€” The Core Skill',
-        body: `When you look at a block diagram and need to know what cable to buy, you count the conductors required between each pair of locations.\n\nBasic switch-light:\nâ€¢ Panel â†’ Switch box: 2 conductors (hot + neutral) â†’ 14/2\nâ€¢ Switch box â†’ Light box: 2 conductors (switched hot + neutral) â†’ 14/2\n\n3-way switch circuit:\nâ€¢ Panel â†’ SW1 box: 2 conductors â†’ 14/2\nâ€¢ SW1 box â†’ SW2 box: 3 conductors (traveler A + traveler B + neutral) â†’ 14/3\nâ€¢ SW2 box â†’ Light box: 2 conductors â†’ 14/2\n\n3-wire motor control push button station:\nâ€¢ 3 conductors to the button station (control hot, junction point, neutral return)\n\nMotor power circuit:\nâ€¢ 3 conductors from starter to motor (T1, T2, T3)\n\nOn blueprints, slash marks on a circuit line tell you the same thing:\n// = 2 conductors (14/2)\n/// = 3 conductors (14/3)\n//// = 4 conductors\n\nA home run arrow on a floor plan shows which panel the circuit returns to.`
+        title: 'Standard Schematic Symbols',
+        body: `Standard symbols allow anyone trained in the system to read a diagram from any source. Key symbols for control circuits:\n\n• NO contact: two short vertical lines with an open gap between them. Requires the contact to CLOSE for current to flow.\n\n• NC contact: two short vertical lines with a diagonal slash through the gap. Contact is CLOSED normally; the slash indicates the operating condition (contacts open when operated).\n\n• Coil: a circle with the device letter inside, or a rectangle (IEC style). The letter identifies which device it is: M1 = motor contactor 1, CR1 = control relay 1, T1 = timer relay 1.\n\n• Push button NO: a horizontal line with an upward arrow through it and a gap — shows the button actuates the contact upward to close.\n\n• Push button NC: same with diagonal slash indicating normally closed.\n\n• Timer contacts (TDOE): NO or NC symbol with a small semicircle on the contact line indicating time-delayed operation on energization.\n\n• Timer contacts (TDOD): similar symbol with semicircle indicating time-delayed operation on de-energization.\n\n• Overload contacts: NC contact with a horizontal line below it (resembling an overload heater symbol).\n\n• Fuse: a small rectangle or S-curve in the conductor line.\n\n• Motor symbol: a circle with the letter M inside. For three-phase motors, three leads enter the circle. NEMA motor leads are designated T1, T2, T3.\n\n• Transformer symbol: two coils (primary and secondary) separated by parallel vertical lines representing the iron core. The dot convention indicates polarity.\n\n• Fuse: a small rectangle or S-curve in the conductor line. A blown fuse creates an open circuit.\n\n• Circuit breaker: a small rectangle with an angled line (trip indicator). Breakers are reusable, unlike fuses.\n\n• Disconnect switch: a line hinged at one end with an open gap — represents a knife switch or safety disconnect.\n\n• Pilot light (indicator lamp): a circle with a cross inside. Letter designations identify color: R = red, G = green, A = amber.`
       },
       {
         type: 'concept',
-        title: 'ðŸ”„ Converting Between Diagram Types',
-        body: `Block â†’ Wiring Diagram:\n1. Identify each block and select the physical device (single-pole switch, relay, motor)\n2. Draw each device's enclosure with all terminals\n3. Connect terminals with conductors using correct colour codes\n4. Show all wire nuts for splices\n5. Label cable types (14/2 NMD90, etc.)\n\nWiring â†’ Schematic:\n1. Identify all loads (coils, motors, lamps) â€” these become your output symbols on the right rail\n2. Identify all contacts and switches â€” these become contact symbols on the left side of rungs\n3. Trace current paths in the wiring diagram â†’ replicate as rungs\n4. Series connections in wiring become contacts in series in the rung\n5. Parallel connections become contacts in parallel\n6. Draw dashed lines connecting a coil symbol to all contacts operated by that coil\n\nSchematic â†’ Wiring:\n1. Identify each rung and trace what it energizes\n2. For each component, draw its physical enclosure\n3. Connect terminals per the schematic, adding correct wire colours\n4. Combine circuits sharing the same box into one drawing\n\nThis back-and-forth conversion is what happens every time an electrician plans and then builds a control circuit.`
+        title: 'Device Designations and Letter Codes',
+        body: `Every device on a schematic is identified by a standard letter designation. These codes are universal across NEMA drawings and must be memorized:\n\n• M = Motor starter (main contactor). M1 = first motor starter, M2 = second, etc.\n• CR = Control relay. An intermediate relay used for logic, not for switching motor power directly.\n• OL = Overload relay. Protects the motor from sustained overcurrent. OL contacts are NC — they open to break the control circuit when the relay trips.\n• TR = Timer relay. May be on-delay (TDOE) or off-delay (TDOD). TR1 = first timer.\n• SOL = Solenoid. An electromagnetic actuator, often operating a valve.\n• LS = Limit switch. A mechanically operated switch activated by physical position or movement.\n• PS = Pressure switch. Activated by fluid or air pressure reaching a setpoint.\n• TS = Temperature switch (thermostat). Opens or closes at a preset temperature.\n• FS = Flow switch. Activated by fluid flow in a pipe.\n• PB = Push button. Momentary contact operator.\n• SS = Selector switch. Maintained-position switch (e.g., Hand-Off-Auto).\n• PL = Pilot light (indicator lamp).\n• FU = Fuse.\n• CB = Circuit breaker.\n• DS = Disconnect switch.\n• CT = Current transformer.\n• PT = Potential (voltage) transformer.\n\nNumbering convention: devices of the same type are numbered sequentially — CR1, CR2, CR3. Contacts belonging to a device share its designation: CR1 coil controls CR1 NO and CR1 NC contacts.`,
+        formula: 'M = Motor starter | CR = Control relay | OL = Overload | TR = Timer\nSOL = Solenoid | LS = Limit switch | PS = Pressure switch | PB = Push button\nSS = Selector switch | PL = Pilot light | FU = Fuse | CB = Circuit breaker'
+      },
+      {
+        type: 'concept',
+        title: 'Terminal Numbering Conventions',
+        body: `Terminal numbering on industrial control devices follows specific conventions that allow electricians to identify connections without seeing the device physically:\n\n• Odd numbers (1, 3, 5): assigned to the LEFT side (line side or incoming) terminals of a device.\n• Even numbers (2, 4, 6): assigned to the RIGHT side (load side or outgoing) terminals of a device.\n\nFor motor starters and contactors:\n• Power terminals: L1/T1, L2/T2, L3/T3. L = line (incoming power), T = load (outgoing to motor).\n• Auxiliary contacts: numbered 13-14 (first NO contact), 21-22 (first NC contact), 23-24 (second NC contact), 31-32 (second NO contact). The first digit identifies the contact number; the second digit indicates NO (3-4) or NC (1-2).\n\nFor overload relays:\n• Heater terminals: typically 1-2 (phase 1), 3-4 (phase 2), 5-6 (phase 3).\n• OL auxiliary NC contact: 95-96 (IEC standard) or NC terminals on NEMA devices.\n\nFor push button stations:\n• Start (NO): terminals 13-14 or 3-4.\n• Stop (NC): terminals 11-12 or 1-2.\n\nKnowing terminal numbering lets you verify connections against the schematic without tracing every wire physically.`,
+        formula: 'Odd numbers (1, 3, 5) = LEFT / LINE side terminals\nEven numbers (2, 4, 6) = RIGHT / LOAD side terminals\nNO auxiliary contacts: x3-x4 | NC auxiliary contacts: x1-x2'
+      },
+      {
+        type: 'concept',
+        title: 'Wire Numbering in Industrial Control',
+        body: `Wire numbering is the system that connects schematics to physical wiring. Every conductor segment in a control circuit receives a unique wire number:\n\n• All points connected by a continuous conductor share the SAME wire number.\n• When a conductor passes through a terminal block, the same number appears on both sides of the terminal.\n• Wire numbers change at every device — the output terminal of a contact has a different wire number than the input terminal.\n• Common numbering schemes start at 1 and increase sequentially. Some systems use rung-based numbering (rung 3 wires might be 301, 302, 303).\n\nWire numbering rules:\n• The wire connected directly to L1 (hot) is typically wire number 1.\n• The wire connected to L2/N (neutral) is the highest number or is labeled N.\n• Each junction point where conductors split creates a node — all conductors at that node share the same wire number.\n• Wire numbers are marked on conductors using wire markers (adhesive labels, heat-shrink labels, or printed sleeves).\n\nWhy wire numbers matter:\n• They allow tracing a circuit through conduit, wireways, and terminal blocks without disconnecting anything.\n• A technician can measure voltage between two wire numbers at any accessible point to test a circuit segment.\n• When wiring from a schematic, wire numbers tell you exactly which terminals to connect together.\n• Wire markers that fall off or are missing create serious troubleshooting problems — always replace missing markers.`,
+        formula: 'Same wire number = same electrical node (continuous conductor)\nWire number changes at every device terminal\nL1 side = wire 1 | L2/N side = highest number or N'
+      },
+      {
+        type: 'concept',
+        title: 'NEMA vs IEC Symbols',
+        body: `North American electrical drawings traditionally use NEMA symbols. International and OEM equipment increasingly uses IEC symbols (IEC 60617 standard). You will encounter both:\n\nKey differences:\n• Coil: NEMA = circle with letter. IEC = rectangle (divided box, coil designation inside).\n• Contacts: NEMA = vertical line representation with gap or slash. IEC = horizontal line representation — NO shown as a line that swings open, NC shown with a crossbar.\n• Push buttons: NEMA = arrow through contact symbol. IEC = small square or diamond actuator symbol above the contact.\n• Switches: NEMA and IEC show different switch configurations differently. IEC selector switches use numbered position tables.\n• Relays: NEMA draws all contacts of a relay beside the coil or with dashed lines. IEC draws the coil in one location and contacts wherever they appear in the circuit, linked by reference number only (e.g., K1 coil on sheet 2, K1 contacts on sheets 3, 5, and 7).\n• Motors: NEMA = circle with M, leads T1, T2, T3. IEC = circle with M, leads designated U, V, W.\n• Overloads: NEMA = heater symbol with separate NC contact. IEC = integrated thermal relay symbol.\n\nPractical impact: when working on imported or OEM equipment, verify which symbol standard the drawing uses before tracing circuits. An IEC diagram will look unfamiliar to someone trained only on NEMA drawings. Most modern apprenticeship programs teach both.`,
+        formula: 'NEMA: circle coils | vertical contacts | T1, T2, T3 motor leads\nIEC 60617: rectangle coils | horizontal contacts | U, V, W motor leads\nAlways check which standard applies before tracing an unfamiliar diagram'
+      },
+      {
+        type: 'concept',
+        title: 'Converting from Wiring Diagram to Schematic',
+        body: `This conversion is a fundamental skill — you will need to go from "how it is wired" to "what it does electrically."\n\nStep-by-step process:\n1. Identify all loads (coils, motors, lamps) in the wiring diagram. Each becomes an output symbol on the right side of a rung in the schematic.\n2. Identify all contacts and switches. Each becomes a contact symbol on the left portion of rungs.\n3. Trace each current path in the wiring diagram from the hot supply through contacts to each load. Reproduce this path as a rung in the ladder.\n4. Contacts wired in series in the physical wiring = contact symbols in series on the rung.\n5. Contacts wired in parallel in the physical wiring = contact symbols in parallel on the rung.\n6. Draw a dashed line from each coil symbol to all contact symbols that are operated by that coil. This shows which contacts change state when the coil energizes.\n7. Add wire numbers or terminal references to connect the schematic back to the physical wiring.`
+      },
+      {
+        type: 'concept',
+        title: 'Converting from Schematic to Wiring Diagram',
+        body: `Going from "what it does" to "how to wire it" is what you do when building a panel from a schematic design:\n\nStep-by-step process:\n1. Identify all physical devices referenced in the schematic. Create a device list (contactor M1, relay CR1, timer T1, etc.).\n2. For each device, draw its physical enclosure with all terminals labeled.\n3. Trace each rung of the schematic. Each connection in the rung becomes a wire between physical terminals.\n4. Assign wire numbers: all terminals connected to the same conductor have the same wire number.\n5. Identify conductor colours using applicable code (CEC for Canadian installations): hot conductors in control circuits are typically red; neutral is white; grounding conductors are green or bare.\n6. Show the physical routing of wires — within the panel to terminal blocks, through conduit to external devices.\n7. Devices sharing the same physical enclosure are shown in the same box on the wiring diagram.`
+      },
+      {
+        type: 'concept',
+        title: 'Reading Three-Line and Single-Line Diagrams',
+        body: `Beyond control circuits, electricians must also read power distribution diagrams:\n\n• Three-line diagrams: the three phases are shown as three separate horizontal or vertical lines. Main disconnect, fusing, contactors, overload heaters, and motors are shown in three-line format. This makes it clear which phase each component connects to. Particularly important for understanding phase balancing, three-phase motor connections (wye vs. delta), and identifying which phase is fused for motor protection.\n\n• Single-line (one-line) diagrams: the entire three-phase system is represented as a single line. Each component is shown as a symbol on that line. Buses, transformers, breakers, feeder circuits, and panel boards are all indicated. The one-line is used for system-level understanding — which feeder feeds which panel, where the main disconnect is, what the transformer ratings are, and how fault current flows.\n\nAs an electrician, you will use one-line diagrams to understand the system hierarchy before working on any part of it, and three-line diagrams when working on three-phase power circuits.`
+      },
+      {
+        type: 'concept',
+        title: 'CAD and Software Tools for Electrical Drawings',
+        body: `Modern electrical drawings are produced and modified using computer-aided design (CAD) software rather than hand drafting. As an electrician, you may need to use or mark up these files:\n\n• AutoCAD Electrical: the industry standard for detailed electrical schematics and panel layouts. Produces ladder diagrams, wiring diagrams, panel layouts, and parts lists automatically from the schematic database. Changes to one drawing update cross-references automatically.\n\n• EPLAN Electric P8: widely used in industrial OEM and automation environments, particularly with European and IEC-based equipment. Sophisticated cross-reference and automatic wire numbering.\n\n• SolidWorks Electrical / SOLIDWORKS: used by machine builders for integration of electrical and mechanical documentation in one system.\n\n• PDF markup tools: on many job sites, electricians mark up printed or PDF drawings directly using tablets, PDF annotation software (Bluebeam Revu is common in construction), or simply pen and red pencil for field markups.\n\nAs an apprentice, you are not expected to produce CAD drawings, but you should be able to read and mark up drawing files, understand revision clouds (indicating what changed on a drawing), and know how to request updated drawings through the site engineer or supervisor.`
       },
       {
         type: 'real-world',
-        title: 'ðŸ›  The 3-Wire Control Circuit â€” Reading the Ladder',
-        body: `The 3-wire motor starter is the most common control circuit in industrial electrical work, and you need to read it cold.\n\nControl rung (trace from left to right):\nL1 â†’ [OL NC contact] â†’ [Stop NC] â†’ junction point â†’ [Start NO] â†’ [M coil] â†’ N/L2\n                                              â†• (parallel)\n                                         [M aux NO seal-in]\n\nHow to read it:\nâ€¢ OL NC: if the overload trips, this contact opens, killing the coil â€” motor stops\nâ€¢ Stop NC: pressing Stop opens this contact â€” motor stops\nâ€¢ Junction: current can reach the coil through either the Start NO or the M seal-in\nâ€¢ Start NO: momentarily closes when Start is pressed â€” energizes M coil\nâ€¢ M seal-in: closes when M energizes â€” holds the circuit after Start is released\nâ€¢ M coil: energizes to close all M contacts\n\nPower rungs (3-phase):\nL1 â†’ [M contact] â†’ [OL heater 1] â†’ T1 â†’ Motor\nL2 â†’ [M contact] â†’ [OL heater 2] â†’ T2 â†’ Motor\nL3 â†’ [M contact] â†’ [OL heater 3] â†’ T3 â†’ Motor\n\nThe dashed line from the M coil to all M contacts shows: when M coil energizes, ALL M contacts change state simultaneously.`
+        title: 'As-Built Drawings: The Critical Record',
+        body: `The drawings produced during design are called construction drawings or issued-for-construction (IFC) drawings. After the job is built, changes are always made — a conduit routed differently due to a conflict, a junction box relocated, an extra device added in the field.\n\nAs-built drawings (also called record drawings) document what was actually installed, not what was originally designed. They are created by marking up the construction drawings with all field changes, then updating the CAD files to match.\n\nWhy as-builts matter:\n• Future maintenance depends on knowing where conductors actually run.\n• Troubleshooting becomes extremely difficult if the drawing does not match the installation.\n• Future renovations or additions need to know actual wire sizes, panel assignments, and routing.\n• Code requires that documentation match the installation for certain systems.\n\nOn the job: when you make a field change, mark it on your copy of the drawing immediately. Use a red pen (red-line). Note the date, your initials, and what changed. These markups become the as-built record. Losing this information costs future workers hours of tracing and testing.`
+      },
+      {
+        type: 'concept',
+        title: 'Marking Up Drawings on the Job',
+        body: `Reading, marking up, and updating drawings is a daily part of life on a construction or maintenance job site. Key skills:\n\n• Reading floor plans: circuit lines show conductor routing with slash marks indicating conductor count. Home run arrows show which panel and circuit number each circuit feeds. Outlet symbols, fixture symbols, and switch symbols all have standard conventions.\n\n• Revision clouds: a bubble or cloud shape drawn around any area of a drawing that has been changed since the last revision. The revision number and date are noted in the title block. Always check the revision level of a drawing before using it.\n\n• Cross-references: in large ladder diagrams, a coil might be on sheet 5 while some of its contacts are on sheet 8. Cross-reference numbers (in parentheses beside the coil or contact) point you to the other location. Always follow cross-references when tracing control circuits in large systems.\n\n• Wire numbers: each conductor segment in a control circuit has a unique number. All terminals connected by the same continuous conductor share the same number. Wire numbers are how electricians trace conductors through terminal blocks, cable trays, and conduit without disconnecting anything.`
+      },
+      {
+        type: 'concept',
+        title: 'Reading Manufacturer Connection Diagrams',
+        body: `When installing or troubleshooting equipment, you will often work from the manufacturer’s connection diagram rather than a site-specific drawing. These diagrams come in the equipment manual or are printed inside the panel cover:\n\n• Motor connection diagrams: show how to connect motor leads for different voltages (e.g., 208V vs. 480V) and configurations (wye vs. delta). Dual-voltage motors have 9 or 12 leads — the connection diagram shows which leads to join for each voltage. For a 9-lead dual-voltage motor: high voltage connects T1-T4, T2-T5, T3-T6 in series; low voltage connects T1+T7, T2+T8, T3+T9 in parallel with T4+T5+T6 joined.\n\n• Contactor and starter diagrams: show internal wiring, auxiliary contact locations, terminal identification, and coil voltage connections. Always verify the coil voltage matches your control circuit voltage.\n\n• VFD (Variable Frequency Drive) wiring diagrams: show power input terminals (R/S/T or L1/L2/L3), motor output terminals (U/V/W or T1/T2/T3), control terminals (analog inputs, digital inputs, relay outputs), and communication terminals. These are more complex than simple starter diagrams.\n\n• Control transformer diagrams: show primary taps for different input voltages and secondary connections. Tapping determines the turns ratio and output voltage.\n\n• PLC I/O wiring diagrams: show how field devices connect to input and output modules. Each terminal is labeled with its I/O address.\n\nKey rule: never assume a manufacturer diagram matches your site conditions. Verify voltage, phase, and grounding requirements against the nameplate and your site’s electrical system before making any connections.`
+      },
+      {
+        type: 'concept',
+        title: 'Self-Test and Activity Review',
+        body: `Key answers and concepts from the module self-tests and activities:\n\n1. What are the three main types of electrical diagrams? Wiring diagrams (physical connections), schematic/ladder diagrams (electrical logic), and single-line/one-line diagrams (system overview). Each serves a different purpose but describes the same system.\n\n2. What is the reading rule for a ladder diagram? Read left to right, top to bottom. Contacts (inputs) are on the left side of each rung; loads/coils (outputs) are on the right side adjacent to the L2/N rail.\n\n3. What does it mean when contacts are in series vs. parallel? Series = AND logic (all must close). Parallel = OR logic (any one can complete the path).\n\n4. How do you convert a wiring diagram to a schematic? Identify all loads, identify all contacts, trace each current path from L1 through contacts to loads at L2, reproduce each path as a rung, add cross-references.\n\n5. How do you convert a schematic to a wiring diagram? List all physical devices, draw device enclosures with terminals, trace each rung to determine wire connections, assign wire numbers, add conductor colors, show physical routing.\n\n6. What is the difference between a three-line and single-line diagram? A three-line diagram shows all three phases separately — used for detailed power circuit analysis. A single-line diagram represents the three-phase system as one line — used for system-level overview.\n\n7. What are as-built drawings? Drawings updated to reflect what was actually installed, including all field changes. Created by red-line markup of construction drawings.\n\n8. Why are wire numbers important? They allow tracing conductors through terminal blocks, conduit, and wireways without disconnecting anything. Same wire number = same electrical node.\n\n9. What do terminal numbers 13-14 indicate? The first NO auxiliary contact on a device (IEC convention). The digit 3-4 ending means NO; 1-2 ending means NC.\n\n10. What is a revision cloud? A bubble or cloud shape drawn around an area of a drawing that has been changed since the last revision. Always check the revision level before using any drawing.`
       },
       {
         type: 'quiz',
-        title: 'ðŸ§  Quick Check',
+        title: 'Quick Check',
         questions: [
-          { q: 'A block diagram shows 3 slash marks on the cable run between two switch boxes. What cable type is needed?', a: '14/3 NMD90 â€” 3 slash marks = 3 conductors. The circuit is a 3-way switch and the two traveler wires plus neutral must run in the same cable between the two switch locations.' },
-          { q: 'In a ladder diagram, where are contacts placed relative to the coil?', a: 'Contacts (inputs/conditions) are always on the LEFT side of the rung. Coils and loads (outputs) are always on the RIGHT side, closest to the neutral rail. Current flows left to right through closed contacts to energize the output.' },
-          { q: 'What does a diagonal line through a contact symbol on a schematic mean?', a: 'It is a Normally Closed (NC) contact â€” the contacts are CLOSED when no power is applied to the coil. They OPEN when the coil is energized. NC contacts are used for stop buttons and overload contacts.' }
+          { q: 'In a ladder diagram, you see two NC contact symbols in series before a motor contactor coil. One is labeled OL and one is labeled STOP. Describe what each one does and what happens if either opens.', a: 'OL (NC) = overload relay contact. Normally closed, opens if the overload relay trips due to sustained overcurrent. STOP (NC) = stop pushbutton contact. Normally closed, opens when the stop button is pressed. Either one opening in series breaks the current path to the M1 coil, de-energizing the contactor and stopping the motor. Both must be closed for the motor to run.' },
+          { q: 'A drawing shows three slash marks on a circuit line between two switch boxes. What cable is required and why?', a: 'Three conductors are required between the boxes: 14/3 NMD90 (three insulated conductors plus bare EGC). Three slash marks = three current-carrying conductors. This is typical of a 3-way switch circuit where traveler A, traveler B, and neutral must all run in the same cable between the two switch locations.' },
+          { q: 'What is the purpose of as-built drawings and what is your responsibility as a field electrician regarding them?', a: 'As-built drawings record what was actually installed, not what was originally designed. Field changes made during construction must be marked on drawings immediately using red pen (red-lining) with the date and initials. These markups are later used to update the CAD files. Accurate as-builts are essential for future maintenance, troubleshooting, and renovations.' },
+          { q: 'What do the device designations M, CR, OL, and TR stand for on a schematic diagram?', a: 'M = Motor starter (main contactor that switches power to the motor). CR = Control relay (intermediate relay used for logic functions, not direct motor switching). OL = Overload relay (protects motor from sustained overcurrent; its NC contacts open to de-energize the control circuit). TR = Timer relay (provides time-delayed contact operation, either on-delay TDOE or off-delay TDOD).' },
+          { q: 'On a contactor, what is the difference between terminals labeled L1/L2/L3 and T1/T2/T3?', a: 'L1, L2, L3 are the LINE side terminals (incoming power from the supply). T1, T2, T3 are the LOAD side terminals (outgoing power to the motor). Power flows from L to T when the contactor is energized. The convention is odd-numbered terminals on the left (line) side and even-numbered on the right (load) side.' },
+          { q: 'A wire is labeled with the number 7 at three different terminal blocks in a control panel. What does this mean?', a: 'All three terminal blocks are connected by the same continuous conductor (wire number 7). They are the same electrical node. You can measure voltage at any of these three points and get the same reading because they are all electrically common. Wire numbers identify nodes, not individual wire segments.' }
         ]
       },
       {
         type: 'protip',
-        title: 'ðŸ›  Pro Tips',
+        title: 'Pro Tips',
         tips: [
-          'When counting conductors on a block diagram, draw a line between each pair of adjacent boxes and ask: "How many electrical connections must cross this line?" That number is your conductor count. Each connection needs its own conductor.',
-          'The white wire in a switch loop MUST be re-identified as a hot conductor â€” typically with a wrap of black electrical tape at both ends. If you see a white wire at a single-pole switch terminal (not at a wire nut), it is a switch leg return and it should be marked. Leaving it white is a code violation and creates a hazard for the next person who works there.',
-          'When troubleshooting from a ladder diagram: cover the right side with your finger, look at only the contacts in the rung, and ask "Can current get through here right now?" If yes, the coil should be energized. If the coil is NOT energized, you found the rung. Now test each contact in that rung until you find the one that won\'t close.'
+          'When troubleshooting from a ladder diagram, cover the output (coil) side with your finger and focus only on the contacts in the rung. Ask yourself: "Can current get through every series contact right now?" If one contact is open and should be closed, that is your fault. Test continuity across each suspect contact in sequence.',
+          'Cross-references are your navigation system in a large drawing set. Never assume you have seen the entire circuit from one sheet. Follow every cross-reference to its other location before concluding the circuit does not have the feature you are looking for.',
+          'When making field changes, never erase from the original drawing. Add a revision cloud in red, note what changed, and sign and date your markup. Erasing original drawing information makes the drawing history unreadable and can create safety issues if the original design intent is lost.',
+          'NEMA and IEC drawings look different even for identical circuits. Before tracing a circuit on an unfamiliar piece of equipment, check the drawing title block or legend for the symbol standard. A 5-minute check prevents 30 minutes of confused tracing.',
+          'Wire numbers are your best friend in a large panel. When tracing a circuit, do not follow wires with your eyes through a bundle — read the wire marker at the source terminal, then find the same wire number at the destination terminal. This is faster and eliminates errors.',
+          'Before connecting a dual-voltage motor, always check the manufacturer connection diagram AND verify the supply voltage with a meter. Connecting a 208V motor configuration to a 480V supply will destroy the motor insulation instantly.',
+          'Terminal numbering follows a pattern: for IEC auxiliary contacts, if the last digit is 3-4 it is NO, if it is 1-2 it is NC. Once you learn this pattern, you can identify contact type from the terminal number alone without looking at the symbol.'
         ]
       },
       {
         type: 'objectives',
-        title: 'Module Objectives',
+        title: 'Module 24 Objectives',
         objectives: [
-          'Define the three types of electrical diagrams: block diagram, wiring diagram, and schematic (ladder) diagram.',
-          'State the purpose of each diagram type and identify which is used for planning, which for wiring, and which for troubleshooting.',
-          'Read a block diagram and identify the logical sequence of components in a circuit.',
-          'Determine the number of conductors required in each cable run by analyzing a block diagram.',
-          'Identify the Canadian conductor colour code: black (hot), white (neutral), red (second hot), green/bare (EGC).',
-          'Explain the purpose of re-identifying a white conductor in a switch loop and describe how it is done.',
-          'Describe the difference between 14/2 and 14/3 NMD90 cable and explain when each is required.',
-          'Identify the structural elements of a ladder (schematic) diagram: L1 rail, N/L2 rail, rungs, contacts, and coils.',
-          'Distinguish between NO (normally open) and NC (normally closed) contact symbols on a schematic.',
-          'State the rule for placing contacts and loads on a ladder rung: contacts on the left, outputs on the right.',
-          'Trace a circuit path through a ladder rung and determine whether an output is energized given a set of contact states.',
-          'Identify the purpose of each element in a 3-wire motor control schematic: Stop NC, Start NO, M seal-in, M coil, OL NC contacts.',
-          'Explain how the seal-in (M auxiliary) contact allows the motor to run after the Start button is released.',
-          'Explain how the Stop NC contact and OL NC contact each stop the motor.',
-          'Convert a simple block diagram to a wiring diagram by adding conductor colours, cable types, and terminal connections.',
-          'Convert a wiring diagram to a schematic by extracting control rungs and power rungs in ladder format.',
-          'Read slash marks on a blueprint floor plan circuit line and determine the corresponding cable type.',
-          'Identify the schematic symbols for: NO contact, NC contact, relay/contactor coil, lamp, motor, fuse, push button NO/NC.'
+          'Identify and describe six types of electrical diagrams: pictorial, wiring, schematic, ladder, three-line, and single-line, and state the primary purpose of each.',
+          'Describe the structure of a ladder diagram: left power rail (L1), right power rail (N/L2), rungs, contacts on the left, and loads/coils on the right.',
+          'State the reading rule for ladder diagrams: left to right, top to bottom; contacts before coils; series = AND; parallel = OR.',
+          'Identify standard NEMA schematic symbols for: NO contact, NC contact, relay coil, push button NO, push button NC, TDOE timed contacts, TDOD timed contacts, overload contacts, fuse, and circuit breaker.',
+          'Identify key differences between NEMA and IEC schematic symbols and explain why recognizing both standards is important.',
+          'Convert a wiring diagram to a schematic (ladder) diagram using the step-by-step process: identify loads, identify contacts, trace current paths, draw rungs, add cross-references.',
+          'Convert a schematic (ladder) diagram to a wiring diagram: assign terminal numbers, add conductor colours, show physical routing.',
+          'Read a three-line diagram and identify main disconnect, fusing, contactors, overload heaters, and motor connections.',
+          'Read a single-line (one-line) diagram and identify the system hierarchy: source, transformer, main distribution, feeders, panelboards, and branch circuits.',
+          'Describe the purpose of as-built drawings and explain the electrician\'s responsibility for maintaining accurate field markup records.',
+          'Describe CAD tools used in the electrical industry (AutoCAD Electrical, EPLAN) and identify common PDF markup tools used in field applications.',
+          'Read revision clouds and title block revision tables on a drawing and determine whether the drawing is current.',
+          'Use cross-references in a large drawing set to follow a control circuit from coil to all associated contacts across multiple drawing sheets.',
+          'Interpret wire numbers on a drawing and use them to trace conductors through terminal blocks without disconnecting wiring.',
+          'List standard device designations (M, CR, OL, TR, SOL, LS, PS, PB, SS, PL, FU, CB, DS) and state what each represents.',
+          'Apply terminal numbering conventions: odd numbers for line/left side, even numbers for load/right side; auxiliary contact numbering (13-14 = NO, 21-22 = NC).',
+          'Explain wire numbering rules: same number = same node, numbers change at every device, and describe how wire markers are used in practice.',
+          'Read a manufacturer connection diagram for a motor, contactor, or VFD and identify terminal connections for the correct voltage and configuration.'
         ],
         questions: [
-          { q: 'Why does a 3-way switch circuit require 14/3 cable between the two switches, while 14/2 is used for the rest of the circuit?', a: 'Between the two 3-way switches, three conductors are required: traveler A (black), traveler B (red), and neutral (white). 14/3 cable carries these three conductors plus the bare EGC. The source-to-SW1 and SW2-to-light runs only need 2 conductors each (hot + neutral or switched hot + neutral), so 14/2 is sufficient.' },
-          { q: 'In a 3-wire motor control circuit, what would happen if the M seal-in contact failed to close after the Start button was pressed?', a: 'The motor would run only while the Start button is held down. The instant the Start button is released, the control circuit would open (since the seal-in path was never established) and the coil would de-energize, stopping the motor. The seal-in contact is what provides "memory" to keep the motor running after momentary Start is released.' },
-          { q: 'On a schematic, you see a contact symbol with a diagonal slash near the Stop pushbutton. Is this contact normally open or normally closed? What does pressing Stop do to it?', a: 'The diagonal slash indicates an NC (normally closed) contact. In its normal state (with no one pressing Stop), this contact is CLOSED, allowing current to flow through the control rung to the coil. Pressing Stop opens this NC contact, breaking the control circuit, de-energizing the coil, and stopping the motor.' }
+          { q: 'Convert this verbal circuit description to a ladder rung: "Control relay CR1 coil is energized when limit switch LS1 (NO) AND pressure switch PS1 (NC) are both satisfied, OR when the manual override selector SW1 (NO) is in the Manual position."', a: 'Rung structure: L1 → [LS1 NO]—[PS1 NC] → in parallel with [SW1 NO] → [CR1 coil] → N. The series combination of LS1 and PS1 represents the automatic path (both must be satisfied — AND logic). SW1 in parallel with that series combination represents the manual override path (OR logic — either the automatic conditions OR the manual switch can energize CR1).' },
+          { q: 'Why does a schematic diagram not show the physical location of components, and why is this an advantage for troubleshooting?', a: 'A schematic shows electrical connections and logic, not physical layout. This is an advantage because the troubleshooter can trace the electrical circuit path without needing to know where each device physically is in the building. The diagram shows only what matters for circuit operation: which contacts are in series, which are in parallel, and what coils they control. Physical location is irrelevant to electrical function.' },
+          { q: 'You are given a wiring diagram where the stop pushbutton is connected between terminals 1 and 2 of a terminal block, and a cross-reference note says "see sheet 6 rung 15." What does this tell you?', a: 'The cross-reference means that the stop pushbutton contact also appears on sheet 6, rung 15 of the ladder diagram. The schematic representation of this physical device is located there. You should go to sheet 6 rung 15 to see the full control circuit that this stop button is part of, including all other contacts in the same rung and the coil that is controlled.' }
         ]
       },
       {
         type: 'outcome',
         title: 'Module Desired Outcome',
-        outcome: 'The student will read, interpret, and convert between block diagrams, wiring diagrams, and schematic (ladder) diagrams for residential and motor control circuits, and will correctly count conductors from diagram information.',
+        outcome: 'The student will read, interpret, and convert between electrical diagram types, apply standard schematic symbols, and use drawing documentation skills including as-built markups and cross-reference tracing.',
         questions: [
-          { q: 'You are given a block diagram: [Panel] â†’ [3-Way SW1] â†’ [3-Way SW2] â†’ [Light Fixture]. List the three cable runs required, the cable type for each, and the conductor count for each run.', a: 'Run 1: Panel to SW1 box â€” 14/2 NMD90 â€” 2 conductors (black hot, white neutral). Run 2: SW1 box to SW2 box â€” 14/3 NMD90 â€” 3 conductors (black traveler, red traveler, white neutral). Run 3: SW2 box to Light box â€” 14/2 NMD90 â€” 2 conductors (black switched hot, white neutral). Total: 3 cable runs, 7 conductors (plus EGCs in each cable).' },
-          { q: 'Convert the following description to a ladder schematic rung: "A relay coil (CR1) is controlled by a normally open pushbutton (PB1). A normally closed limit switch (LS1) is in series before the pushbutton. A CR1 auxiliary contact is in parallel with PB1."', a: 'L1 rail â†’ [LS1 NC contact] â†’ junction â†’ [PB1 NO contact] â†’ [CR1 coil] â†’ N rail. In parallel with PB1: [CR1 NO auxiliary contact] connected between the junction and the point after PB1. The NC slash on LS1 and NO gap on PB1 and CR1 aux must be correctly drawn.' },
-          { q: 'On a wiring diagram you see a white wire connected to a single-pole switch terminal. Is this correct? What must be done?', a: 'This is a switch loop â€” the white conductor is returning the switched hot from the switch back to the light box. It is being used as an ungrounded (hot) conductor, not a neutral. The CEC requires the white wire to be re-identified at both ends (at the switch terminal and at the splice in the light box) with black electrical tape or black paint to indicate it is being used as a hot conductor. Leaving it white is a violation and creates a hazard.' }
+          { q: 'You are handed a one-line diagram of a building\'s electrical system. Describe the information you would extract from it before beginning any work on the system.', a: 'From a one-line diagram: identify the source (utility connection, transformer ratings, primary and secondary voltages), the main disconnect location and rating, available fault current (if annotated), the main distribution panel and bus rating, feeder circuits to sub-panels (conductor sizes, breaker ratings), sub-panel identifications and their feeder sources, and which loads are on which feeders. This tells you the system hierarchy, where to isolate power for any given part of the system, the relative fault current levels at each point, and how to work safely with the system energized or de-energized.' },
+          { q: 'During a retrofit project, you add an emergency stop button to an existing motor control panel that only has a single stop station. Describe the wiring change, how you would update the drawing, and what documentation you would create.', a: 'Wiring change: locate the existing STOP NC pushbutton in the control circuit. Wire the new emergency stop NC contacts in series with the existing stop button (add terminals in series). The two NC contacts in series mean either one can stop the motor. Drawing update: mark up the existing wiring diagram and ladder schematic in red to show the added E-stop button, its terminal connections, the new wire numbers, and the conductor routing. Add a revision cloud around the changed area, note the date and initials. Update the device list to include the new E-stop. Submit the red-line markup to the engineer of record or site supervisor for formal drawing revision. Retain your copy of the markup as a record.' }
         ]
       }
     ]
+  },
+  // ── Period 3 ──────────────────────────────────────────────────────────────
+  {
+    id: 'm31', period: 3, comingSoon: true,
+    title: 'Three-Phase Power Systems',
+    icon: '🔺',
+    subtitle: 'Delta and wye configurations, power calculations, and load balancing',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06))',
+    border: 'rgba(245,158,11,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 3 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm32', period: 3, comingSoon: true,
+    title: 'Transformers & Power Distribution',
+    icon: '🏭',
+    subtitle: 'Transformer theory, connections, and distribution system design',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06))',
+    border: 'rgba(245,158,11,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 3 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm33', period: 3, comingSoon: true,
+    title: 'Grounding & Bonding Systems',
+    icon: '🌍',
+    subtitle: 'Equipment grounding, system grounding, and bonding requirements',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06))',
+    border: 'rgba(245,158,11,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 3 lessons are being developed. Check back soon!' }]
+  },
+  // ── Period 4 ──────────────────────────────────────────────────────────────
+  {
+    id: 'm41', period: 4, comingSoon: true,
+    title: 'Motor Controls & Drive Systems',
+    icon: '⚙️',
+    subtitle: 'VFDs, soft starters, and advanced motor protection',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
+    border: 'rgba(239,68,68,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm42', period: 4, comingSoon: true,
+    title: 'Industrial Automation & PLCs',
+    icon: '🤖',
+    subtitle: 'Programmable logic controllers, ladder logic, and SCADA systems',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
+    border: 'rgba(239,68,68,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
+  },
+  {
+    id: 'm43', period: 4, comingSoon: true,
+    title: 'Code & Standards — Red Seal Prep',
+    icon: '📜',
+    subtitle: 'Canadian Electrical Code mastery and Red Seal exam strategies',
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
+    border: 'rgba(239,68,68,0.3)',
+    readTime: 'Coming Soon',
+    sections: [{ type:'hook', title:'Coming Soon', body:'Period 4 lessons are being developed. Check back soon!' }]
   }
 ];
-
+/*OWNER_RAW_REMOVED
+    icon: '〰️',
+    subtitle: 'Second Period - Alternating Current (AC) Circuit Properties',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '26 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Alternating current (ac) circuits are widely used as the means of distribution for electric energy. Most electrician work involves ac circuits. In second period training, you will learn about additional ac circuit properties crucial to understanding electrical theory and the electrician trade.\n\nThis module discusses the generation of an alternating current and shows how a sine wave is generated. It describes the relationship between output frequency, poles, and rotational speed. Finally, it explains effective (RMS) voltage and sine wave calculations.\n\nObjectives:\n1. Describe the generation of an ac sine wave.\n2. Determine the output frequency of an ac generator.\n3. Calculate standard ac sine wave values.'
+      },
+      {
+        type: 'concept',
+        title: 'Generation of Alternating Current',
+        body: 'Relative motion means that either the conductor is moving past a stationary magnetic field, or a magnetic field is moving past a stationary conductor. When there is relative motion between a conductor and magnetic flux, an electromotive force (emf) is developed. The amount of emf depends on:\n- The density of the magnetic flux\n- The length of conductor within the magnetic field\n- The rate at which the conductor cuts the lines of magnetic force\n\nA conductor moving parallel to lines of force produces zero emf. Cutting directly across at 90° produces maximum emf.\n\nA conductor travelling at constant speed on a circular path cuts the lines of force at a constantly changing rate — so the induced voltage is constantly changing, varying according to the angle of cutting.'
+      },
+      {
+        type: 'concept',
+        title: 'Sine Wave Development',
+        body: 'Although conductor velocity is constant:\n- The angle at which flux lines are cut constantly changes\n- Lines cut per second continuously changes\n- Instantaneous induced voltage continuously changes\n\nPeak emf (Emax) is generated at 90° and 270° (when the conductor cuts at right angles). As a conductor loop rotates, it passes alternate north and south poles. One pair of poles = two alternations = one electrical cycle.\n\n0°–180° (positive alternation): positive emf values\n180°–360° (negative alternation): negative emf values\n\nPlotting both on a voltage/time graph produces a sine wave — called alternating current (ac) because it alternates direction.'
+      },
+      {
+        type: 'concept',
+        title: 'Frequency and Magnetic Poles',
+        body: 'The number of electrical cycles completed per second is the frequency (f), measured in hertz (Hz). The time for one cycle is the period.\n\nTwo-pole machine: 1 rev = 1 cycle (360 electrical degrees).\nFour-pole machine: 1 rev = 2 cycles (720 electrical degrees); 30 rev/s = 60 Hz.\nEight-pole machine: 1 rev = 4 cycles; only 15 rev/s needed for 60 Hz.\n\nIn any alternator, 360 electrical degrees are produced when a conductor passes by two opposite poles.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating Frequency',
+        body: 'Formula (using individual poles from nameplate):\nf = (p × n) / 120\n\nWhere: p = number of individual poles, n = rotational speed (r/min)\nDenominator is 120 because conductors must pass 2 poles per cycle, and 60 s/min.\n\nExamples:\n• 4-pole at 1800 r/min → f = (4 × 1800) / 120 = 60 Hz\n• 2-pole, 50 Hz → n = (50 × 120) / 2 = 3000 r/min\n• 400 Hz at 1200 r/min → p = (400 × 120) / 1200 = 40 poles'
+      },
+      {
+        type: 'concept',
+        title: 'Sine Wave Values — Peak and Instantaneous',
+        body: 'Peak (maximum) emf occurs when conductor cuts at 90° — at 90° (positive) and 270° (negative).\nSymbols: Vm, Em, Emax, or Epeak. Peak-to-peak spans both polarities.\n\nInstantaneous value formula:\ne = Emax × sin(angle)\n\nExamples (Emax = 10 V):\n• At 20°: e = 10 × sin 20° = 3.42 V\n• At 110°: e = 10 × sin 110° = 9.4 V\n• At 210°: e = 10 × sin 210° = −5 V'
+      },
+      {
+        type: 'keypoint',
+        title: 'Effective (RMS) Values',
+        body: 'The effective (RMS) value of ac produces the same heating effect as equivalent dc. AC meters indicate RMS values. Symbols without subscripts (E, V, I) = RMS.\n\nPeak from RMS: Emax = E × √2  (or E / 0.707)\nRMS from Peak: E = Emax × 0.707  (or Emax / √2)\n\nExamples:\n• 120 V RMS → Emax = 120 × 1.414 = 169.7 V\n• 169.7 V peak → E = 169.7 × 0.707 = 120 V\n• Peak 679 V → E = 679 × 0.707 = 480 V\n• Voltmeter reads 120 V; at 20°: Emax = 169.7 V → e = 169.7 × sin 20° = 58 V'
+      }
+    ]
+  },
+  {
+    id: 'm3_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Inductors and Capacitors in Circuits',
+    icon: '🔋',
+    subtitle: 'Second Period - Alternating Current (AC) Circuit Properties',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '42 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Inductors and capacitors are used in a variety of applications that an electrician will encounter. It is important to understand the effect these devices have in both ac and dc circuits.\n\nObjectives:\n1. Describe the effects of an inductor in a dc circuit.\n2. Describe the effects of a capacitor in a dc circuit.\n3. Describe the effects of an inductor in an ac circuit.\n4. Describe the characteristics of an ac inductive circuit.\n5. Calculate inductance and inductive reactance.\n6. Describe the effects of a capacitor in an ac circuit.\n7. Describe the characteristics of an ac capacitive circuit.\n8. Calculate capacitance and capacitive reactance.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductors in DC Circuits — RL Time Constant',
+        body: 'In a purely resistive circuit, current rises instantly. In an inductive circuit, current rises at a rate determined by inductance — opposing change via counter-electromotive force (cemf).\n\nTime Constant (T): Time for a circuit value to change by 63.2%.\nFormula: T = L / R  (L in henries, R in ohms → T in seconds)\nFull charge ≈ 5 time constants.\n\nExample: L = 0.16 H, R = 4 Ω → T = 0.04 s; full current at 0.2 s\nTC progression (steady state = 6 A): TC1=3.79 A, TC2=5.19 A, TC3=5.70 A, TC4=5.89 A, TC5=5.96 A\n\nHigher L → longer time constant. Higher R → lower steady current, shorter time.\nSteady-state current: I = E/R (Ohm\'s law — cemf = 0 at steady state).'
+      },
+      {
+        type: 'keypoint',
+        title: 'Opening an Inductive Circuit — Inductive Kick',
+        body: 'When an inductive circuit is opened, the collapsing field induces very high voltage:\ne = (ΔI / Δt) × L\n\nExample: L = 0.2 H, I = 4 A, opens in 0.4 μs:\ne = (4 / 0.0000004) × 0.2 = 2,000,000 V\n\nA discharge resistor in parallel with the coil provides a safe path:\n• Without discharge R (500 kΩ air gap): Vi = 4 A × 500,000 = 2 MV\n• With 100 Ω discharge R: Vi = 4 A × 100 = 400 V\n\nAlways protect inductive circuits with a discharge resistor or snubber.'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitors in DC Circuits — Electric Charge',
+        body: 'Capacitance allows a capacitor to store electric charge. In dc, a capacitor charges until Vcapacitor = Vsupply, then current stops.\n\nElectric charge: Q = I × t  (coulombs = amperes × seconds)\nCharge stored: Q = C × V  (farads × volts)\n\nExample: 50 μF charged to 22 V → Q = 0.00005 × 22 = 1.1 mC\n\nCharging: electrons rush onto the negative plate until Vc = E.\nDischarging: electrons flow from negative plate through resistor to positive plate until V = 0.'
+      },
+      {
+        type: 'keypoint',
+        title: 'RC Time Constants',
+        body: 'Formula: T = R × C  (T in seconds, R in ohms, C in farads)\nFull charge/discharge ≈ 5 time constants. Each TC, voltage increases 63.2% of remaining difference.\n\nExample: R = 200 Ω, C = 15 μF → T = 0.003 s (3 ms); full charge = 15 ms\n\nHigher R or C → longer time constant.\n\nKey answers:\n• Q = 5 A × 4 s = 20 C\n• Q = 100 μF × 200 V = 0.02 C\n• 80 μF, 30 Ω: T = 30 × 0.00008 = 2.4 ms; full charge = 12 ms\n• 50 μF, 1200 Ω, 100 V: voltage after 1 TC = 100 × 63.2% = 63.2 V'
+      },
+      {
+        type: 'concept',
+        title: 'Inductive Reactance (XL) in AC Circuits',
+        body: 'In ac circuits, current continually changes and inductance opposes that change — this opposition is called inductive reactance (XL), measured in ohms (Ω).\n\nXL exists ONLY in ac (dc current is constant — no cemf induced).\n\nRelationships:\n• Higher inductance → higher cemf → higher XL (direct)\n• Higher frequency → faster current change → higher XL (direct)\n\nIn a purely inductive ac circuit, current LAGS supply voltage by 90°.\n• When current starts rising (max rate of change), cemf is maximum\n• When current is at peak (zero rate of change), cemf = zero\n\nPhasor diagrams: IL drawn 90° clockwise (lagging) from VS.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating Inductive Reactance',
+        body: 'Formula: XL = 2πfL\nWhere: f = frequency (Hz), L = inductance (H)\n\nExamples:\n• L = 0.3 H, f = 60 Hz → XL = 2 × π × 60 × 0.3 = 113 Ω\n• L = 450 mH, f = 100 Hz → XL = 2 × π × 100 × 0.45 = 282.7 Ω\n• Transposed for L: XL = 65 Ω, f = 50 Hz → L = 65/(2π×50) = 207 mH\n• L = 0.22 H at 60 Hz → XL = 2 × π × 60 × 0.22 = 82.9 Ω'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitive Reactance (XC) in AC Circuits',
+        body: 'In ac circuits, voltage is constantly changing and the capacitor creates capacitive reactance (XC), measured in ohms. XC exists ONLY in ac.\n\nRelationships (both INVERSE):\n• Higher capacitance → more electron flow → LOWER XC\n• Higher frequency → faster charge/discharge → higher flow → LOWER XC\n\nIn a purely capacitive ac circuit, current LEADS voltage by 90°.\n• When supply voltage starts to rise, current is immediately high to charge the capacitor\n• By the time voltage peaks, current has dropped near zero\n\nPhasor: IC drawn 90° counterclockwise (leading) from VC.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Calculating Capacitive Reactance',
+        body: 'Formula: XC = 1 / (2πfC)\nWhere: f = frequency (Hz), C = capacitance (F)\n\nExamples:\n• C = 500 μF, f = 60 Hz → XC = 1/(2π × 60 × 0.0005) = 5.31 Ω\n• XC = 10 Ω, f = 60 Hz → C = 1/(2π × 60 × 10) = 265 μF\n• 800 μF at 60 Hz → XC = 1/(2π × 60 × 0.0008) = 3.32 Ω\n\nSelf-test key answers:\n• 300 mH, 2.5 Ω: T = 0.3/2.5 = 0.12 s\n• Purely inductive: current lags voltage by 90°\n• 600 mH at 60 Hz: XL = 2π × 60 × 0.6 = 226.2 Ω\n• Purely capacitive: current leads voltage by 90°\n• 30 Hz, XC = 75 Ω: C = 1/(2π × 30 × 75) = 70.7 μF'
+      }
+    ]
+  },
+  {
+    id: 'm22_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Timers and Smart Relays',
+    icon: '⏱️',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '18 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Electrical circuits are designed to control a variety of operations. Some require events to occur after a specific time has elapsed. With increasing automation, understanding timing control equipment is essential.\n\nObjectives:\n1. Describe timers and basic timing functions.\n2. Describe smart relays and basic timing functions.\n\nThis module describes different timing devices with emphasis on timing relays, including different timing functions and control circuits. Basic principles of smart relays are also examined.'
+      },
+      {
+        type: 'concept',
+        title: 'Types of Timing Devices',
+        body: 'Three basic types of timing devices:\n\n1. Spring-wound interval timers — wall switch style, timed-on interval. Used for lights, fans, bathroom fans, sauna heaters. Inexpensive, not highly accurate.\n\n2. Mechanical and electronic time switches — mechanical versions use clock motors with adjustable cams. Electronic versions use a clock circuit. Control circuits over 24-hour or 7-day cycles. Used for security lighting, irrigation, parking timers.\n\n3. Timing relays — provide precision and versatility for motor control. Can be pneumatic, fluid dashpot (constant-viscosity oil), or electronic. Modern electronic timing relays have largely replaced older types — more accurate, versatile, smaller, and cost-effective.\n\nNote: NO = normally open; NC = normally closed.'
+      },
+      {
+        type: 'concept',
+        title: 'TDOE — Time Delay on Energization (On-Delay)',
+        body: 'Contacts change state after a specified time measured from when the relay coil is ENERGIZED. When de-energized, contacts return to normal immediately.\n\n• At energization: NO timed contacts stay open (timing to close); NC timed contacts stay closed (timing to open)\n• After timeout: NO closes; NC opens\n• De-energize: contacts return to normal immediately\n\nApplication: Lubrication pump (M1) must run 3 minutes before main motor (M2) can start. TDOE relay with 3-minute delay — NO contact in M2 starter coil circuit stays open until timer times out.'
+      },
+      {
+        type: 'concept',
+        title: 'TDOD — Time Delay on De-Energization (Off-Delay)',
+        body: 'Contacts change state INSTANTLY when coil is energized, but only revert to normal after a specified time following de-energization.\n\n• At energization: NO timed closes immediately; NC timed opens immediately\n• At de-energization: contacts begin timing\n• After timeout: contacts return to normal\n\nApplication: When stop is pressed, Motor 1 stops immediately but Motor 2 continues for 5 minutes.\n\nIMPORTANT: A mandatory emergency stop button must be included in TDOD circuits — it immediately stops ALL motors regardless of timing state.'
+      },
+      {
+        type: 'concept',
+        title: 'Interval, One-Shot, and Repeat Cycle Timing',
+        body: 'Interval Timing: Contacts change state instantly at energization, then revert after a specified time. After timeout, contacts stay normal until coil is de-energized and re-energized. Application: exhaust fan purging a furnace combustion chamber.\n\nOne-Shot Timing: Coil is continuously energized. Contacts only change state when a start signal is received (button, limit switch, pressure switch). After the set time, contacts revert and wait for the next signal. Application: oil-spray pump on a lathe — lubricates for a set period when pressed.\n\nRepeat Cycle Timing: Regular on-and-off cycle until coil is de-energized.\n• Symmetrical: on time = off time\n• Non-symmetrical: different on and off times\nApplication: Air exhaust system providing air changes at specific intervals (e.g., 5 min on, 2 min off).'
+      },
+      {
+        type: 'keypoint',
+        title: 'Multi-Function Timing Relays and Reset Terminals',
+        body: 'Multi-function electronic timing relays provide several functions selectable by a mode switch:\n• A = ON DELAY (TDOE)\n• B/G = INTERVAL\n• C/P/I = OFF DELAY (TDOD)\n• E or K = REPEAT CYCLE\n\nAdvanced functions (manufacturer-dependent): Flasher, Shot on falling edge, Watchdog timer, Triggered on-delay.\n\nReset Terminals: Some relays offer a reset terminal in addition to a start terminal, allowing the timing sequence to be reset before completion. Can be activated by manual or automatic pilot devices.\n\nObjective One Activity key answers:\n• TDOE = Time Delay on Energization\n• TDOD = Time Delay on De-Energization\n• TDOE at energization: NO=open, NC=closed\n• TDOD at energization: NO=closed, NC=open\n• After TDOE timeout: NO=closed, NC=open\n• After TDOD de-energization (still timing): NO=closed, NC=open'
+      },
+      {
+        type: 'concept',
+        title: 'Smart Relays',
+        body: 'Smart relays evolved from PLC technology — combining the simplicity of traditional relays with PLC programmability. Used when full-scale PLCs are unnecessarily complex or expensive.\n\nKey features:\n• Programmable via graphical interfaces (ladder logic or function block diagrams)\n• Multiple inputs/outputs with onboard memory\n• Reprogrammed without rewiring\n• Integrates relay control, timers, counters, and device communication in one unit\n\nSelection considerations: number and voltage of I/O, keypad/display requirements, wireless communication needs.\n\nApplications: Building automation, lighting control, HVAC, small-scale manufacturing, car wash automation, automatic door control, access control, surveillance management.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Smart Relay Functions and Self-Test Answers',
+        body: 'Smart relay timing functions:\n• TDOE: contacts change after set time following input\n• TDOD: contacts change immediately; revert after set time following signal removal\n• One-Shot: contacts cycle each time start terminal receives a signal\n• Repeat Cycle: symmetrical or non-symmetrical on/off cycles\n• Daily/Weekly/Monthly Scheduling: real-time clock-based switching\n• Totalizing Timer with Reset: accumulates operation time then resets\n\nSelf-Test Key Answers:\n1. Spring-wound interval timer (bathroom fan — timed-on, inexpensive)\n2. One-shot (always requires a start signal)\n3. TDOE NO contacts at instant of energization: Open, not yet timing\n4. TDOD NO contacts at instant of energization: Closed, not timing\n5. Interval timer (5 s set, 12 s energized): Coil must de-energize then re-energize to restart timing\n6. Smart relays vs timing relays: Smart relays can be programmed for many timing functions\n7. To delay action after receiving input: On-delay (TDOE) timing'
+      }
+    ]
+  },
+  {
+    id: 'm2_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Properties of Inductors and Capacitors',
+    icon: '🧲',
+    subtitle: 'Second Period - Alternating Current (AC) Circuit Properties',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '20 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Properties of inductors and capacitors are critical to understanding AC circuit behavior. This module covers the physical properties and electrical characteristics of these two fundamental components.\n\nObjectives:\n1. Describe the properties of inductors.\n2. Describe the properties of capacitors.\n3. Understand how inductors and capacitors affect circuit behavior in AC systems.'
+      },
+      {
+        type: 'concept',
+        title: 'Inductance — Self-Inductance and Mutual Inductance',
+        body: 'Self-inductance is the property of a coil that opposes any change in current through it by inducing a counter-emf (cemf). The unit of inductance is the henry (H).\n\nFactors affecting inductance:\n• Number of turns (N) — more turns = more inductance (proportional to N²)\n• Core material — iron core greatly increases inductance vs air core\n• Cross-sectional area of core — larger area = more inductance\n• Length of coil — shorter coil = more inductance\n\nMutual inductance occurs when changing current in one coil induces voltage in a nearby coil. This is the principle behind transformers.\n\nFormula: L = (N² × μ × A) / l\nWhere: N = turns, μ = permeability, A = cross-sectional area, l = length'
+      },
+      {
+        type: 'concept',
+        title: 'Inductor Construction and Types',
+        body: 'Air-core inductors: Used at high frequencies (radio, communications). Low inductance values.\n\nIron-core inductors: Laminated iron cores for power frequencies (50/60 Hz). High inductance values. Used in transformers, motors, generators.\n\nFerrite-core inductors: Used at medium-high frequencies. Ferrite is a ceramic magnetic material.\n\nVariable inductors: Inductance adjusted by moving the core in and out of the coil.\n\nInductor symbols: Air core (simple coil symbol), iron core (coil with parallel lines), variable (coil with arrow).'
+      },
+      {
+        type: 'concept',
+        title: 'Capacitance — Electric Field Storage',
+        body: 'Capacitance is the ability to store electric charge. A capacitor consists of two conducting plates separated by an insulating material (dielectric).\n\nFactors affecting capacitance:\n• Plate area — larger plates = more capacitance (direct)\n• Distance between plates — closer = more capacitance (inverse)\n• Dielectric material — higher dielectric constant = more capacitance\n\nFormula: C = (ε × A) / d\nWhere: ε = permittivity of dielectric, A = plate area, d = plate separation\n\nUnit: farad (F). Practical units: microfarad (μF = 10⁻⁶ F), nanofarad (nF = 10⁻⁹ F), picofarad (pF = 10⁻¹² F)'
+      },
+      {
+        type: 'keypoint',
+        title: 'Capacitor Types and Applications',
+        body: 'Electrolytic capacitors: Polarized, high capacitance (1 μF to thousands of μF). Used in power supplies, filtering. MUST observe polarity.\n\nCeramic capacitors: Non-polarized, small values (pF to μF). Used in high-frequency circuits.\n\nFilm capacitors: Polyester, polypropylene. Good stability. Used in timing, coupling.\n\nVariable capacitors: Adjustable plates. Used in tuning circuits.\n\nCapacitor ratings:\n• Capacitance value (in μF, nF, or pF)\n• Voltage rating (maximum safe voltage — WVDC)\n• Temperature rating\n• Tolerance (±%)\n\nSeries capacitors: 1/CT = 1/C1 + 1/C2 + 1/C3\nParallel capacitors: CT = C1 + C2 + C3'
+      },
+      {
+        type: 'keypoint',
+        title: 'Energy Storage and Safety',
+        body: 'Inductors store energy in magnetic fields: W = ½LI²\nCapacitors store energy in electric fields: W = ½CV²\n\nSafety considerations:\n• Charged capacitors can deliver lethal shocks even after power is removed\n• Always discharge capacitors before working on equipment\n• Use a discharge resistor — never short-circuit capacitor terminals\n• Electrolytic capacitors can explode if connected with reverse polarity or exceeded voltage rating\n• Large inductors produce voltage spikes when circuits are opened (inductive kick)'
+      }
+    ]
+  },
+  {
+    id: 'm5_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Relays and Contactors',
+    icon: '🔌',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '26 pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Relays and contactors are essential switching devices in electrical control systems. Understanding their construction, operation, and application is fundamental to the electrician trade.\n\nObjectives:\n1. Describe the construction and operation of relays.\n2. Describe the construction and operation of contactors.\n3. Identify relay and contactor applications in control circuits.'
+      },
+      {
+        type: 'concept',
+        title: 'Electromagnetic Relays — Construction and Operation',
+        body: 'A relay is an electrically operated switch. When current flows through the coil, it creates a magnetic field that attracts the armature, causing contacts to change state.\n\nComponents:\n• Coil (electromagnet) — creates magnetic field when energized\n• Armature — movable magnetic piece attracted by the coil\n• Contacts — NO (normally open) and NC (normally closed)\n• Spring — returns armature to normal position when coil is de-energized\n• Core — concentrates magnetic flux\n\nOperation:\n1. Coil energized → magnetic field pulls armature\n2. NO contacts close, NC contacts open\n3. Coil de-energized → spring returns armature\n4. Contacts return to normal state'
+      },
+      {
+        type: 'concept',
+        title: 'Relay Types and Ratings',
+        body: 'General-purpose relays: Multiple contact arrangements (SPST, SPDT, DPDT, 3PDT). Used in control circuits for switching loads.\n\nControl relays (machine tool relays): Heavy-duty contacts for industrial applications. Replaceable contact cartridges.\n\nLatching relays: Maintain contact position after coil is de-energized. Require a separate reset coil or manual reset.\n\nReed relays: Glass-enclosed contacts operated by external magnetic field. Very fast switching, long life.\n\nRelay ratings:\n• Coil voltage (AC or DC) — must match supply\n• Contact rating — current and voltage capacity\n• Contact configuration — number of poles and throws\n• Pickup voltage — minimum voltage to operate\n• Dropout voltage — voltage at which relay releases'
+      },
+      {
+        type: 'concept',
+        title: 'Contactors — Heavy-Duty Switching',
+        body: 'A contactor is a heavy-duty relay designed for switching power circuits (motors, heaters, lighting).\n\nDifferences from relays:\n• Larger physical size\n• Higher current ratings (up to thousands of amperes)\n• Arc suppression (arc chutes, blow-out coils)\n• Power contacts for load switching\n• Auxiliary contacts for control circuits\n\nContactor construction:\n• Magnetic core (E-frame or U-frame)\n• Operating coil\n• Movable and stationary contacts\n• Arc chutes — extinguish arcs when contacts open under load\n• Shading coils — prevent AC contactor chatter (short-circuited copper rings on pole faces)\n\nNEMA sizes: 00, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 — each size handles higher horsepower ratings.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Motor Starters and Overload Protection',
+        body: 'A motor starter = contactor + overload relay. The contactor switches power to the motor; the overload relay protects against sustained overcurrent.\n\nOverload relay types:\n• Thermal (bimetallic or eutectic alloy/solder pot) — heater element heats up with motor current\n• Electronic — current transformers sense motor current, microprocessor trips\n\nOverload relay classes:\n• Class 10 — trips in 10 seconds at 6× rated current (standard motors)\n• Class 20 — trips in 20 seconds (high-inertia loads)\n• Class 30 — trips in 30 seconds (very high-inertia loads)\n\nTrip indicators: Flag shows when overload has tripped. Manual or automatic reset.\n\nThree-wire control: START (NO momentary) and STOP (NC momentary) buttons with holding contact (seal-in contact) on the starter.'
+      },
+      {
+        type: 'concept',
+        title: 'Control Circuit Diagrams',
+        body: 'Ladder diagrams: Show control circuit logic. Two vertical power rails (L1, L2) with horizontal rungs containing control devices.\n\nReading ladder diagrams:\n• Read left to right, top to bottom\n• Each rung is a complete circuit from L1 to L2\n• Coils/loads on the right side of rungs\n• Control devices (buttons, switches, contacts) on the left\n\nDevice designations:\n• M = motor starter coil\n• CR = control relay\n• OL = overload contact\n• 1M, 2M = auxiliary contacts of starter M\n\nThree-wire control circuit operation:\n1. Press START → current through STOP(NC) → START(NO) → M coil → M energizes\n2. M seal-in contact closes (parallels START button)\n3. Release START → current maintained through seal-in contact\n4. Press STOP → breaks circuit → M de-energizes → all contacts return to normal'
+      }
+    ]
+  },
+  {
+    id: 'm4_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Pilot and Overcurrent Devices',
+    icon: '🛡️',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: '30+ pages',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Introduction & Rationale',
+        body: 'Pilot devices send signals to control circuits, while overcurrent devices protect circuits and equipment. Understanding these devices is essential for designing and troubleshooting control systems.\n\nObjectives:\n1. Describe pilot devices and their applications.\n2. Describe overcurrent protective devices.\n3. Identify short-circuit and overload characteristics.'
+      },
+      {
+        type: 'concept',
+        title: 'Pilot Devices — Manual and Mechanical',
+        body: 'Pilot devices are input devices that send signals to control circuits. They do NOT carry load current — they control the devices that do.\n\nManual pilot devices:\n• Pushbuttons — momentary (spring return) or maintained. NO, NC, or both.\n• Selector switches — 2-position (ON/OFF) or 3-position (HAND/OFF/AUTO)\n• Drum switches — multi-position, multi-circuit switching\n• Foot switches — hands-free operation\n• Toggle switches — simple ON/OFF control\n\nMechanical pilot devices:\n• Limit switches — actuated by machine motion (lever, roller, plunger)\n• Cam switches — rotary actuator at specific positions\n\nOperator types: lever, roller, wobble stick, fork lever, spring rod, cat whisker.'
+      },
+      {
+        type: 'concept',
+        title: 'Pilot Devices — Sensing Type',
+        body: 'Proximity switches: Detect objects without physical contact.\n• Inductive — detect metals (uses oscillator and Eddy currents)\n• Capacitive — detect metals and non-metals (sense dielectric changes)\n• Photoelectric — use light beams (through-beam, retro-reflective, diffuse)\n• Ultrasonic — use sound waves for distance sensing\n\nPressure switches: Actuated when fluid pressure reaches a setpoint. Used for pump control, safety systems.\n\nTemperature switches (thermostats): Bimetallic element or thermocouple. Opens/closes at specific temperature.\n\nFloat switches: Actuated by liquid level. Used for pump control, tank filling.\n\nFlow switches: Detect fluid flow in pipes. Used for cooling system verification.'
+      },
+      {
+        type: 'concept',
+        title: 'Overcurrent Protection — Fuses',
+        body: 'Overcurrent: any current exceeding the rated current of equipment or conductor.\n\nTwo types of overcurrent:\n• Overload — moderate overcurrent (up to ~6× rated), sustained\n• Short circuit — massive overcurrent (can be 10,000+ amps), must be interrupted instantly\n\nFuses: Simplest overcurrent device. A fusible link melts when current exceeds rating.\n\nFuse classes (CEC/CSA):\n• Class H — standard, 10,000 AIC (ampere interrupting capacity)\n• Class K — high interrupting capacity (50,000-200,000 AIC)\n• Class R — rejection type, 200,000 AIC. Notched to prevent substitution.\n• Class J — current-limiting, 200,000 AIC. Smaller dimensions.\n• Class CC — compact, current-limiting, 200,000 AIC\n• Class T — very compact, current-limiting\n\nDual-element (time-delay) fuses: Allow temporary overloads (motor starting) but still protect against short circuits.'
+      },
+      {
+        type: 'keypoint',
+        title: 'Circuit Breakers and Short-Circuit Characteristics',
+        body: 'Short-circuit characteristics:\n• Electromagnetic responsive elements sense magnetic field increase from sudden overcurrent\n• Magnetic field builds instantly around conductor during short circuit\n• Circuit breaker trips almost instantaneously\n\nInverse-time circuit breakers (thermal-magnetic):\n• Thermal element (bimetallic strip) — handles overloads, trips slowly for moderate overcurrent\n• Magnetic element (electromagnet) — handles short circuits, trips instantly for high overcurrent\n• Most common type in panelboards, commercial buildings, and industrial plants\n\nComponents: handle mechanism, trip mechanism, bimetallic strip, adjusting screw, tripper bar, electromagnet sensing element, spring, movable/stationary contact arms.\n\nGround fault circuit interrupters (GFCI): Detect current imbalance between hot and neutral (as low as 5 mA). Required by CEC for bathroom, kitchen, outdoor receptacles.'
+      }
+    ]
+  },
+  {
+    id: 'm4b_raw',
+    period: 2,
+    ownerOnly: true,
+    title: 'Pilot and Overcurrent Devices (Part 2)',
+    icon: '⚡',
+    subtitle: 'Second Period - Magnetic Controls and Switching Circuits',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.04))',
+    border: 'rgba(245,158,11,0.25)',
+    readTime: 'Continuation',
+    sections: [
+      {
+        type: 'hook',
+        title: 'Continuation — Advanced Overcurrent Topics',
+        body: 'This is the continuation of the Pilot and Overcurrent Devices module, covering additional circuit breaker types, coordination, and advanced protection concepts.'
+      },
+      {
+        type: 'concept',
+        title: 'Molded-Case Circuit Breakers (MCCB)',
+        body: 'MCCBs are the most common circuit breakers in commercial and industrial applications.\n\nFrame sizes: 100A, 225A, 400A, 600A, 800A, 1200A, 2000A, 3000A, 4000A, 6000A\nTrip units can be:\n• Thermal-magnetic (standard)\n• Electronic (adjustable settings)\n• Motor circuit protector (instantaneous only, used with motor starters)\n\nAdjustable trip units allow:\n• Long-time delay (overload)\n• Short-time delay (coordination)\n• Instantaneous (short circuit)\n• Ground fault (optional)\n\nSeries ratings: Downstream breaker can have lower AIC if protected by upstream breaker. Must be listed as a series combination.'
+      },
+      {
+        type: 'keypoint',
+OWNER_RAW_REMOVED*/
 const Lessons = {
   activeLesson: null,
+  _ttsActive: false,
+
+  _elAudio: null,
+  _elSectionOffsets: [],
+  _elSpeedRate: 1.0,
+  _ttsPaused: false,
+
+  // Find a lesson by ID — searches both built-in and uploaded modules
+  _findLesson(lessonId) {
+    const builtin = LESSONS_CONTENT.find(l => l.id === lessonId);
+    if (builtin) return builtin;
+    // Search uploaded modules
+    const state = Storage.get();
+    if (!state) return null;
+    const moduleKey = 'sparky_module_' + state.user.id;
+    try {
+      const uploaded = JSON.parse(localStorage.getItem(moduleKey) || '[]');
+      return uploaded.find(m => m.id === lessonId) || null;
+    } catch(e) { return null; }
+  },
+
+  _buildReadText(fromIdx) {
+    const lesson = this._findLesson(this.activeLesson);
+    if (!lesson) return { text: '', offsets: [] };
+    let text = '';
+    const offsets = [];
+    for (let i = fromIdx; i < lesson.sections.length; i++) {
+      const s = lesson.sections[i];
+      const start = text.length;
+      let t = (s.title || '').replace(/[^\w\s.,!?'-]/g, '') + '. ';
+      if (s.body) t += s.body + ' ';
+      if (s.formula) t += 'Formula: ' + s.formula.replace(/[^\w\s.,!?=+\-\/()]/g, '') + '. ';
+      if (s.tips) s.tips.forEach(tip => { t += tip + ' '; });
+      if (s.objectives) s.objectives.forEach(o => { t += o + '. '; });
+      text += t;
+      offsets.push({ idx: i, start, end: text.length });
+    }
+    return { text: text.trim(), offsets };
+  },
+
+  async _elSpeakFrom(fromIdx) {
+    this._stopReading();
+    const { text, offsets } = this._buildReadText(fromIdx);
+    if (!text) return;
+    this._elSectionOffsets = offsets;
+    const btn = document.getElementById('lessons-read-btn');
+    if (btn) { btn.textContent = '⏳ Loading...'; btn.style.color = '#f59e0b'; btn.style.borderColor = 'rgba(245,158,11,0.4)'; btn.style.background = 'rgba(245,158,11,0.08)'; }
+    try {
+      const BACKEND = 'https://sparkystudy-production.up.railway.app';
+      const res = await fetch(`${BACKEND}/api/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.substring(0, 5000) })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.color = '#58a6ff'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.background = 'rgba(88,166,255,0.1)'; }
+        alert('ElevenLabs error: ' + (err.detail?.message || err.detail || res.status));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      this._elAudio = new Audio(url);
+      this._elAudio.playbackRate = this._elSpeedRate;
+      const totalChars = Math.min(text.length, 5000);
+      this._elAudio.addEventListener('timeupdate', () => {
+        if (!this._elAudio) return;
+        const pct = this._elAudio.currentTime / (this._elAudio.duration || 1);
+        const charPos = Math.floor(pct * totalChars);
+        const cur = offsets.find(o => charPos >= o.start && charPos < o.end);
+        if (cur) this._highlightSection(cur.idx);
+        const slider = document.getElementById('read-ctrl-seek');
+        if (slider) slider.value = Math.floor(pct * 100);
+      });
+      this._elAudio.onended = () => {
+        this._ttsActive = false; this._ttsPaused = false;
+        URL.revokeObjectURL(url);
+        this._clearHighlights(); this._hideReadControls();
+        const b = document.getElementById('lessons-read-btn');
+        if (b) { b.textContent = '🔊 Read Aloud'; b.style.color = '#58a6ff'; b.style.borderColor = 'rgba(88,166,255,0.3)'; b.style.background = 'rgba(88,166,255,0.1)'; }
+      };
+      this._elAudio.play();
+      this._ttsActive = true; this._ttsPaused = false;
+      this._showReadControls();
+      if (btn) { btn.textContent = '⏹ Stop'; btn.style.color = '#10b981'; btn.style.borderColor = 'rgba(16,185,129,0.3)'; btn.style.background = 'rgba(16,185,129,0.1)'; }
+    } catch(e) {
+      if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.color = '#58a6ff'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.background = 'rgba(88,166,255,0.1)'; }
+      alert('ElevenLabs connection error: ' + e.message);
+    }
+  },
+
+  _highlightSection(idx) {
+    document.querySelectorAll('.lesson-sec-active').forEach(el => {
+      el.classList.remove('lesson-sec-active');
+      el.style.outline = ''; el.style.boxShadow = '';
+    });
+    const el = document.getElementById('lesson-section-' + idx);
+    if (el) {
+      el.classList.add('lesson-sec-active');
+      el.style.outline = '2px solid rgba(249,115,22,0.7)';
+      el.style.boxShadow = '0 0 20px rgba(249,115,22,0.12)';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  },
+
+  _clearHighlights() {
+    document.querySelectorAll('.lesson-sec-active').forEach(el => {
+      el.classList.remove('lesson-sec-active');
+      el.style.outline = ''; el.style.boxShadow = '';
+    });
+  },
+
+  _showReadControls() {
+    let bar = document.getElementById('read-controls-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'read-controls-bar';
+      bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#0d1117;border-top:2px solid rgba(249,115,22,0.4);padding:10px 20px;display:flex;align-items:center;gap:12px;z-index:9999;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,0.5);';
+      bar.innerHTML = `
+        <span style="font-size:0.8rem;color:#f97316;font-weight:700;">🔊 Reading</span>
+        <input type="range" id="read-ctrl-seek" min="0" max="100" value="0" style="flex:1;min-width:80px;accent-color:#f97316;cursor:pointer;" oninput="Lessons._seekTo(this.value)">
+        <button onclick="Lessons._togglePause()" id="read-ctrl-pause" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.4);color:#f97316;padding:6px 14px;border-radius:7px;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;">⏸ Pause</button>
+        <select id="read-ctrl-speed" onchange="Lessons._setSpeed(this.value)" style="background:#1f2937;border:1px solid #374151;color:#e5e7eb;padding:5px 10px;border-radius:7px;font-size:0.82rem;cursor:pointer;">
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+        </select>
+        <button onclick="Lessons._stopReading()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:6px 12px;border-radius:7px;font-size:0.82rem;cursor:pointer;">⏹ Stop</button>
+      `;
+      document.body.appendChild(bar);
+    } else {
+      bar.style.display = 'flex';
+    }
+    const speedSel = document.getElementById('read-ctrl-speed');
+    if (speedSel) speedSel.value = String(this._elSpeedRate);
+  },
+
+  _hideReadControls() {
+    const bar = document.getElementById('read-controls-bar');
+    if (bar) bar.style.display = 'none';
+    this._clearHighlights();
+  },
+
+  _togglePause() {
+    if (!this._elAudio) return;
+    const btn = document.getElementById('read-ctrl-pause');
+    if (this._ttsPaused) {
+      this._elAudio.play(); this._ttsPaused = false;
+      if (btn) btn.textContent = '⏸ Pause';
+    } else {
+      this._elAudio.pause(); this._ttsPaused = true;
+      if (btn) btn.textContent = '▶ Resume';
+    }
+  },
+
+  _seekTo(pct) {
+    if (!this._elAudio || !this._elAudio.duration) return;
+    this._elAudio.currentTime = (pct / 100) * this._elAudio.duration;
+  },
+
+  _setSpeed(rate) {
+    this._elSpeedRate = parseFloat(rate);
+    if (this._elAudio) this._elAudio.playbackRate = this._elSpeedRate;
+  },
+
+  _getBestVoice() {
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    // Microsoft Neural (Online Natural) voices first — these sound closest to real speech
+    const preferred = [
+      'Microsoft Aria Online (Natural) - English (United States)',
+      'Microsoft Jenny Online (Natural) - English (United States)',
+      'Microsoft Guy Online (Natural) - English (United States)',
+      'Microsoft Davis Online (Natural) - English (United States)',
+      'Microsoft Ana Online (Natural) - English (United States)',
+      'Microsoft Brian Online (Natural) - English (United States)',
+      'Microsoft Emma Online (Natural) - English (United Kingdom)',
+      'Microsoft Ryan Online (Natural) - English (United Kingdom)',
+    ];
+    for (const name of preferred) {
+      const v = voices.find(v => v.name === name || v.name.startsWith(name));
+      if (v) return v;
+    }
+    // Any Microsoft Natural/Online English voice
+    const msNatural = voices.find(v => v.name.includes('Microsoft') && v.name.includes('Natural') && v.lang.startsWith('en'));
+    if (msNatural) return msNatural;
+    // Any Microsoft Online English voice
+    const msOnline = voices.find(v => v.name.includes('Microsoft') && v.name.includes('Online') && v.lang.startsWith('en'));
+    if (msOnline) return msOnline;
+    // Fall back to Google
+    const google = voices.find(v => v.name.startsWith('Google') && v.lang.startsWith('en'));
+    if (google) return google;
+    return voices.find(v => v.lang.startsWith('en-US') || v.lang.startsWith('en-GB')) || voices[0];
+  },
+
+  _getLessonText(lessonId) {
+    const lesson = this._findLesson(lessonId);
+    if (!lesson) return '';
+    let text = lesson.title + '. ' + lesson.subtitle + '. ';
+    for (const s of lesson.sections) {
+      if (s.title) text += s.title.replace(/[^\w\s.,!?'-]/g, '') + '. ';
+      if (s.body) text += s.body + ' ';
+      if (s.formula) text += 'Formula: ' + s.formula.replace(/[×÷√]/g, ' ') + '. ';
+      if (s.questions) s.questions.forEach(q => { text += q.q + ' Answer: ' + q.a + '. '; });
+      if (s.tips) s.tips.forEach(t => { text += t + ' '; });
+      if (s.objectives) s.objectives.forEach(o => { text += o + '. '; });
+    }
+    return text.replace(/\s+/g, ' ').trim();
+  },
+
+  _stopReading() {
+    if (this._elAudio) { this._elAudio.pause(); this._elAudio = null; }
+    speechSynthesis.cancel();
+    this._ttsActive = false; this._ttsPaused = false;
+    this._hideReadControls();
+    const btn = document.getElementById('lessons-read-btn');
+    if (btn) { btn.textContent = '🔊 Read Aloud'; btn.style.background = 'rgba(88,166,255,0.1)'; btn.style.borderColor = 'rgba(88,166,255,0.3)'; btn.style.color = '#58a6ff'; }
+  },
+
+  async _toggleRead() {
+    if (this._ttsActive) { this._stopReading(); return; }
+    await this._elSpeakFrom(0);
+  },
 
   render(state) {
     if (!state) return;
@@ -9233,30 +11395,145 @@ const Lessons = {
   },
 
   _renderIndex(container, state) {
+    const period = state.user.period;
+    // Get user's uploaded modules from localStorage
+    const moduleKey = 'sparky_module_' + state.user.id;
+    const uploadedModules = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    const userModules = uploadedModules.filter(m => m.period === period);
+
+    // Built-in lessons for owner only
+    const builtInLessons = LESSONS_CONTENT.filter(l => l.period === period && !l.comingSoon);
+    const allLessons = [...userModules, ...builtInLessons];
+
     container.innerHTML = `
       <div style="padding:24px 0 8px;">
         <h1 style="font-size:2rem;margin-bottom:6px;">&#x1F4DA; Lessons</h1>
-        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">Deep-dive lessons for every available module â€” real explanations, real-world examples, and the kind of context that makes everything click.</p>
+        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">
+          ${allLessons.length > 0
+            ? `Your Period ${period} modules and lessons — study, review, and quiz yourself.`
+            : `Upload your textbook modules to create interactive lessons.`}
+        </p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-top:24px;">
-        ${LESSONS_CONTENT.map(lesson => `
-          <div onclick="Lessons._open('${lesson.id}')" style="cursor:pointer;background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:24px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;"
-            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'"
-            onmouseout="this.style.transform='';this.style.boxShadow=''">
-            <div style="font-size:2.5rem;margin-bottom:10px;">${lesson.icon}</div>
-            <h2 style="font-size:1.15rem;margin:0 0 4px;color:${lesson.color};">${lesson.title}</h2>
-            <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 16px;line-height:1.4;">${lesson.subtitle}</p>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-size:0.78rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</span>
-              <span style="font-size:0.8rem;font-weight:600;color:${lesson.color};">Start &#x2192;</span>
+
+      ${allLessons.length === 0 ? `
+        <div style="text-align:center;padding:48px 24px;">
+          <div style="font-size:3.5rem;margin-bottom:16px;">📕</div>
+          <h2 style="font-size:1.3rem;margin-bottom:10px;">No modules uploaded yet</h2>
+          <p style="color:var(--text-secondary);font-size:0.95rem;max-width:460px;margin:0 auto 24px;line-height:1.6;">
+            Upload your textbook PDFs or photos to create interactive lessons.
+            The AI will organize the content into sections you can study, quiz yourself on, and have read aloud.
+          </p>
+          <label class="btn btn-primary btn-lg" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:14px 28px;font-size:1rem;">
+            📄 Upload a Module
+            <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Lessons._uploadModule(event,'${state.user.id}')">
+          </label>
+          <div style="margin-top:14px;font-size:0.78rem;color:var(--text-muted);">🔒 Modules are private — stored on your device only, never shared.</div>
+        </div>
+      ` : `
+        <div style="display:flex;align-items:center;gap:12px;margin:16px 0 20px;">
+          <label class="btn btn-primary btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            📄 Upload Module
+            <input type="file" accept="image/*,.pdf,.txt" multiple style="display:none;" onchange="Lessons._uploadModule(event,'${state.user.id}')">
+          </label>
+          <span style="font-size:0.78rem;color:var(--text-muted);">🔒 Private — never shared</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+          ${allLessons.map(lesson => `
+            <div onclick="Lessons._open('${lesson.id}')" style="cursor:pointer;background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:24px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;"
+              onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'"
+              onmouseout="this.style.transform='';this.style.boxShadow=''">
+              ${lesson.uploaded ? '<div style="position:absolute;top:12px;right:12px;font-size:0.65rem;background:rgba(245,158,11,0.15);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">UPLOADED</div>' : ''}
+              <div style="font-size:2.5rem;margin-bottom:10px;">${lesson.icon}</div>
+              <h2 style="font-size:1.15rem;margin:0 0 4px;color:${lesson.color};">${lesson.title}</h2>
+              <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 16px;line-height:1.4;">${lesson.subtitle}</p>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:0.78rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</span>
+                <span style="font-size:0.8rem;font-weight:600;color:${lesson.color};">Start &#x2192;</span>
+              </div>
+              ${lesson.uploaded ? `<div style="position:absolute;bottom:8px;right:8px;display:flex;gap:4px;">
+                <button onclick="event.stopPropagation();Lessons._renameUploaded('${lesson.id}','${state.user.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;opacity:0.6;padding:2px 4px;" title="Rename">✏️</button>
+                <button onclick="event.stopPropagation();Lessons._deleteUploaded('${lesson.id}','${state.user.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;opacity:0.5;padding:2px 4px;" title="Delete">🗑️</button>
+              </div>` : ''}
             </div>
-          </div>
-        `).join('')}
-      </div>
+          `).join('')}
+        </div>
+      `}
     `;
   },
 
+  // Upload module directly from Lessons page
+  async _uploadModule(event, userId) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    event.target.value = '';
+    const BACKEND = 'https://sparkystudy-production.up.railway.app';
+
+    for (const file of files) {
+      const fname = file.name || 'module';
+      showToast(`Processing ${fname}...`, 'info');
+      try {
+        let text = '';
+        if (file.type === 'application/pdf') {
+          text = await Notes._extractPdfText(file);
+          if (text.trim().length < 50) {
+            showToast(`📄 ${fname} is scanned — running OCR...`, 'info');
+            text = await Notes._ocrPdf(file, BACKEND);
+          }
+        } else if (file.type.startsWith('image/')) {
+          const base64 = await Notes._fileToBase64(file);
+          const res = await fetch(BACKEND + '/api/extract-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64, mimeType: file.type })
+          });
+          const data = await res.json();
+          text = data.text || '';
+        } else {
+          text = await file.text();
+        }
+        if (text.trim().length > 20) {
+          await Notes._saveAsModule(text, fname, userId, null);
+        }
+      } catch(err) {
+        showToast(`Failed: ${err.message}`, 'error');
+      }
+    }
+    this.render(Storage.get());
+  },
+
+  _renameUploaded(lessonId, userId) {
+    const moduleKey = 'sparky_module_' + userId;
+    const modules = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    const mod = modules.find(m => m.id === lessonId);
+    if (!mod) return;
+    const newName = prompt('Rename this module:', mod.title);
+    if (!newName || !newName.trim() || newName.trim() === mod.title) return;
+    mod.title = newName.trim();
+    localStorage.setItem(moduleKey, JSON.stringify(modules));
+    showToast('Module renamed!', 'success');
+    if (this.activeLesson === lessonId) {
+      const container = document.getElementById('lessonsContent');
+      if (container) this._renderLesson(lessonId, container);
+    } else {
+      this.render(Storage.get());
+    }
+  },
+
+  _deleteUploaded(lessonId, userId) {
+    if (!confirm('Delete this uploaded module? This cannot be undone.')) return;
+    const moduleKey = 'sparky_module_' + userId;
+    const modules = (() => { try { return JSON.parse(localStorage.getItem(moduleKey) || '[]'); } catch(e) { return []; } })();
+    const filtered = modules.filter(m => m.id !== lessonId);
+    localStorage.setItem(moduleKey, JSON.stringify(filtered));
+    localStorage.removeItem('sparky_modtext_' + userId + '_' + lessonId);
+    showToast('Module deleted.', 'info');
+    this.activeLesson = null;
+    this.render(Storage.get());
+  },
+
   _open(lessonId) {
+    const state = Storage.get();
+    if (!state) return;
     this.activeLesson = lessonId;
     const container = document.getElementById('lessonsContent');
     if (container) this._renderLesson(lessonId, container);
@@ -9264,6 +11541,7 @@ const Lessons = {
   },
 
   _back() {
+    this._stopReading();
     this.activeLesson = null;
     const container = document.getElementById('lessonsContent');
     const state = Storage.get();
@@ -9271,17 +11549,58 @@ const Lessons = {
     window.scrollTo(0, 0);
   },
 
-  _renderLesson(lessonId, container) {
-    const lesson = LESSONS_CONTENT.find(l => l.id === lessonId);
-    if (!lesson) { this.activeLesson = null; return; }
+  _notesOpen: false,
 
-    const sectionHtml = lesson.sections.map(s => this._renderSection(s, lesson.color)).join('');
+  _toggleNotes(lessonId, userId) {
+    this._notesOpen = !this._notesOpen;
+    // Re-render the lesson to update the grid layout
+    const container = document.getElementById('lessonsContent');
+    if (container) this._renderLesson(lessonId, container);
+    if (this._notesOpen) {
+      setTimeout(() => { const ed = document.getElementById('lessonNotesEditor'); if (ed) ed.focus(); }, 150);
+    }
+  },
+
+  _saveNotes(lessonId, userId) {
+    const editor = document.getElementById('lessonNotesEditor');
+    if (!editor) return;
+    const key = 'sparky_lesson_notes_' + userId + '_' + lessonId;
+    localStorage.setItem(key, editor.innerHTML);
+    const saved = document.getElementById('lessonNotesSaved');
+    if (saved) { saved.textContent = 'Saved ✓'; setTimeout(() => { if (saved) saved.textContent = 'Auto-saved'; }, 1500); }
+    // Also sync to AI context
+    syncAIContext(Storage.get());
+  },
+
+  _renderLesson(lessonId, container) {
+    const lesson = this._findLesson(lessonId);
+    if (!lesson) { this.activeLesson = null; return; }
+    const state = Storage.get();
+    const userId = state ? state.user.id : '';
+
+    const sectionHtml = lesson.sections.map((s, idx) => this._renderSection(s, lesson.color, idx)).join('');
+
+    // Load saved notes for this lesson
+    const notesKey = 'sparky_lesson_notes_' + userId + '_' + lessonId;
+    const savedNotes = localStorage.getItem(notesKey) || '';
 
     container.innerHTML = `
       <div style="padding:16px 0;">
-        <button onclick="Lessons._back()" style="background:none;border:1px solid var(--border);color:var(--text-secondary);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;margin-bottom:20px;display:flex;align-items:center;gap:6px;">
-          &#8592; All Lessons
-        </button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+          <button onclick="Lessons._back()" style="background:none;border:1px solid var(--border);color:var(--text-secondary);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;gap:6px;">
+            &#8592; All Lessons
+          </button>
+          <button id="lessons-read-btn" onclick="Lessons._toggleRead()" style="background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.15s;">
+            🔊 Read Aloud
+          </button>
+          <button id="lessons-notes-btn" onclick="Lessons._toggleNotes('${lessonId}','${userId}')" style="background:${this._notesOpen ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.06)'};border:1px solid ${this._notesOpen ? 'var(--accent)' : 'rgba(245,158,11,0.3)'};color:var(--accent);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.15s;">
+            📝 ${this._notesOpen ? 'Hide Notes' : 'My Notes'}
+          </button>
+        </div>
+
+        <!-- Side-by-side layout: lesson content + sticky notes panel -->
+        <div style="display:${this._notesOpen ? 'grid' : 'block'};grid-template-columns:${this._notesOpen ? '1fr 320px' : '1fr'};gap:20px;align-items:start;">
+        <div>
         <div style="background:${lesson.gradient};border:1px solid ${lesson.border};border-radius:16px;padding:32px;margin-bottom:28px;">
           <div style="font-size:3rem;margin-bottom:12px;">${lesson.icon}</div>
           <h1 style="font-size:1.9rem;margin:0 0 6px;color:${lesson.color};">${lesson.title}</h1>
@@ -9289,17 +11608,55 @@ const Lessons = {
           <div style="margin-top:14px;font-size:0.82rem;color:var(--text-muted);">&#x1F4D6; ${lesson.sections.length} sections &nbsp;&bull;&nbsp; ${lesson.readTime}</div>
         </div>
         ${sectionHtml}
-        <div style="text-align:center;padding:32px 0 16px;">
+        <div style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.25);border-radius:14px;padding:24px;margin-bottom:16px;">
+          <h3 style="margin:0 0 8px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">🤖 AI Practice Quiz</h3>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 14px;">Generate fresh exam-style questions based on this lesson.</p>
+          <button onclick="Lessons._aiQuiz('${lessonId}')" id="ai-quiz-btn" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;">⚡ Generate 5 Questions</button>
+          <div id="ai-quiz-result" style="margin-top:16px;"></div>
+        </div>
+        <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);border-radius:14px;padding:24px;margin-bottom:24px;">
+          <h3 style="margin:0 0 8px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">🃏 AI Flashcard Generator</h3>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 14px;">Instantly create 10 study flashcards from this lesson and add them to your deck.</p>
+          <button onclick="Lessons._aiGenerateFlashcards('${lessonId}')" id="ai-fc-btn" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;">🃏 Generate Flashcards</button>
+          <div id="ai-fc-result" style="margin-top:16px;"></div>
+        </div>
+        <div style="text-align:center;padding:16px 0 16px;">
           <button onclick="Lessons._back()" style="background:${lesson.color};color:#000;font-weight:700;border:none;padding:14px 32px;border-radius:10px;cursor:pointer;font-size:1rem;">
             &#x2190; Back to Lessons
           </button>
         </div>
+        </div><!-- end lesson column -->
+
+        ${this._notesOpen ? `
+        <!-- Sticky notes sidebar -->
+        <div id="lessonNotesPanel" style="position:sticky;top:80px;height:fit-content;max-height:calc(100vh - 100px);">
+          <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 100px);">
+            <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04));padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(245,158,11,0.2);flex-shrink:0;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:0.95rem;">📝</span>
+                <span style="font-weight:700;font-size:0.8rem;color:var(--accent);">My Notes</span>
+              </div>
+              <span id="lessonNotesSaved" style="font-size:0.68rem;color:var(--text-muted);">Auto-saved</span>
+            </div>
+            <div id="lessonNotesEditor" contenteditable="true" spellcheck="true"
+              style="flex:1;overflow-y:auto;padding:14px;font-size:0.85rem;line-height:1.7;color:var(--text-primary);outline:none;min-height:300px;"
+              data-placeholder="Type notes as you read..."
+              oninput="Lessons._saveNotes('${lessonId}','${userId}')"
+            >${savedNotes}</div>
+          </div>
+        </div>` : ''}
+
+        </div><!-- end grid wrapper -->
       </div>
     `;
   },
 
-  _renderSection(s, accentColor) {
+  _renderSection(s, accentColor, idx = 0) {
     // Special full-width renderers for objectives and outcome
+    if (s.type === 'objectives' && (!s.objectives || !Array.isArray(s.objectives))) {
+      // Fallback: render as concept if objectives array is missing
+      return this._renderSection({ ...s, type: 'concept' }, accentColor, idx);
+    }
     if (s.type === 'objectives') {
       const objList = s.objectives.map((o, i) =>
         `<div style="display:flex;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:6px;align-items:flex-start;">
@@ -9319,11 +11676,14 @@ const Lessons = {
       return `
         <div style="background:rgba(255,255,255,0.02);border:2px solid ${accentColor}33;border-radius:14px;padding:24px;margin-bottom:18px;">
           <h3 style="font-size:1.1rem;margin:0 0 4px;display:flex;align-items:center;gap:8px;color:${accentColor};">&#x1F4CB; ${s.title}</h3>
-          <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 16px;font-style:italic;">Knowledge objectives only â€” hands-on demonstration objectives are excluded.</p>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 16px;font-style:italic;">Knowledge objectives only — hands-on demonstration objectives are excluded.</p>
           ${objList}${qHtml}
         </div>`;
     }
 
+    if (s.type === 'outcome' && !s.outcome) {
+      return this._renderSection({ ...s, type: 'concept' }, accentColor, idx);
+    }
     if (s.type === 'outcome') {
       const qHtml = s.questions ? s.questions.map((qobj, i) => `
         <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px;margin-bottom:10px;">
@@ -9362,9 +11722,9 @@ const Lessons = {
     if (s.body) {
       const paragraphs = s.body.split('\n\n').map(p => {
         const lines = p.split('\n');
-        if (lines.length > 1 && lines.some(l => l.startsWith('â€¢'))) {
-          const listItems = lines.filter(l => l.startsWith('â€¢')).map(l => '<li style="margin-bottom:5px;">' + l.slice(1).trim() + '</li>').join('');
-          const pre = lines.filter(l => !l.startsWith('â€¢')).join(' ').trim();
+        if (lines.length > 1 && lines.some(l => l.startsWith('•'))) {
+          const listItems = lines.filter(l => l.startsWith('•')).map(l => '<li style="margin-bottom:5px;">' + l.slice(1).trim() + '</li>').join('');
+          const pre = lines.filter(l => !l.startsWith('•')).join(' ').trim();
           return (pre ? '<p style="margin:0 0 8px;">' + pre + '</p>' : '') + '<ul style="margin:0 0 12px;padding-left:20px;">' + listItems + '</ul>';
         }
         return '<p style="margin:0 0 12px;line-height:1.7;color:var(--text-primary);">' + p.replace(/\n/g, '<br>') + '</p>';
@@ -9400,11 +11760,257 @@ const Lessons = {
     }
 
     return `
-      <div style="background:${style.bg};border:1px solid ${style.border};border-radius:14px;padding:24px;margin-bottom:18px;">
+      <div id="lesson-section-${idx}" style="background:${style.bg};border:1px solid ${style.border};border-radius:14px;padding:24px;margin-bottom:18px;transition:outline 0.2s,box-shadow 0.2s;">
         <h3 style="font-size:1.05rem;margin:0 0 14px;display:flex;align-items:center;gap:8px;">${s.title}</h3>
         ${inner}
+        <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button onclick="Lessons._aiExplain(${idx})" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);color:#f97316;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">⚡ AI Explain This</button>
+          <button onclick="Lessons._elSpeakFrom(${idx})" style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.25);color:#58a6ff;padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">▶ Start reading here</button>
+          <button onclick="Lessons._addToNotes(${idx})" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);color:var(--accent);padding:6px 12px;border-radius:7px;font-size:0.78rem;font-weight:600;cursor:pointer;">📝 Add to Notes</button>
+        </div>
+        <div id="ai-explain-${idx}" style="display:none;margin-top:12px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:14px;font-size:0.88rem;line-height:1.65;color:var(--text-primary);"></div>
       </div>`;
-  }
+
+  },
+
+  async _aiExplain(idx) {
+    const lesson = this._findLesson(this.activeLesson);
+    if (!lesson || !lesson.sections[idx]) return;
+    const s = lesson.sections[idx];
+    const box = document.getElementById('ai-explain-' + idx);
+    const btn = box?.previousElementSibling?.querySelector('button');
+    if (!box) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; if (btn) btn.textContent = '⚡ AI Explain This'; return; }
+    box.style.display = 'block';
+    box.innerHTML = '<span style="color:var(--text-muted);">⏳ Thinking...</span>';
+    if (btn) btn.textContent = '⚡ Hide Explanation';
+    const bodyText = s.body || '';
+    const prompt = `You are SparkStudy, an AI tutor for Alberta electrical apprentices. Explain this concept simply and practically, as if talking to a tradesperson, not an academic. Use plain English, short sentences, and a real-world analogy if it helps. Keep it under 120 words.\n\nConcept: "${s.title}"\n\n${bodyText.substring(0, 800)}`;
+    try {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      box.innerHTML = (data.answer || 'No response.').replace(/\n/g, '<br>');
+    } catch(e) {
+      box.innerHTML = 'Connection error — try again.';
+    }
+  },
+
+  _addToNotes(idx) {
+    const lesson = this._findLesson(this.activeLesson);
+    if (!lesson || !lesson.sections[idx]) return;
+    const s = lesson.sections[idx];
+    const state = Storage.get();
+    if (!state || !state.user) return;
+    const userId = state.user.id;
+
+    // Build clean text from section
+    let text = '<h3>' + s.title + '</h3>\n';
+    if (s.body) text += '<p>' + s.body.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+    if (s.formula) text += '<pre>' + s.formula + '</pre>';
+    if (s.questions) {
+      s.questions.forEach((q, i) => {
+        text += '<p><b>Q' + (i+1) + ':</b> ' + q.q + '<br><b>A:</b> ' + q.a + '</p>';
+      });
+    }
+    if (s.tips) {
+      s.tips.forEach(t => { text += '<p>' + t + '</p>'; });
+    }
+
+    // Add to Theory notes by default
+    const noteKey = 'sparky_notes_' + userId + '_theory';
+    const existing = localStorage.getItem(noteKey) || '';
+    const separator = existing.trim() ? '<hr style="margin:16px 0;border:1px solid rgba(255,255,255,0.1);">' : '';
+    localStorage.setItem(noteKey, existing + separator + text);
+
+    // Flash the button to confirm
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Added to Theory Notes!';
+    btn.style.background = 'rgba(16,185,129,0.2)';
+    btn.style.borderColor = 'rgba(16,185,129,0.5)';
+    btn.style.color = '#10b981';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.background = 'rgba(245,158,11,0.08)';
+      btn.style.borderColor = 'rgba(245,158,11,0.25)';
+      btn.style.color = 'var(--accent)';
+    }, 2000);
+
+    // Also sync AI context
+    if (typeof syncAIContext === 'function') syncAIContext(state);
+  },
+
+  async _aiQuiz(lessonId) {
+    const lesson = this._findLesson(lessonId);
+    if (!lesson) return;
+    const btn = document.getElementById('ai-quiz-btn');
+    const result = document.getElementById('ai-quiz-result');
+    if (!result) return;
+    if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
+    const content = lesson.sections.map(s => s.title + (s.body ? ': ' + s.body.substring(0, 200) : '')).join('\n').substring(0, 2000);
+    const prompt = `You are an exam question writer for Alberta electrical apprentices. Based on this lesson content, write exactly 5 multiple-choice exam questions. Format each question EXACTLY like this:\n\nQ: [question]\nA) [option]\nB) [option]\nC) [option]\nD) [option]\nANSWER: [letter] — [brief explanation]\n\nLesson: ${lesson.title}\n\n${content}`;
+    try {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      const text = data.answer || '';
+      // Parse and render questions
+      const questions = text.split(/\nQ:|\nQ\./).filter(q => q.trim());
+      if (questions.length === 0) { result.innerHTML = '<p style="color:var(--text-muted);">' + text.replace(/\n/g, '<br>') + '</p>'; }
+      else {
+        // Store parsed quiz data for answer selection
+        Lessons._quizData = questions.map((q, i) => {
+          const lines = q.trim().split('\n');
+          const qText = lines[0].trim();
+          const options = lines.filter(l => /^[A-D]\)/.test(l.trim()));
+          const answerLine = lines.find(l => l.startsWith('ANSWER:'));
+          const correctLetter = answerLine ? (answerLine.match(/ANSWER:\s*([A-D])/)||[])[1] : null;
+          return { qText, options, answerLine, correctLetter };
+        });
+        result.innerHTML = Lessons._quizData.map((q, i) => `
+          <div id="ai-quiz-q-${i}" style="background:rgba(0,0,0,0.2);border-radius:10px;padding:16px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">Q${i+1}: ${q.qText}</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+              ${q.options.map((o, oi) => `
+                <button onclick="Lessons._aiQuizAnswer(${i},${oi})" id="ai-quiz-q${i}-opt${oi}"
+                  style="text-align:left;padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-size:0.85rem;color:var(--text-primary);cursor:pointer;transition:background 0.15s,border-color 0.15s;width:100%;"
+                  onmouseover="if(!this.dataset.answered)this.style.background='rgba(124,58,237,0.15)'"
+                  onmouseout="if(!this.dataset.answered)this.style.background='rgba(255,255,255,0.04)'"
+                >${o.trim()}</button>
+              `).join('')}
+            </div>
+            ${q.answerLine ? `<details><summary style="font-size:0.82rem;color:#a78bfa;font-weight:600;cursor:pointer;">&#9654; Reveal Answer</summary><div style="margin-top:8px;padding:10px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:0.85rem;color:#a7f3d0;">${q.answerLine.replace('ANSWER:','').trim()}</div></details>` : ''}
+          </div>`).join('');
+      }
+      if (btn) { btn.textContent = '🔄 Regenerate'; btn.disabled = false; }
+    } catch(e) {
+      result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
+      if (btn) { btn.textContent = '⚡ Generate 5 Questions'; btn.disabled = false; }
+    }
+  },
+
+  _quizData: [],
+
+  _aiQuizAnswer(qIdx, optIdx) {
+    const q = Lessons._quizData[qIdx];
+    if (!q) return;
+    // Disable all options for this question
+    for (let i = 0; i < q.options.length; i++) {
+      const btn = document.getElementById(`ai-quiz-q${qIdx}-opt${i}`);
+      if (btn) { btn.disabled = true; btn.dataset.answered = '1'; btn.style.cursor = 'default'; btn.onmouseover = null; btn.onmouseout = null; }
+    }
+    const selectedLetter = q.options[optIdx] ? q.options[optIdx].trim().charAt(0) : null;
+    const isCorrect = selectedLetter && q.correctLetter && selectedLetter === q.correctLetter;
+    // Highlight selected and correct
+    for (let i = 0; i < q.options.length; i++) {
+      const btn = document.getElementById(`ai-quiz-q${qIdx}-opt${i}`);
+      if (!btn) continue;
+      const letter = q.options[i].trim().charAt(0);
+      if (letter === q.correctLetter) {
+        btn.style.background = 'rgba(16,185,129,0.2)';
+        btn.style.borderColor = 'rgba(16,185,129,0.6)';
+        btn.style.color = '#a7f3d0';
+      } else if (i === optIdx && !isCorrect) {
+        btn.style.background = 'rgba(239,68,68,0.2)';
+        btn.style.borderColor = 'rgba(239,68,68,0.5)';
+        btn.style.color = '#fca5a5';
+      }
+    }
+    // Show feedback below
+    const container = document.getElementById(`ai-quiz-q-${qIdx}`);
+    if (container) {
+      const feedback = document.createElement('div');
+      feedback.style.cssText = `margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-weight:600;background:${isCorrect ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'};color:${isCorrect ? '#a7f3d0' : '#fca5a5'};border:1px solid ${isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};`;
+      feedback.textContent = isCorrect ? '✓ Correct!' : `✗ Incorrect — correct answer is ${q.correctLetter})`;
+      // Insert before the details element (or at end)
+      const details = container.querySelector('details');
+      if (details) container.insertBefore(feedback, details);
+      else container.appendChild(feedback);
+    }
+  },
+
+  async _aiGenerateFlashcards(lessonId) {
+    const lesson = this._findLesson(lessonId);
+    if (!lesson) return;
+    const btn = document.getElementById('ai-fc-btn');
+    const result = document.getElementById('ai-fc-result');
+    if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
+    const content = lesson.sections.map(s => s.title + (s.body ? ': ' + s.body.substring(0, 300) : '')).join('\n').substring(0, 2500);
+    const prompt = `You are SparkStudy, creating flashcards for Alberta electrical apprentices studying "${lesson.title}". Generate exactly 10 high-quality flashcard pairs based on the lesson content below. Format EXACTLY like this (one pair per line, separated by |):\n\nQ: [question] | A: [concise answer]\n\nMake questions test real understanding, not just definitions. Focus on numbers, formulas, procedures, and "what happens when" scenarios.\n\nLesson content:\n${content}`;
+    try {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      const text = data.answer || '';
+      const lines = text.split('\n').filter(l => l.includes(' | ') && l.startsWith('Q:'));
+      if (lines.length === 0) {
+        if (result) result.innerHTML = '<p style="color:var(--danger);">Could not parse flashcards — try again.</p>';
+        if (btn) { btn.textContent = '🃏 Generate Flashcards'; btn.disabled = false; }
+        return;
+      }
+      // Add to flashcard state
+      const state = Storage.get();
+      let added = 0;
+      lines.forEach(line => {
+        const [qPart, aPart] = line.split(' | ');
+        const q = (qPart || '').replace(/^Q:\s*/,'').trim();
+        const a = (aPart || '').replace(/^A:\s*/,'').trim();
+        if (!q || !a) return;
+        const id = 'ai_' + lessonId + '_' + Math.random().toString(36).substr(2, 8);
+        if (!state.flashcards) state.flashcards = {};
+        state.flashcards[id] = { q, a, topic: lessonId, correct: 0, incorrect: 0, easeFactor: 2.5, interval: 1, due: new Date().toISOString().split('T')[0] };
+        added++;
+      });
+      Storage.set(state);
+      if (result) result.innerHTML = `<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:0.88rem;color:#a7f3d0;">✓ Added ${added} flashcards to your deck! Go to Flashcards to study them.</div>`;
+      if (btn) { btn.textContent = '✓ Added to Deck'; btn.disabled = true; }
+    } catch(e) {
+      if (result) result.innerHTML = '<p style="color:var(--danger);">Connection error — try again.</p>';
+      if (btn) { btn.textContent = '🃏 Generate Flashcards'; btn.disabled = false; }
+    }
+  },
+
+  async _aiStudyPlan(btn) {
+    const state = Storage.get();
+    const period = state.user.period || 2;
+    const daysLeft = ClassSchedule.getDaysUntilExam(state);
+    const mastery = getOverallMastery(state);
+    const dueCards = SM2.getDueCards(state).length;
+    const streak = state.sessions.streak || 0;
+    const planBtn = typeof btn === 'object' ? btn : document.getElementById('ai-plan-btn');
+    const result = document.getElementById('ai-plan-result');
+    if (planBtn) { planBtn.textContent = '⏳ Building your plan...'; planBtn.disabled = true; }
+    if (result) result.innerHTML = '';
+    const prompt = `You are SparkStudy AI coach for an Alberta Period ${period} electrical apprentice. Create a practical, specific study plan based on:\n- Overall mastery: ${mastery}%\n- Days until exam: ${daysLeft !== null ? daysLeft + ' days' : 'not set — assume 30 days'}\n- Flashcards due today: ${dueCards}\n- Study streak: ${streak} days\n\nWrite a focused 7-day study plan. Be specific: which topics each day, how long, which activity (flashcards/quiz/lessons/review). Keep it motivating and practical. Format with **Day 1:** headers and bullet points. Under 300 words.`;
+    try {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      const data = await res.json();
+      const raw = data.answer || data.text || data.response || '';
+      if (!raw.trim()) throw new Error('Empty response from AI');
+      const text = raw
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^### (.+)$/gm, '<strong style="color:var(--accent)">$1</strong>')
+        .replace(/^- /gm, '• ')
+        .replace(/\n/g, '<br>');
+      if (result) result.innerHTML = `<div style="padding:16px;background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.25);border-radius:10px;font-size:0.88rem;line-height:1.75;color:var(--text-secondary);">${text}</div>`;
+      if (planBtn) { planBtn.textContent = '🔄 Regenerate Plan'; planBtn.disabled = false; }
+    } catch(e) {
+      console.error('[StudyPlan]', e);
+      if (result) result.innerHTML = `<div style="padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:0.85rem;color:var(--danger);">Could not generate plan: ${e.message}. Check your internet connection and try again.</div>`;
+      if (planBtn) { planBtn.textContent = '🤖 Build My Study Plan'; planBtn.disabled = false; }
+    }
+  },
 };
 
 // ===== SETTINGS MODULE =====
@@ -9504,10 +12110,75 @@ const Settings = {
         </div>
 
         <!-- Danger Zone -->
-        <div style="background:var(--bg-card);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
-          <h3 style="margin:0 0 16px;font-size:1.05rem;color:var(--danger);display:flex;align-items:center;gap:8px;">&#x26A0; Danger Zone</h3>
-          <button class="btn btn-danger" onclick="Settings.resetAll()" style="width:100%;">Reset All Data</button>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;text-align:center;">This will permanently delete all your progress.</div>
+        <div style="background:var(--bg-card);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+          <h3 style="margin:0 0 8px;font-size:1.05rem;color:var(--danger);display:flex;align-items:center;gap:8px;">&#x26A0; Danger Zone</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">To permanently delete your account and all progress, type <strong style="color:var(--danger);">DELETE MY ACCOUNT</strong> below and then click the button. This cannot be undone.</p>
+          <input type="text" id="deleteConfirmInput" placeholder='Type "DELETE MY ACCOUNT" to confirm'
+            style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:var(--text-primary);font-size:0.88rem;margin-bottom:10px;">
+          <button class="btn btn-danger" onclick="Settings.resetAll()" style="width:100%;opacity:0.6;" id="deleteConfirmBtn" disabled>Delete My Account &amp; All Data</button>
+          <script>
+            document.getElementById('deleteConfirmInput').addEventListener('input', function() {
+              const btn = document.getElementById('deleteConfirmBtn');
+              const match = this.value.trim() === 'DELETE MY ACCOUNT';
+              btn.disabled = !match;
+              btn.style.opacity = match ? '1' : '0.6';
+            });
+          </script>
+        </div>
+
+
+        <!-- Messages from Support -->
+        <div id="supportMessagesSection" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
+          <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">
+            &#x1F4EC; My Messages
+            <span id="msgBadge" style="display:none;background:#ef4444;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 7px;border-radius:20px;min-width:18px;text-align:center;"></span>
+          </h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;">Your support conversations and replies from the SparkStudy team.</p>
+          <div id="supportHistory"></div>
+          <script>(async function(){
+            if (FireDB.ready) {
+              const cloud = await FireDB.getMessagesForUser('${state.user.id}').catch(()=>null);
+              if (cloud) SupportMessages.mergeCloud(cloud);
+            }
+            Settings._refreshSupportHistory('${state.user.id}');
+          })();</script>
+        </div>
+
+        <!-- Contact / Send New Message -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;">
+          <h3 style="margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px;">&#x1F4AC; Send a Message</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;">Have a question, found a bug, or need help? Send us a message and we'll get back to you.</p>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px;">Subject</label>
+              <select id="supportSubject" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;">
+                <option value="General Question">General Question</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Billing / Subscription">Billing / Subscription</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Account Issue">Account Issue</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px;">Message</label>
+              <textarea id="supportMessage" rows="5" placeholder="Describe your question or issue..."
+                style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.9rem;resize:vertical;line-height:1.5;font-family:inherit;"></textarea>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;text-align:right;" id="supportCharCount">0 / 2000</div>
+            </div>
+            <button class="btn btn-primary" id="supportSendBtn" onclick="Settings.sendSupport('${state.user.id}','${state.user.name}','${state.user.email}')" style="align-self:flex-start;padding:10px 28px;">
+              Send Message
+            </button>
+            <div id="supportResult" style="display:none;"></div>
+          </div>
+          <div style="display:none">
+          </div>
+          <script>
+            (function() {
+              const ta = document.getElementById('supportMessage');
+              const cc = document.getElementById('supportCharCount');
+              if (ta && cc) ta.addEventListener('input', () => { cc.textContent = ta.value.length + ' / 2000'; });
+            })();
+          </script>
         </div>
 
         <!-- Schedule Upload -->
@@ -9525,7 +12196,7 @@ const Settings = {
   _scheduleHTML(state) {
     const sched = state.schedule || {};
     const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const topics = MODULES.filter(m => m.hasContent);
+    const topics = Object.values(TOPICS).filter(t => t.period === (state.user.period||1)).sort((a,b)=>a.order-b.order);
     const hasSchedule = Object.keys(sched).some(k => days.includes(k) && sched[k]);
     return `
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;">
@@ -9534,13 +12205,13 @@ const Settings = {
 
       <!-- Image upload -->
       <div style="margin-bottom:18px;">
-        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:8px;">Upload a photo of your timetable (optional â€” for reference)</label>
+        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:8px;">Upload a photo of your timetable (optional — for reference)</label>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <label style="padding:8px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.85rem;">
-            ðŸ“Ž Choose Image
+            📎 Choose Image
             <input type="file" accept="image/*,application/pdf" style="display:none;" onchange="Settings.uploadScheduleImage(event)">
           </label>
-          ${sched.imageData ? `<span style="font-size:0.8rem;color:#22c55e;">âœ“ Schedule image saved</span>
+          ${sched.imageData ? `<span style="font-size:0.8rem;color:#22c55e;">✓ Schedule image saved</span>
             <button onclick="Settings.clearScheduleImage()" style="font-size:0.75rem;color:#ef4444;background:none;border:none;cursor:pointer;">Remove</button>` : '<span style="font-size:0.8rem;color:var(--text-muted);">No image uploaded</span>'}
         </div>
         ${sched.imageData ? `<img src="${sched.imageData}" style="max-width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--border);">` : ''}
@@ -9554,13 +12225,23 @@ const Settings = {
             <div style="min-width:90px;font-size:0.85rem;font-weight:600;color:var(--text-secondary);">${day}</div>
             <select id="sched_${day}" onchange="Settings.saveScheduleDay('${day}',this.value)"
               style="flex:1;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.82rem;">
-              <option value="">â€” No class â€”</option>
-              ${topics.map(m=>`<option value="${m.id}" ${sched[day]===m.id?'selected':''}>${m.num}. ${m.name}</option>`).join('')}
+              <option value="">— No class —</option>
+              ${topics.map(t=>`<option value="${t.id}" ${sched[day]===t.id?'selected':''}>${t.name}</option>`).join('')}
             </select>
           </div>`).join('')}
       </div>
-      ${hasSchedule ? `<div style="margin-top:12px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:8px;font-size:0.82rem;color:#22c55e;">âœ… Schedule saved â€” your dashboard will show daily study suggestions based on today's topic.</div>` : ''}
+      ${hasSchedule ? `<div style="margin-top:12px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:8px;font-size:0.82rem;color:#22c55e;">✅ Schedule saved — your dashboard will show daily study suggestions based on today's topic.</div>` : ''}
     </div>`;
+  },
+
+  saveClaudeKey() {
+    const key = document.getElementById('claudeKeyInput')?.value?.trim() || '';
+    const s = Storage.get();
+    s.user.claudeApiKey = key;
+    Storage.set(s);
+    FireDB.saveUser(s);
+    showToast(key ? 'Claude API key saved!' : 'API key cleared.', 'success');
+    Settings.render(s);
   },
 
   uploadScheduleImage(event) {
@@ -9656,18 +12337,99 @@ const Settings = {
     showToast('Data exported!', 'success');
   },
 
+  saveElevenLabs() {
+    const key = document.getElementById('el-api-key-input')?.value.trim();
+    const voice = document.getElementById('el-voice-id-input')?.value.trim();
+    if (key) localStorage.setItem('el_api_key', key);
+    if (voice) localStorage.setItem('el_voice_id', voice);
+    const msg = document.getElementById('el-save-msg');
+    if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+  },
+
   retakeDiagnostic() {
-    if (!confirm('This will reset your diagnostic results and generate a new study plan. Continue?')) return;
-    const state = Storage.get();
-    state.diagnostic = { completed: false, responses: [], weakAreas: [], strongAreas: [], score: 0, pct: 0 };
-    Storage.set(state);
-    App.navigate('diagnostic');
+    if (!confirm('This will start a new diagnostic session. Your history will be preserved. Continue?')) return;
+    Diagnostic.retake();
+  },
+
+  sendSupport(userId, userName, userEmail) {
+    const subject = document.getElementById('supportSubject')?.value || 'General Question';
+    const message = document.getElementById('supportMessage')?.value?.trim() || '';
+    const btn = document.getElementById('supportSendBtn');
+    const result = document.getElementById('supportResult');
+
+    if (!message) { showToast('Please enter a message.', 'error'); return; }
+    if (message.length > 2000) { showToast('Message too long (max 2000 characters).', 'error'); return; }
+
+    SupportMessages.send(userId, userName, userEmail, subject, message);
+
+    if (result) {
+      result.style.display = 'block';
+      result.innerHTML = '<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:12px 16px;font-size:0.88rem;color:#a7f3d0;">✓ Message sent! We\'ll get back to you as soon as possible.</div>';
+    }
+    document.getElementById('supportMessage').value = '';
+    document.getElementById('supportCharCount').textContent = '0 / 2000';
+    btn.textContent = '✓ Sent';
+    btn.disabled = true;
+
+    // Refresh the message history below
+    Settings._refreshSupportHistory(userId);
+  },
+
+  _refreshSupportHistory(userId) {
+    const el = document.getElementById('supportHistory');
+    if (!el) return;
+    const msgs = SupportMessages.getForUser(userId);
+    const unread = SupportMessages.getUnreadReplies(userId);
+    // Update badge
+    const badge = document.getElementById('msgBadge');
+    if (badge) {
+      if (unread.length > 0) {
+        badge.textContent = unread.length;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+    if (!msgs.length) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:12px 0;">No messages yet. Send one below!</div>';
+      return;
+    }
+    const unreadIds = new Set(unread.map(m => m.id));
+    el.innerHTML = `
+      <div style="margin-top:8px;">
+        ${msgs.map(m => {
+          const isNew = unreadIds.has(m.id);
+          return `
+          <div style="background:${isNew ? 'rgba(245,158,11,0.06)' : 'var(--bg-input)'};border:1px solid ${isNew ? 'rgba(245,158,11,0.3)' : 'var(--border)'};border-radius:10px;padding:14px 16px;margin-bottom:10px;${isNew ? 'box-shadow:0 0 0 1px rgba(245,158,11,0.15);' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+              <span style="font-size:0.82rem;font-weight:700;">${isNew ? '🔔 ' : ''}${m.subject}</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);">${new Date(m.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</span>
+            </div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:${m.replies&&m.replies.length?'10px':'0'};">${m.message.replace(/</g,'&lt;')}</div>
+            ${(m.replies||[]).map(r => `
+              <div style="background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;margin-top:8px;">
+                <div style="font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:4px;">&#x1F451; SparkStudy Team · ${new Date(r.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+                <div style="font-size:0.85rem;">${r.message.replace(/</g,'&lt;')}</div>
+              </div>
+            `).join('')}
+            <div style="margin-top:8px;">
+              <span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:${m.status==='replied'?'rgba(16,185,129,0.12)':'rgba(245,158,11,0.1)'};color:${m.status==='replied'?'#10b981':'#f59e0b'};font-weight:600;">${m.status==='replied'?'&#x2705; Replied':'&#x23F3; Awaiting reply'}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
   },
 
   resetAll() {
-    if (!confirm('This will delete ALL your progress, flashcard data, and exam history. This cannot be undone. Are you sure?')) return;
+    const input = document.getElementById('deleteConfirmInput');
+    if (!input || input.value.trim() !== 'DELETE MY ACCOUNT') {
+      showToast('Please type "DELETE MY ACCOUNT" in the box first.', 'error');
+      return;
+    }
+    if (!confirm('Last chance — this will permanently delete ALL your progress, flashcards, exams, and account data. There is no undo.')) return;
     Storage.clear();
-    showToast('All data reset', 'info');
+    showToast('Account deleted.', 'info');
     App.navigate('landing');
   }
 };
@@ -9777,14 +12539,6 @@ const PromoCodes = {
     if (c) c.active = !c.active;
     this.save(all);
   },
-  apply(code) {
-    if (!code) return { success: false, message: '' };
-    const promo = this.validate(code);
-    if (!promo) return { success: false, message: 'Invalid or expired promo code.' };
-    this.redeem(code);
-    Diagnostic._appliedPromoData = promo;
-    return { success: true, message: promo.type === 'free' ? '🎉 Free access applied!' : promo.type === 'trial_extend' ? `+${promo.value} extra trial days applied!` : promo.type === 'percent' ? `${promo.value}% discount applied!` : `$${promo.value} discount applied!` };
-  },
   validate(code) {
     if (!code) return null;
     const all = this.getAll();
@@ -9839,7 +12593,7 @@ const OwnerDashboard = {
     const avgDiag = diagScores.length>0?Math.round(diagScores.reduce((a,b)=>a+b,0)/diagScores.length):0;
     const recentEvents = SiteAnalytics.getRecentEvents(50);
 
-    // Traffic stats â€” use Firebase cloud data if available (real cross-device, owner-excluded)
+    // Traffic stats — use Firebase cloud data if available (real cross-device, owner-excluded)
     let totalVisits, todayVisits, visitDays, hourly, topPages;
     if (this._cloudVisits) {
       const cv = this._cloudVisits;
@@ -9883,7 +12637,18 @@ const OwnerDashboard = {
         FireDB.getAllUsers(),
         FireDB.getVisits(30)
       ]);
-      if (cloudUsers && cloudUsers.length >= 0) this._cloudUsers = cloudUsers;
+      if (cloudUsers && cloudUsers.length >= 0) {
+        this._cloudUsers = cloudUsers;
+        // Cache cloud users into localStorage so getUserById works for all accounts
+        cloudUsers.forEach(s => {
+          if (s && s.user && !s.user.isOwner) {
+            const key = STORAGE_KEY + '_' + s.user.id;
+            if (!localStorage.getItem(key)) {
+              localStorage.setItem(key, JSON.stringify(s));
+            }
+          }
+        });
+      }
       if (cloudVisits) this._cloudVisits = cloudVisits;
     }
     const D = this._gatherData();
@@ -9895,13 +12660,21 @@ const OwnerDashboard = {
       {id:'diagnostics',label:'Diagnostics',icon:'&#x1F3AF;'},{id:'exams',label:'Exams',icon:'&#x1F4DD;'},
       {id:'flashcards',label:'Flashcards',icon:'&#x1F4DA;'},{id:'traffic',label:'Traffic',icon:'&#x1F6A6;'},
       {id:'engagement',label:'Engagement',icon:'&#x1F525;'},{id:'revenue',label:'Revenue',icon:'&#x1F4B0;'},
-      {id:'plans',label:'Plans & Pricing',icon:'&#x1F4B3;'},{id:'events',label:'Event Log',icon:'&#x1F4DC;'},
-      {id:'export',label:'Export',icon:'&#x1F4E5;'}
+      {id:'plans',label:'Plans & Pricing',icon:'&#x1F4B3;'},{id:'support',label:'Support',icon:'&#x1F4AC;'},
+      {id:'events',label:'Event Log',icon:'&#x1F4DC;'},{id:'export',label:'Export',icon:'&#x1F4E5;'}
     ];
     container.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;"><div><h1 style="margin:0;">&#x1F451; Owner Analytics</h1><p style="color:var(--text-secondary);margin-top:4px;">Real-time insights &mdash; '+D.totalUsers+' users, '+D.totalVisits+' visits'+cloudBadge+'</p></div><div style="display:flex;align-items:center;gap:12px;"><span class="oa-live-dot"></span><span style="font-size:0.85rem;color:#22c55e;">Live</span><span style="font-size:0.75rem;color:var(--text-muted);">'+new Date().toLocaleTimeString()+'</span><button class="btn btn-ghost btn-sm" onclick="App.navigate(\'dashboard\')" style="border:1px solid var(--border);">&#x1F519; My Dashboard</button><button class="btn btn-secondary btn-sm" onclick="OwnerDashboard.render()">&#x21BB; Refresh</button><button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Logout</button></div></div><div class="oa-tabs" style="flex-wrap:wrap;">'+tabs.map(t=>'<div class="oa-tab '+(this.currentTab===t.id?'active':'')+'" onclick="OwnerDashboard.switchTab(\''+t.id+'\')">'+t.icon+' '+t.label+'</div>').join('')+'</div><div id="oaTabContent"></div>';
     const tc = document.getElementById('oaTabContent');
     const fn = '_tab_'+this.currentTab;
-    if(this[fn]) tc.innerHTML = this[fn](D);
+    if(this[fn]) {
+      const result = this[fn](D);
+      if (result && typeof result.then === 'function') {
+        tc.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">Loading...</div>';
+        result.then(html => { if(tc) tc.innerHTML = html || ''; }).catch(err => { if(tc) tc.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">Error loading tab: '+err.message+'</div>'; });
+      } else {
+        tc.innerHTML = result || '';
+      }
+    }
   },
 
   switchTab(t) { this.currentTab=t; this.render(); },
@@ -9937,9 +12710,84 @@ const OwnerDashboard = {
   },
 
   _renderUserDetail(st) {
-    const u=st.user;const tm=Object.keys(TOPICS).map(tid=>{const cds=Object.entries(st.flashcards||{}).filter(([id])=>{const fc=FLASHCARD_BANK.find(f=>f.id===id);return fc&&fc.topic===tid;});if(!cds.length)return{name:TOPICS[tid]?.name||tid,m:0};return{name:TOPICS[tid]?.name||tid,m:Math.round(cds.reduce((s,[,c])=>s+c.correct/Math.max(c.correct+c.incorrect,1),0)/cds.length*100)};}).filter(t=>t.m>0).sort((a,b)=>a.m-b.m);
+    const u=st.user;
+    const sub=u.subscription||{};
+    const now=Date.now();
+    const isTrial=sub.status==='trial';
+    const isPaid=sub.status==='paid';
+    const isElite=isPaid||(isTrial&&sub.trialEnd&&sub.trialEnd>now);
+    const trialLeft=isTrial&&sub.trialEnd?Math.max(0,Math.ceil((sub.trialEnd-now)/86400000)):0;
+    const planLabel=isPaid?'Elite (Paid)':isTrial?'Trial ('+trialLeft+'d left)':'Free / Expired';
+    const planColor=isPaid?'#f59e0b':isTrial&&trialLeft>0?'#3b82f6':'#6b7280';
+    // Also check Stripe-style fields (set by payment-success.html)
+    const stripePlan=sub.plan;
+    const stripeLabel=stripePlan==='elite'?(sub.trial?'Elite Trial':'Elite Paid'):'';
+    const displayPlan=stripeLabel||planLabel;
+    const signupDate=u.signupDate?new Date(u.signupDate).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}):'Unknown';
+    const lastLogin=u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric'}):'Never';
+    const trialEndStr=sub.trial_end_date?new Date(sub.trial_end_date).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'}):(sub.trialEnd?new Date(sub.trialEnd).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'}):'—');
+    const tm=Object.keys(TOPICS).map(tid=>{const cds=Object.entries(st.flashcards||{}).filter(([id])=>{const fc=FLASHCARD_BANK.find(f=>f.id===id);return fc&&fc.topic===tid;});if(!cds.length)return{name:TOPICS[tid]?.name||tid,m:0};return{name:TOPICS[tid]?.name||tid,m:Math.round(cds.reduce((s,[,c])=>s+c.correct/Math.max(c.correct+c.incorrect,1),0)/cds.length*100)};}).filter(t=>t.m>0).sort((a,b)=>a.m-b.m);
     const weak=tm.slice(0,3),strong=tm.slice(-3).reverse();
-    return '<div class="oa-section" style="margin-top:8px;"><h3>&#x1F464; '+u.name+' <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;">&mdash; '+u.email+'</span></h3><div class="oa-grid" style="grid-template-columns:repeat(3,1fr);"><div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Weakest</span>'+weak.map(t=>'<div style="font-size:0.85rem;">'+t.name+': <strong>'+t.m+'%</strong></div>').join('')+'</div><div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Strongest</span>'+strong.map(t=>'<div style="font-size:0.85rem;">'+t.name+': <strong style="color:#22c55e;">'+t.m+'%</strong></div>').join('')+'</div><div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Exams</span>'+(st.exams.attempts||[]).slice(-3).reverse().map(ex=>'<div style="font-size:0.85rem;">'+new Date(ex.date).toLocaleDateString()+': <strong>'+ex.pct+'%</strong></div>').join('')+'</div></div></div>';
+    const isBanned=!!u.banned;
+    // ── Activity data ──
+    const sess=st.sessions||{};
+    const daily=sess.daily||{};
+    const totalMs=sess.totalTime||0;
+    const totalTimeStr=totalMs>=3600000?`${Math.floor(totalMs/3600000)}h ${Math.floor((totalMs%3600000)/60000)}m`:`${Math.floor(totalMs/60000)}m`;
+    const lastActiveStr=u.lastLogin?new Date(u.lastLogin).toLocaleString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Never';
+    const dailyRows=Object.entries(daily).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,30).map(([date,d])=>{
+      const mins=Math.floor((d.time||0)/60000);
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;"><span style="color:var(--accent);">${date}</span><span style="color:var(--text-muted);">${mins}m · ${d.flashcards||0} cards · ${d.exams||0} exams</span></div>`;
+    }).join('')||'<div style="color:var(--text-muted);font-size:0.8rem;padding:6px 0;">No sessions yet</div>';
+    const recentActivity=((st.points||{}).history||[]).slice(-30).reverse().map(p=>`<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.78rem;"><span style="color:var(--text-secondary);">${p.reason}</span><span style="color:#22c55e;font-weight:600;flex-shrink:0;margin-left:8px;">+${p.amount}pts · ${new Date(p.timestamp).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:0.8rem;padding:6px 0;">No activity yet</div>';
+    return `<div class="oa-section" style="margin-top:8px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div>
+          <h3 style="margin:0 0 4px;">&#x1F464; ${u.name} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;">&mdash; ${u.email}</span></h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+            <span style="font-size:0.78rem;font-weight:700;padding:3px 10px;border-radius:20px;background:${planColor}22;border:1px solid ${planColor}55;color:${planColor};">${displayPlan}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);">Period ${u.period||'?'}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);">Joined ${signupDate}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);">Last seen ${this._timeAgo(u.lastLogin)}</span>
+            ${isTrial&&trialLeft>0?'<span style="font-size:0.78rem;color:var(--text-muted);">Trial ends '+trialEndStr+'</span>':''}
+            ${sub.subscription_id?'<span style="font-size:0.72rem;font-family:monospace;color:var(--text-muted);">Stripe: '+sub.subscription_id+'</span>':''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="OwnerDashboard.blockUser('${u.id}')" style="font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid ${isBanned?'#22c55e':'#f59e0b'};background:transparent;color:${isBanned?'#22c55e':'#f59e0b'};cursor:pointer;">${isBanned?'Unblock':'Block'}</button>
+          <button onclick="OwnerDashboard.removeUser('${u.id}')" style="font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px solid #ef4444;background:transparent;color:#ef4444;cursor:pointer;">Remove</button>
+        </div>
+      </div>
+      <div class="oa-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Weakest Topics</span>${weak.map(t=>'<div style="font-size:0.85rem;margin-top:4px;">'+t.name+': <strong style="color:#ef4444;">'+t.m+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No data yet</div>'}</div>
+        <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Strongest Topics</span>${strong.map(t=>'<div style="font-size:0.85rem;margin-top:4px;">'+t.name+': <strong style="color:#22c55e;">'+t.m+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No data yet</div>'}</div>
+        <div style="padding:8px;"><span style="font-size:0.7rem;color:var(--text-muted);">Recent Exams</span>${(st.exams.attempts||[]).slice(-3).reverse().map(ex=>'<div style="font-size:0.85rem;margin-top:4px;">'+new Date(ex.date).toLocaleDateString()+': <strong style="color:'+(ex.pct>=70?'#22c55e':'#ef4444')+';">'+ex.pct+'%</strong></div>').join('')||'<div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">No exams yet</div>'}</div>
+      </div>
+      <details style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
+        <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--text-muted);list-style:none;display:flex;align-items:center;gap:8px;user-select:none;padding:2px 0;">
+          &#x25B6; Activity Log &nbsp;&middot;&nbsp; Last seen ${this._timeAgo(u.lastLogin)} &nbsp;&middot;&nbsp; ${totalTimeStr} total study time
+        </summary>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;">
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Overview</div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x1F550; Last login: <strong>${lastActiveStr}</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x23F1; Total study time: <strong>${totalTimeStr}</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x1F525; Streak: <strong>${sess.streak||0} days</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x1F4C5; Last studied: <strong>${sess.lastStudy||'Never'}</strong></div>
+            <div style="font-size:0.83rem;margin-bottom:5px;">&#x2B50; Points: <strong>${(st.points||{}).total||0}</strong></div>
+            <div style="font-size:0.83rem;">&#x1F4DD; Exams taken: <strong>${(st.exams.attempts||[]).length}</strong></div>
+          </div>
+          <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;">
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Daily Sessions</div>
+            ${dailyRows}
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;margin-top:10px;max-height:160px;overflow-y:auto;">
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Recent Activity</div>
+          ${recentActivity}
+        </div>
+      </details>
+    </div>`;
   },
 
   _tab_diagnostics(D) {
@@ -10118,6 +12966,68 @@ const OwnerDashboard = {
     document.getElementById('groupSavingsDisplay').textContent='Save $'+sv+' ('+svp+'%) vs individual';
   },
 
+  async _tab_support(D) {
+    // Pull cloud messages into local store
+    if (FireDB.ready) {
+      const cloud = await FireDB.getAllMessages();
+      if (cloud) SupportMessages.mergeCloud(cloud);
+    }
+    const msgs = SupportMessages.getAll();
+    const open = msgs.filter(m => m.status === 'open').length;
+    const replied = msgs.filter(m => m.status === 'replied').length;
+
+    if (!msgs.length) return `
+      <div class="oa-section" style="text-align:center;padding:60px 20px;">
+        <div style="font-size:3rem;margin-bottom:12px;">&#x1F4AC;</div>
+        <h3 style="margin-bottom:8px;">No support messages yet</h3>
+        <p style="color:var(--text-secondary);">Messages from users will appear here.</p>
+      </div>`;
+
+    return `
+      <div class="oa-grid" style="margin-bottom:24px;">
+        <div class="oa-stat"><div class="oa-stat-value">${msgs.length}</div><div class="oa-stat-label">Total</div></div>
+        <div class="oa-stat"><div class="oa-stat-value" style="color:#f59e0b;">${open}</div><div class="oa-stat-label">Open</div></div>
+        <div class="oa-stat"><div class="oa-stat-value" style="color:#22c55e;">${replied}</div><div class="oa-stat-label">Replied</div></div>
+      </div>
+      ${msgs.map(m => `
+        <div class="oa-section" style="margin-bottom:12px;" id="smsg-${m.id}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <div>
+              <div style="font-weight:700;font-size:0.95rem;">${m.userName} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;">&mdash; ${m.userEmail}</span></div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">${m.subject} &middot; ${new Date(m.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+            <span style="font-size:0.75rem;padding:3px 10px;border-radius:20px;font-weight:700;background:${m.status==='replied'?'rgba(34,197,94,0.12)':'rgba(245,158,11,0.12)'};color:${m.status==='replied'?'#22c55e':'#f59e0b'};">${m.status==='replied'?'Replied':'Open'}</span>
+          </div>
+          <div style="background:var(--bg-input);border-radius:8px;padding:12px;font-size:0.88rem;line-height:1.6;margin-bottom:10px;">${m.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+          ${(m.replies||[]).map(r => `
+            <div style="background:rgba(245,158,11,0.07);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:8px;">
+              <div style="font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:4px;">You (Owner) &middot; ${new Date(r.sentAt).toLocaleDateString('en-CA',{month:'short',day:'numeric'})}</div>
+              <div style="font-size:0.85rem;">${r.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+            </div>
+          `).join('')}
+          <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;">
+            <textarea id="reply-${m.id}" rows="2" placeholder="Type your reply — user will see it as from 'Owner'..."
+              style="flex:1;padding:8px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.85rem;resize:vertical;font-family:inherit;line-height:1.5;"></textarea>
+            <button onclick="OwnerDashboard.sendReply('${m.id}')" style="padding:8px 16px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;white-space:nowrap;height:38px;">Send Reply</button>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  },
+
+  async sendReply(msgId) {
+    const ta = document.getElementById('reply-' + msgId);
+    const text = ta ? ta.value.trim() : '';
+    if (!text) return showToast('Please type a reply first.', 'error');
+    SupportMessages.reply(msgId, text);
+    showToast('Reply sent.', 'success');
+    // Re-render the support tab
+    const tc = document.getElementById('oaTabContent');
+    if (tc) tc.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">Refreshing...</div>';
+    const html = await this._tab_support(this._gatherData());
+    if (tc) tc.innerHTML = html;
+  },
+
   _tab_events(D) {
     const ic={signup:'&#x1F4DD;',login:'&#x1F511;',owner_login:'&#x1F451;',owner_analytics_login:'&#x1F4CA;',exam_complete:'&#x1F4DD;',diagnostic_complete:'&#x1F3AF;'};
     return '<div class="oa-section"><h3>&#x1F4DC; Events ('+D.recentEvents.length+')</h3>'+(D.recentEvents.length>0?'<div style="max-height:500px;overflow-y:auto;"><table class="oa-table"><thead><tr><th>Time</th><th>Event</th><th>Details</th></tr></thead><tbody>'+D.recentEvents.map(ev=>{const time=new Date(ev.timestamp).toLocaleString();const dets=Object.entries(ev).filter(([k])=>!['event','timestamp','date'].includes(k)).map(([k,v])=>k+': '+v).join(', ');return '<tr><td style="white-space:nowrap;font-size:0.8rem;">'+time+'</td><td>'+(ic[ev.event]||'&#x26A1;')+' '+ev.event+'</td><td style="font-size:0.8rem;color:var(--text-secondary);">'+dets+'</td></tr>';}).join('')+'</tbody></table></div>':'<p style="color:var(--text-muted);text-align:center;padding:40px;">No events yet.</p>')+'</div>';
@@ -10257,7 +13167,7 @@ const OwnerDashboard = {
   }
 };
 
-// ===== MOBILE NAV TOGGLE (burger â†’ open drawer) =====
+// ===== MOBILE NAV TOGGLE (burger → open drawer) =====
 function toggleMobileNav() { openMobileDrawer(); }
 
 function openMobileDrawer() {
@@ -10284,21 +13194,21 @@ function updateMobileDrawer(state, activePage) {
   const isMobile = window.innerWidth <= 768;
 
   if (!state) {
-    // Not logged in â€” hide drawer user, hide bottom nav
+    // Not logged in — hide drawer user, hide bottom nav
     if (drawerUser) drawerUser.style.display = 'none';
     if (bottomNav) bottomNav.classList.remove('bn-visible');
     if (drawerNav) drawerNav.innerHTML = `
       <div class="mobile-drawer-section-label">Account</div>
       <button class="mobile-drawer-item" onclick="App.navigate('login');closeMobileDrawer();">
-        <span class="mdi">ðŸ”‘</span> Log In
+        <span class="mdi">🔑</span> Log In
       </button>
       <button class="mobile-drawer-item" onclick="App.navigate('signup');closeMobileDrawer();">
-        <span class="mdi">âœ¨</span> Sign Up
+        <span class="mdi">✨</span> Sign Up
       </button>`;
     return;
   }
 
-  // Logged in â€” show user info
+  // Logged in — show user info
   if (drawerUser) drawerUser.style.display = 'flex';
   if (drawerAvatar) drawerAvatar.textContent = (state.user.name || '?')[0].toUpperCase();
   if (drawerName) drawerName.textContent = state.user.name || 'Student';
@@ -10319,35 +13229,41 @@ function updateMobileDrawer(state, activePage) {
   // Build drawer nav items
   const navItems = [
     { section: 'Study' },
-    { page: 'dashboard', icon: 'ðŸ ', label: 'Dashboard' },
-    { page: 'flashcards', icon: 'ðŸƒ', label: 'Flashcards' },
-    { page: 'exams', icon: 'ðŸ“', label: 'Exams' },
-    { page: 'lessons', icon: 'ðŸ“š', label: 'Lessons' },
-    { page: 'study-guide', icon: 'ðŸ“–', label: 'Study Guide' },
-    { page: 'notes', icon: 'ðŸ“', label: 'My Notes' },
+    { page: 'dashboard', icon: '🏠', label: 'Dashboard' },
+    { page: 'flashcards', icon: '🃏', label: 'Flashcards' },
+    { page: 'exams', icon: '📝', label: 'Exams' },
+    { page: 'lessons', icon: '📚', label: 'Lessons' },
+    { page: 'study-guide', icon: '📖', label: 'Study Guide' },
+    { page: 'notes', icon: '📝', label: 'My Notes' },
     { section: 'Tools & Insights' },
-    { page: 'tools', icon: 'ðŸ”§', label: 'Simulators' },
-    { page: 'math', icon: 'ðŸ§®', label: 'Math Practice' },
-    { page: 'leaderboard', icon: 'ðŸ†', label: 'Leaderboard' },
-    { page: 'analytics', icon: 'ðŸ“Š', label: 'Analytics' },
-    { page: 'review', icon: 'â­', label: 'Review Wrong' },
+    { page: 'tools', icon: '🔧', label: 'Simulators' },
+    { page: 'math', icon: '🧮', label: 'Math Practice' },
+    { page: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
+    { page: 'analytics', icon: '📊', label: 'Analytics' },
+    { page: 'review', icon: '⭐', label: 'Review Wrong' },
     { section: 'Account' },
-    { page: 'settings', icon: 'âš™ï¸', label: 'Settings' },
+    { page: 'settings', icon: '⚙️', label: 'Settings' },
   ];
   if (state.user.isOwner) {
     navItems.splice(navItems.findIndex(i => i.section === 'Account'), 0,
-      { page: 'owner', icon: 'ðŸ‘‘', label: 'Owner Analytics' });
+      { page: 'owner', icon: '👑', label: 'Owner Analytics' });
   }
   if (state.user.subscription && state.user.subscription.groupId) {
     navItems.splice(navItems.findIndex(i => i.page === 'settings'), 0,
-      { page: 'group', icon: 'ðŸ‘¥', label: 'Group' });
+      { page: 'group', icon: '👥', label: 'Group' });
   }
+
+  // Check for unread message replies
+  const unreadMsgCount = state && !state.user.isOwner ? SupportMessages.getUnreadReplies(state.user.id).length : 0;
 
   drawerNav.innerHTML = navItems.map(item => {
     if (item.section) return `<div class="mobile-drawer-section-label">${item.section}</div>`;
     const active = activePage === item.page ? ' active' : '';
+    const dot = item.page === 'settings' && unreadMsgCount > 0
+      ? `<span style="background:#ef4444;color:#fff;font-size:0.6rem;font-weight:800;padding:1px 6px;border-radius:20px;margin-left:auto;">${unreadMsgCount}</span>`
+      : '';
     return `<button class="mobile-drawer-item${active}" onclick="App.navigate('${item.page}');closeMobileDrawer();">
-      <span class="mdi">${item.icon}</span> ${item.label}
+      <span class="mdi">${item.icon}</span> ${item.label}${dot}
     </button>`;
   }).join('');
 }
@@ -10376,28 +13292,119 @@ function getExamPrediction(state) {
 
 // ===== MATH PRACTICE =====
 const MathPractice = {
-  currentCategory: 'ac-basics',
+  currentCategory: 'ohms-law',
   currentProblem: null,
   score: 0,
   attempts: 0,
   showingSolution: false,
   showingConfig: false,
+  _moduleFilter: 'all',
+
+  // Maps module exam topics to math practice category IDs
+  _moduleToMathMap: {
+    'ac-theory': ['ac-basics'],
+    'ac-circuits': ['reactance', 'impedance', 'power-factor', 'ac-basics'],
+    'inductors-capacitors': ['reactance', 'impedance', 'ac-basics'],
+    'power-factor': ['power-factor'],
+    'motors': ['motors'],
+    'motor-controls': ['motors'],
+    'relays-contactors': [], // no math for these
+    'timers-smart': [],
+    'pilot-overcurrent': [],
+    'drawing-diagrams': [],
+    'transformers': ['transformers'],
+    'three-phase': ['three-phase'],
+    'ohms-law': ['ohms-law'],
+    'series-circuits': ['series', 'series-parallel'],
+    'parallel-circuits': ['parallel', 'series-parallel'],
+    'conductors': ['ohms-law', 'power'],
+  },
+
+  _filterModule(modId) {
+    this._moduleFilter = modId;
+    if (modId !== 'all' && typeof MODULES !== 'undefined') {
+      const mod = MODULES.find(m => m.id === modId);
+      if (mod && mod.topics.length > 0) {
+        // Map module topics to math practice categories
+        const mathCats = new Set();
+        mod.topics.forEach(t => {
+          const mapped = this._moduleToMathMap[t] || [];
+          mapped.forEach(c => mathCats.add(c));
+          // Also try direct match
+          if (this.categories.find(c => c.id === t)) mathCats.add(t);
+        });
+        const catList = [...mathCats];
+        if (catList.length === 0) {
+          showToast('This module has no math practice problems yet.', 'info');
+          return;
+        }
+        const state = Storage.get();
+        if (state) {
+          state.mathSettings = state.mathSettings || {};
+          state.mathSettings.enabledCategories = catList;
+          Storage.set(state);
+          FireDB.saveUser(state);
+        }
+        this.currentCategory = catList[0];
+      }
+    } else {
+      // All topics — enable everything
+      this._setAll(true);
+      return;
+    }
+    this.generateProblem();
+    this.render(Storage.get());
+  },
 
   categories: [
-    { id:'ac-basics',   name:'Module 1 â€” Fundamentals of Alternating Current',    icon:'ã€œ',  formula:'Vrms = Vp Ã— 0.707  |  f = 1/T  |  T = 1/f' },
-    { id:'reactance',   name:'Module 2 â€” Properties of Inductors & Capacitors',   icon:'ðŸ“¡',  formula:'XL = 2Ï€fL  |  XC = 1/(2Ï€fC)' },
-    { id:'impedance',   name:'Module 3 â€” Inductors & Capacitors in Circuits',     icon:'ðŸ“',  formula:'Z = âˆš(RÂ² + XÂ²)  |  Î¸ = arctan(X/R)' },
-    { id:'three-phase', name:'Module 4 â€” Principles of AC Circuits',              icon:'ðŸ”º',  formula:'VL = âˆš3 Ã— Vp  |  IL = âˆš3 Ã— Ip (delta)' },
+    { id:'ohms-law',       name:"Ohm's Law",          icon:'⚡', period:1, formula:'V = IR' },
+    { id:'power',          name:'Power',               icon:'💡', period:1, formula:'P = VI = I²R = V²/R' },
+    { id:'series',         name:'Series Circuits',     icon:'➡️', period:1, formula:'Rt = R1+R2+... Vt = V1+V2+...' },
+    { id:'parallel',       name:'Parallel Circuits',   icon:'⑂',  period:1, formula:'1/Rt = 1/R1+1/R2+...' },
+    { id:'series-parallel',name:'Series-Parallel',     icon:'🔧', period:1, formula:'Combined Rt, V drops, I' },
+    { id:'ac-basics',      name:'AC Basics',           icon:'📈', period:2, formula:'Vrms = Vp×0.707, f = 1/T' },
+    { id:'reactance',      name:'Reactance (XL & XC)', icon:'🌊', period:2, formula:'XL=2πfL, XC=1/(2πfC)' },
+    { id:'impedance',      name:'Impedance',           icon:'📐', period:2, formula:'Z = √(R²+X²)' },
+    { id:'power-factor',   name:'Power Factor',        icon:'📊', period:2, formula:'PF=cosθ, P=S×PF, S=VI' },
+    { id:'transformers',   name:'Transformers',        icon:'🔁', period:2, formula:'V1/V2 = N1/N2 = I2/I1' },
+    { id:'motors',         name:'Motor Speed & Slip',  icon:'⚙️', period:2, formula:'Ns=120f/P, slip=(Ns-Nr)/Ns' },
+    { id:'three-phase',    name:'Three-Phase',         icon:'🔺', period:2, formula:'VL=√3×Vp (wye), IL=√3×Ip (delta)' },
+    { id:'voltage-drop',   name:'Voltage Drop',        icon:'📉', period:1, formula:'Vd = 2×I×R×L / 1000' },
+    { id:'wire-sizing',    name:'Wire Sizing & Ampacity', icon:'🔌', period:1, formula:'CEC Table 2, 4, D3' },
+    { id:'conduit-fill',   name:'Conduit Fill',        icon:'🔩', period:1, formula:'Fill% = ΣA_wires / A_conduit' },
+    { id:'demand-load',    name:'Demand Load Calcs',   icon:'🏠', period:1, formula:'CEC Rule 8-200' },
+    { id:'motor-calcs',    name:'Motor FLC & Protection', icon:'🏭', period:2, formula:'OL=125%FLC, Branch=250%FLC' },
+    { id:'time-constants', name:'Time Constants (RL/RC)', icon:'⏱️', period:2, formula:'T=L/R, T=RC, 5T=steady state' },
+    { id:'energy-cost',    name:'Energy & Cost',       icon:'💰', period:1, formula:'kWh = P×t/1000, Cost = kWh×rate' },
+    { id:'resonance',      name:'Resonance & Q Factor', icon:'🎯', period:2, formula:'fr = 1/(2π√LC), Q = XL/R' },
+    { id:'pf-correction',  name:'PF Correction',       icon:'📐', period:2, formula:'Qc = P×(tanθ1−tanθ2)' },
+    { id:'xfmr-eff',       name:'Transformer Efficiency', icon:'🔄', period:2, formula:'η = Pout/Pin × 100, %Reg' },
+    { id:'motor-torque',   name:'Motor Torque & Efficiency', icon:'💪', period:2, formula:'T = P×5252/RPM, η = Pout/Pin' },
+    { id:'magnetics',      name:'Magnetic Circuits',   icon:'🧲', period:2, formula:'Φ = mmf/ℛ, B = Φ/A' },
+    { id:'lc-calcs',       name:'L & C Calculations',  icon:'🔋', period:2, formula:'L series/parallel, C series/parallel' },
+    { id:'wye-delta',      name:'Wye-Delta Conversion', icon:'🔺', period:2, formula:'RΔ = 3×RY, RY = RΔ/3' },
+    { id:'ac-dividers',    name:'AC Voltage & Current Dividers', icon:'⚖️', period:2, formula:'V1 = VT×Z1/ZT' },
   ],
 
   // Maps each math category to its actual lesson/study content.
-  // type:'lessons' â†’ opens a specific lesson module by module ID (m1, m2, etc.)
-  // type:'study-guide' â†’ opens the Study Guide for that topic (period 1 content or modules without a written lesson yet)
+  // type:'lessons' → opens a specific lesson module by module ID (m1, m2, etc.)
+  // type:'study-guide' → opens the Study Guide for that topic (period 1 content or modules without a written lesson yet)
   _studyTopicMap: {
-    'ac-basics':   { type:'lessons', id:'m1', label:'Module 1 â€” Fundamentals of Alternating Current' },
-    'reactance':   { type:'lessons', id:'m2', label:'Module 2 â€” Properties of Inductors and Capacitors' },
-    'impedance':   { type:'lessons', id:'m3', label:'Module 3 â€” Inductors and Capacitors in Circuits' },
-    'three-phase': { type:'lessons', id:'m4', label:'Module 4 â€” Principles of AC Circuits' },
+    // Period 1 — Study Guide only (no MODULES exist for period 1)
+    'ohms-law':       { type:'study-guide', id:'ohms-law',          label:"Ohm's Law & Basic Theory" },
+    'power':          { type:'study-guide', id:'ohms-law',          label:"Ohm's Law & Basic Theory" },
+    'series':         { type:'study-guide', id:'series-circuits',   label:'Series Circuits' },
+    'parallel':       { type:'study-guide', id:'parallel-circuits', label:'Parallel Circuits' },
+    'series-parallel':{ type:'study-guide', id:'series-circuits',   label:'Series Circuits' },
+    // Period 2 — real curriculum modules (hasContent:true)
+    'ac-basics':      { type:'lessons', id:'m1',  label:'Fundamentals of Alternating Current' },
+    'reactance':      { type:'lessons', id:'m2',  label:'Properties of Inductors and Capacitors' },
+    'impedance':      { type:'lessons', id:'m3',  label:'Inductors and Capacitors in Circuits' },
+    'three-phase':    { type:'lessons', id:'m4',  label:'Principles of AC Circuits' },
+    // Period 2 — Study Guide fallback (no written lesson module yet)
+    'power-factor':   { type:'study-guide', id:'power-factor', label:'Power Factor' },
+    'transformers':   { type:'study-guide', id:'transformers', label:'Transformers' },
+    'motors':         { type:'study-guide', id:'motors',       label:'Motors & Generators' },
   },
 
   openLesson(catId) {
@@ -10452,7 +13459,7 @@ const MathPractice = {
     if (!state) return;
     if (!state.mathSettings) state.mathSettings = { enabledCategories: null };
     let enabled = state.mathSettings.enabledCategories;
-    // null means all enabled â€” materialise the full list first
+    // null means all enabled — materialise the full list first
     if (!enabled) enabled = this.categories.map(c => c.id);
     if (enabled.includes(id)) {
       enabled = enabled.filter(e => e !== id);
@@ -10478,90 +13485,255 @@ const MathPractice = {
 
   _gen_ohms_law() {
     const type = this._r(0,2);
-    if (type===0) { const V=this._r(12,480,12),R=this._r(1,200,5); return {q:`A circuit has a voltage of <strong>${V}V</strong> and a resistance of <strong>${R}Î©</strong>. What is the current?`,a:this._round(V/R),unit:'A',hint:'I = V Ã· R',formula:'I = V / R'}; }
-    if (type===1) { const I=this._r(1,30),R=this._r(5,200,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Î©</strong> resistor. What is the voltage across it?`,a:this._round(I*R),unit:'V',hint:'V = I Ã— R',formula:'V = I Ã— R'}; }
-    const V=this._r(12,480,12),I=this._r(1,20); return {q:`A <strong>${V}V</strong> source pushes <strong>${I}A</strong> through a resistor. What is the resistance?`,a:this._round(V/I),unit:'Î©',hint:'R = V Ã· I',formula:'R = V / I'};
+    if (type===0) { const V=this._r(12,480,12),R=this._r(1,200,5); return {q:`A circuit has a voltage of <strong>${V}V</strong> and a resistance of <strong>${R}Ω</strong>. What is the current?`,a:this._round(V/R),unit:'A',hint:'I = V ÷ R',formula:'I = V / R'}; }
+    if (type===1) { const I=this._r(1,30),R=this._r(5,200,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Ω</strong> resistor. What is the voltage across it?`,a:this._round(I*R),unit:'V',hint:'V = I × R',formula:'V = I × R'}; }
+    const V=this._r(12,480,12),I=this._r(1,20); return {q:`A <strong>${V}V</strong> source pushes <strong>${I}A</strong> through a resistor. What is the resistance?`,a:this._round(V/I),unit:'Ω',hint:'R = V ÷ I',formula:'R = V / I'};
   },
 
   _gen_power() {
     const type = this._r(0,3);
-    if (type===0) { const V=this._r(12,240,12),I=this._r(1,20); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong>. What is the power?`,a:this._round(V*I),unit:'W',hint:'P = V Ã— I',formula:'P = V Ã— I'}; }
-    if (type===1) { const I=this._r(1,20),R=this._r(5,100,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Î©</strong> resistor. What power is dissipated?`,a:this._round(I*I*R),unit:'W',hint:'P = IÂ² Ã— R',formula:'P = IÂ² Ã— R'}; }
-    if (type===2) { const V=this._r(12,240,12),R=this._r(5,100,5); return {q:`<strong>${V}V</strong> is applied across a <strong>${R}Î©</strong> resistor. What is the power?`,a:this._round(V*V/R),unit:'W',hint:'P = VÂ² Ã· R',formula:'P = VÂ² / R'}; }
-    const P=this._r(100,2400,100),V=this._r(120,240,120); return {q:`A <strong>${P}W</strong> heater operates at <strong>${V}V</strong>. What current does it draw?`,a:this._round(P/V),unit:'A',hint:'I = P Ã· V',formula:'I = P / V'};
+    if (type===0) { const V=this._r(12,240,12),I=this._r(1,20); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong>. What is the power?`,a:this._round(V*I),unit:'W',hint:'P = V × I',formula:'P = V × I'}; }
+    if (type===1) { const I=this._r(1,20),R=this._r(5,100,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Ω</strong> resistor. What power is dissipated?`,a:this._round(I*I*R),unit:'W',hint:'P = I² × R',formula:'P = I² × R'}; }
+    if (type===2) { const V=this._r(12,240,12),R=this._r(5,100,5); return {q:`<strong>${V}V</strong> is applied across a <strong>${R}Ω</strong> resistor. What is the power?`,a:this._round(V*V/R),unit:'W',hint:'P = V² ÷ R',formula:'P = V² / R'}; }
+    const P=this._r(100,2400,100),V=this._r(120,240,120); return {q:`A <strong>${P}W</strong> heater operates at <strong>${V}V</strong>. What current does it draw?`,a:this._round(P/V),unit:'A',hint:'I = P ÷ V',formula:'I = P / V'};
   },
 
   _gen_series() {
     const type = this._r(0,2);
-    if (type===0) { const R1=this._r(5,100,5),R2=this._r(5,100,5),R3=this._r(5,100,5); return {q:`Three resistors <strong>R1=${R1}Î©, R2=${R2}Î©, R3=${R3}Î©</strong> are connected in series. What is the total resistance?`,a:R1+R2+R3,unit:'Î©',hint:'Add all resistors: Rt = R1+R2+R3',formula:'Rt = R1 + R2 + R3'}; }
-    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,50,10),R2=this._r(10,50,10); const I=this._round(V/(R1+R2)); return {q:`<strong>${V}V</strong> is applied across a series circuit with <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong>. What is the current?`,a:I,unit:'A',hint:'Find Rt first, then I = V Ã· Rt',formula:'I = V / (R1+R2)'}; }
-    const V=this._r(24,120,12),R1=this._r(10,40,10),R2=this._r(10,40,10); const I=V/(R1+R2); return {q:`In a series circuit with <strong>${V}V</strong>, <strong>R1=${R1}Î©</strong>, and <strong>R2=${R2}Î©</strong>, what is the voltage drop across R1?`,a:this._round(I*R1),unit:'V',hint:'Find I first (I=V/Rt), then V1 = I Ã— R1',formula:'V1 = I Ã— R1'};
+    if (type===0) { const R1=this._r(5,100,5),R2=this._r(5,100,5),R3=this._r(5,100,5); return {q:`Three resistors <strong>R1=${R1}Ω, R2=${R2}Ω, R3=${R3}Ω</strong> are connected in series. What is the total resistance?`,a:R1+R2+R3,unit:'Ω',hint:'Add all resistors: Rt = R1+R2+R3',formula:'Rt = R1 + R2 + R3'}; }
+    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,50,10),R2=this._r(10,50,10); const I=this._round(V/(R1+R2)); return {q:`<strong>${V}V</strong> is applied across a series circuit with <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What is the current?`,a:I,unit:'A',hint:'Find Rt first, then I = V ÷ Rt',formula:'I = V / (R1+R2)'}; }
+    const V=this._r(24,120,12),R1=this._r(10,40,10),R2=this._r(10,40,10); const I=V/(R1+R2); return {q:`In a series circuit with <strong>${V}V</strong>, <strong>R1=${R1}Ω</strong>, and <strong>R2=${R2}Ω</strong>, what is the voltage drop across R1?`,a:this._round(I*R1),unit:'V',hint:'Find I first (I=V/Rt), then V1 = I × R1',formula:'V1 = I × R1'};
   },
 
   _gen_parallel() {
     const type = this._r(0,2);
-    if (type===0) { const R1=this._r(10,100,10),R2=this._r(10,100,10); const Rt=this._round((R1*R2)/(R1+R2)); return {q:`Two resistors <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong> are in parallel. What is the total resistance?`,a:Rt,unit:'Î©',hint:'Use the product-over-sum formula: Rt = (R1Ã—R2)/(R1+R2)',formula:'Rt = (R1Ã—R2) / (R1+R2)'}; }
-    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); const I1=this._round(V/R1),I2=this._round(V/R2); return {q:`<strong>${V}V</strong> is applied to a parallel circuit with <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong>. What is the total current?`,a:this._round(I1+I2),unit:'A',hint:'Each branch: I=V/R. Total: It=I1+I2',formula:'It = V/R1 + V/R2'}; }
-    const V=this._r(24,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); return {q:`A parallel circuit has <strong>${V}V</strong> across branches <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong>. What current flows through R2?`,a:this._round(V/R2),unit:'A',hint:'In parallel, same voltage across all branches. I2 = V / R2',formula:'I2 = V / R2'};
+    if (type===0) { const R1=this._r(10,100,10),R2=this._r(10,100,10); const Rt=this._round((R1*R2)/(R1+R2)); return {q:`Two resistors <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong> are in parallel. What is the total resistance?`,a:Rt,unit:'Ω',hint:'Use the product-over-sum formula: Rt = (R1×R2)/(R1+R2)',formula:'Rt = (R1×R2) / (R1+R2)'}; }
+    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); const I1=this._round(V/R1),I2=this._round(V/R2); return {q:`<strong>${V}V</strong> is applied to a parallel circuit with <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What is the total current?`,a:this._round(I1+I2),unit:'A',hint:'Each branch: I=V/R. Total: It=I1+I2',formula:'It = V/R1 + V/R2'}; }
+    const V=this._r(24,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); return {q:`A parallel circuit has <strong>${V}V</strong> across branches <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What current flows through R2?`,a:this._round(V/R2),unit:'A',hint:'In parallel, same voltage across all branches. I2 = V / R2',formula:'I2 = V / R2'};
   },
 
   _gen_series_parallel() {
     const R1=this._r(10,50,10),R2=this._r(10,50,10),R3=this._r(10,50,10),V=this._r(24,120,12);
     const Rp=this._round((R2*R3)/(R2+R3)); const Rt=this._round(R1+Rp); const I=this._round(V/Rt);
     const type=this._r(0,1);
-    if(type===0) return {q:`R1=${R1}Î© is in series with parallel combination of R2=${R2}Î© and R3=${R3}Î©. Source is <strong>${V}V</strong>. What is the total current?`,a:I,unit:'A',hint:'Find Rparallel=(R2Ã—R3)/(R2+R3), then Rt=R1+Rp, then I=V/Rt',formula:'Rp=(R2Ã—R3)/(R2+R3), Rt=R1+Rp, I=V/Rt'};
-    return {q:`R1=${R1}Î© is in series with parallel combination of R2=${R2}Î© and R3=${R3}Î©. Source is <strong>${V}V</strong>. What is the total resistance?`,a:Rt,unit:'Î©',hint:'Rp=(R2Ã—R3)/(R2+R3), then Rt=R1+Rp',formula:'Rt = R1 + (R2Ã—R3)/(R2+R3)'};
+    if(type===0) return {q:`R1=${R1}Ω is in series with parallel combination of R2=${R2}Ω and R3=${R3}Ω. Source is <strong>${V}V</strong>. What is the total current?`,a:I,unit:'A',hint:'Find Rparallel=(R2×R3)/(R2+R3), then Rt=R1+Rp, then I=V/Rt',formula:'Rp=(R2×R3)/(R2+R3), Rt=R1+Rp, I=V/Rt'};
+    return {q:`R1=${R1}Ω is in series with parallel combination of R2=${R2}Ω and R3=${R3}Ω. Source is <strong>${V}V</strong>. What is the total resistance?`,a:Rt,unit:'Ω',hint:'Rp=(R2×R3)/(R2+R3), then Rt=R1+Rp',formula:'Rt = R1 + (R2×R3)/(R2+R3)'};
   },
 
   _gen_ac_basics() {
-    const type=this._r(0,3);
-    if(type===0){ const Vp=this._r(100,400,10); return {q:`A sine wave has a peak voltage of <strong>${Vp}V</strong>. What is the RMS voltage?`,a:this._round(Vp*0.7071),unit:'V',hint:'Vrms = Vpeak Ã— 0.7071',formula:'Vrms = Vpeak Ã— 0.7071'}; }
-    if(type===1){ const Vr=this._r(100,250,10); return {q:`The RMS voltage of a circuit is <strong>${Vr}V</strong>. What is the peak voltage?`,a:this._round(Vr*1.4142),unit:'V',hint:'Vpeak = Vrms Ã— 1.414',formula:'Vpeak = Vrms Ã— 1.414'}; }
+    const type=this._r(0,8);
+    if(type===0){ const Vp=this._r(100,400,10); return {q:`A sine wave has a peak voltage of <strong>${Vp}V</strong>. What is the RMS voltage?`,a:this._round(Vp*0.7071),unit:'V',hint:'Vrms = Vpeak × 0.7071',formula:'Vrms = Vpeak × 0.7071'}; }
+    if(type===1){ const Vr=this._r(100,250,10); return {q:`The RMS voltage of a circuit is <strong>${Vr}V</strong>. What is the peak voltage?`,a:this._round(Vr*1.4142),unit:'V',hint:'Vpeak = Vrms × 1.414',formula:'Vpeak = Vrms × 1.414'}; }
     if(type===2){ const T=this._r(10,100,5); return {q:`A sine wave has a period of <strong>${T}ms</strong>. What is its frequency?`,a:this._round(1000/T,1),unit:'Hz',hint:'f = 1 / T (convert ms to seconds first)',formula:'f = 1/T'}; }
-    const f=this._r(10,120,10); return {q:`A signal has a frequency of <strong>${f}Hz</strong>. What is its period?`,a:this._round(1000/f,2),unit:'ms',hint:'T = 1/f (then convert to ms)',formula:'T = 1/f Ã— 1000ms'};
+    if(type===3){ const f=this._r(10,120,10); return {q:`A signal has a frequency of <strong>${f}Hz</strong>. What is its period?`,a:this._round(1000/f,2),unit:'ms',hint:'T = 1/f (then convert to ms)',formula:'T = 1/f × 1000ms'}; }
+    if(type===4){ const P=this._r(2,12,2); const rpm=this._r(300,3600,300); return {q:`A <strong>${P}-pole</strong> alternator spins at <strong>${rpm} RPM</strong>. What frequency does it produce?`,a:this._round(P*rpm/120),unit:'Hz',hint:'f = (poles × RPM) / 120',formula:'f = pn/120'}; }
+    if(type===5){ const Vp=this._r(100,400,10); return {q:`What is the peak-to-peak voltage of a sine wave with <strong>${Vp}V peak</strong>?`,a:this._round(Vp*2),unit:'V',hint:'Vpp = 2 × Vpeak',formula:'Vpp = 2 × Vpeak'}; }
+    if(type===6){ const Vrms=this._r(100,277,1); const angle=this._r(1,5)*30; return {q:`The RMS voltage is <strong>${Vrms}V</strong>. What is the instantaneous voltage at <strong>${angle}°</strong>?`,a:this._round(Vrms*1.4142*Math.sin(angle*Math.PI/180)),unit:'V',hint:'v = Vpeak × sin(θ). First find Vpeak from Vrms.',formula:'v = Vpeak × sin(θ)'}; }
+    if(type===7){ const Vrms=this._r(100,250,10); return {q:`What is the average value of a <strong>${Vrms}V RMS</strong> full-wave rectified sine wave?`,a:this._round(Vrms*1.4142*0.6366),unit:'V',hint:'Vavg = 0.637 × Vpeak. First find Vpeak.',formula:'Vavg = 0.637 × Vpeak'}; }
+    const P=this._r(2,12,2); const f=this._r(25,60,5); return {q:`What RPM must a <strong>${P}-pole</strong> alternator spin to produce <strong>${f}Hz</strong>?`,a:this._round(120*f/P),unit:'RPM',hint:'RPM = 120f / P',formula:'n = 120f/P'};
   },
 
   _gen_reactance() {
-    const type=this._r(0,1);
-    if(type===0){ const f=this._r(30,120,10),L=this._r(10,500,10); return {q:`An inductor of <strong>${L}mH</strong> is connected to a <strong>${f}Hz</strong> supply. What is its inductive reactance?`,a:this._round(2*Math.PI*f*(L/1000)),unit:'Î©',hint:'XL = 2Ï€ Ã— f Ã— L (convert mH to H)',formula:'XL = 2Ï€fL'}; }
-    const f=this._r(30,120,10),C=this._r(10,500,10); return {q:`A capacitor of <strong>${C}Î¼F</strong> is connected to a <strong>${f}Hz</strong> supply. What is its capacitive reactance?`,a:this._round(1/(2*Math.PI*f*(C/1000000))),unit:'Î©',hint:'XC = 1 Ã· (2Ï€ Ã— f Ã— C) (convert Î¼F to F)',formula:'XC = 1/(2Ï€fC)'};
+    const type=this._r(0,5);
+    if(type===0){ const f=this._r(30,120,10),L=this._r(10,500,10); return {q:`An inductor of <strong>${L}mH</strong> is connected to a <strong>${f}Hz</strong> supply. What is its inductive reactance?`,a:this._round(2*Math.PI*f*(L/1000)),unit:'Ω',hint:'XL = 2π × f × L (convert mH to H)',formula:'XL = 2πfL'}; }
+    if(type===1){ const f=this._r(30,120,10),C=this._r(10,500,10); return {q:`A capacitor of <strong>${C}μF</strong> is connected to a <strong>${f}Hz</strong> supply. What is its capacitive reactance?`,a:this._round(1/(2*Math.PI*f*(C/1000000))),unit:'Ω',hint:'XC = 1 ÷ (2π × f × C) (convert μF to F)',formula:'XC = 1/(2πfC)'}; }
+    if(type===2){ const XL=this._r(10,200,10),f=60; return {q:`An inductor has <strong>${XL}Ω</strong> reactance at <strong>${f}Hz</strong>. What is its inductance?`,a:this._round(XL/(2*Math.PI*f)*1000),unit:'mH',hint:'L = XL / (2πf), then convert H to mH',formula:'L = XL / (2πf)'}; }
+    if(type===3){ const XC=this._r(10,200,10),f=60; return {q:`A capacitor has <strong>${XC}Ω</strong> reactance at <strong>${f}Hz</strong>. What is its capacitance?`,a:this._round(1/(2*Math.PI*f*XC)*1000000),unit:'μF',hint:'C = 1 / (2πfXC), then convert F to μF',formula:'C = 1 / (2πfXC)'}; }
+    if(type===4){ const L=this._r(50,500,50),f1=50,f2=60; const XL1=this._round(2*Math.PI*f1*(L/1000)); return {q:`A <strong>${L}mH</strong> inductor has <strong>${XL1}Ω</strong> reactance at <strong>${f1}Hz</strong>. What is its reactance at <strong>${f2}Hz</strong>?`,a:this._round(2*Math.PI*f2*(L/1000)),unit:'Ω',hint:'XL is directly proportional to frequency. Calculate XL = 2πfL at the new frequency.',formula:'XL = 2πfL'}; }
+    const V=this._r(100,240,10),XL=this._r(10,100,10); return {q:`An AC source of <strong>${V}V</strong> is connected to a pure inductor with <strong>XL=${XL}Ω</strong>. What current flows?`,a:this._round(V/XL),unit:'A',hint:'I = V / XL (pure inductor, no resistance)',formula:'I = V / XL'};
   },
 
   _gen_impedance() {
-    const type=this._r(0,1);
+    const type=this._r(0,7);
     const R=this._r(10,100,10);
-    if(type===0){ const XL=this._r(10,150,10); return {q:`A series RL circuit has R=<strong>${R}Î©</strong> and XL=<strong>${XL}Î©</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XL*XL)),unit:'Î©',hint:'Z = âˆš(RÂ² + XLÂ²)',formula:'Z = âˆš(RÂ² + XÂ²)'}; }
-    const XC=this._r(10,150,10); return {q:`A series RC circuit has R=<strong>${R}Î©</strong> and XC=<strong>${XC}Î©</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XC*XC)),unit:'Î©',hint:'Z = âˆš(RÂ² + XCÂ²)',formula:'Z = âˆš(RÂ² + XÂ²)'};
+    if(type===0){ const XL=this._r(10,150,10); return {q:`A series RL circuit has R=<strong>${R}Ω</strong> and XL=<strong>${XL}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XL*XL)),unit:'Ω',hint:'Z = √(R² + XL²)',formula:'Z = √(R² + X²)'}; }
+    if(type===1){ const XC=this._r(10,150,10); return {q:`A series RC circuit has R=<strong>${R}Ω</strong> and XC=<strong>${XC}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XC*XC)),unit:'Ω',hint:'Z = √(R² + XC²)',formula:'Z = √(R² + X²)'}; }
+    if(type===2){ const XL=this._r(40,150,10),XC=this._r(10,100,10); const X=XL-XC; return {q:`A series RLC circuit has R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, XC=<strong>${XC}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+X*X)),unit:'Ω',hint:'Net reactance X = XL - XC, then Z = √(R² + X²)',formula:'Z = √(R² + (XL−XC)²)'}; }
+    if(type===3){ const XL=this._r(20,100,10); const Z=Math.sqrt(R*R+XL*XL); const V=this._r(100,240,10); return {q:`A series RL circuit: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, source=<strong>${V}V</strong>. What is the current?`,a:this._round(V/Math.sqrt(R*R+XL*XL)),unit:'A',hint:'First find Z = √(R²+XL²), then I = V/Z',formula:'I = V / Z'}; }
+    if(type===4){ const Z=this._r(30,150,10),X=this._r(10,Z-5,10); const Rcalc=Math.sqrt(Z*Z-X*X); return {q:`A circuit has Z=<strong>${Z}Ω</strong> and X=<strong>${X}Ω</strong>. What is the resistance?`,a:this._round(Rcalc),unit:'Ω',hint:'R = √(Z² − X²)',formula:'R = √(Z² − X²)'}; }
+    if(type===5){ const XL=this._r(20,80,10); const Z=Math.sqrt(R*R+XL*XL); const V=this._r(100,240,10); const I=V/Z; return {q:`Series RL: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, source=<strong>${V}V</strong>. What is the voltage across R?`,a:this._round(I*R),unit:'V',hint:'Find I = V/Z first, then VR = I × R',formula:'VR = I × R'}; }
+    if(type===6){ const XL=this._r(20,80,10); const Z=Math.sqrt(R*R+XL*XL); const V=this._r(100,240,10); const I=V/Z; return {q:`Series RL: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, source=<strong>${V}V</strong>. What is the voltage across the inductor?`,a:this._round(I*XL),unit:'V',hint:'Find I = V/Z first, then VL = I × XL',formula:'VL = I × XL'}; }
+    const VR=this._r(40,160,10),VL=this._r(30,120,10); return {q:`In a series RL circuit, VR=<strong>${VR}V</strong> and VL=<strong>${VL}V</strong>. What is the total applied voltage?`,a:this._round(Math.sqrt(VR*VR+VL*VL)),unit:'V',hint:'VT = √(VR² + VL²) — voltages are 90° apart',formula:'VT = √(VR² + VL²)'};
   },
 
   _gen_power_factor() {
-    const type=this._r(0,2);
-    if(type===0){ const pf=this._round(this._r(70,99)/100,2),S=this._r(1000,10000,500); return {q:`A load has an apparent power of <strong>${S}VA</strong> and a power factor of <strong>${pf}</strong>. What is the true power?`,a:this._round(S*pf),unit:'W',hint:'P = S Ã— PF',formula:'P = S Ã— PF'}; }
-    if(type===1){ const R=this._r(10,80,10),X=this._r(10,80,10); const Z=Math.sqrt(R*R+X*X); return {q:`A circuit has R=<strong>${R}Î©</strong> and X=<strong>${X}Î©</strong>. What is the power factor?`,a:this._round(R/Z,3),unit:'(decimal)',hint:'PF = R / Z (where Z = âˆš(RÂ²+XÂ²))',formula:'PF = cos Î¸ = R/Z'}; }
-    const V=this._r(120,600,120),I=this._r(5,40,5); return {q:`A circuit has <strong>${V}V</strong> and <strong>${I}A</strong>. What is the apparent power?`,a:this._round(V*I),unit:'VA',hint:'S = V Ã— I',formula:'S = V Ã— I'};
+    const type=this._r(0,6);
+    if(type===0){ const pf=this._round(this._r(70,99)/100,2),S=this._r(1000,10000,500); return {q:`A load has an apparent power of <strong>${S}VA</strong> and a power factor of <strong>${pf}</strong>. What is the true power?`,a:this._round(S*pf),unit:'W',hint:'P = S × PF',formula:'P = S × PF'}; }
+    if(type===1){ const R=this._r(10,80,10),X=this._r(10,80,10); const Z=Math.sqrt(R*R+X*X); return {q:`A circuit has R=<strong>${R}Ω</strong> and X=<strong>${X}Ω</strong>. What is the power factor?`,a:this._round(R/Z,3),unit:'(decimal)',hint:'PF = R / Z (where Z = √(R²+X²))',formula:'PF = cos θ = R/Z'}; }
+    if(type===2){ const V=this._r(120,600,120),I=this._r(5,40,5); return {q:`A circuit has <strong>${V}V</strong> and <strong>${I}A</strong>. What is the apparent power?`,a:this._round(V*I),unit:'VA',hint:'S = V × I',formula:'S = V × I'}; }
+    if(type===3){ const V=this._r(120,480,120),I=this._r(5,30,5),pf=this._round(this._r(60,95)/100,2); return {q:`A motor draws <strong>${I}A</strong> at <strong>${V}V</strong> with PF=<strong>${pf}</strong>. What is the true power?`,a:this._round(V*I*pf),unit:'W',hint:'P = V × I × PF',formula:'P = V × I × PF'}; }
+    if(type===4){ const P=this._r(500,5000,500),S=this._r(P+200,8000,500); return {q:`A load has true power <strong>${P}W</strong> and apparent power <strong>${S}VA</strong>. What is the reactive power?`,a:this._round(Math.sqrt(S*S-P*P)),unit:'VARs',hint:'Q = √(S² − P²)',formula:'Q = √(S² − P²)'}; }
+    if(type===5){ const P=this._r(500,5000,500),pf=this._round(this._r(70,95)/100,2); const S=P/pf; return {q:`A load uses <strong>${P}W</strong> true power with PF=<strong>${pf}</strong>. What is the apparent power?`,a:this._round(S),unit:'VA',hint:'S = P / PF',formula:'S = P / PF'}; }
+    const R=this._r(10,60,10),X=this._r(10,60,10); const Z=Math.sqrt(R*R+X*X); const theta=Math.atan(X/R)*180/Math.PI; return {q:`A circuit has R=<strong>${R}Ω</strong> and X=<strong>${X}Ω</strong>. What is the phase angle?`,a:this._round(theta,1),unit:'°',hint:'θ = arctan(X / R)',formula:'θ = arctan(X/R)'};
   },
 
   _gen_transformers() {
-    const type=this._r(0,2);
+    const type=this._r(0,4);
     const N1=this._r(100,2000,100),N2=this._r(50,500,50);
-    if(type===0){ const V1=this._r(120,4800,120); return {q:`A transformer has <strong>${N1} primary turns</strong> and <strong>${N2} secondary turns</strong>. Primary voltage is <strong>${V1}V</strong>. What is the secondary voltage?`,a:this._round(V1*N2/N1),unit:'V',hint:'V2 = V1 Ã— (N2/N1)',formula:'V1/V2 = N1/N2'}; }
+    if(type===0){ const V1=this._r(120,4800,120); return {q:`A transformer has <strong>${N1} primary turns</strong> and <strong>${N2} secondary turns</strong>. Primary voltage is <strong>${V1}V</strong>. What is the secondary voltage?`,a:this._round(V1*N2/N1),unit:'V',hint:'V2 = V1 × (N2/N1)',formula:'V1/V2 = N1/N2'}; }
     if(type===1){ const V1=this._r(240,4800,240),V2=this._r(12,240,12); const ratio=this._round(V1/V2,1); return {q:`A transformer steps down from <strong>${V1}V</strong> to <strong>${V2}V</strong>. What is the turns ratio (N1:N2)?`,a:ratio,unit:':1',hint:'Turns ratio = V1 / V2',formula:'N1/N2 = V1/V2'}; }
-    const V1=this._r(240,4800,240),N1b=this._r(200,2000,200),N2b=this._r(50,500,50),I2=this._r(5,50,5);
-    return {q:`A transformer has turns ratio ${N1b}:${N2b}. If secondary current is <strong>${I2}A</strong>, what is the primary current?`,a:this._round(I2*N2b/N1b),unit:'A',hint:'I1 = I2 Ã— (N2/N1) â€” primary current is inversely proportional to turns',formula:'I1/I2 = N2/N1'};
+    if(type===2){ const V1=this._r(240,4800,240),N1b=this._r(200,2000,200),N2b=this._r(50,500,50),I2=this._r(5,50,5); return {q:`A transformer has turns ratio ${N1b}:${N2b}. If secondary current is <strong>${I2}A</strong>, what is the primary current?`,a:this._round(I2*N2b/N1b),unit:'A',hint:'I1 = I2 × (N2/N1)',formula:'I1/I2 = N2/N1'}; }
+    if(type===3){ const V1=this._r(240,600,120),V2=this._r(12,120,12),I2=this._r(5,40,5); const P=V2*I2; return {q:`An ideal transformer: primary <strong>${V1}V</strong>, secondary <strong>${V2}V</strong> at <strong>${I2}A</strong>. What is the primary current?`,a:this._round(P/V1),unit:'A',hint:'Power is equal on both sides: V1×I1 = V2×I2',formula:'I1 = (V2×I2) / V1'}; }
+    const V1=this._r(120,600,120),V2=this._r(12,120,12),I2=this._r(5,30,5); return {q:`Transformer: <strong>${V1}V</strong> primary, <strong>${V2}V</strong> secondary, secondary load draws <strong>${I2}A</strong>. What is the secondary power?`,a:this._round(V2*I2),unit:'W',hint:'P = V × I on the secondary side',formula:'P2 = V2 × I2'};
   },
 
   _gen_motors() {
-    const type=this._r(0,1);
-    if(type===0){ const f=60,P=this._r(2,8,2)*2; return {q:`A <strong>${P}-pole</strong> induction motor operates on <strong>60Hz</strong>. What is its synchronous speed?`,a:this._round(120*f/P),unit:'RPM',hint:'Ns = 120 Ã— f / P',formula:'Ns = 120f / P'}; }
-    const Ns=this._r(600,3600,300),slip=this._r(2,8);
-    const Nr=Math.round(Ns*(1-slip/100));
-    return {q:`A motor has synchronous speed <strong>${Ns}RPM</strong> and runs at <strong>${Nr}RPM</strong>. What is the slip percentage?`,a:slip,unit:'%',hint:'Slip = (Ns - Nr) / Ns Ã— 100',formula:'Slip% = (Nsâˆ’Nr)/Ns Ã— 100'};
+    const type=this._r(0,4);
+    if(type===0){ const f=60,P=this._r(2,8,2)*2; return {q:`A <strong>${P}-pole</strong> induction motor operates on <strong>60Hz</strong>. What is its synchronous speed?`,a:this._round(120*f/P),unit:'RPM',hint:'Ns = 120 × f / P',formula:'Ns = 120f / P'}; }
+    if(type===1){ const Ns=this._r(600,3600,300),slip=this._r(2,8); const Nr=Math.round(Ns*(1-slip/100)); return {q:`A motor has synchronous speed <strong>${Ns}RPM</strong> and runs at <strong>${Nr}RPM</strong>. What is the slip percentage?`,a:slip,unit:'%',hint:'Slip = (Ns - Nr) / Ns × 100',formula:'Slip% = (Ns−Nr)/Ns × 100'}; }
+    if(type===2){ const P=this._r(2,8,2)*2; const Ns=120*60/P; const slip=this._r(2,6); const Nr=Math.round(Ns*(1-slip/100)); return {q:`A <strong>${P}-pole</strong> motor on <strong>60Hz</strong> runs at <strong>${Nr} RPM</strong>. What is the slip?`,a:slip,unit:'%',hint:'Find Ns = 120f/P first, then slip = (Ns-Nr)/Ns × 100',formula:'Slip% = (Ns−Nr)/Ns × 100'}; }
+    if(type===3){ const Ns=this._r(900,3600,300),slip=this._r(3,7); const Nr=Math.round(Ns*(1-slip/100)); return {q:`A motor has <strong>${slip}% slip</strong> and synchronous speed of <strong>${Ns} RPM</strong>. What is the rotor speed?`,a:Nr,unit:'RPM',hint:'Nr = Ns × (1 − slip/100)',formula:'Nr = Ns × (1 − slip%)'}; }
+    const f=60; const RPM=this._r(900,3600,300); const P=Math.round(120*f/RPM); return {q:`A motor runs at synchronous speed <strong>${RPM} RPM</strong> on <strong>60Hz</strong>. How many poles does it have?`,a:P,unit:'poles',hint:'P = 120f / Ns',formula:'P = 120f / Ns'};
   },
 
   _gen_three_phase() {
-    const type=this._r(0,1);
-    if(type===0){ const Vp=this._r(120,277,1); return {q:`In a <strong>wye (Y)</strong> connected system, the phase voltage is <strong>${Vp}V</strong>. What is the line voltage?`,a:this._round(Vp*Math.sqrt(3)),unit:'V',hint:'VL = Vp Ã— âˆš3 (âˆš3 â‰ˆ 1.732)',formula:'VL = Vp Ã— âˆš3'}; }
-    const VL=this._r(208,600,100); return {q:`In a <strong>wye (Y)</strong> system, the line voltage is <strong>${VL}V</strong>. What is the phase voltage?`,a:this._round(VL/Math.sqrt(3)),unit:'V',hint:'Vp = VL Ã· âˆš3 (âˆš3 â‰ˆ 1.732)',formula:'Vp = VL / âˆš3'};
+    const type=this._r(0,5);
+    if(type===0){ const Vp=this._r(120,277,1); return {q:`In a <strong>wye (Y)</strong> connected system, the phase voltage is <strong>${Vp}V</strong>. What is the line voltage?`,a:this._round(Vp*Math.sqrt(3)),unit:'V',hint:'VL = Vp × √3 (√3 ≈ 1.732)',formula:'VL = Vp × √3'}; }
+    if(type===1){ const VL=this._r(208,600,100); return {q:`In a <strong>wye (Y)</strong> system, the line voltage is <strong>${VL}V</strong>. What is the phase voltage?`,a:this._round(VL/Math.sqrt(3)),unit:'V',hint:'Vp = VL ÷ √3 (√3 ≈ 1.732)',formula:'Vp = VL / √3'}; }
+    if(type===2){ const Ip=this._r(5,30,5); return {q:`In a <strong>delta (Δ)</strong> connected system, the phase current is <strong>${Ip}A</strong>. What is the line current?`,a:this._round(Ip*Math.sqrt(3)),unit:'A',hint:'IL = Ip × √3 in delta',formula:'IL = Ip × √3'}; }
+    if(type===3){ const IL=this._r(10,50,5); return {q:`In a <strong>delta (Δ)</strong> system, the line current is <strong>${IL}A</strong>. What is the phase current?`,a:this._round(IL/Math.sqrt(3)),unit:'A',hint:'Ip = IL ÷ √3 in delta',formula:'Ip = IL / √3'}; }
+    if(type===4){ const VL=this._r(208,600,100),IL=this._r(5,30,5),pf=this._round(this._r(75,95)/100,2); return {q:`A 3-phase load: VL=<strong>${VL}V</strong>, IL=<strong>${IL}A</strong>, PF=<strong>${pf}</strong>. What is the total power?`,a:this._round(Math.sqrt(3)*VL*IL*pf),unit:'W',hint:'P = √3 × VL × IL × PF',formula:'P = √3 × VL × IL × PF'}; }
+    const VL=this._r(208,600,100),IL=this._r(5,30,5); return {q:`A 3-phase load: VL=<strong>${VL}V</strong>, IL=<strong>${IL}A</strong>. What is the apparent power?`,a:this._round(Math.sqrt(3)*VL*IL),unit:'VA',hint:'S = √3 × VL × IL',formula:'S = √3 × VL × IL'};
+  },
+
+  _gen_voltage_drop() {
+    const type=this._r(0,4);
+    // Common wire resistances per 1000m (approximate for copper)
+    const awg = [{size:'14',r:8.29},{size:'12',r:5.21},{size:'10',r:3.28},{size:'8',r:2.06},{size:'6',r:1.30},{size:'4',r:0.815},{size:'3',r:0.646},{size:'2',r:0.513},{size:'1',r:0.407}];
+    const wire = awg[this._r(0,awg.length-1)];
+    if(type===0){ const I=this._r(5,40,5),L=this._r(10,100,10); const Vd=this._round(2*I*wire.r*L/1000); return {q:`A #<strong>${wire.size} AWG</strong> copper wire carries <strong>${I}A</strong> over <strong>${L}m</strong> one-way. Resistance is <strong>${wire.r}Ω/km</strong>. What is the voltage drop?`,a:Vd,unit:'V',hint:'Vd = 2 × I × R × L / 1000 (×2 for round trip)',formula:'Vd = 2 × I × R/km × L/1000'}; }
+    if(type===1){ const V=this._r(120,240,120),I=this._r(10,30,5),L=this._r(20,80,10); const Vd=2*I*wire.r*L/1000; const pct=this._round(Vd/V*100,1); return {q:`A <strong>${V}V</strong> circuit uses #<strong>${wire.size} AWG</strong> (<strong>${wire.r}Ω/km</strong>), draws <strong>${I}A</strong>, run is <strong>${L}m</strong>. What is the voltage drop percentage?`,a:pct,unit:'%',hint:'Find Vd first, then %Vd = Vd/Vsource × 100',formula:'%Vd = (Vd / V) × 100'}; }
+    if(type===2){ const P=this._r(500,5000,500),V=this._r(120,240,120); const I=this._round(P/V); return {q:`A <strong>${P}W</strong> load runs on <strong>${V}V</strong>. What current does it draw?`,a:I,unit:'A',hint:'I = P / V',formula:'I = P / V'}; }
+    if(type===3){ const V=this._r(120,240,120),Vd=this._r(2,8,1); const pct=this._round(Vd/V*100,1); return {q:`A <strong>${V}V</strong> circuit has a <strong>${Vd}V</strong> drop. What percentage is this?`,a:pct,unit:'%',hint:'%Vd = Vd / V × 100. CEC recommends max 3% for branch, 5% total.',formula:'%Vd = (Vd / V) × 100'}; }
+    const V=this._r(120,240,120),maxPct=3,I=this._r(10,30,5); const maxVd=V*maxPct/100; const maxL=this._round(maxVd*1000/(2*I*wire.r)); return {q:`Max <strong>${maxPct}%</strong> drop on <strong>${V}V</strong>, #<strong>${wire.size} AWG</strong> (<strong>${wire.r}Ω/km</strong>), <strong>${I}A</strong>. What is the maximum one-way run length?`,a:maxL,unit:'m',hint:'Rearrange: L = (Vd × 1000) / (2 × I × R/km)',formula:'L = Vd×1000 / (2×I×R/km)'};
+  },
+
+  _gen_wire_sizing() {
+    const type=this._r(0,3);
+    // CEC Table 2 ampacities (copper, 75°C, in raceway)
+    const table = [{awg:'14',amp:15},{awg:'12',amp:20},{awg:'10',amp:30},{awg:'8',amp:50},{awg:'6',amp:65},{awg:'4',amp:85},{awg:'3',amp:100},{awg:'2',amp:115},{awg:'1',amp:130},{awg:'1/0',amp:150},{awg:'2/0',amp:175},{awg:'3/0',amp:200},{awg:'4/0',amp:230}];
+    if(type===0){ const idx=this._r(0,table.length-1); const w=table[idx]; return {q:`What is the ampacity of #<strong>${w.awg} AWG</strong> copper conductor at 75°C in raceway? (CEC Table 2)`,a:w.amp,unit:'A',hint:'Memorize common sizes: 14=15A, 12=20A, 10=30A, 8=50A, 6=65A',formula:'CEC Table 2'}; }
+    if(type===1){ const P=this._r(1000,8000,500),V=this._r(120,240,120); const I=this._round(P/V); return {q:`A <strong>${P}W</strong> load on <strong>${V}V</strong> draws <strong>${I}A</strong>. What is the minimum wire size? (CEC Table 2, copper 75°C)`,a:table.find(w=>w.amp>=I)?.awg || '14',unit:'AWG',hint:'Find current first (I=P/V), then pick the wire with ampacity ≥ that current',formula:'I = P/V, then CEC Table 2'}; }
+    if(type===2){ const idx=this._r(0,table.length-1); const w=table[idx]; const contLoad=this._round(w.amp*0.8); return {q:`#<strong>${w.awg} AWG</strong> has <strong>${w.amp}A</strong> ampacity. What is its continuous load rating? (80% rule)`,a:contLoad,unit:'A',hint:'Continuous load = 80% of ampacity',formula:'Continuous = Ampacity × 0.80'}; }
+    const numWires=this._r(4,9); const factor=[1,1,1,1,0.8,0.8,0.7,0.7,0.7,0.7][numWires]||0.5; const idx=this._r(2,8); const w=table[idx]; const derated=this._round(w.amp*factor); return {q:`#<strong>${w.awg} AWG</strong> (<strong>${w.amp}A</strong> base) with <strong>${numWires} current-carrying conductors</strong> in raceway. Derating factor is <strong>${factor}</strong>. What is the derated ampacity?`,a:derated,unit:'A',hint:'Derated ampacity = base ampacity × derating factor',formula:'Amp_derated = Amp_base × factor'};
+  },
+
+  _gen_conduit_fill() {
+    const type=this._r(0,2);
+    // Common wire areas (mm²) and conduit areas
+    const wireAreas = [{awg:'14',area:8.97},{awg:'12',area:11.68},{awg:'10',area:16.77},{awg:'8',area:30.19},{awg:'6',area:42.41}];
+    const conduits = [{size:'1/2"',area:163},{size:'3/4"',area:285},{size:'1"',area:478},{size:'1-1/4"',area:725},{size:'1-1/2"',area:988},{size:'2"',area:1598}];
+    if(type===0){ const w=wireAreas[this._r(0,wireAreas.length-1)]; const n=this._r(2,6); const totalArea=this._round(w.area*n); const c=conduits.find(c=>c.area*0.4>=totalArea)||conduits[conduits.length-1]; const fillPct=this._round(totalArea/c.area*100,1); return {q:`<strong>${n}</strong> #<strong>${w.awg} AWG</strong> wires (each <strong>${w.area}mm²</strong>) in a <strong>${c.size}</strong> conduit (<strong>${c.area}mm²</strong>). What is the fill percentage?`,a:fillPct,unit:'%',hint:'Fill% = (n × wire area) / conduit area × 100',formula:'Fill% = ΣA_wires / A_conduit × 100'}; }
+    if(type===1){ const w=wireAreas[this._r(0,3)]; const maxFill=0.4; const c=conduits[this._r(2,conduits.length-1)]; const maxWires=Math.floor(c.area*maxFill/w.area); return {q:`How many #<strong>${w.awg} AWG</strong> wires (<strong>${w.area}mm²</strong> each) fit in a <strong>${c.size}</strong> conduit (<strong>${c.area}mm²</strong>) at 40% fill?`,a:maxWires,unit:'wires',hint:'Max wires = floor(conduit area × 0.40 / wire area)',formula:'N = floor(A_conduit × 0.40 / A_wire)'}; }
+    const w=wireAreas[this._r(0,wireAreas.length-1)]; const n=this._r(3,8); const totalArea=w.area*n; const minConduitArea=totalArea/0.4; const c=conduits.find(c2=>c2.area>=minConduitArea)||conduits[conduits.length-1]; return {q:`You need to pull <strong>${n}</strong> #<strong>${w.awg} AWG</strong> wires (<strong>${w.area}mm²</strong> each). Minimum conduit area needed at 40% fill?`,a:this._round(totalArea/0.4),unit:'mm²',hint:'Min conduit area = total wire area / 0.40',formula:'A_conduit = ΣA_wires / 0.40'};
+  },
+
+  _gen_demand_load() {
+    const type=this._r(0,3);
+    if(type===0){ const area=this._r(80,250,10); const watts=area*33; return {q:`A house has <strong>${area}m²</strong> of living space. At <strong>33W/m²</strong> (CEC basic lighting load), what is the basic demand?`,a:watts,unit:'W',hint:'Basic load = area × 33 W/m²',formula:'Basic = area × 33 W/m²'}; }
+    if(type===1){ const area=this._r(100,200,10); const basic=area*33; const first=Math.min(basic,5000)*1.0; const rest=Math.max(basic-5000,0)*0.25; const demand=this._round(first+rest); return {q:`A <strong>${area}m²</strong> house: basic load = <strong>${basic}W</strong>. Apply CEC demand: first 5000W at 100%, remainder at 25%. What is the demand load?`,a:demand,unit:'W',hint:'First 5000W at 100% + remaining at 25%',formula:'Demand = 5000 + (total-5000)×0.25'}; }
+    if(type===2){ const P=this._r(3000,15000,500),V=240; return {q:`A service has <strong>${P}W</strong> demand load at <strong>${V}V</strong> single-phase. What is the service amperage?`,a:this._round(P/V),unit:'A',hint:'I = P / V',formula:'I = P / V'}; }
+    const ranges=[{kW:6,demand:6},{kW:8,demand:8},{kW:10,demand:8},{kW:12,demand:8}]; const r=ranges[this._r(0,3)]; return {q:`A <strong>${r.kW}kW</strong> electric range. Per CEC Table 62, the demand is <strong>${r.demand}kW</strong>. Convert to watts.`,a:r.demand*1000,unit:'W',hint:'1 kW = 1000 W',formula:'W = kW × 1000'};
+  },
+
+  _gen_motor_calcs() {
+    const type=this._r(0,4);
+    if(type===0){ const FLC=this._r(5,50,5); const OL=this._round(FLC*1.25); return {q:`A motor has FLC of <strong>${FLC}A</strong>. What is the maximum overload protection setting? (125% rule)`,a:OL,unit:'A',hint:'Max OL = FLC × 1.25',formula:'OL = FLC × 125%'}; }
+    if(type===1){ const FLC=this._r(5,50,5); const branch=this._round(FLC*2.5); return {q:`A motor has FLC of <strong>${FLC}A</strong>. What is the maximum branch circuit fuse size? (250% rule)`,a:branch,unit:'A',hint:'Max fuse = FLC × 2.50',formula:'Fuse ≤ FLC × 250%'}; }
+    if(type===2){ const HP=this._r(1,25,1); const V=this._r(1,2)===1?240:480; const FLC_table={240:{1:4.2,2:6.8,3:9.6,5:15.2,7.5:22,10:28,15:42,20:54,25:68},480:{1:2.1,2:3.4,3:4.8,5:7.6,7.5:11,10:14,15:21,20:27,25:34}}; const hps=[1,2,3,5,7.5,10,15,20,25]; const closest=hps.reduce((a,b)=>Math.abs(b-HP)<Math.abs(a-HP)?b:a); const flc=FLC_table[V]?.[closest]||10; return {q:`A <strong>${closest}HP</strong> 3-phase motor at <strong>${V}V</strong> has FLC of <strong>${flc}A</strong> (CEC Table 44). What is the 125% overload setting?`,a:this._round(flc*1.25),unit:'A',hint:'OL = FLC × 1.25',formula:'OL = FLC × 125%'}; }
+    if(type===3){ const FLC1=this._r(10,30,5),FLC2=this._r(5,20,5); const largest=Math.max(FLC1,FLC2); const feeder=this._round(largest*2.5+Math.min(FLC1,FLC2)); return {q:`Two motors: FLC1=<strong>${FLC1}A</strong>, FLC2=<strong>${FLC2}A</strong>. Feeder protection = 250% of largest + sum of others. What size?`,a:feeder,unit:'A',hint:'Feeder = 250% × largest FLC + sum of remaining FLCs',formula:'Feeder = 2.5×FLC_largest + ΣFLC_others'}; }
+    const V=this._r(120,480,120),I=this._r(5,30,5),eff=this._round(this._r(80,95)/100,2); const HP=this._round(V*I*eff/746,1); return {q:`A motor draws <strong>${I}A</strong> at <strong>${V}V</strong> with <strong>${eff}</strong> efficiency. What is its horsepower? (746W = 1HP)`,a:HP,unit:'HP',hint:'HP = (V × I × efficiency) / 746',formula:'HP = (V × I × η) / 746'};
+  },
+
+  _gen_time_constants() {
+    const type=this._r(0,5);
+    if(type===0){ const L=this._r(50,500,50),R=this._r(10,200,10); const T=this._round(L/R,3); return {q:`An RL circuit: L=<strong>${L}mH</strong>, R=<strong>${R}Ω</strong>. What is one time constant?`,a:this._round((L/1000)/R*1000,3),unit:'ms',hint:'T = L/R (convert mH to H, result in seconds, then to ms)',formula:'T = L / R'}; }
+    if(type===1){ const R=this._r(1000,50000,1000),C=this._r(10,500,10); const T=this._round(R*(C/1000000)*1000,2); return {q:`An RC circuit: R=<strong>${R}Ω</strong>, C=<strong>${C}μF</strong>. What is one time constant?`,a:T,unit:'ms',hint:'T = R × C (convert μF to F, result in seconds, then to ms)',formula:'T = R × C'}; }
+    if(type===2){ const L=this._r(100,500,100),R=this._r(20,100,10); const T=(L/1000)/R; const total=this._round(T*5*1000,2); return {q:`RL circuit: L=<strong>${L}mH</strong>, R=<strong>${R}Ω</strong>. How long to reach steady state? (5 time constants)`,a:total,unit:'ms',hint:'Total = 5 × T = 5 × (L/R)',formula:'Total = 5 × (L/R)'}; }
+    if(type===3){ const Imax=this._r(2,10,1); const I1T=this._round(Imax*0.632,2); return {q:`An RL circuit has max current of <strong>${Imax}A</strong>. What is the current after 1 time constant? (63.2% rule)`,a:I1T,unit:'A',hint:'After 1T, current reaches 63.2% of maximum',formula:'I(1T) = Imax × 0.632'}; }
+    if(type===4){ const Imax=this._r(2,10,1); const I3T=this._round(Imax*0.950,2); return {q:`Max current = <strong>${Imax}A</strong>. What is the current after 3 time constants? (95.0%)`,a:I3T,unit:'A',hint:'After 3T = 95.0% of max',formula:'I(3T) = Imax × 0.950'}; }
+    const Istart=this._r(4,12,2),R=this._r(50,500,50),L=this._r(100,500,100); const dI=Istart,dt=(L/1000)/R; const eKick=this._round(dI/dt*L/1000); return {q:`An RL circuit: <strong>${Istart}A</strong> steady state, L=<strong>${L}mH</strong>, R=<strong>${R}Ω</strong>. If the switch opens in one time constant, what is the inductive kick voltage?`,a:eKick,unit:'V',hint:'e = L × (ΔI/Δt) = L × (I / T) where T = L/R',formula:'e = L × ΔI/Δt'};
+  },
+
+  _gen_energy_cost() {
+    const type=this._r(0,4);
+    if(type===0){ const P=this._r(500,3000,500),t=this._r(2,12,1); const kWh=this._round(P*t/1000); return {q:`A <strong>${P}W</strong> heater runs for <strong>${t} hours</strong>. How many kWh does it use?`,a:kWh,unit:'kWh',hint:'kWh = watts × hours / 1000',formula:'kWh = P × t / 1000'}; }
+    if(type===1){ const P=this._r(500,3000,500),t=this._r(4,10,1),rate=this._round(this._r(8,18)/100,2); const kWh=P*t/1000; const cost=this._round(kWh*rate); return {q:`A <strong>${P}W</strong> appliance runs <strong>${t}hrs/day</strong> at <strong>$${rate}/kWh</strong>. What is the daily cost?`,a:cost,unit:'$',hint:'Cost = (P × t / 1000) × rate',formula:'Cost = kWh × rate'}; }
+    if(type===2){ const P=this._r(1000,5000,500),t=this._r(4,8,1),days=30,rate=this._round(this._r(8,15)/100,2); const kWh=P*t*days/1000; const cost=this._round(kWh*rate); return {q:`<strong>${P}W</strong> load, <strong>${t}hrs/day</strong>, <strong>${days} days</strong>, <strong>$${rate}/kWh</strong>. Monthly cost?`,a:cost,unit:'$',hint:'kWh = P × hrs × days / 1000, then × rate',formula:'Cost = (P×t×days/1000) × rate'}; }
+    if(type===3){ const V=this._r(120,240,120),I=this._r(5,20,5),t=this._r(2,8,1); const P=V*I; const kWh=this._round(P*t/1000); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong> for <strong>${t} hours</strong>. Energy consumed?`,a:kWh,unit:'kWh',hint:'P = V×I first, then kWh = P×t/1000',formula:'kWh = V×I×t / 1000'}; }
+    const kWh=this._r(500,2000,100),rate=this._round(this._r(8,15)/100,2); return {q:`A monthly bill shows <strong>${kWh} kWh</strong> at <strong>$${rate}/kWh</strong>. What is the energy charge?`,a:this._round(kWh*rate),unit:'$',hint:'Cost = kWh × rate per kWh',formula:'Cost = kWh × rate'};
+  },
+
+  _gen_resonance() {
+    const type=this._r(0,5);
+    if(type===0){ const L=this._r(10,500,10),C=this._r(10,500,10); const fr=1/(2*Math.PI*Math.sqrt((L/1000)*(C/1000000))); return {q:`L=<strong>${L}mH</strong>, C=<strong>${C}μF</strong>. What is the resonant frequency?`,a:this._round(fr,1),unit:'Hz',hint:'fr = 1 / (2π√(LC)) — convert units first',formula:'fr = 1 / (2π√LC)'}; }
+    if(type===1){ const R=this._r(5,50,5),XL=this._r(50,300,10); const Q=this._round(XL/R,1); return {q:`At resonance: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>. What is the Q factor?`,a:Q,unit:'',hint:'Q = XL / R (at resonance XL = XC)',formula:'Q = XL / R'}; }
+    if(type===2){ const R=this._r(5,30,5),XL=this._r(100,500,50); const Q=XL/R; const fr=this._r(50,200,10); const BW=this._round(fr/Q,1); return {q:`fr=<strong>${fr}Hz</strong>, Q=<strong>${this._round(Q,1)}</strong>. What is the bandwidth?`,a:BW,unit:'Hz',hint:'BW = fr / Q',formula:'BW = fr / Q'}; }
+    if(type===3){ const R=this._r(5,30,5),L=this._r(50,300,50),C=this._r(10,200,10); const XL=2*Math.PI*60*(L/1000); const XC=1/(2*Math.PI*60*(C/1000000)); const Z=Math.sqrt(R*R+(XL-XC)*(XL-XC)); return {q:`Series RLC at 60Hz: R=<strong>${R}Ω</strong>, L=<strong>${L}mH</strong>, C=<strong>${C}μF</strong>. What is the impedance?`,a:this._round(Z),unit:'Ω',hint:'Find XL and XC at 60Hz, net X = XL-XC, then Z = √(R²+X²)',formula:'Z = √(R² + (XL-XC)²)'}; }
+    if(type===4){ const V=this._r(100,240,10),R=this._r(5,20,5),Q=this._r(5,20,1); const VL=V*Q; return {q:`At resonance: source=<strong>${V}V</strong>, R=<strong>${R}Ω</strong>, Q=<strong>${Q}</strong>. What is the voltage across the inductor?`,a:this._round(VL),unit:'V',hint:'VL = V × Q (voltage magnification at resonance)',formula:'VL = VS × Q'}; }
+    const fr=this._r(50,500,10),L=this._r(10,200,10); const C=1/(Math.pow(2*Math.PI*fr,2)*(L/1000))*1000000; return {q:`Resonant freq=<strong>${fr}Hz</strong>, L=<strong>${L}mH</strong>. What capacitance is needed for resonance?`,a:this._round(C,1),unit:'μF',hint:'Rearrange fr = 1/(2π√LC) to solve for C',formula:'C = 1 / ((2πfr)² × L)'};
+  },
+
+  _gen_pf_correction() {
+    const type=this._r(0,4);
+    if(type===0){ const P=this._r(5,50,5)*1000,pf1=this._round(this._r(65,80)/100,2),pf2=this._round(this._r(90,98)/100,2); const theta1=Math.acos(pf1),theta2=Math.acos(pf2); const Qc=this._round(P*(Math.tan(theta1)-Math.tan(theta2))); return {q:`A <strong>${P/1000}kW</strong> load at PF=<strong>${pf1}</strong> needs correction to PF=<strong>${pf2}</strong>. What reactive power (kVAR) of capacitors needed?`,a:this._round(Qc/1000,1),unit:'kVAR',hint:'Qc = P × (tan θ₁ − tan θ₂)',formula:'Qc = P × (tanθ₁ − tanθ₂)'}; }
+    if(type===1){ const S=this._r(10,100,5),pf=this._round(this._r(70,90)/100,2); const P=this._round(S*pf,1); const Q=this._round(S*Math.sin(Math.acos(pf)),1); return {q:`Apparent power=<strong>${S}kVA</strong>, PF=<strong>${pf}</strong>. What is the reactive power?`,a:Q,unit:'kVAR',hint:'Q = S × sin(θ) where θ = arccos(PF)',formula:'Q = S × sin(arccos PF)'}; }
+    if(type===2){ const P=this._r(5,40,5),Q=this._r(5,30,5); const S=this._round(Math.sqrt(P*P+Q*Q),1); return {q:`True power=<strong>${P}kW</strong>, reactive power=<strong>${Q}kVAR</strong>. What is the apparent power?`,a:S,unit:'kVA',hint:'S = √(P² + Q²)',formula:'S = √(P² + Q²)'}; }
+    if(type===3){ const P=this._r(5,30,5),Q=this._r(5,25,5); const pf=this._round(P/Math.sqrt(P*P+Q*Q),3); return {q:`P=<strong>${P}kW</strong>, Q=<strong>${Q}kVAR</strong>. What is the power factor?`,a:pf,unit:'',hint:'PF = P / S where S = √(P²+Q²)',formula:'PF = P / √(P²+Q²)'}; }
+    const V=this._r(240,600,120),Qc=this._r(5,30,5)*1000,f=60; const C=this._round(Qc/(2*Math.PI*f*V*V)*1000000,1); return {q:`Need <strong>${Qc/1000}kVAR</strong> correction at <strong>${V}V</strong>, <strong>60Hz</strong>. What capacitance is required?`,a:C,unit:'μF',hint:'C = Qc / (2πfV²)',formula:'C = Qc / (2πfV²)'};
+  },
+
+  _gen_xfmr_eff() {
+    const type=this._r(0,4);
+    if(type===0){ const Pout=this._r(5,50,5)*1000,Ploss=this._r(200,2000,100); const Pin=Pout+Ploss; const eff=this._round(Pout/Pin*100,1); return {q:`Transformer output=<strong>${Pout/1000}kW</strong>, total losses=<strong>${Ploss}W</strong>. What is the efficiency?`,a:eff,unit:'%',hint:'η = Pout / Pin × 100, where Pin = Pout + losses',formula:'η = Pout / (Pout + losses) × 100'}; }
+    if(type===1){ const V1=this._r(240,4800,240),V2=this._r(120,240,120),I2=this._r(5,40,5),eff=this._r(92,98); const Pout=V2*I2; const Pin=this._round(Pout/(eff/100)); const I1=this._round(Pin/V1,2); return {q:`Transformer: <strong>${V1}V</strong> primary, <strong>${V2}V/${I2}A</strong> secondary, <strong>${eff}%</strong> efficient. What is the primary current?`,a:I1,unit:'A',hint:'Pout = V2×I2, Pin = Pout/η, I1 = Pin/V1',formula:'I1 = (V2×I2) / (η × V1)'}; }
+    if(type===2){ const VNL=this._r(120,480,12),VFL=this._r(110,470,10); const reg=this._round((VNL-VFL)/VFL*100,1); return {q:`No-load voltage=<strong>${VNL}V</strong>, full-load voltage=<strong>${VFL}V</strong>. What is the voltage regulation?`,a:reg,unit:'%',hint:'%Reg = (VNL − VFL) / VFL × 100',formula:'%Reg = (VNL−VFL)/VFL × 100'}; }
+    if(type===3){ const Pcu=this._r(100,1000,100),Pcore=this._r(50,500,50); const totalLoss=Pcu+Pcore; return {q:`Copper losses=<strong>${Pcu}W</strong>, core losses=<strong>${Pcore}W</strong>. What are the total transformer losses?`,a:totalLoss,unit:'W',hint:'Total = copper + core losses',formula:'Ploss = Pcu + Pcore'}; }
+    const kVA=this._r(5,100,5),pf=this._round(this._r(75,95)/100,2),eff=this._r(93,98); const Pout=kVA*1000*pf; const Pin=this._round(Pout/(eff/100)); return {q:`A <strong>${kVA}kVA</strong> transformer at PF=<strong>${pf}</strong>, <strong>${eff}%</strong> efficient. What is the input power?`,a:this._round(Pin),unit:'W',hint:'Pout = kVA × PF × 1000, Pin = Pout / η',formula:'Pin = (kVA×PF×1000) / η'};
+  },
+
+  _gen_motor_torque() {
+    const type=this._r(0,4);
+    if(type===0){ const HP=this._r(1,25,1),RPM=this._r(900,3600,300); const T=this._round(HP*5252/RPM,1); return {q:`A <strong>${HP}HP</strong> motor runs at <strong>${RPM}RPM</strong>. What is the torque?`,a:T,unit:'lb-ft',hint:'T = HP × 5252 / RPM',formula:'T = HP × 5252 / RPM'}; }
+    if(type===1){ const Pout=this._r(1,20,1)*746,Pin=this._r(1,25,1)*746+this._r(50,300,50); const eff=this._round(Pout/Pin*100,1); return {q:`Motor input=<strong>${this._round(Pin)}W</strong>, output=<strong>${this._round(Pout)}W</strong>. What is the efficiency?`,a:eff,unit:'%',hint:'η = Pout / Pin × 100',formula:'η = Pout / Pin × 100'}; }
+    if(type===2){ const HP=this._r(1,15,1); const W=this._round(HP*746); return {q:`Convert <strong>${HP} HP</strong> to watts.`,a:W,unit:'W',hint:'1 HP = 746 watts',formula:'W = HP × 746'}; }
+    if(type===3){ const W=this._r(1000,15000,500); const HP=this._round(W/746,1); return {q:`Convert <strong>${W}W</strong> to horsepower.`,a:HP,unit:'HP',hint:'HP = watts / 746',formula:'HP = W / 746'}; }
+    const T=this._r(5,50,5),RPM=this._r(900,3600,300); const HP=this._round(T*RPM/5252,1); return {q:`Torque=<strong>${T} lb-ft</strong> at <strong>${RPM}RPM</strong>. What is the horsepower?`,a:HP,unit:'HP',hint:'HP = T × RPM / 5252',formula:'HP = T × RPM / 5252'};
+  },
+
+  _gen_magnetics() {
+    const type=this._r(0,4);
+    if(type===0){ const N=this._r(100,1000,100),I=this._r(1,10,1); const mmf=N*I; return {q:`A coil has <strong>${N} turns</strong> carrying <strong>${I}A</strong>. What is the magnetomotive force (mmf)?`,a:mmf,unit:'At',hint:'mmf = N × I (ampere-turns)',formula:'mmf = N × I'}; }
+    if(type===1){ const Phi=this._r(1,10,1),A=this._r(10,100,10); const B=this._round(Phi/A*1000,2); return {q:`Magnetic flux=<strong>${Phi}mWb</strong> through area=<strong>${A}cm²</strong>. What is the flux density? (Give in mT)`,a:this._round((Phi/1000)/(A/10000)*1000,1),unit:'mT',hint:'B = Φ/A (convert units: mWb→Wb, cm²→m²)',formula:'B = Φ / A'}; }
+    if(type===2){ const mmf=this._r(100,2000,100),R=this._r(50,500,50); const Phi=this._round(mmf/R*1000,2); return {q:`mmf=<strong>${mmf}At</strong>, reluctance=<strong>${R} × 10³ At/Wb</strong>. What is the flux? (in mWb)`,a:this._round(mmf/(R*1000)*1000,2),unit:'mWb',hint:'Φ = mmf / ℛ',formula:'Φ = mmf / ℛ'}; }
+    if(type===3){ const N=this._r(200,800,100),I=this._r(2,8,1),l=this._r(10,40,5); const H=this._round(N*I/(l/100)); return {q:`Coil: <strong>${N} turns</strong>, <strong>${I}A</strong>, magnetic path=<strong>${l}cm</strong>. What is the field intensity?`,a:H,unit:'At/m',hint:'H = N×I / l (convert cm to m)',formula:'H = NI / l'}; }
+    const B=this._r(5,20,1),l=this._r(10,50,10),A=this._r(5,25,5); return {q:`A conductor of <strong>${l}cm</strong> moves at <strong>${B}m/s</strong> through a <strong>${A}mT</strong> field. What EMF is induced?`,a:this._round((A/1000)*(B)*(l/100)*1000,2),unit:'mV',hint:'e = B × l × v',formula:'e = Blv'};
+  },
+
+  _gen_lc_calcs() {
+    const type=this._r(0,5);
+    if(type===0){ const L1=this._r(10,200,10),L2=this._r(10,200,10); return {q:`Two inductors in series (no mutual coupling): L1=<strong>${L1}mH</strong>, L2=<strong>${L2}mH</strong>. Total inductance?`,a:L1+L2,unit:'mH',hint:'Series inductors add: LT = L1 + L2',formula:'LT = L1 + L2'}; }
+    if(type===1){ const L1=this._r(20,200,10),L2=this._r(20,200,10); const LT=this._round((L1*L2)/(L1+L2),1); return {q:`Two inductors in parallel: L1=<strong>${L1}mH</strong>, L2=<strong>${L2}mH</strong>. Total inductance?`,a:LT,unit:'mH',hint:'Parallel: LT = (L1×L2)/(L1+L2)',formula:'LT = (L1×L2)/(L1+L2)'}; }
+    if(type===2){ const C1=this._r(10,200,10),C2=this._r(10,200,10); return {q:`Two capacitors in parallel: C1=<strong>${C1}μF</strong>, C2=<strong>${C2}μF</strong>. Total capacitance?`,a:C1+C2,unit:'μF',hint:'Parallel capacitors add: CT = C1 + C2',formula:'CT = C1 + C2'}; }
+    if(type===3){ const C1=this._r(20,200,10),C2=this._r(20,200,10); const CT=this._round((C1*C2)/(C1+C2),1); return {q:`Two capacitors in series: C1=<strong>${C1}μF</strong>, C2=<strong>${C2}μF</strong>. Total capacitance?`,a:CT,unit:'μF',hint:'Series: CT = (C1×C2)/(C1+C2)',formula:'CT = (C1×C2)/(C1+C2)'}; }
+    if(type===4){ const V=this._r(12,120,12),C=this._r(10,500,10); const Q=this._round(V*(C/1000000)*1000000,1); return {q:`A <strong>${C}μF</strong> capacitor charged to <strong>${V}V</strong>. What charge is stored?`,a:Q,unit:'μC',hint:'Q = C × V (in base units, then convert)',formula:'Q = CV'}; }
+    const C=this._r(10,500,10),V=this._r(12,240,12); const E=this._round(0.5*(C/1000000)*V*V*1000,2); return {q:`Energy stored in a <strong>${C}μF</strong> capacitor at <strong>${V}V</strong>?`,a:E,unit:'mJ',hint:'E = ½CV² (convert μF to F, result in J, then to mJ)',formula:'E = ½CV²'};
+  },
+
+  _gen_wye_delta() {
+    const type=this._r(0,3);
+    if(type===0){ const RY=this._r(5,50,5); const RD=RY*3; return {q:`Three equal resistors in wye: each <strong>${RY}Ω</strong>. Convert to delta. What is each delta resistor?`,a:RD,unit:'Ω',hint:'For equal resistors: RΔ = 3 × RY',formula:'RΔ = 3 × RY'}; }
+    if(type===1){ const RD=this._r(15,150,15); const RY=RD/3; return {q:`Three equal resistors in delta: each <strong>${RD}Ω</strong>. Convert to wye. What is each wye resistor?`,a:this._round(RY),unit:'Ω',hint:'For equal resistors: RY = RΔ / 3',formula:'RY = RΔ / 3'}; }
+    if(type===2){ const ZY=this._r(5,40,5); const ZD=ZY*3; const VL=this._r(208,600,100); const IL_Y=this._round(VL/(Math.sqrt(3)*ZY),1); return {q:`Wye load: Z=<strong>${ZY}Ω</strong>/phase, VL=<strong>${VL}V</strong>. What is the line current?`,a:IL_Y,unit:'A',hint:'IL = VL / (√3 × ZY) in a wye load',formula:'IL = VL / (√3 × ZY)'}; }
+    const ZD=this._r(15,120,15); const VL=this._r(208,600,100); const Ip=this._round(VL/ZD,1); const IL=this._round(Ip*Math.sqrt(3),1); return {q:`Delta load: Z=<strong>${ZD}Ω</strong>/phase, VL=<strong>${VL}V</strong>. What is the line current?`,a:IL,unit:'A',hint:'Ip = VL/ZΔ, then IL = Ip × √3',formula:'IL = (VL/ZΔ) × √3'};
+  },
+
+  _gen_ac_dividers() {
+    const type=this._r(0,3);
+    if(type===0){ const R1=this._r(10,80,10),R2=this._r(10,80,10),VT=this._r(100,240,10); const V1=this._round(VT*R1/(R1+R2)); return {q:`Series circuit: R1=<strong>${R1}Ω</strong>, R2=<strong>${R2}Ω</strong>, source=<strong>${VT}V</strong>. Voltage across R1?`,a:V1,unit:'V',hint:'V1 = VT × R1/(R1+R2)',formula:'V1 = VT × R1 / (R1+R2)'}; }
+    if(type===1){ const R=this._r(10,50,10),XL=this._r(10,80,10),VT=this._r(100,240,10); const Z=Math.sqrt(R*R+XL*XL); const I=VT/Z; const VR=this._round(I*R); return {q:`Series RL: R=<strong>${R}Ω</strong>, XL=<strong>${XL}Ω</strong>, VT=<strong>${VT}V</strong>. What is VR?`,a:VR,unit:'V',hint:'Z = √(R²+XL²), I = VT/Z, VR = I×R',formula:'VR = VT × R/Z'}; }
+    if(type===2){ const R1=this._r(10,50,10),R2=this._r(10,50,10),IT=this._r(5,20,5); const I1=this._round(IT*R2/(R1+R2)); return {q:`Parallel branches: R1=<strong>${R1}Ω</strong>, R2=<strong>${R2}Ω</strong>, total current=<strong>${IT}A</strong>. Current through R1?`,a:I1,unit:'A',hint:'I1 = IT × R2/(R1+R2) — current divider uses opposite resistor',formula:'I1 = IT × R2/(R1+R2)'}; }
+    const XL=this._r(20,100,10),XC=this._r(20,100,10),VT=this._r(100,240,10); const Xnet=Math.abs(XL-XC); const I=this._round(VT/Xnet,1); return {q:`Series LC (no resistance): XL=<strong>${XL}Ω</strong>, XC=<strong>${XC}Ω</strong>, source=<strong>${VT}V</strong>. What is the current?`,a:I,unit:'A',hint:'Xnet = |XL - XC|, I = V / Xnet',formula:'I = V / |XL − XC|'};
   },
 
   checkAnswer() {
@@ -10587,8 +13759,8 @@ const MathPractice = {
     if (isCorrect) {
       this.score++;
       Points.award('Math problem solved', Points.ACTIONS.math_correct.base, true);
-      showToast('âœ… Correct! +2 pts', 'success');
-    } else { showToast(`âŒ Not quite. Answer: ${correct} ${this.currentProblem.unit}`, 'error'); }
+      showToast('✅ Correct! +2 pts', 'success');
+    } else { showToast(`❌ Not quite. Answer: ${correct} ${this.currentProblem.unit}`, 'error'); }
     const pct = this.attempts > 0 ? Math.round(this.score/this.attempts*100) : 0;
     const scoreEl = document.getElementById('mathScore');
     if (scoreEl) scoreEl.textContent = `${this.score}/${this.attempts} (${pct}%)`;
@@ -10610,43 +13782,78 @@ const MathPractice = {
     container.innerHTML = `
       <!-- Header -->
       <div style="margin-bottom:18px;">
-        <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:2px;">ðŸ§® Math Practice</h1>
+        <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:2px;">🧮 Math Practice</h1>
         <p style="color:var(--text-secondary);font-size:0.85rem;">Formulas are always shown. Pick only the modules you need.</p>
       </div>
 
-      <!-- Module selector â€” always visible, chip-style toggles -->
+      <!-- Module filter -->
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <span style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);">
-            MODULES â€” <span style="color:var(--accent);">${enabledCount} active</span>
+            FILTER BY MODULE
           </span>
           <div style="display:flex;gap:6px;">
-            <button onclick="MathPractice._setAll(true)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All on</button>
-            <button onclick="MathPractice._setAll(false)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All off</button>
-            <button onclick="MathPractice.generateProblem(true)" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 12px;">ðŸŽ² Random</button>
+            <button onclick="MathPractice._setAll(true)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All Topics</button>
+            <button onclick="MathPractice.generateProblem(true)" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 12px;">🎲 Random</button>
           </div>
         </div>
+
+        <!-- Module buttons -->
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+          <button onclick="MathPractice._filterModule('all')"
+            style="padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:${!this._moduleFilter || this._moduleFilter==='all' ? '700' : '500'};
+              border:2px solid ${!this._moduleFilter || this._moduleFilter==='all' ? 'var(--accent)' : 'var(--border)'};
+              background:${!this._moduleFilter || this._moduleFilter==='all' ? 'var(--accent-soft)' : 'var(--bg-secondary)'};
+              color:${!this._moduleFilter || this._moduleFilter==='all' ? 'var(--accent)' : 'var(--text-primary)'};
+              cursor:pointer;transition:var(--transition);">
+            📚 All Topics
+          </button>
+          ${(typeof MODULES !== 'undefined' ? MODULES : []).filter(m => m.hasContent && m.topics.some(t => (this._moduleToMathMap[t] || []).length > 0 || this.categories.find(c => c.id === t))).map(m => {
+            const isActive = this._moduleFilter === m.id;
+            return `<button onclick="MathPractice._filterModule('${m.id}')"
+              style="padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:${isActive?'700':'500'};
+                border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};
+                background:${isActive ? 'var(--accent-soft)' : 'var(--bg-secondary)'};
+                color:${isActive ? 'var(--accent)' : 'var(--text-primary)'};
+                cursor:pointer;transition:var(--transition);white-space:nowrap;">
+              📖 M${m.num}. ${m.name}
+            </button>`;
+          }).join('')}
+        </div>
+
+        <!-- Topic chips within selected module -->
+        <div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">TOPICS</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           ${this.categories.map(c => {
             const isEnabled = !enabledCats || enabledCats.includes(c.id);
             const isActive = c.id === this.currentCategory;
             const s = mathStats[c.id] || { attempts:0, correct:0 };
             const acc = s.attempts > 0 ? Math.round(s.correct/s.attempts*100) : null;
-            const accDot = acc === null ? '' : acc >= 80 ? ' ðŸŸ¢' : acc >= 50 ? ' ðŸŸ¡' : ' ðŸ”´';
+            const accDot = acc === null ? '' : acc >= 80 ? ' 🟢' : acc >= 50 ? ' 🟡' : ' 🔴';
+            // If module filter is active, dim topics not in that module
+            let inModule = true;
+            if (this._moduleFilter && this._moduleFilter !== 'all' && typeof MODULES !== 'undefined') {
+              const mod = MODULES.find(m => m.id === this._moduleFilter);
+              if (mod) {
+                const mathCats = new Set();
+                mod.topics.forEach(t => { (this._moduleToMathMap[t] || []).forEach(mc => mathCats.add(mc)); if (this.categories.find(cc => cc.id === t)) mathCats.add(t); });
+                inModule = mathCats.has(c.id);
+              }
+            }
             return `<button onclick="MathPractice._chipClick('${c.id}', event)"
               data-chipid="${c.id}"
-              title="${isEnabled ? 'Click to practice Â· Right-click to toggle on/off' : 'Disabled â€” click to enable & practice'}"
+              title="${isEnabled ? 'Click to practice · Right-click to toggle on/off' : 'Disabled — click to enable & practice'}"
               style="padding:6px 12px;border-radius:20px;font-size:0.8rem;font-weight:${isActive?'700':'500'};
                 border:2px solid ${isActive ? 'var(--accent)' : isEnabled ? 'var(--border)' : 'transparent'};
                 background:${isActive ? 'var(--accent-soft)' : isEnabled ? 'var(--bg-secondary)' : 'rgba(0,0,0,0.3)'};
                 color:${isActive ? 'var(--accent)' : isEnabled ? 'var(--text-primary)' : 'var(--text-muted)'};
-                opacity:${isEnabled?'1':'0.5'};cursor:pointer;transition:var(--transition);white-space:nowrap;">
+                opacity:${inModule ? (isEnabled?'1':'0.5') : '0.25'};cursor:pointer;transition:var(--transition);white-space:nowrap;">
               ${c.icon} ${c.name}${accDot}
             </button>`;
           }).join('')}
         </div>
         <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;">
-          Tap a module to practice it. <strong>Long-press</strong> or <strong>right-click</strong> a chip to enable/disable it from the random rotation.
+          Select a module above to focus on its math topics, or tap any topic chip to practice it.
         </p>
       </div>
 
@@ -10678,25 +13885,25 @@ const MathPractice = {
               <!-- Answer row -->
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
                 <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;">
-                  <input id="mathAnswer" type="number" step="any" placeholder="Your answerâ€¦"
+                  <input id="mathAnswer" type="number" step="any" placeholder="Your answer…"
                     style="flex:1;padding:12px 14px;font-size:1.1rem;background:var(--bg-input);border:2px solid var(--accent);border-radius:10px;color:var(--text-primary);outline:none;"
                     onkeydown="if(event.key==='Enter')MathPractice.checkAnswer()">
                   <span style="font-weight:600;color:var(--text-secondary);">${this.currentProblem.unit}</span>
                 </div>
-                <button onclick="MathPractice.checkAnswer()" class="btn btn-primary" style="padding:12px 24px;font-size:1rem;">Check âœ“</button>
-                <button onclick="MathPractice.generateProblem()" class="btn btn-ghost btn-sm">Skip â†’</button>
+                <button onclick="MathPractice.checkAnswer()" class="btn btn-primary" style="padding:12px 24px;font-size:1rem;">Check ✓</button>
+                <button onclick="MathPractice.generateProblem()" class="btn btn-ghost btn-sm">Skip →</button>
               </div>
 
               <!-- Wrong answer feedback / hint -->
               <div id="mathSolution" style="display:${this.showingSolution?'block':'none'};background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:0.88rem;">
-                <strong>ðŸ’¡ Hint:</strong> ${this.currentProblem.hint}<br>
+                <strong>💡 Hint:</strong> ${this.currentProblem.hint}<br>
                 <strong>Formula used:</strong> <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">${this.currentProblem.formula}</code><br>
                 <strong>Answer:</strong> <span style="color:var(--accent);font-weight:700;">${this.currentProblem.a} ${this.currentProblem.unit}</span>
               </div>
               <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
-                ${!this.showingSolution ? `<button onclick="document.getElementById('mathSolution').style.display='block';this.style.display='none';" style="font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;">ðŸ’¡ Show hint</button>` : ''}
+                ${!this.showingSolution ? `<button onclick="document.getElementById('mathSolution').style.display='block';this.style.display='none';" style="font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;">💡 Show hint</button>` : ''}
                 <button onclick="MathPractice.openLesson('${this.currentCategory}')" style="font-size:0.78rem;color:#818cf8;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px;">
-                  ðŸ“– ${this._lessonLabel(this.currentCategory)} â†’
+                  📖 ${this._lessonLabel(this.currentCategory)} →
                 </button>
               </div>
 
@@ -10704,25 +13911,25 @@ const MathPractice = {
               <div style="text-align:center;padding:32px 20px 24px;color:var(--text-muted);">
                 <div style="font-size:3rem;margin-bottom:10px;">${cat.icon}</div>
                 <p style="font-size:0.95rem;color:var(--text-primary);font-weight:600;">Ready to practice ${cat.name}</p>
-                <p style="font-size:0.82rem;margin:4px 0 20px;">Formulas are on the right â€” hit Start when you're ready.</p>
+                <p style="font-size:0.82rem;margin:4px 0 20px;">Formulas are on the right — hit Start when you're ready.</p>
                 <button onclick="MathPractice.openLesson('${this.currentCategory}')"
                   style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);border-radius:8px;cursor:pointer;font-size:0.85rem;color:#818cf8;font-weight:600;"
                   onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
-                  ðŸ“– Not sure? Read: ${this._lessonLabel(this.currentCategory)}
+                  📖 Not sure? Read: ${this._lessonLabel(this.currentCategory)}
                 </button>
               </div>
             `}
           </div>
 
           <button onclick="MathPractice.generateProblem()" class="btn btn-primary" style="width:100%;font-size:1rem;padding:14px;">
-            ${this.currentProblem ? 'âž¡ï¸ Next Problem' : 'â–¶ï¸ Start Practicing'}
+            ${this.currentProblem ? '➡️ Next Problem' : '▶️ Start Practicing'}
           </button>
         </div>
 
-        <!-- Formula sheet â€” always visible, right column -->
+        <!-- Formula sheet — always visible, right column -->
         <div style="position:sticky;top:74px;">
           <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:var(--radius);padding:18px;">
-            <div style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">ðŸ“‹ Formula Sheet â€” ${cat.name}</div>
+            <div style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📋 Formula Sheet — ${cat.name}</div>
             <div style="font-size:0.88rem;color:var(--text-primary);line-height:2;font-family:'Courier New',monospace;font-weight:500;">
               ${formulaLines}
             </div>
@@ -10732,12 +13939,12 @@ const MathPractice = {
           <button onclick="MathPractice.openLesson('${this.currentCategory}')"
             style="width:100%;margin-top:10px;padding:12px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);border-radius:var(--radius);cursor:pointer;text-align:left;transition:var(--transition);"
             onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
-            <div style="font-size:0.8rem;font-weight:700;color:#818cf8;margin-bottom:2px;">ðŸ“– ${this._lessonLabel(this.currentCategory)}</div>
+            <div style="font-size:0.8rem;font-weight:700;color:#818cf8;margin-bottom:2px;">📖 ${this._lessonLabel(this.currentCategory)}</div>
             <div style="font-size:0.73rem;color:var(--text-muted);line-height:1.4;">Read the lesson, see worked examples, and take a mini-quiz on this topic.</div>
           </button>
 
           <div style="margin-top:10px;">
-            <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">ðŸ–¨ï¸ Print Worksheet</button>
+            <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">🖨️ Print Worksheet</button>
           </div>
         </div>
 
@@ -10762,16 +13969,19 @@ const MathPractice = {
   },
 
   _chipClick(id, event) {
-    // Left-click â†’ select this module and generate a problem.
-    // If the module was disabled, re-enable it so it joins the random rotation too.
+    // Left-click → select this category and generate a problem (single render)
     const state = Storage.get();
     if (state && state.mathSettings && state.mathSettings.enabledCategories && !state.mathSettings.enabledCategories.includes(id)) {
       state.mathSettings.enabledCategories.push(id);
       Storage.set(state);
       FireDB.saveUser(state);
     }
-    this.selectCategory(id);
-    this.generateProblem();
+    this.currentCategory = id;
+    this.showingSolution = false;
+    // Generate problem and render once (not twice)
+    const gen = this['_gen_' + id.replace(/-/g,'_')];
+    if (gen) this.currentProblem = gen.call(this);
+    this.render(Storage.get());
   },
 
   selectCategory(id) {
@@ -10783,18 +13993,18 @@ const MathPractice = {
 
   _formulaRef(id) {
     const refs = {
-      'ohms-law': 'V = I Ã— R<br>I = V / R<br>R = V / I',
-      'power': 'P = V Ã— I<br>P = IÂ² Ã— R<br>P = VÂ² / R<br>I = P / V<br>V = P / I',
-      'series': 'Rt = R1 + R2 + R3...<br>It = I1 = I2 = I3 (same)<br>Vt = V1 + V2 + V3<br>Vn = It Ã— Rn',
-      'parallel': 'Vt = V1 = V2 = V3 (same)<br>It = I1 + I2 + I3<br>Rt = (R1Ã—R2)/(R1+R2)  [2 resistors]<br>1/Rt = 1/R1 + 1/R2 + 1/R3',
-      'series-parallel': 'Solve parallel groups first â†’ get Rp<br>Add Rp to series resistors â†’ get Rt<br>I = V / Rt<br>Vdrop = I Ã— R (series parts)',
-      'ac-basics': 'Vrms = Vpeak Ã— 0.7071<br>Vpeak = Vrms Ã— 1.4142<br>f = 1 / T<br>T = 1 / f<br>60 Hz â†’ T = 16.67ms',
-      'reactance': 'XL = 2Ï€ Ã— f Ã— L<br>XC = 1 / (2Ï€ Ã— f Ã— C)<br>XL in Î©, f in Hz, L in H<br>XC in Î©, f in Hz, C in F',
-      'impedance': 'Z = âˆš(RÂ² + XÂ²)<br>Î¸ = arctan(X / R)<br>X = XL âˆ’ XC (net reactance)',
-      'power-factor': 'PF = cos Î¸ = R / Z<br>P = S Ã— PF  (true power, W)<br>Q = S Ã— sin Î¸  (reactive, VAR)<br>S = V Ã— I  (apparent, VA)<br>SÂ² = PÂ² + QÂ²',
-      'transformers': 'V1/V2 = N1/N2<br>I1/I2 = N2/N1<br>V2 = V1 Ã— (N2/N1)<br>I1 = I2 Ã— (N2/N1)<br>Efficiency = Pout / Pin Ã— 100%',
-      'motors': 'Ns = 120 Ã— f / P<br>Slip = (Ns âˆ’ Nr) / Ns Ã— 100%<br>Nr = Ns Ã— (1 âˆ’ slip)<br>(Ns=sync RPM, Nr=rotor RPM, P=poles)',
-      'three-phase': 'Wye: VL = Vp Ã— âˆš3,  IL = Ip<br>Delta: VL = Vp,  IL = Ip Ã— âˆš3<br>âˆš3 = 1.732<br>3Ï† Power = âˆš3 Ã— VL Ã— IL Ã— PF',
+      'ohms-law': 'V = I × R<br>I = V / R<br>R = V / I',
+      'power': 'P = V × I<br>P = I² × R<br>P = V² / R<br>I = P / V<br>V = P / I',
+      'series': 'Rt = R1 + R2 + R3...<br>It = I1 = I2 = I3 (same)<br>Vt = V1 + V2 + V3<br>Vn = It × Rn',
+      'parallel': 'Vt = V1 = V2 = V3 (same)<br>It = I1 + I2 + I3<br>Rt = (R1×R2)/(R1+R2)  [2 resistors]<br>1/Rt = 1/R1 + 1/R2 + 1/R3',
+      'series-parallel': 'Solve parallel groups first → get Rp<br>Add Rp to series resistors → get Rt<br>I = V / Rt<br>Vdrop = I × R (series parts)',
+      'ac-basics': 'Vrms = Vpeak × 0.7071<br>Vpeak = Vrms × 1.4142<br>f = 1 / T<br>T = 1 / f<br>60 Hz → T = 16.67ms',
+      'reactance': 'XL = 2π × f × L<br>XC = 1 / (2π × f × C)<br>XL in Ω, f in Hz, L in H<br>XC in Ω, f in Hz, C in F',
+      'impedance': 'Z = √(R² + X²)<br>θ = arctan(X / R)<br>X = XL − XC (net reactance)',
+      'power-factor': 'PF = cos θ = R / Z<br>P = S × PF  (true power, W)<br>Q = S × sin θ  (reactive, VAR)<br>S = V × I  (apparent, VA)<br>S² = P² + Q²',
+      'transformers': 'V1/V2 = N1/N2<br>I1/I2 = N2/N1<br>V2 = V1 × (N2/N1)<br>I1 = I2 × (N2/N1)<br>Efficiency = Pout / Pin × 100%',
+      'motors': 'Ns = 120 × f / P<br>Slip = (Ns − Nr) / Ns × 100%<br>Nr = Ns × (1 − slip)<br>(Ns=sync RPM, Nr=rotor RPM, P=poles)',
+      'three-phase': 'Wye: VL = Vp × √3,  IL = Ip<br>Delta: VL = Vp,  IL = Ip × √3<br>√3 = 1.732<br>3φ Power = √3 × VL × IL × PF',
     };
     return refs[id] || '';
   },
@@ -10820,15 +14030,15 @@ const MathPractice = {
       .footer{margin-top:40px;font-size:0.75rem;color:#888;text-align:center;}
       @media print{button{display:none;}}
     </style></head><body>
-    <h1>ðŸ§® ${cat.name} Worksheet</h1>
+    <h1>🧮 ${cat.name} Worksheet</h1>
     <p style="font-size:0.85rem;color:#555;">Formula: ${cat.formula}</p>
     <p style="font-size:0.85rem;color:#555;">Name: ___________________ &nbsp;&nbsp;&nbsp; Date: ___________________</p>
     ${problems.map((p,i)=>`<div class="problem"><div class="num">Problem ${i+1}</div>
     <div class="q">${p.q.replace(/<strong>/g,'').replace(/<\/strong>/g,'')}</div>
     <div>Answer: <span class="answer"></span> ${p.unit}</div>
     <div class="formula">Hint: ${p.hint}</div></div>`).join('')}
-    <div class="footer">SparkyStudy â€” ${cat.name} Worksheet â€” sparkystudy.com</div>
-    <br><button onclick="window.print()">ðŸ–¨ï¸ Print</button>
+    <div class="footer">SparkyStudy — ${cat.name} Worksheet — sparkystudy.com</div>
+    <br><button onclick="window.print()">🖨️ Print</button>
     </body></html>`;
     const win = window.open('','_blank');
     win.document.write(html);
@@ -10956,7 +14166,7 @@ const QuickQuiz = {
           ${(() => {
             const wrongs = this.questions.map((q,i)=>this.answers[i]!==q.correct?{q:q.q,opts:q.opts,correct:q.correct,selected:this.answers[i],exp:q.exp||'',topic:q.topic}:null).filter(Boolean);
             if (wrongs.length > 0) { WrongAnswerStudy._pending = wrongs; WrongAnswerStudy._pendingLabel = 'Quick Quiz'; }
-            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">ðŸ“– Study ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
+            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">📖 Study ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
           })()}
           <button class="btn btn-primary" onclick="QuickQuiz.start()">Another Quick Quiz</button>
           <button class="btn btn-secondary" onclick="App.navigate('dashboard')">Dashboard</button>
@@ -10982,16 +14192,16 @@ const FormulaSheet = {
           <button class="btn btn-ghost btn-sm" onclick="FormulaSheet.toggle()">&#10005;</button>
         </div>
         <div style="font-family:'Courier New',monospace;font-size:0.8rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:16px;">
-          <div class="formula-box"><strong style="color:var(--accent);">Ohm's Law</strong><br>V = I Ã— R<br>I = V / R<br>R = V / I</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Power</strong><br>P = V Ã— I<br>P = IÂ² Ã— R<br>P = VÂ² / R</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Ohm's Law</strong><br>V = I × R<br>I = V / R<br>R = V / I</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Power</strong><br>P = V × I<br>P = I² × R<br>P = V² / R</div>
           <div class="formula-box"><strong style="color:var(--accent);">Series Circuits</strong><br>Rt = R1 + R2 + R3<br>It = I1 = I2 = I3<br>Vt = V1 + V2 + V3</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Parallel Circuits</strong><br>1/Rt = 1/R1 + 1/R2<br>Rt = (R1Ã—R2)/(R1+R2)<br>Vt = V1 = V2 = V3<br>It = I1 + I2 + I3</div>
-          <div class="formula-box"><strong style="color:var(--accent);">AC Values</strong><br>Vrms = Vpeak Ã— 0.707<br>Vpeak = Vrms Ã— 1.414<br>f = 1 / T</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Impedance</strong><br>Z = âˆš(RÂ² + XÂ²)<br>XL = 2Ï€fL<br>XC = 1/(2Ï€fC)</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Transformers</strong><br>Vp/Vs = Np/Ns<br>VpÃ—Ip = VsÃ—Is</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Motor Speed</strong><br>Ns = 120f / P<br>Slip% = (Ns-Nr)/Ns Ã— 100</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Power Factor</strong><br>PF = W / VA = cos Î¸<br>VAÂ² = WÂ² + VARÂ²</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Voltage Drop</strong><br>Vd = 2 Ã— I Ã— R Ã— L<br>Max 3% branch, 5% total</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Parallel Circuits</strong><br>1/Rt = 1/R1 + 1/R2<br>Rt = (R1×R2)/(R1+R2)<br>Vt = V1 = V2 = V3<br>It = I1 + I2 + I3</div>
+          <div class="formula-box"><strong style="color:var(--accent);">AC Values</strong><br>Vrms = Vpeak × 0.707<br>Vpeak = Vrms × 1.414<br>f = 1 / T</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Impedance</strong><br>Z = √(R² + X²)<br>XL = 2πfL<br>XC = 1/(2πfC)</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Transformers</strong><br>Vp/Vs = Np/Ns<br>Vp×Ip = Vs×Is</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Motor Speed</strong><br>Ns = 120f / P<br>Slip% = (Ns-Nr)/Ns × 100</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Power Factor</strong><br>PF = W / VA = cos θ<br>VA² = W² + VAR²</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Voltage Drop</strong><br>Vd = 2 × I × R × L<br>Max 3% branch, 5% total</div>
           <div class="formula-box"><strong style="color:var(--accent);">Wire Ampacity</strong><br>14 AWG = 15A<br>12 AWG = 20A<br>10 AWG = 30A<br>8 AWG = 40A<br>6 AWG = 55A</div>
         </div>
       `;
@@ -11110,53 +14320,38 @@ confettiStyle.textContent = '@keyframes confettiFall { 0% { top: -20px; opacity:
 document.head.appendChild(confettiStyle);
 
 // ===== FLOATING ACTION BUTTONS (Formula + Timer) =====
-
-const ExamChecker = {
-  renderContent() {
-    return '<div style="max-width:800px;margin:0 auto;">' +
-      '<p style="color:var(--text-secondary);margin-bottom:20px;">Paste your exam questions below. The AI will find the correct CEC answer for each one with the exact rule citation.</p>' +
-      '<textarea id="examInput" style="width:100%;height:280px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text-primary);font-size:0.88rem;resize:vertical;font-family:inherit;box-sizing:border-box;line-height:1.6;" placeholder="Paste your exam questions here...\n\nExample:\n1. A Class 2 circuit may be wired with aluminum conductors. True or False?\n2. What is the minimum separation between Class 2 and power circuits?"></textarea>' +
-      '<button onclick="ExamChecker.check()" class="btn btn-primary" style="margin-top:12px;width:100%;padding:14px;font-size:1rem;font-weight:700;">&#x26A1; Check All Answers Against CEC 2024</button>' +
-      '<div id="examResults" style="margin-top:24px;"></div>' +
-      '</div>';
-  },
-  render() {
-    return '<div style="max-width:800px;margin:0 auto;padding:24px 16px;">' +
-      '<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;">&#x1F4CB; CEC Exam Checker</h1>' +
-      '<p style="color:var(--text-secondary);margin-bottom:20px;">Paste your exam questions below â€” the AI will find the correct answer for each one using the 2024 Canadian Electrical Code.</p>' +
-      '<textarea id="examInput" style="width:100%;height:300px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text-primary);font-size:0.9rem;resize:vertical;font-family:inherit;box-sizing:border-box;" placeholder="Paste your exam questions here..."></textarea>' +
-      '<button onclick="ExamChecker.check()" class="btn btn-primary" style="margin-top:12px;width:100%;padding:14px;font-size:1rem;font-weight:700;">&#x26A1; Check Answers</button>' +
-      '<div id="examResults" style="margin-top:24px;"></div>' +
-      '</div>';
-  },
-  async check() {
-    const input = document.getElementById('examInput');
-    const results = document.getElementById('examResults');
-    if (!input || !input.value.trim()) return;
-    results.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">&#x23F3; Checking answers against the CEC...</div>';
-    try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/exam', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questions: input.value.trim() })
-      });
-      const data = await res.json();
-      const html = data.answer
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/\*\*(.+?)\*\*/g, '<strong></strong>')
-        .replace(/\n/g, '<br>');
-      results.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;line-height:1.8;">' + html + '</div>';
-    } catch(err) {
-      results.innerHTML = '<div style="color:var(--error);padding:20px;">Error: ' + err.message + '</div>';
-    }
-  }
-};
+// ── Push notification opt-in ──────────────────────────────────────────────
+function requestPushPermission() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  if (Notification.permission === 'granted' || Notification.permission === 'denied') return;
+  if (localStorage.getItem('ss_push_asked')) return;
+  localStorage.setItem('ss_push_asked', '1');
+  // Delay so it doesn't pop up immediately on load
+  setTimeout(() => {
+    const banner = document.createElement('div');
+    banner.id = 'pushBanner';
+    banner.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;z-index:1000;box-shadow:var(--shadow-lg);max-width:380px;width:calc(100vw - 32px);';
+    banner.innerHTML = `
+      <div style="font-weight:700;margin-bottom:6px;">🔔 Study reminders</div>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:14px;">Get a nudge when you haven't studied and your exam is coming up.</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" style="flex:1;" onclick="
+          Notification.requestPermission().then(p => {
+            document.getElementById('pushBanner').remove();
+            if(p==='granted') showToast('Reminders on! We\\'ll nudge you to study.','success');
+          });">Turn on</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('pushBanner').remove();">Not now</button>
+      </div>`;
+    document.body.appendChild(banner);
+  }, 4000);
+}
 
 function createFAB() {
   const fab = document.createElement('div');
   fab.id = 'fabContainer';
   fab.style.cssText = 'position:fixed;bottom:24px;left:24px;display:flex;flex-direction:column;gap:8px;z-index:800;';
   fab.innerHTML = `
+    <button id="askaiBtn" title="Ask SparkStudy AI" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);border:none;color:#fff;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);box-shadow:0 4px 20px rgba(249,115,22,0.5);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">&#9889;</button>
     <button onclick="FormulaSheet.toggle()" title="Formula Sheet" style="width:48px;height:48px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--accent);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);box-shadow:var(--shadow);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">&#128211;</button>
     <button onclick="Pomodoro.toggle()" title="Pomodoro Timer" style="width:48px;height:48px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--accent);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);box-shadow:var(--shadow);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">&#9200;</button>
   `;
@@ -11220,42 +14415,66 @@ const PWA = {
 
 // ===== LEADERBOARD =====
 const Leaderboard = {
-  _tab: 'weekly', // 'weekly' | 'alltime'
-  _users: [],
+  _timeTab: 'weekly', // 'weekly' | 'monthly' | 'alltime'
+  _period:  'all',    // 'all' | '1' | '2' | '3' | '4'
+  _school:  'all',    // 'all' | school id
+  _users:   [],
 
   async render(state) {
     const el = document.getElementById('leaderboardContent');
     if (!el) return;
-    el.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--text-muted);">Loading leaderboardâ€¦</div>`;
+    el.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--text-muted);">Loading leaderboard…</div>`;
 
-    // Fetch all users from Firebase
     let users = [];
     try {
       const cloudUsers = await FireDB.getAllUsers();
       if (cloudUsers && cloudUsers.length > 0) {
-        users = cloudUsers.map(u => ({
-          id: u.id,
-          name: (u.user && u.user.name) ? u.user.name : 'Anonymous',
-          avatar: (u.user && u.user.name) ? u.user.name.charAt(0).toUpperCase() : '?',
-          totalPts: (u.user && u.user.points && u.user.points.total) ? u.user.points.total : 0,
-          weeklyPts: (u.user && u.user.points && u.user.points.weekly) ? u.user.points.weekly : 0,
-          streak: (u.user && u.user.sessions && u.user.sessions.streak) ? u.user.sessions.streak : 0,
-          isOwner: (u.user && u.user.isOwner) ? true : false,
-        })).filter(u => !u.isOwner);
+        users = cloudUsers.map(u => {
+          const realScores = u.realExamScores || [];
+          const bestExam   = realScores.length > 0 ? Math.max(...realScores.map(s => s.score)) : null;
+          const cashback   = bestExam !== null ? ExamSubmission._getCashback(bestExam) : 0;
+          const monthStart = (() => { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); })();
+          const monthlyPts = ((u.points && u.points.history) || [])
+            .filter(h => h.timestamp >= monthStart)
+            .reduce((s, h) => s + (h.amount || 0), 0);
+          return {
+            id:        u.id,
+            name:      (u.user && u.user.name) || 'Anonymous',
+            avatar:    (u.user && u.user.name) ? u.user.name.charAt(0).toUpperCase() : '?',
+            totalPts:  (u.points && u.points.total)  || 0,
+            weeklyPts: (u.points && u.points.weekly) || 0,
+            monthlyPts,
+            streak:    (u.sessions && u.sessions.streak) || 0,
+            period:    (u.user && u.user.period) || 0,
+            school:    (u.user && u.user.school) || '',
+            bestExam,
+            cashback,
+            isOwner:   (u.user && u.user.isOwner) || false,
+          };
+        }).filter(u => !u.isOwner);
       }
     } catch(e) {}
 
-    // Also include current local user if not in list
+    // Ensure current local user is included
     if (state && !state.user.isOwner) {
-      const existing = users.find(u => u.id === state.user.id);
-      if (!existing) {
+      if (!users.find(u => u.id === state.user.id)) {
+        const realScores = state.realExamScores || [];
+        const bestExam   = realScores.length > 0 ? Math.max(...realScores.map(s => s.score)) : null;
+        const monthStart = (() => { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); })();
+        const monthlyPts = ((state.points && state.points.history) || [])
+          .filter(h => h.timestamp >= monthStart)
+          .reduce((s, h) => s + (h.amount || 0), 0);
         users.push({
-          id: state.user.id,
-          name: state.user.name || 'You',
+          id: state.user.id, name: state.user.name || 'You',
           avatar: state.user.name ? state.user.name.charAt(0).toUpperCase() : '?',
           totalPts: (state.points && state.points.total) || 0,
           weeklyPts: (state.points && state.points.weekly) || 0,
+          monthlyPts,
           streak: state.sessions.streak || 0,
+          period: state.user.period || 0,
+          school: state.user.school || '',
+          bestExam,
+          cashback: bestExam !== null ? ExamSubmission._getCashback(bestExam) : 0,
           isOwner: false,
         });
       }
@@ -11265,28 +14484,56 @@ const Leaderboard = {
     this._renderBoard(state);
   },
 
+  _getPoints(u) {
+    if (this._timeTab === 'weekly')  return u.weeklyPts;
+    if (this._timeTab === 'monthly') return u.monthlyPts;
+    return u.totalPts;
+  },
+
   _renderBoard(state) {
     const el = document.getElementById('leaderboardContent');
     if (!el) return;
     const myId = state ? state.user.id : null;
-    const sorted = [...this._users].sort((a,b) =>
-      this._tab === 'weekly' ? b.weeklyPts - a.weeklyPts : b.totalPts - a.totalPts
-    );
-    const myPos = sorted.findIndex(u => u.id === myId);
+
+    // Apply filters
+    let filtered = [...this._users];
+    if (this._period !== 'all') filtered = filtered.filter(u => String(u.period) === this._period);
+    if (this._school !== 'all') filtered = filtered.filter(u => u.school === this._school);
+    const sorted = filtered.sort((a,b) => this._getPoints(b) - this._getPoints(a));
+
+    const myPos  = sorted.findIndex(u => u.id === myId);
     const myRank = myPos >= 0 ? Points.getRank(sorted[myPos].totalPts) : null;
-    const myPts = myPos >= 0 ? (this._tab === 'weekly' ? sorted[myPos].weeklyPts : sorted[myPos].totalPts) : 0;
+    const myPts  = myPos >= 0 ? this._getPoints(sorted[myPos]) : 0;
+
+    const tabBtn = (id, label) =>
+      `<button onclick="Leaderboard._switchTimeTab('${id}')" class="btn btn-sm ${this._timeTab===id?'btn-primary':'btn-secondary'}">${label}</button>`;
 
     el.innerHTML = `
-      <div style="max-width:700px;margin:0 auto;padding:24px 16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div style="max-width:780px;margin:0 auto;padding:24px 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
           <div>
-            <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:4px;">ðŸ† Leaderboard</h1>
+            <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:4px;">&#x1F3C6; Leaderboard</h1>
             <p style="color:var(--text-secondary);font-size:0.9rem;">Compete with other students. Study more, earn more points.</p>
           </div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="Leaderboard._switchTab('weekly')" class="btn btn-sm ${this._tab==='weekly'?'btn-primary':'btn-secondary'}">This Week</button>
-            <button onclick="Leaderboard._switchTab('alltime')" class="btn btn-sm ${this._tab==='alltime'?'btn-primary':'btn-secondary'}">All-Time</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${tabBtn('weekly','This Week')}
+            ${tabBtn('monthly','Monthly')}
+            ${tabBtn('alltime','All-Time')}
           </div>
+        </div>
+
+        <!-- Period & School filters -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            ${['all','1','2','3','4'].map(p=>
+              `<button onclick="Leaderboard._setPeriod('${p}')" class="btn btn-sm ${this._period===p?'btn-primary':'btn-secondary'}" style="min-width:56px;">${p==='all'?'All Periods':'Period '+p}</button>`
+            ).join('')}
+          </div>
+          <select onchange="Leaderboard._setSchool(this.value)"
+            style="padding:7px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.82rem;">
+            <option value="all" ${this._school==='all'?'selected':''}>All Schools</option>
+            ${SCHOOLS_LIST.map(s=>`<option value="${s.id}" ${this._school===s.id?'selected':''}>${s.name}</option>`).join('')}
+          </select>
         </div>
 
         ${myPos >= 0 ? `
@@ -11294,29 +14541,41 @@ const Leaderboard = {
           <div style="font-size:1.4rem;font-weight:900;color:var(--accent);min-width:40px;text-align:center;">#${myPos+1}</div>
           <div style="width:38px;height:38px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;">${sorted[myPos].avatar}</div>
           <div style="flex:1;">
-            <div style="font-weight:700;">You â€” ${sorted[myPos].name}</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);">${myRank ? `${myRank.badge} ${myRank.name}` : ''} Â· ${sorted[myPos].streak}ðŸ”¥ streak</div>
+            <div style="font-weight:700;">You — ${sorted[myPos].name}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">${myRank ? `${myRank.badge} ${myRank.name}` : ''} · ${sorted[myPos].streak}&#x1F525; streak</div>
           </div>
           <div style="font-size:1.3rem;font-weight:900;color:var(--accent);">${myPts.toLocaleString()} pts</div>
         </div>` : ''}
 
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-          ${sorted.length === 0 ? `<div style="padding:48px;text-align:center;color:var(--text-muted);">No users yet. Be the first to earn points!</div>` :
-            sorted.slice(0, 50).map((u, i) => {
-              const rank = Points.getRank(u.totalPts);
-              const pts = this._tab === 'weekly' ? u.weeklyPts : u.totalPts;
-              const isMe = u.id === myId;
-              const medal = i === 0 ? 'ðŸ¥‡' : i === 1 ? 'ðŸ¥ˆ' : i === 2 ? 'ðŸ¥‰' : `<span style="color:var(--text-muted);font-size:0.85rem;">#${i+1}</span>`;
-              return `<div style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--border);background:${isMe ? 'rgba(245,158,11,0.06)' : 'transparent'};transition:background 0.2s;" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='${isMe ? 'rgba(245,158,11,0.06)' : 'transparent'}'">
-                <div style="width:32px;text-align:center;font-size:${i<3?'1.2rem':'0.9rem'};">${medal}</div>
-                <div style="width:36px;height:36px;border-radius:50%;background:${isMe ? 'var(--accent)' : 'var(--bg-secondary)'};color:${isMe ? '#000' : 'var(--text-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;flex-shrink:0;">${u.avatar}</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:${isMe ? '700' : '500'};font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.name}${isMe ? ' (you)' : ''}</div>
-                  <div style="font-size:0.72rem;color:${rank.color};">${rank.badge} ${rank.name}${u.streak > 0 ? ` Â· ${u.streak}ðŸ”¥` : ''}</div>
-                </div>
-                <div style="font-weight:700;font-size:0.95rem;color:${i===0?'#f59e0b':i===1?'#9ca3af':i===2?'#cd7c2f':'var(--text-primary)'};">${pts.toLocaleString()}<span style="font-size:0.72rem;font-weight:400;color:var(--text-muted);margin-left:3px;">pts</span></div>
-              </div>`;
-            }).join('')
+          ${sorted.length === 0
+            ? `<div style="padding:48px;text-align:center;color:var(--text-muted);">No users match this filter. Try a different period or school.</div>`
+            : sorted.slice(0, 50).map((u, i) => {
+                const rank   = Points.getRank(u.totalPts);
+                const pts    = this._getPoints(u);
+                const isMe   = u.id === myId;
+                const medal  = i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':`<span style="color:var(--text-muted);font-size:0.85rem;">#${i+1}</span>`;
+                const examBadge = u.bestExam !== null ? (() => {
+                  const cb = u.cashback;
+                  const cbBadge = cb > 0 ? `<span style="font-size:0.65rem;background:rgba(34,197,94,0.15);color:#22c55e;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700;">$${cb} back</span>` : '';
+                  return `<span style="font-size:0.72rem;color:var(--text-muted);">Exam: <strong style="color:var(--text-primary);">${u.bestExam}%</strong>${cbBadge}</span>`;
+                })() : '';
+                const schoolName = u.school ? (SCHOOLS_LIST.find(s=>s.id===u.school)||{short:u.school}).short || u.school : '';
+                const recentlyActive = u.lastActive && (Date.now() - u.lastActive) < 15 * 60 * 1000;
+                const activeDot = recentlyActive ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:4px;box-shadow:0 0 4px #22c55e;" title="Online now"></span>` : '';
+                return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:${isMe?'rgba(245,158,11,0.06)':'transparent'};transition:background 0.2s;" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='${isMe?'rgba(245,158,11,0.06)':'transparent'}'">
+                  <div style="width:30px;text-align:center;font-size:${i<3?'1.2rem':'0.85rem'};flex-shrink:0;">${medal}</div>
+                  <div style="width:34px;height:34px;border-radius:50%;background:${isMe?'var(--accent)':'var(--bg-secondary)'};color:${isMe?'#000':'var(--text-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.88rem;flex-shrink:0;position:relative;">
+                    ${u.avatar}
+                    ${recentlyActive ? `<span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid var(--bg-primary);"></span>` : ''}
+                  </div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:${isMe?'700':'500'};font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${activeDot}${u.name}${isMe?' (you)':''}</div>
+                    <div style="font-size:0.7rem;color:${rank.color};display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rank.badge} ${rank.name}${schoolName?`<span style="color:var(--text-muted);">· ${schoolName}</span>`:''}${u.period?`<span style="color:var(--text-muted);">P${u.period}</span>`:''}${u.streak>0?` · ${u.streak}&#x1F525;`:''}${examBadge?` · ${examBadge}`:''}</div>
+                  </div>
+                  <div style="font-weight:700;font-size:0.92rem;color:${i===0?'#f59e0b':i===1?'#9ca3af':i===2?'#cd7c2f':'var(--text-primary)'};text-align:right;flex-shrink:0;">${pts.toLocaleString()}<span style="font-size:0.7rem;font-weight:400;color:var(--text-muted);margin-left:2px;">pts</span></div>
+                </div>`;
+              }).join('')
           }
         </div>
 
@@ -11324,517 +14583,351 @@ const Leaderboard = {
           <div style="font-weight:700;margin-bottom:12px;font-size:0.85rem;">How to earn points</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">
             ${Object.entries(Points.ACTIONS).filter(([,v])=>v.base>0).map(([,v]) =>
-              `<div style="font-size:0.8rem;color:var(--text-secondary);display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;">
+              `<div style="font-size:0.78rem;color:var(--text-secondary);display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg-secondary);border-radius:6px;">
                 <span>${v.desc}</span><strong style="color:var(--accent);margin-left:8px;">+${v.base}</strong>
               </div>`
             ).join('')}
           </div>
-          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:10px;">ðŸ”¥ Streak bonuses: 3-day streak = 1.5Ã— points Â· 7-day streak = 2Ã— points</p>
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:10px;">&#x1F525; Streak bonuses: 3-day = 1.5× · 7-day = 2× · Cashback badges show best real exam score</p>
         </div>
       </div>
     `;
   },
 
-  _switchTab(tab) {
-    this._tab = tab;
-    const state = Storage.get();
-    this._renderBoard(state);
-  }
+  _switchTimeTab(tab) { this._timeTab = tab; this._renderBoard(Storage.get()); },
+  _setPeriod(p)       { this._period  = p;   this._renderBoard(Storage.get()); },
+  _setSchool(s)       { this._school  = s;   this._renderBoard(Storage.get()); },
 };
 
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// AskAI â€” Smart module search assistant (no external API)
-// Searches LESSONS_CONTENT for answers using keyword matching
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const AskAI = {
-  _open: false,
-  _history: [],
-  _typing: false,
-
-  // â”€â”€ Electrical domain synonym map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Keys are what a user might type; values = extra terms to search
-  _synonyms: {
-    'ac':          ['alternating current'],
-    'dc':          ['direct current'],
-    'rms':         ['root mean square','effective value'],
-    'emf':         ['electromotive force','voltage source'],
-    'hz':          ['hertz','frequency','cycles'],
-    'amp':         ['ampere','current'],
-    'amps':        ['ampere','current'],
-    'ohm':         ['resistance'],
-    'ohms':        ['resistance','ohm'],
-    'volt':        ['voltage'],
-    'volts':       ['voltage','volt'],
-    'watt':        ['power','watts'],
-    'watts':       ['power','watt'],
-    'kw':          ['kilowatt','power'],
-    'va':          ['volt ampere','apparent power'],
-    'var':         ['reactive power','vars'],
-    'pf':          ['power factor'],
-    'xl':          ['inductive reactance','reactance'],
-    'xc':          ['capacitive reactance','reactance'],
-    'impedance':   ['opposition','z'],
-    'reactance':   ['xl','xc','opposition'],
-    'inductance':  ['henry','inductor'],
-    'capacitance': ['farad','capacitor'],
-    'transformer': ['step up','step down','turns ratio'],
-    'coil':        ['inductor','winding','solenoid'],
-    'sine':        ['sinusoidal','sin wave','sine wave'],
-    'peak':        ['maximum','amplitude','vpeak'],
-    'period':      ['cycle time','wavelength','one cycle'],
-    'frequency':   ['hz','hertz','cycles per second'],
-    'phase':       ['phase angle','phase shift','leading','lagging'],
-    'three phase': ['3 phase','three-phase','3-phase','three wire','3Ï†'],
-    'single phase':['1 phase','one phase','1Ï†'],
-    'power factor':['pf','cos theta','phase angle'],
-    'motor':       ['induction motor','synchronous','rpm','rotor','stator'],
-    'relay':       ['coil','contacts','normally open','normally closed'],
-    'contactor':   ['relay','motor starter','coil'],
-    'starter':     ['motor starter','across the line','dol'],
-    'plc':         ['programmable logic controller','ladder logic'],
-    'timer':       ['timing relay','on delay','off delay','time delay'],
-    'no':          ['normally open','n.o.'],
-    'nc':          ['normally closed','n.c.'],
-    'seal':        ['holding contact','seal in circuit','latching'],
-    'overload':    ['thermal overload','overload relay','heater'],
-    'neutral':     ['grounded conductor','white wire'],
-    'ground':      ['earth','grounding conductor','green wire'],
-    'parallel':    ['branches','parallel circuit'],
-    'series':      ['series circuit','loop'],
+// ===== EXAM SCORE SUBMISSION + CASHBACK =====
+const ExamSubmission = {
+  _getCashback(pct) {
+    for (const tier of CASHBACK_SCALE) { if (pct >= tier.min) return tier.amount; }
+    return 0;
   },
 
-  // â”€â”€ Simple electrical-aware stemmer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _stem(word) {
-    if (word.length < 5) return word;
-    // Longest-match suffix stripping â€” order matters
-    const rules = [
-      ['izations','ize'], ['ization','ize'], ['ications','icate'],
-      ['ication','icate'], ['ances','ance'], ['ences','ence'],
-      ['ators','ate'],    ['ations','ate'], ['ance',''],
-      ['ence',''],        ['ator','ate'],   ['ation','ate'],
-      ['ings',''],        ['tors','tor'],   ['ors','or'],
-      ['ers','er'],       ['ing',''],       ['ies','y'],
-      ['ied','y'],        ['ves','f'],      ['ed',''],
-      ['es',''],          ['s',''],
-    ];
-    for (const [sfx, rep] of rules) {
-      if (word.endsWith(sfx) && word.length - sfx.length >= 3) {
-        return word.slice(0, word.length - sfx.length) + rep;
-      }
-    }
-    return word;
+  _checkEligibility(state) {
+    // Must have completed ≥80% of expected study days between class start and exam date
+    const cs = state.classSchedule || {};
+    if (!cs.classStartDate || !cs.examDate) return true; // no schedule = no gate
+    const start  = new Date(cs.classStartDate);
+    const end    = new Date(cs.examDate);
+    const daily  = state.sessions.daily || {};
+    const totalDays = Math.max(1, Math.round((end - start) / 86400000));
+    const goalDays  = Math.ceil(totalDays * 0.5);
+    const studiedDays = Object.keys(daily).filter(d => {
+      const dt = new Date(d + 'T12:00:00');
+      return dt >= start && dt <= end && (daily[d].flashcards > 0 || daily[d].time > 0);
+    }).length;
+    return (studiedDays / goalDays) >= 0.8;
   },
-
-  // â”€â”€ Stop words â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _stopWords: new Set(['the','a','an','is','are','was','were','be','been','being',
-    'have','has','had','do','does','did','will','would','could','should','may',
-    'might','shall','can','need','dare','ought','used','what','which','who','how',
-    'when','where','why','this','that','these','those','and','or','but','if',
-    'in','on','at','to','for','of','with','by','from','as','into','through',
-    'during','before','after','above','below','between','out','about','up','down',
-    'it','its','i','you','we','they','he','she','my','your','our','their',
-    'tell','explain','describe','show','give','help','me','about','please']),
-
-  // â”€â”€ Keyword extraction with synonym + stem expansion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _keywords(q) {
-    const raw = q.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(w => w.length > 1 && !this._stopWords.has(w));
-
-    const expanded = new Set();
-    for (const w of raw) {
-      expanded.add(w);
-      expanded.add(this._stem(w));
-      // Direct synonym lookup
-      if (this._synonyms[w]) {
-        for (const syn of this._synonyms[w]) expanded.add(syn);
-        for (const syn of this._synonyms[w]) expanded.add(this._stem(syn));
-      }
-    }
-
-    // Multi-word phrase lookup (bigrams of original query)
-    const rawWords = raw;
-    for (let i = 0; i < rawWords.length - 1; i++) {
-      const phrase = rawWords[i] + ' ' + rawWords[i + 1];
-      if (this._synonyms[phrase]) {
-        for (const syn of this._synonyms[phrase]) expanded.add(syn);
-      }
-    }
-
-    return [...expanded].filter(w => w.length > 1);
-  },
-
-  // â”€â”€ Question type detector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _questionType(q) {
-    const l = q.toLowerCase();
-    if (/formula|equation|calculat|how\s+to\s+(find|calculate|compute)|what.s\s+the\s+(formula|equation)/.test(l)) return 'formula';
-    if (/^what\s+(is|are|does|do)\b/.test(l) || /\bdefine\b|\bdefinition\b|\bmean\b/.test(l)) return 'definition';
-    if (/\bwhy\b|\bcause\b|\breason\b/.test(l)) return 'explanation';
-    if (/\bhow\s+(does|do|to|can)\b/.test(l)) return 'howto';
-    if (/\bdifference\b|\bcompare\b|\bversus\b|\bvs\b/.test(l)) return 'comparison';
-    if (/\bexample\b|\breal.world\b|\bapplication\b|\bpractical\b/.test(l)) return 'example';
-    return 'general';
-  },
-
-  // â”€â”€ Section type weights per question type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _sectionWeight(sectionType, questionType) {
-    const table = {
-      formula:     { keypoint:1.8, concept:1.3, quiz:0.7, story:0.4, hook:0.3, 'real-world':1.0, analogy:0.7, protip:1.0 },
-      definition:  { concept:1.6, keypoint:1.5, analogy:1.1, story:0.6, hook:0.4, 'real-world':0.9, protip:0.8, quiz:0.8 },
-      explanation: { analogy:1.6, story:1.4, 'real-world':1.4, protip:1.3, concept:1.1, hook:1.0, keypoint:1.0, quiz:0.7 },
-      howto:       { protip:1.7, 'real-world':1.5, concept:1.2, analogy:1.1, keypoint:1.1, story:0.8, hook:0.6, quiz:0.7 },
-      example:     { 'real-world':2.0, analogy:1.6, protip:1.4, story:1.2, concept:0.8, keypoint:0.9, hook:0.7, quiz:1.0 },
-      comparison:  { concept:1.4, keypoint:1.3, analogy:1.2, story:1.0, 'real-world':1.1, protip:1.0, hook:0.6, quiz:0.8 },
-      general:     { concept:1.2, keypoint:1.3, 'real-world':1.1, analogy:1.0, protip:1.1, story:0.9, hook:0.7, quiz:0.9 },
-    };
-    return (table[questionType] || table.general)[sectionType] || 1.0;
-  },
-
-  // â”€â”€ Section text extractor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _sectionText(section) {
-    let text = (section.title || '') + ' ' + (section.body || '');
-    if (section.formula) text += ' ' + section.formula;
-    if (section.questions) text += ' ' + section.questions.map(q => q.q + ' ' + q.a).join(' ');
-    return text.toLowerCase();
-  },
-
-  // â”€â”€ Bigram fuzzy matching (for typos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _bigrams(word) {
-    const bg = new Set();
-    for (let i = 0; i < word.length - 1; i++) bg.add(word.slice(i, i + 2));
-    return bg;
-  },
-  _bigramSim(a, b) {
-    if (a.length < 2 || b.length < 2) return 0;
-    const bA = this._bigrams(a), bB = this._bigrams(b);
-    let shared = 0;
-    for (const bg of bA) if (bB.has(bg)) shared++;
-    return (2 * shared) / (bA.size + bB.size);
-  },
-  _fuzzyHit(textWords, kw) {
-    if (kw.length < 4) return false;
-    for (const tw of textWords) {
-      if (Math.abs(tw.length - kw.length) > 4) continue;
-      if (this._bigramSim(kw, tw) >= 0.55) return true;
-    }
-    return false;
-  },
-
-  // â”€â”€ Phrase bonus: reward multi-word keyword matches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _phraseBonus(text, keywords) {
-    let bonus = 0;
-    // Check every pair of adjacent keywords in query order
-    for (let i = 0; i < keywords.length - 1; i++) {
-      const phrase = keywords[i] + ' ' + keywords[i + 1];
-      if (text.includes(phrase)) bonus += 4;
-    }
-    return bonus;
-  },
-
-  // â”€â”€ Main scorer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _score(text, keywords, questionType, sectionType) {
-    if (!keywords.length) return 0;
-    const textWords = text.match(/[a-z0-9]+/g) || [];
-    let score = 0;
-    for (const kw of keywords) {
-      // Escape regex special chars in keyword
-      const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const wordRe = new RegExp('\\b' + esc + '\\b', 'g');
-      const partRe = new RegExp(esc, 'g');
-      const wordMatches = (text.match(wordRe) || []).length;
-      const partMatches = (text.match(partRe) || []).length;
-      score += wordMatches * 3 + (partMatches - wordMatches);
-      if (wordMatches === 0 && partMatches === 0 && this._fuzzyHit(textWords, kw)) score += 1;
-    }
-    score += this._phraseBonus(text, keywords);
-    score *= this._sectionWeight(sectionType, questionType);
-    return score;
-  },
-
-  // â”€â”€ Best-sentence extractor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Instead of a dumb window, find the sentence(s) most packed with keywords
-  _bestPassage(body, keywords, maxLen = 300) {
-    if (!body) return '';
-    // Split on sentence boundaries
-    const sentences = body.split(/(?<=[.!?\n])\s+/).filter(s => s.trim().length > 15);
-    if (!sentences.length) return body.slice(0, maxLen);
-
-    const kws = keywords.map(k => k.toLowerCase());
-
-    const scored = sentences.map((s, idx) => {
-      const sl = s.toLowerCase();
-      let sc = 0;
-      for (const kw of kws) {
-        if (sl.includes(kw)) sc += 2;
-      }
-      return { s, sc, idx };
-    });
-
-    scored.sort((a, b) => b.sc - a.sc);
-    const best = scored[0];
-    if (best.sc === 0) return body.slice(0, maxLen) + (body.length > maxLen ? 'â€¦' : '');
-
-    // Grab best sentence + the one after it for context
-    const pick = [best];
-    const nextIdx = best.idx + 1;
-    if (nextIdx < sentences.length) {
-      const next = sentences[nextIdx];
-      if (next.length + best.s.length < maxLen) pick.push({ s: next, idx: nextIdx });
-    }
-    pick.sort((a, b) => a.idx - b.idx);
-    let result = pick.map(p => p.s).join(' ');
-    if (result.length > maxLen) result = result.slice(0, maxLen) + 'â€¦';
-    return result;
-  },
-
-  // â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _search(question) {
-    const keywords = this._keywords(question);
-    const questionType = this._questionType(question);
-    if (!keywords.length) return { results: [], questionType, keywords };
-
-    const results = [];
-    for (const lesson of LESSONS_CONTENT) {
-      for (const section of lesson.sections) {
-        const text = this._sectionText(section);
-        const score = this._score(text, keywords, questionType, section.type);
-        if (score > 0) results.push({ lesson, section, score, questionType });
-      }
-    }
-    results.sort((a, b) => b.score - a.score);
-    return { results: results.slice(0, 4), questionType, keywords };
-  },
-
-  // â”€â”€ Response formatter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _formatResponse(question, { results, questionType, keywords }) {
-    if (!results.length) {
-      return {
-        text: "I couldn't find that in the loaded modules. Try using terms like \"RMS\", \"impedance\", \"inductance\", \"three-phase\", \"motor control\", or \"power factor\".",
-        sources: [],
-        followUps: []
-      };
-    }
-
-    const top = results[0];
-    const body = top.section.body || '';
-    const formula = top.section.formula || '';
-    const sectionTitle = top.section.title || '';
-
-    let text = '';
-
-    if (questionType === 'formula' && formula) {
-      // Lead with the formula(s)
-      text = 'ðŸ“ ' + formula.replace(/\n/g, '\nðŸ“ ');
-      const passage = this._bestPassage(body, keywords, 200);
-      if (passage) text += '\n\n' + passage;
-    } else if (questionType === 'definition') {
-      // First sentence of best passage = the definition
-      text = this._bestPassage(body, keywords, 300);
-      if (formula) text += '\n\nðŸ“ ' + formula.split('\n')[0];
-    } else {
-      text = this._bestPassage(body, keywords, 300);
-      if (formula && questionType !== 'example') {
-        const fLines = formula.split('\n').slice(0, 2).join('  |  ');
-        text += '\n\nðŸ“ ' + fLines;
-      }
-    }
-
-    // Generate smart follow-up suggestions based on the winning lesson
-    const followUps = this._suggestFollowUps(top.lesson, top.section, questionType);
-
-    const sources = results.slice(0, 3).map(r => ({
-      lessonTitle: r.lesson.title,
-      sectionTitle: r.section.title,
-      icon: r.lesson.icon
-    }));
-
-    return { text, sources, followUps };
-  },
-
-  // â”€â”€ Follow-up question suggester â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _suggestFollowUps(lesson, section, questionType) {
-    const suggestions = {
-      'm1': ['What is RMS voltage?', 'How does a transformer work?', 'What is frequency?'],
-      'm2': ['What is inductive reactance?', 'How do capacitors store energy?', 'What is the formula for XL?'],
-      'm3': ['What is impedance?', 'How do I calculate Z?', 'What is power factor?'],
-      'm4': ['What is three-phase power?', 'How does a three-phase motor work?', 'What is line vs phase voltage?'],
-      'm21': ['What is a relay?', 'How does a contactor work?', 'What is a normally open contact?'],
-      'm22': ['What is a motor starter?', 'How does overload protection work?', 'What is a seal-in circuit?'],
-      'm23': ['How does an on-delay timer work?', 'What is a PLC?', 'What is ladder logic?'],
-      'm24': ['What are smart relays?', 'How does a VFD work?', 'What is a PID controller?'],
-    };
-    return (suggestions[lesson.id] || []).slice(0, 3);
-  },
-
-  // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  toggle() { this._open ? this.close() : this.open(); },
 
   open() {
-    this._open = true;
-    const panel = document.getElementById('askaiPanel');
-    if (panel) {
-      panel.style.display = 'flex';
-      requestAnimationFrame(() => panel.classList.add('askai-visible'));
-      this._focusInput();
-      return;
-    }
-    this._createPanel();
-  },
-
-  close() {
-    this._open = false;
-    const panel = document.getElementById('askaiPanel');
-    if (!panel) return;
-    panel.classList.remove('askai-visible');
-    setTimeout(() => { if (panel) panel.style.display = 'none'; }, 280);
-  },
-
-  async ask(question) {
-    if (!question.trim() || this._typing) return;
-    question = question.trim();
-    this._history.push({ role: 'user', text: question });
-    this._renderMessages();
-    this._typing = true;
-    this._scrollBottom();
-    try {
-      const res = await fetch('https://web-production-a1f63.up.railway.app/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, history: this._history.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) })
-      });
-      const data = await res.json();
-      const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: 'ðŸ“–' }));
-      this._history.push({ role: 'ai', text: data.answer || data.error || 'No response.', sources, followUps: [] });
-    } catch(err) {
-      this._history.push({ role: 'ai', text: 'Connection error. Check your internet.', sources: [], followUps: [] });
-    }
-    this._typing = false;
-    this._renderMessages();
-    this._scrollBottom();
-  },
-
-  // â”€â”€ UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  _createPanel() {
-    const panel = document.createElement('div');
-    panel.id = 'askaiPanel';
-    panel.className = 'askai-panel';
-    panel.style.display = 'flex';
-    panel.innerHTML = `
-      <div class="askai-header">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.3rem;">ðŸ¤–</span>
+    const state = Storage.get();
+    if (!state) return;
+    document.getElementById('examSubmitModal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'examSubmitModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;max-width:480px;width:100%;position:relative;max-height:90vh;overflow-y:auto;">
+        <button onclick="document.getElementById('examSubmitModal').remove()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;line-height:1;">×</button>
+        <h2 style="margin:0 0 6px;font-size:1.3rem;">📋 Submit Exam Score</h2>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 24px;">Submit your real AIT exam result to unlock cashback rewards (up to $50 back).</p>
+        <div style="display:flex;flex-direction:column;gap:16px;">
           <div>
-            <div style="font-weight:700;font-size:0.95rem;color:var(--text-primary);">SparkyAI</div>
-            <div style="font-size:0.72rem;color:var(--accent);font-weight:600;">Searches your IBEW modules</div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Exam Date</label>
+            <input type="date" id="esDate" value="${new Date().toISOString().split('T')[0]}" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Period</label>
+            <select id="esPeriod" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+              ${[1,2,3,4].map(p=>`<option value="${p}" ${p===(state.user.period||1)?'selected':''}>Period ${p}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Score (%)</label>
+            <input type="number" id="esScore" min="0" max="100" placeholder="e.g. 88" oninput="ExamSubmission._previewCashback(this.value)"
+              style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+          </div>
+          <div id="esCashbackPreview" style="display:none;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:var(--radius-sm);padding:12px 14px;">
+            <div style="font-weight:700;color:var(--success);" id="esCashbackText"></div>
+            <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px;">Based on the cashback scale below</div>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Upload AIT Results Screenshot <span style="font-weight:400;">(optional)</span></label>
+            <input type="file" id="esScreenshot" accept="image/*"
+              style="width:100%;padding:8px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;"
+              onchange="ExamSubmission._previewShot(this)">
+            <div id="esShotPreview" style="margin-top:8px;"></div>
+          </div>
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;font-size:0.78rem;color:var(--text-muted);">
+            💰 <strong>Cashback scale:</strong> 70–74% $10 · 75–79% $20 · 80–84% $30 · 85–89% $40 · 90–94% $45 · 95–100% $50<br>
+            <span style="margin-top:4px;display:block;">Cashback requires completing ≥80% of study sessions before your exam date.</span>
           </div>
         </div>
-        <button onclick="AskAI.close()" class="askai-close-btn">âœ•</button>
-      </div>
-      <div id="askaiMessages" class="askai-messages">
-        ${this._welcomeBubble()}
-      </div>
-      <div class="askai-input-row">
-        <input id="askaiInput" class="askai-input" type="text"
-          placeholder="e.g. What is impedance?"
-          onkeydown="if(event.key==='Enter')AskAI._submitInput()"
-          maxlength="10000" />
-        <button class="askai-send-btn" onclick="AskAI._submitInput()">âž¤</button>
-      </div>
-    `;
-    document.body.appendChild(panel);
-    requestAnimationFrame(() => panel.classList.add('askai-visible'));
-    this._focusInput();
-  },
-
-  _welcomeBubble() {
-    return `<div class="askai-bubble askai-ai">
-      <div class="askai-bubble-text">Hey! Ask me anything from your loaded IBEW modules â€” AC theory, inductors &amp; capacitors, impedance, three-phase power, motor controls, relays, timers, PLCs and more.<br><br>I understand abbreviations like <strong>RMS</strong>, <strong>XL</strong>, <strong>PF</strong>, typos, and related terms. âš¡</div>
-      <div class="askai-sources" style="margin-top:10px;">
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('What is RMS voltage?')">ðŸ’¡ What is RMS voltage?</span>
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How does impedance work?')">ðŸ’¡ Impedance</span>
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('Three phase power formula')">ðŸ’¡ 3-phase formulas</span>
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How do relays work?')">ðŸ’¡ How relays work</span>
-      </div>
-    </div>`;
-  },
-
-  _quickAsk(q) {
-    const inp = document.getElementById('askaiInput');
-    if (inp) inp.value = q;
-    this._submitInput();
-  },
-
-  _submitInput() {
-    const inp = document.getElementById('askaiInput');
-    if (!inp) return;
-    const q = inp.value.trim();
-    if (!q) return;
-    inp.value = '';
-    this.ask(q);
-  },
-
-  _renderMessages() {
-    const container = document.getElementById('askaiMessages');
-    if (!container) return;
-
-    const bubbles = this._history.map(msg => {
-      if (msg.role === 'user') {
-        return `<div class="askai-bubble askai-user"><div class="askai-bubble-text">${this._esc(msg.text)}</div></div>`;
-      }
-      const sourceHtml = msg.sources && msg.sources.length
-        ? `<div class="askai-sources">${msg.sources.map(s =>
-            `<span class="askai-source-tag">${s.icon} ${this._esc(s.lessonTitle)} â€” ${this._esc(s.sectionTitle)}</span>`
-          ).join('')}</div>`
-        : '';
-      const followHtml = msg.followUps && msg.followUps.length
-        ? `<div class="askai-followups">${msg.followUps.map(q =>
-            `<span class="askai-followup-tag" onclick="AskAI._quickAsk('${q.replace(/'/g,'&#39;')}')">â†’ ${this._esc(q)}</span>`
-          ).join('')}</div>`
-        : '';
-      return `<div class="askai-bubble askai-ai">
-        <div class="askai-bubble-text">${this._esc(msg.text)}</div>
-        ${sourceHtml}${followHtml}
+        <div style="display:flex;gap:12px;margin-top:24px;">
+          <button class="btn btn-secondary" onclick="document.getElementById('examSubmitModal').remove()" style="flex:1;">Cancel</button>
+          <button class="btn btn-primary" onclick="ExamSubmission.submit()" style="flex:1;">Submit Score</button>
+        </div>
       </div>`;
-    }).join('');
-
-    const typingHtml = this._typing
-      ? `<div class="askai-bubble askai-ai"><div class="askai-typing"><span></span><span></span><span></span></div></div>`
-      : '';
-
-    container.innerHTML = this._welcomeBubble() + bubbles + typingHtml;
-    this._scrollBottom();
+    document.body.appendChild(modal);
   },
 
-  _scrollBottom() {
-    setTimeout(() => { const c = document.getElementById('askaiMessages'); if (c) c.scrollTop = c.scrollHeight; }, 30);
+  _previewCashback(val) {
+    const pct = parseInt(val);
+    const preview = document.getElementById('esCashbackPreview');
+    const text    = document.getElementById('esCashbackText');
+    if (!preview || !text) return;
+    if (!isNaN(pct) && pct >= 70) {
+      const cb = this._getCashback(pct);
+      preview.style.display = 'block';
+      text.textContent = cb > 0 ? `💰 You'd earn $${cb} cashback!` : 'No cashback at this score.';
+    } else {
+      preview.style.display = 'none';
+    }
   },
 
-  _focusInput() {
-    setTimeout(() => { const inp = document.getElementById('askaiInput'); if (inp) inp.focus(); }, 300);
+  _previewShot(input) {
+    const file = input.files[0];
+    const prev = document.getElementById('esShotPreview');
+    if (!prev) return;
+    if (file) {
+      const url = URL.createObjectURL(file);
+      prev.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:8px;max-height:180px;object-fit:contain;">`;
+    } else {
+      prev.innerHTML = '';
+    }
   },
 
-  _esc(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  async submit() {
+    const dateVal  = document.getElementById('esDate')?.value;
+    const period   = parseInt(document.getElementById('esPeriod')?.value);
+    const scoreVal = parseInt(document.getElementById('esScore')?.value);
+    const shotInput = document.getElementById('esScreenshot');
+    if (!dateVal) { showToast('Please enter the exam date.', 'error'); return; }
+    if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 100) { showToast('Enter a valid score (0–100).', 'error'); return; }
+    const state    = Storage.get();
+    const cashback = this._getCashback(scoreVal);
+    const eligible = this._checkEligibility(state);
+    let screenshotData = null;
+    if (shotInput?.files[0]) {
+      try {
+        screenshotData = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload  = e => res(e.target.result);
+          reader.onerror = rej;
+          reader.readAsDataURL(shotInput.files[0]);
+        });
+      } catch(e) {}
+    }
+    const submission = {
+      id: Date.now().toString(),
+      date: dateVal, period, score: scoreVal,
+      cashback: eligible ? cashback : 0,
+      cashbackLocked: !eligible,
+      cashbackReason: !eligible ? 'Complete ≥80% of study sessions before your exam to unlock cashback.' : null,
+      claimed: false, screenshotData, submittedAt: Date.now(),
+    };
+    if (!state.realExamScores) state.realExamScores = [];
+    const idx = state.realExamScores.findIndex(s => s.period === period);
+    if (idx >= 0) state.realExamScores[idx] = submission;
+    else state.realExamScores.push(submission);
+    // Award points
+    Points.award('Exam score submitted', Points.ACTIONS.real_exam_submit.base);
+    if (scoreVal >= 95)      Points.award('Real exam 95%+ bonus!', Points.ACTIONS.real_exam_95.base, true);
+    else if (scoreVal >= 90) Points.award('Real exam 90%+ bonus!', Points.ACTIONS.real_exam_90.base, true);
+    else if (scoreVal >= 80) Points.award('Real exam 80%+ bonus!', Points.ACTIONS.real_exam_80.base, true);
+    Storage.set(state);
+    FireDB.saveUser(state);
+    document.getElementById('examSubmitModal')?.remove();
+    showToast(`Score submitted!${cashback > 0 && eligible ? ` You earned $${cashback} cashback.` : ''}`, 'success');
+    Dashboard.render(Storage.get());
+  },
+
+  claimCashback(submissionId) {
+    const state = Storage.get();
+    const sub = (state.realExamScores || []).find(s => s.id === submissionId);
+    if (!sub || sub.claimed || sub.cashback === 0) return;
+    if (sub.cashbackLocked) { showToast('Complete ≥80% of study sessions to unlock cashback.', 'info'); return; }
+    const name = state.user.name || '';
+    const email = state.user.email || '';
+    const body = `Cashback Claim%0D%0A%0D%0AStudent: ${encodeURIComponent(name)}%0D%0AEmail: ${encodeURIComponent(email)}%0D%0APeriod: ${sub.period}%0D%0AScore: ${sub.score}%25%0D%0ACashback: $${sub.cashback}%0D%0AExam Date: ${sub.date}`;
+    window.open(`mailto:admin@sparkystudy.com?subject=Cashback Claim — ${encodeURIComponent(name)}&body=${body}`, '_blank');
+    sub.claimed = true;
+    Storage.set(state);
+    FireDB.saveUser(state);
+    showToast("Cashback claim email opened! We'll e-transfer within 2 business days.", 'success');
+    Dashboard.render(Storage.get());
   }
 };
 
+// ===== CLASS SCHEDULE (school + exam date + period) =====
+const ClassSchedule = {
+  open() {
+    const state = Storage.get();
+    if (!state) return;
+    const cs = state.classSchedule || {};
+    document.getElementById('classScheduleModal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'classScheduleModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;max-width:480px;width:100%;position:relative;max-height:90vh;overflow-y:auto;">
+        <button onclick="document.getElementById('classScheduleModal').remove()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;line-height:1;">×</button>
+        <h2 style="margin:0 0 6px;font-size:1.3rem;">📅 Class Schedule</h2>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin:0 0 24px;">Set your school and exam date to enable the countdown timer, cashback eligibility, and personalized AI context.</p>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">School</label>
+            <select id="csSchool" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+              <option value="">Select your school…</option>
+              ${SCHOOLS_LIST.map(s=>`<option value="${s.id}" ${cs.school===s.id?'selected':''}>${s.name}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Period</label>
+            <select id="csPeriod" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+              ${[1,2,3,4].map(p=>`<option value="${p}" ${(cs.period||state.user.period)==p?'selected':''}>Period ${p}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Class Start Date</label>
+            <input type="date" id="csStart" value="${cs.classStartDate||''}" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Class End Date</label>
+            <input type="date" id="csEnd" value="${cs.classEndDate||''}" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Exam Date <span style="color:var(--danger);">*</span></label>
+            <input type="date" id="csExam" value="${cs.examDate||''}" style="width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:24px;">
+          <button class="btn btn-secondary" onclick="document.getElementById('classScheduleModal').remove()" style="flex:1;">Cancel</button>
+          <button class="btn btn-primary" onclick="ClassSchedule.save()" style="flex:1;">Save Schedule</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  },
 
-// Floating SparkyAI trigger button
-function createAskAIFAB() {
-  if (document.getElementById('askaiBtn')) return;
-  const btn = document.createElement('button');
-  btn.id = 'askaiBtn';
-  btn.className = 'askai-fab';
-  btn.innerHTML = 'ðŸ¤–';
-  btn.title = 'Ask SparkyAI';
-  btn.onclick = () => AskAI.toggle();
-  document.body.appendChild(btn);
-}
+  save() {
+    const school          = document.getElementById('csSchool')?.value || '';
+    const period          = parseInt(document.getElementById('csPeriod')?.value);
+    const classStartDate  = document.getElementById('csStart')?.value || '';
+    const classEndDate    = document.getElementById('csEnd')?.value || '';
+    const examDate        = document.getElementById('csExam')?.value || '';
+    if (!examDate) { showToast('Please enter your exam date.', 'error'); return; }
+    const state = Storage.get();
+    state.classSchedule = { school, period, classStartDate, classEndDate, examDate, savedAt: Date.now() };
+    if (school) state.user.school = school;
+    Storage.set(state);
+    FireDB.saveUser(state);
+    document.getElementById('classScheduleModal')?.remove();
+    showToast('Class schedule saved!', 'success');
+    Dashboard.render(Storage.get());
+  },
 
-// One-time analytics wipe â€” clears all pre-launch test traffic (was 100% owner)
+  getDaysUntilExam(state) {
+    const cs = state && state.classSchedule;
+    if (!cs || !cs.examDate) return null;
+    const exam  = new Date(cs.examDate + 'T12:00:00');
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    return Math.ceil((exam - today) / 86400000);
+  }
+};
+
+// ===== AI STUDY PLAN GENERATOR =====
+const StudyPlan = {
+  _plan: null,
+
+  async generate() {
+    const state    = Storage.get();
+    if (!state) return;
+    const daysLeft = ClassSchedule.getDaysUntilExam(state);
+    if (!daysLeft || daysLeft <= 0) {
+      showToast('Set your exam date first.', 'info');
+      ClassSchedule.open();
+      return;
+    }
+    const container = document.getElementById('studyPlanContainer');
+    if (container) container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);">⚡ Generating your study plan…</div>`;
+    const topics     = getTopicsForPeriod(state.user.period);
+    const topicData  = topics.map(t => ({ name: t.name, mastery: getTopicMastery(state, t.id) }));
+    const weakTopics = topicData.filter(t => t.mastery < 60).sort((a,b) => a.mastery - b.mastery).slice(0,5);
+    const planDays   = Math.min(daysLeft, 30);
+    const todayStr   = new Date().toISOString().split('T')[0];
+    const prompt = `You are a study plan generator for Alberta electrical apprentices.\nStudent:\n- Period: ${state.user.period}\n- Days until exam: ${daysLeft}\n- Overall mastery: ${getOverallMastery(state)}%\n- Weakest topics: ${weakTopics.map(t=>`${t.name} (${t.mastery}%)`).join(', ')}\n- Streak: ${state.sessions.streak} days\n\nGenerate a day-by-day study plan for the next ${planDays} days starting ${todayStr}.\nReturn ONLY a JSON array, no explanation:\n[{"day":1,"date":"${todayStr}","topic":"AC Theory","minutes":30,"type":"flashcards","note":"Focus on sine waves"},...]\nAllowed types: flashcards, quiz, review, exam-prep. Keep it practical.`;
+    try {
+      const res = await fetch('https://sparkystudy-production.up.railway.app/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, history: [] })
+      });
+      const data = await res.json();
+      const text = data.answer || '';
+      const m    = text.match(/\[[\s\S]*\]/);
+      if (!m) throw new Error('No JSON array in response');
+      const plan = JSON.parse(m[0]);
+      this._plan = plan;
+      this._renderPlan(plan, state);
+    } catch(err) {
+      console.error('[StudyPlan]', err);
+      if (container) container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--danger);">Could not generate plan. Check your API key or try again.</div>`;
+    }
+  },
+
+  _buildPlanHTML(plan, state) {
+    const savedChecks = state.studyPlanChecks || {};
+    const typeColors  = { flashcards:'#3b82f6', quiz:'#8b5cf6', review:'#f59e0b', 'exam-prep':'#22c55e' };
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:0.88rem;font-weight:700;">&#x1F4C5; Your ${plan.length}-Day Study Plan</div>
+        <button class="btn btn-secondary btn-sm" onclick="StudyPlan.generate()">&#x21BB; Regenerate</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;">
+        ${plan.map(day => {
+          const checked   = !!savedChecks[`day_${day.day}`];
+          const color     = typeColors[day.type] || 'var(--text-muted)';
+          const dateLabel = day.date ? new Date(day.date + 'T12:00:00').toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'}) : `Day ${day.day}`;
+          return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${checked?'rgba(34,197,94,0.06)':'var(--bg-secondary)'};border:1px solid ${checked?'rgba(34,197,94,0.2)':'var(--border)'};border-radius:8px;">
+            <input type="checkbox" ${checked?'checked':''} onchange="StudyPlan.checkDay('day_${day.day}',this.checked)" style="width:16px;height:16px;accent-color:var(--success);flex-shrink:0;cursor:pointer;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:0.7rem;color:var(--text-muted);">${dateLabel}</span>
+                <span style="font-size:0.68rem;background:${color}22;color:${color};padding:1px 7px;border-radius:20px;font-weight:600;">${day.type}</span>
+              </div>
+              <div style="font-weight:600;font-size:0.84rem;${checked?'text-decoration:line-through;color:var(--text-muted);':''}">${day.topic}</div>
+              ${day.note?`<div style="font-size:0.74rem;color:var(--text-muted);">${day.note}</div>`:''}
+            </div>
+            <div style="font-size:0.74rem;color:var(--text-muted);white-space:nowrap;">${day.minutes}m</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  },
+
+  _renderPlan(plan, state) {
+    const container = document.getElementById('studyPlanContainer');
+    if (container) container.innerHTML = this._buildPlanHTML(plan, state);
+  },
+
+  checkDay(key, checked) {
+    const state = Storage.get();
+    if (!state.studyPlanChecks) state.studyPlanChecks = {};
+    if (checked) {
+      state.studyPlanChecks[key] = true;
+      Points.award('Study plan day completed', 10);
+    } else {
+      delete state.studyPlanChecks[key];
+    }
+    Storage.set(state);
+    FireDB.saveUser(state);
+  }
+};
+
+// One-time analytics wipe — clears all pre-launch test traffic (was 100% owner)
 (function purgeTestTraffic() {
   const FLAG = 'sparkstudy_traffic_purged_v1';
   if (localStorage.getItem(FLAG)) return; // already ran, never run again
@@ -11847,14 +14940,8 @@ function createAskAIFAB() {
 
 // Initialize app
 document.addEventListener("DOMContentLoaded", () => {
-  // Slide-in animation for notes side panel
-  const _animStyle = document.createElement('style');
-  _animStyle.textContent = '@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}';
-  document.head.appendChild(_animStyle);
-
   App.init();
   createFAB();
-  createAskAIFAB();
   PWA.init();
 
   // Click-based dropdowns (no hover gap glitch)
@@ -11877,4 +14964,34 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// -- Build user-context system prompt and expose it for the AI widget --
+(function() {
+  try {
+    const state = Storage.get();
+    if (!state || state.user.isOwner) return;
+    const overallMastery = getOverallMastery(state);
+    const topics     = getTopicsForPeriod(state.user.period);
+    const weakTopics = topics.map(t => ({ name: t.name, mastery: getTopicMastery(state, t.id) }))
+      .sort((a,b) => a.mastery - b.mastery).slice(0,3);
+    const daysLeft   = ClassSchedule.getDaysUntilExam(state);
+    const cs         = state.classSchedule || {};
+    const schoolName = cs.school ? (SCHOOLS_LIST.find(s=>s.id===cs.school)?.name || cs.school) : 'Not set';
+    const realScores = state.realExamScores || [];
+    const lastReal   = realScores.length > 0 ? realScores.slice().sort((a,b)=>b.submittedAt-a.submittedAt)[0] : null;
+    window._sparkStudyCtx = `You are SparkStudy, an AI study assistant built specifically for Alberta electrical apprentices.
 
+Current user context:
+- Name: ${state.user.name}
+- Period: ${state.user.period}
+- School: ${schoolName}
+- Days until exam: ${daysLeft !== null ? daysLeft + ' days' : 'not set'}
+- Overall mastery: ${overallMastery}%
+- Weak topics: ${weakTopics.map(t=>`${t.name} (${t.mastery}%)`).join(', ')}
+- Last real exam score: ${lastReal ? lastReal.score + '%' : 'not submitted'}
+- Study streak: ${state.sessions.streak} days
+- Points: ${(state.points && state.points.total) || 0} total
+
+You have access to Alberta AIT curriculum for all 4 periods and the Canadian Electrical Code (CEC).
+Your job is to quiz them, explain concepts in plain English with CEC citations, build study plans, and motivate them. Always be direct and practical — these are trades guys, not academics. When they get something wrong, tell them exactly why and where to find the right answer.`;
+  } catch(e) {}
+})();

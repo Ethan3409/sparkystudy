@@ -8,19 +8,39 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="sparkystudy">
+<meta name="description" content="SparkStudy — The #1 study platform for Alberta electrical apprentices. AI-powered quizzes, flashcards, exam prep, and ILM module content for Period 1-4.">
+<meta name="keywords" content="electrical apprentice, Alberta, ILM, study guide, exam prep, sparkystudy, electrician, period 2, CEC code">
+<meta property="og:title" content="SparkStudy — Alberta Electrical Apprentice Study Platform">
+<meta property="og:description" content="AI-powered study tools, 900+ exam questions, flashcards, math practice, and ILM module lessons. Built for Alberta electrical apprentices.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sparkystudy.com">
+<meta property="og:image" content="https://sparkystudy.com/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SparkStudy — Alberta Electrical Apprentice Study Platform">
+<meta name="twitter:description" content="AI-powered study tools for Alberta electrical apprentices. 900+ exam questions, ILM module content, math practice.">
+<link rel="canonical" href="https://sparkystudy.com">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZSG1FHV7VH"></script>
 <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZSG1FHV7VH');
+</script>
+<script>
+// Bust stale SW cache once per app version — runs inline so it fires before app.js loads
 (function(){
-  var V='v3';
-  if('serviceWorker' in navigator && sessionStorage.getItem('sw-ver')!==V){
+  var V = 'v7';
+  if ('serviceWorker' in navigator && sessionStorage.getItem('sw-ver') !== V) {
     navigator.serviceWorker.getRegistration().then(function(reg){
-      sessionStorage.setItem('sw-ver',V);
-      if(reg){reg.unregister().then(function(){location.reload();});}
+      sessionStorage.setItem('sw-ver', V);
+      if (reg) { reg.unregister().then(function(){ location.reload(); }); }
     });
   }
 })();
@@ -30,6 +50,9 @@
 <!-- Firebase SDK (v8 compat) — loaded async so it never blocks the page -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+<!-- PDF.js for client-side PDF text extraction -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+<script>window.addEventListener('load',function(){if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';});</script>
 </head>
 <body>
 
@@ -89,6 +112,9 @@
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
   </button>
 </nav>
+
+<!-- TRIAL COUNTDOWN BANNER — shown for all users in active trial -->
+<div id="trial-banner" style="display:none;"></div>
 
 <!-- MOBILE DRAWER OVERLAY -->
 <div class="mobile-drawer-overlay" id="drawerOverlay" onclick="closeMobileDrawer()"></div>
@@ -329,23 +355,79 @@
 
 <!-- ======= SIGNUP PAGE ======= -->
 <div class="page" id="page-signup">
-  <div class="auth-page">
-    <div class="auth-card">
-      <h2>Create Your Account</h2>
-      <p class="auth-subtitle">Start mastering your electrical exam today</p>
+  <div class="auth-page" style="align-items:flex-start;padding-top:40px;">
+    <div class="auth-card" style="max-width:520px;width:100%;">
+      <h2 style="font-size:1.6rem;">Start Your Free Trial</h2>
+      <p class="auth-subtitle">7 days free — $0 today. Cancel anytime before your trial ends and you won't be charged.</p>
+
       <div class="input-group">
         <label>Full Name</label>
-        <input type="text" id="signupName" placeholder="Enter your name">
+        <input type="text" id="signupName" placeholder="Enter your name" required autocomplete="name">
       </div>
       <div class="input-group">
         <label>Email</label>
-        <input type="email" id="signupEmail" placeholder="your@email.com">
+        <input type="email" id="signupEmail" placeholder="your@email.com" required autocomplete="email">
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="signupPassword" placeholder="Create a password">
+        <input type="password" id="signupPassword" placeholder="Create a password (min 6 chars)" required minlength="6" autocomplete="new-password">
       </div>
-      <button class="btn btn-primary btn-block btn-lg" onclick="Auth.signup()">Create Account &amp; Take Diagnostic</button>
+
+      <!-- Period selector -->
+      <div class="input-group">
+        <label>Which period are you in?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;" id="signupPeriodGrid">
+          <div class="signup-period-opt" data-period="1" onclick="Auth.selectPeriod(1)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 1</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">First year</div>
+          </div>
+          <div class="signup-period-opt" data-period="2" onclick="Auth.selectPeriod(2)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 2</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Second year</div>
+          </div>
+          <div class="signup-period-opt" data-period="3" onclick="Auth.selectPeriod(3)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 3</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Third year</div>
+          </div>
+          <div class="signup-period-opt" data-period="4" onclick="Auth.selectPeriod(4)"
+            style="border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s,background 0.15s;">
+            <div style="font-weight:700;font-size:0.95rem;">Period 4</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Fourth year</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing summary box -->
+      <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:16px 18px;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-weight:700;font-size:0.95rem;color:#10b981;">Elite Annual Plan</span>
+          <span style="font-weight:800;font-size:1.1rem;">$79 CAD<span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);">/yr</span></span>
+        </div>
+        <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.7;">
+          ✓ 7-day free trial — card required, charged after trial<br>
+          ✓ Cancel before trial ends → $0 charged<br>
+          ✓ Unlimited flashcards, exams &amp; diagnostic<br>
+          ✓ AI study tools &amp; personalized plan
+        </div>
+      </div>
+
+      <!-- Promo code -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="signupPromo" placeholder="Promo code (optional)" style="flex:1;padding:10px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.85rem;text-transform:uppercase;">
+          <button onclick="Auth.applySignupPromo()" style="padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:0.82rem;cursor:pointer;font-weight:600;white-space:nowrap;">Apply</button>
+        </div>
+        <div id="signupPromoMsg" style="font-size:0.78rem;margin-top:5px;min-height:16px;"></div>
+      </div>
+
+      <button class="btn btn-primary btn-block btn-lg" id="signupBtn" onclick="Auth.signup()" style="font-size:1rem;padding:14px;">
+        Create Account &rarr;
+      </button>
+      <p style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-top:10px;">Free to start — you'll choose your plan after the diagnostic.</p>
+      <div id="signupError" style="color:#ef4444;font-size:0.85rem;text-align:center;margin-top:8px;display:none;"></div>
       <div class="auth-divider">Already have an account? <a href="#" onclick="App.navigate('login')">Log in</a></div>
     </div>
   </div>
@@ -359,13 +441,13 @@
       <p class="auth-subtitle">Continue your study journey</p>
       <div class="input-group">
         <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com">
+        <input type="email" id="loginEmail" placeholder="your@email.com" required autocomplete="email">
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Your password">
+        <input type="password" id="loginPassword" placeholder="Your password" required autocomplete="current-password">
       </div>
-      <button class="btn btn-primary btn-block btn-lg" onclick="Auth.login()">Log In</button>
+      <button class="btn btn-primary btn-block btn-lg" id="loginBtn" onclick="Auth.login()">Log In</button>
       <div class="auth-divider">Don't have an account? <a href="#" onclick="App.navigate('signup')">Sign up</a></div>
     </div>
   </div>
@@ -467,7 +549,8 @@
 </div><!-- /app-container -->
 
 <!-- Data and App scripts (loaded after Firebase SDK via defer) -->
-<script src="data.js" defer></script>
-<script src="app.js" defer></script>
+<script src="data.js?v=7" defer></script>
+<script src="app.js?v=7" defer></script>
+<script src="sparkstudy-ai-widget.js?v=7" defer></script>
 </body>
 </html>
