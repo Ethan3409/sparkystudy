@@ -1,12 +1,12 @@
-
+﻿
 // ===== FIREBASE CONFIG =====
 // HOW TO SET UP (takes ~5 min):
 //   1. Go to https://console.firebase.google.com  and sign in with your Google account
-//   2. Click "Add project" → name it "sparkystudy" → disable Google Analytics → Create
-//   3. In your project: click the </> (Web) icon → register app as "sparkystudy" → Continue
+//   2. Click "Add project" â†’ name it "sparkystudy" â†’ disable Google Analytics â†’ Create
+//   3. In your project: click the </> (Web) icon â†’ register app as "sparkystudy" â†’ Continue
 //   4. Copy the firebaseConfig object values into the fields below
-//   5. In left sidebar: Build → Firestore Database → Create database → Start in test mode → Next → Enable
-//   6. Save and redeploy. Done — all users will now appear in your admin panel!
+//   5. In left sidebar: Build â†’ Firestore Database â†’ Create database â†’ Start in test mode â†’ Next â†’ Enable
+//   6. Save and redeploy. Done â€” all users will now appear in your admin panel!
 const FB_CONFIG = {
   apiKey:            "AIzaSyBAbpgFTA_HcbAWO30fWAQuIr7BhH36Z4Q",
   authDomain:        "sparkystudy-afd09.firebaseapp.com",
@@ -32,7 +32,7 @@ const FireDB = {
       if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
       this.db = firebase.firestore();
       this.ready = true;
-      console.log('[sparkystudy] Firebase connected ✓');
+      console.log('[sparkystudy] Firebase connected âœ“');
       return true;
     } catch(e) { console.warn('[sparkystudy] Firebase init failed:', e.message); return false; }
   },
@@ -135,7 +135,7 @@ const Storage = {
     localStorage.setItem(ACTIVE_USER_KEY, uid);
     // Update user registry
     UserRegistry.update(state.user);
-    // Async cloud sync — non-blocking, never breaks local flow
+    // Async cloud sync â€” non-blocking, never breaks local flow
     FireDB.saveUser(state);
   },
   update(partial) { const s = this.get(); if (!s) return null; Object.assign(s, partial); this.set(s); return s; },
@@ -193,7 +193,7 @@ const Storage = {
     if (!u) return null;
     return this.getUserById(u.id);
   },
-  // Public email lookup — checks local first, then Firestore (async)
+  // Public email lookup â€” checks local first, then Firestore (async)
   findByEmail(email) {
     return this.findByEmailLocal(email);
   }
@@ -313,12 +313,12 @@ const SiteAnalytics = {
 
 // ===== POINTS & GAMIFICATION =====
 const RANKS = [
-  { min:0,     name:'Apprentice',  badge:'⚡', color:'#6b7280' },
-  { min:100,   name:'Journeyman',  badge:'🔧', color:'#3b82f6' },
-  { min:500,   name:'Technician',  badge:'🔌', color:'#8b5cf6' },
-  { min:1500,  name:'Electrician', badge:'⚡', color:'#f59e0b' },
-  { min:4000,  name:'Master',      badge:'🏆', color:'#22c55e' },
-  { min:10000, name:'Expert',      badge:'⭐', color:'#ef4444' },
+  { min:0,     name:'Apprentice',  badge:'âš¡', color:'#6b7280' },
+  { min:100,   name:'Journeyman',  badge:'ðŸ”§', color:'#3b82f6' },
+  { min:500,   name:'Technician',  badge:'ðŸ”Œ', color:'#8b5cf6' },
+  { min:1500,  name:'Electrician', badge:'âš¡', color:'#f59e0b' },
+  { min:4000,  name:'Master',      badge:'ðŸ†', color:'#22c55e' },
+  { min:10000, name:'Expert',      badge:'â­', color:'#ef4444' },
 ];
 
 const Points = {
@@ -372,7 +372,7 @@ const Points = {
     Storage.set(state);
     if (!silent) {
       const mult = multiplier > 1 ? ` <span style="color:#f59e0b">${multiplier}x streak!</span>` : '';
-      showToast(`+${earned} pts — ${reason}${mult}`, 'success');
+      showToast(`+${earned} pts â€” ${reason}${mult}`, 'success');
     }
     // Sync to Firebase so leaderboard sees it
     FireDB.saveUser(state);
@@ -380,7 +380,7 @@ const Points = {
   },
 
   awardExam(pct) {
-    const pts = Math.round(pct * 2); // 0–200 pts based on score
+    const pts = Math.round(pct * 2); // 0â€“200 pts based on score
     this.award('Exam completed', pts);
     if (pct === 100) this.award('Perfect score!', Points.ACTIONS.exam_perfect.base, true);
     else if (pct >= 70) this.award('Passing grade', Points.ACTIONS.exam_pass.base, true);
@@ -463,8 +463,8 @@ function recordStudy(state) {
     setTimeout(() => {
       Points.award('Daily login', Points.ACTIONS.daily_login.base, true);
       const streak = state.sessions.streak;
-      if (streak === 7)  Points.award('7-day streak! 🔥', Points.ACTIONS.streak_7.base);
-      if (streak === 30) Points.award('30-day streak! 💥', Points.ACTIONS.streak_30.base);
+      if (streak === 7)  Points.award('7-day streak! ðŸ”¥', Points.ACTIONS.streak_7.base);
+      if (streak === 30) Points.award('30-day streak! ðŸ’¥', Points.ACTIONS.streak_30.base);
     }, 500);
   }
   return state;
@@ -576,7 +576,7 @@ const Auth = {
       const cloudUser = await FireDB.findByEmail(email);
       if (cloudUser) return showToast('An account with this email already exists. Please log in.', 'error');
     }
-    // Default to period 1 — user will pick their year on the plan selection screen after diagnostic
+    // Default to period 1 â€” user will pick their year on the plan selection screen after diagnostic
     const state = Storage.createDefault(name, email, pass, this.selectedPeriod || 1);
     SiteAnalytics.track('signup', { email, period: this.selectedPeriod || 1 });
     showToast('Account created! Starting your diagnostic...', 'success');
@@ -587,7 +587,7 @@ const Auth = {
     const pass = document.getElementById('loginPassword').value;
     if (!email || !pass) return showToast('Please enter email and password', 'error');
 
-    // Owner ANALYTICS-ONLY login — goes straight to analytics dashboard
+    // Owner ANALYTICS-ONLY login â€” goes straight to analytics dashboard
     if (email === OWNER_ANALYTICS_LOGIN.email && pass === OWNER_ANALYTICS_LOGIN.password) {
       this.isOwnerAnalytics = true;
       // Load all users from Firebase into admin panel (async)
@@ -596,12 +596,12 @@ const Auth = {
         if (cloudUsers) OwnerDashboard._cloudUsers = cloudUsers;
       }
       SiteAnalytics.track('owner_analytics_login', {});
-      showToast('Owner Analytics Mode — viewing all site data', 'success');
+      showToast('Owner Analytics Mode â€” viewing all site data', 'success');
       App.navigate('owner');
       return;
     }
 
-    // Owner STUDENT login — auto-creates account if needed
+    // Owner STUDENT login â€” auto-creates account if needed
     if (email === OWNER.email && pass === OWNER.password) {
       let state = Storage.findByEmailLocal(OWNER.email);
       if (!state) {
@@ -624,10 +624,10 @@ const Auth = {
       return;
     }
 
-    // Regular student login — check local first, then Firestore
+    // Regular student login â€” check local first, then Firestore
     let state = Storage.findByEmailLocal(email);
     if (!state && FireDB.ready) {
-      // Student signed up on a different device — pull their account from cloud
+      // Student signed up on a different device â€” pull their account from cloud
       showToast('Looking up your account...', 'info');
       const cloudState = await FireDB.findByEmail(email);
       if (cloudState) {
@@ -1061,7 +1061,7 @@ const Diagnostic = {
             <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
               ${(d.notLearnedAreas||[]).map(tid => `<span class="badge" style="background:rgba(100,116,139,0.15);color:var(--text-muted);border:1px dashed var(--border);">${TOPICS[tid]?.name || tid}</span>`).join('')}
             </div>
-            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;">We'll start you here — no pressure.</p>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;">We'll start you here â€” no pressure.</p>
           </div>
         ` : ''}
 
@@ -1138,15 +1138,15 @@ const Dashboard = {
           <div style="font-size:2rem;">${rank.badge}</div>
           <div style="flex:1;min-width:140px;">
             <div style="font-weight:700;font-size:1rem;color:${rank.color};">${rank.name}</div>
-            <div style="font-size:0.78rem;color:var(--text-muted);margin:2px 0 6px;">${pts.toLocaleString()} pts total · ${wPts.toLocaleString()} this week</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin:2px 0 6px;">${pts.toLocaleString()} pts total Â· ${wPts.toLocaleString()} this week</div>
             <div style="background:var(--bg-secondary);border-radius:4px;height:6px;overflow:hidden;width:100%;max-width:220px;">
               <div style="height:100%;width:${pctToNext}%;background:linear-gradient(90deg,${rank.color},#f59e0b);border-radius:4px;transition:width 0.5s;"></div>
             </div>
-            ${nextRank ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:3px;">${pctToNext}% to ${nextRank.badge} ${nextRank.name}</div>` : '<div style="font-size:0.7rem;color:#f59e0b;margin-top:3px;">⭐ Max rank achieved!</div>'}
+            ${nextRank ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:3px;">${pctToNext}% to ${nextRank.badge} ${nextRank.name}</div>` : '<div style="font-size:0.7rem;color:#f59e0b;margin-top:3px;">â­ Max rank achieved!</div>'}
           </div>
           <div style="text-align:right;">
             <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:2px;">View Leaderboard</div>
-            <div style="font-size:0.8rem;color:var(--accent);">🏆 →</div>
+            <div style="font-size:0.8rem;color:var(--accent);">ðŸ† â†’</div>
           </div>
         </div>`;
       })()}
@@ -1183,7 +1183,7 @@ const Dashboard = {
               if (todayTopic) {
                 const topicMastery = getTopicMastery(state, todayTopicId);
                 return `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-                  <div style="font-size:0.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">📅 Today — ${dayName}</div>
+                  <div style="font-size:0.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">ðŸ“… Today â€” ${dayName}</div>
                   <div style="font-weight:700;font-size:0.95rem;">${todayTopic.icon} ${todayTopic.name}</div>
                   <div style="font-size:0.78rem;color:var(--text-muted);margin:4px 0 8px;">Current mastery: ${topicMastery}%</div>
                   <div style="display:flex;gap:8px;">
@@ -1484,7 +1484,7 @@ const Flashcards = {
       Points.award('Correct flashcard', Points.ACTIONS.flashcard_correct.base, true);
       // Bonus every 10 correct in a row
       this._correctStreak = (this._correctStreak || 0) + 1;
-      if (this._correctStreak > 0 && this._correctStreak % 10 === 0) Points.award('10-card streak! 🔥', Points.ACTIONS.flashcard_streak.base);
+      if (this._correctStreak > 0 && this._correctStreak % 10 === 0) Points.award('10-card streak! ðŸ”¥', Points.ACTIONS.flashcard_streak.base);
     } else {
       this._correctStreak = 0;
     }
@@ -1739,7 +1739,7 @@ const Exams = {
         const hint = document.getElementById('customCountHint');
         if (slider) { slider.max = questions.length; slider.value = questions.length; }
         if (numInput) { numInput.max = questions.length; numInput.value = questions.length; }
-        if (hint) hint.textContent = questions.length + ' questions available — drag the slider or type a number (1–' + questions.length + ')';
+        if (hint) hint.textContent = questions.length + ' questions available â€” drag the slider or type a number (1â€“' + questions.length + ')';
       }
       const topicBreakdown = {};
       questions.forEach(q => { topicBreakdown[q.topic] = (topicBreakdown[q.topic] || 0) + 1; });
@@ -2003,7 +2003,7 @@ const Exams = {
           ${(() => {
             const wrongs = attempt.responses.filter(r=>!r.isCorrect).map(r=>({q:r.q,opts:r.opts,correct:r.correct,selected:r.selected,exp:r.exp||'',topic:r.topic}));
             if (wrongs.length > 0) { WrongAnswerStudy._pending = wrongs; WrongAnswerStudy._pendingLabel = 'Exam'; }
-            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">📖 Study My ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
+            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">ðŸ“– Study My ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
           })()}
           <button class="btn btn-primary" onclick="Exams.startNew()">Take Another Exam</button>
           <button class="btn btn-secondary" onclick="Exams.mode='list';App.navigate('exams')">Back to Exams</button>
@@ -2191,7 +2191,7 @@ const Notes = {
   ],
 
   TEMPLATES: {
-    'general':   '<h2>\ud83d\udcdd General Notes</h2><p>Use this space for anything that doesn\'t fit another topic — reminders, questions to look up, things your instructor mentioned.</p><h3>Key Points from Today</h3><ul><li></li><li></li></ul><h3>Questions to Follow Up</h3><ul><li></li></ul>',
+    'general':   '<h2>\ud83d\udcdd General Notes</h2><p>Use this space for anything that doesn\'t fit another topic â€” reminders, questions to look up, things your instructor mentioned.</p><h3>Key Points from Today</h3><ul><li></li><li></li></ul><h3>Questions to Follow Up</h3><ul><li></li></ul>',
     'theory':    '<h2>\u26a1 Theory Notes</h2><h3>AC Fundamentals</h3><ul><li><b>Frequency</b> \u2014 60 Hz in Canada; Period T = 1/f = 16.67 ms</li><li><b>RMS</b> = Peak \u00d7 0.707 (equivalent DC heating value)</li><li><b>Impedance</b> Z = \u221a(R\u00b2 + X\u00b2)</li></ul><h3>DC Fundamentals</h3><ul><li><b>Ohm\u2019s Law</b>: V = I \u00d7 R &nbsp; I = V \u00f7 R &nbsp; R = V \u00f7 I</li><li><b>Series</b>: same I everywhere, voltages add</li><li><b>Parallel</b>: same V everywhere, currents add</li></ul><h3>Power</h3><ul><li><b>True power (P)</b> \u2014 watts, consumed by R</li><li><b>Reactive power (Q)</b> \u2014 VAR, stored by L or C</li><li><b>Apparent power (S)</b> \u2014 VA = V \u00d7 I from source</li><li><b>PF</b> = P \u00f7 S = cos(\u03c6)</li></ul>',
     'code':      '<h2>\ud83d\udcd6 CEC Code Notes</h2><h3>How to Read a Rule Number</h3><p>Rule <b>12-3034</b> = Section 12, Rule 3034. Appendix B has explanatory notes.</p><h3>Key Sections</h3><ul><li><b>Section 2</b> \u2014 Definitions</li><li><b>Section 4</b> \u2014 Conductors</li><li><b>Section 8</b> \u2014 Circuit loading &amp; demand</li><li><b>Section 10</b> \u2014 Grounding &amp; bonding</li><li><b>Section 12</b> \u2014 Wiring methods</li><li><b>Section 14</b> \u2014 Protection &amp; control</li><li><b>Section 28</b> \u2014 Motors &amp; generators</li></ul><h3>Rules I Keep Forgetting</h3><ul><li></li><li></li></ul>',
     'lab':       '<h2>\ud83d\udd2c Lab Notes</h2><h3>Safety Checks Before Starting</h3><ul><li>\u2610 PPE on (safety glasses, boots)</li><li>\u2610 LOTO applied and verified</li><li>\u2610 Area clear</li></ul><h3>Today\'s Lab</h3><p><b>Objective:</b></p><p><b>Equipment Used:</b></p><h3>Measurements</h3><p>Record your readings here:</p><ul><li>Voltage: </li><li>Current: </li><li>Resistance: </li></ul><h3>Results / Observations</h3><p></p><h3>What Went Wrong / What I Learned</h3><p></p>',
@@ -2200,7 +2200,7 @@ const Notes = {
   },
   _storageKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}`; },
 
-  // ── Pages system ──────────────────────────────────────────────────
+  // â”€â”€ Pages system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _pagesMetaKey(userId, topicId) { return `sparky_notes_${userId}_${topicId}_pages_meta`; },
   _pageContentKey(userId, topicId, pageId) { return `sparky_notes_${userId}_${topicId}_p_${pageId}`; },
 
@@ -2209,7 +2209,7 @@ const Notes = {
       const raw = localStorage.getItem(this._pagesMetaKey(userId, topicId));
       if (raw) return JSON.parse(raw);
     } catch(e) {}
-    // First visit — migrate any existing single note to Page 1
+    // First visit â€” migrate any existing single note to Page 1
     const existing = localStorage.getItem(this._storageKey(userId, topicId)) || '';
     const pages = [{ id: 'p1', name: 'Page 1' }];
     if (existing) localStorage.setItem(this._pageContentKey(userId, topicId, 'p1'), existing);
@@ -2284,7 +2284,7 @@ const Notes = {
     }
   },
 
-  // Tab key handler — Tab = start/indent bullet, Shift+Tab = outdent
+  // Tab key handler â€” Tab = start/indent bullet, Shift+Tab = outdent
   _handleEditorKey(e, userId) {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -2384,7 +2384,7 @@ const Notes = {
     const gridCols = sc ? '44px 1fr' : '220px 1fr';
     const stickyTop = '80px';
 
-    // ── Shared: sidebar inner HTML ────────────────────────────
+    // â”€â”€ Shared: sidebar inner HTML â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const sidebarInner = sc ? `
       <div class="notes-sidebar-collapsed-strip">
         <button class="notes-sidebar-toggle" onclick="Notes._toggleSidebar('${userId}')" title="Expand sidebar">\u203a</button>
@@ -2415,7 +2415,7 @@ const Notes = {
       </div>
     `;
 
-    // ── Shared: action buttons ────────────────────────────────
+    // â”€â”€ Shared: action buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const actionButtons = `
       <button id="notesAutocorrectBtn" class="btn btn-sm ${this._autocorrect ? 'btn-primary' : 'btn-secondary'}" onclick="Notes._toggleAutocorrect('${userId}')" title="${this._autocorrect ? 'Autocorrect ON' : 'Autocorrect OFF'}" style="${this._autocorrect ? 'background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.4);' : ''}">${this._autocorrect ? '\u2713 Autocorrect' : '\u25a1 Autocorrect'}</button>
       <button class="btn btn-secondary btn-sm" onclick="Notes._studyMode('${userId}')" title="Highlight key terms">\ud83d\udcd6 Study Mode</button>
@@ -2425,7 +2425,7 @@ const Notes = {
       <button class="btn btn-sm notes-fs-btn" onclick="Notes._toggleFullscreen('${userId}')" title="${fs ? 'Exit full screen' : 'Full screen'}">${fs ? '\u26f6 Exit Full Screen' : '\u26f6 Full Screen'}</button>
     `;
 
-    // ── Shared: formatting toolbar ────────────────────────────
+    // â”€â”€ Shared: formatting toolbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const formattingBar = `
       <div class="notes-toolbar">
         <button class="ntb" onclick="Notes._fmt('bold')" title="Bold"><b>B</b></button>
@@ -2447,7 +2447,7 @@ const Notes = {
       </div>
     `;
 
-    // ── Shared: insert popover ────────────────────────────────
+    // â”€â”€ Shared: insert popover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const insertPanel = `
       <div id="notesInsertPanel" class="notes-insert-panel" style="display:none;">
         <div class="notes-insert-tabs">
@@ -2463,7 +2463,7 @@ const Notes = {
       </div>
     `;
 
-    // ── Shared: page tabs row ─────────────────────────────────
+    // â”€â”€ Shared: page tabs row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const pageTabsRow = `
       <div class="notes-pages-bar notes-no-print">
         ${pageTabs}
@@ -2471,7 +2471,7 @@ const Notes = {
       </div>
     `;
 
-    // ── Shared: editor area ───────────────────────────────────
+    // â”€â”€ Shared: editor area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const emptyTextColor = fs ? '#3a3a3a' : 'var(--text-muted)';
     const editorArea = `
       <div id="notesEditorWrap" class="notes-print-area" style="${fs ? '' : 'background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;'}position:relative;">
@@ -2502,7 +2502,7 @@ const Notes = {
       </div>
     `;
 
-    // ── Shared: word count bar ────────────────────────────────
+    // â”€â”€ Shared: word count bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const wordCountBar = `
       <div class="notes-no-print" id="notesWordBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;font-size:0.72rem;color:${fs ? '#888' : 'var(--text-muted)'};">
         <span id="notesWordCount">0 words</span>
@@ -2511,7 +2511,7 @@ const Notes = {
     `;
 
     if (fs) {
-      // ═══ FULLSCREEN: clean dark editor ═══════════════════════
+      // â•â•â• FULLSCREEN: clean dark editor â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
       container.innerHTML = `
         <div class="notes-fullscreen-wrap">
 
@@ -2560,7 +2560,7 @@ const Notes = {
         </div>
       `;
     } else {
-      // ═══ NORMAL mode layout ═══════════════════════════════════
+      // â•â•â• NORMAL mode layout â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
       container.innerHTML = `
         <div style="display:grid;grid-template-columns:${gridCols};gap:${sc?'12px':'20px'};align-items:start;">
 
@@ -2688,11 +2688,11 @@ const Notes = {
         this._save(userId, this.currentTopic, editor.innerHTML);
         const wc = document.getElementById('notesWordCount');
         if (wc) wc.textContent = this._wordCount(editor.innerHTML) + ' words';
-        // Subtle indicator in status line — no intrusive toast
+        // Subtle indicator in status line â€” no intrusive toast
         const st = document.getElementById('notesStatus');
         if (st) { st.textContent = '\u2713 ' + count + ' spelling fix' + (count>1?'es':'') + ' applied'; setTimeout(() => { if (st) st.textContent = 'Auto-saved'; }, 2500); }
       }
-    } catch(e) { /* silent — don't interrupt typing */ }
+    } catch(e) { /* silent â€” don't interrupt typing */ }
   },
 
   _switchTopic(topicId, userId) {
@@ -2837,7 +2837,7 @@ const Notes = {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${topic.name} Notes — SparkyStudy</title>
+  <title>${topic.name} Notes â€” SparkyStudy</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 24px 16px; color: #1a1a1a; line-height: 1.6; }
     .doc-header { border-bottom: 2px solid #f59e0b; padding-bottom: 12px; margin-bottom: 24px; }
@@ -3119,7 +3119,7 @@ const WrongAnswerStudy = {
     if (!container) return;
     if (!this.questions || this.questions.length === 0) {
       container.innerHTML = `<div style="text-align:center;padding:60px 20px;">
-        <div style="font-size:3rem;margin-bottom:16px;">🎯</div>
+        <div style="font-size:3rem;margin-bottom:16px;">ðŸŽ¯</div>
         <h2 style="color:var(--accent);">No Wrong Answers!</h2>
         <p style="color:var(--text-secondary);">You got everything right. Nothing to study.</p>
         <button class="btn btn-primary" onclick="App.navigate('exams')" style="margin-top:20px;">Back to Exams</button>
@@ -3143,7 +3143,7 @@ const WrongAnswerStudy = {
       <div style="max-width:800px;margin:0 auto;">
         <!-- Header -->
         <div style="background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(245,158,11,0.08));border:1px solid rgba(239,68,68,0.25);border-radius:16px;padding:24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-          <div style="font-size:2.5rem;">📖</div>
+          <div style="font-size:2.5rem;">ðŸ“–</div>
           <div style="flex:1;min-width:200px;">
             <h2 style="margin:0;font-size:1.3rem;font-weight:800;">Custom Study Guide</h2>
             <div style="color:var(--text-secondary);font-size:0.88rem;margin-top:4px;">Based on ${q.length} wrong answer${q.length!==1?'s':''} from your ${this.sourceLabel}</div>
@@ -3166,7 +3166,7 @@ const WrongAnswerStudy = {
             <a href="#topic-${i}" style="padding:6px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);text-decoration:none;transition:var(--transition);"
               onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
-              ${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'📌'} ${tn} (${topicGroups[tn].length})
+              ${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'ðŸ“Œ'} ${tn} (${topicGroups[tn].length})
             </a>
           `).join('')}
         </div>
@@ -3175,7 +3175,7 @@ const WrongAnswerStudy = {
         ${Object.entries(topicGroups).map(([tn, qs], gi) => `
           <div id="topic-${gi}" style="margin-bottom:32px;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid rgba(245,158,11,0.2);">
-              <span style="font-size:1.3rem;">${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'📌'}</span>
+              <span style="font-size:1.3rem;">${TOPICS[Object.keys(TOPICS).find(k=>TOPICS[k].name===tn)]?.icon||'ðŸ“Œ'}</span>
               <h3 style="margin:0;font-size:1rem;font-weight:700;">${tn}</h3>
               <span style="background:rgba(239,68,68,0.12);color:#ef4444;font-size:0.75rem;font-weight:700;padding:2px 10px;border-radius:10px;">${qs.length} wrong</span>
             </div>
@@ -3190,8 +3190,8 @@ const WrongAnswerStudy = {
                     const isCorrect = oi === r.correct;
                     const wasSelected = oi === r.selected;
                     let bg = 'var(--bg-input)', border = 'var(--border)', textCol = 'var(--text-secondary)', prefix = '';
-                    if (isCorrect) { bg='rgba(34,197,94,0.1)'; border='rgba(34,197,94,0.4)'; textCol='#22c55e'; prefix='✓ '; }
-                    else if (wasSelected) { bg='rgba(239,68,68,0.08)'; border='rgba(239,68,68,0.35)'; textCol='#ef4444'; prefix='✗ '; }
+                    if (isCorrect) { bg='rgba(34,197,94,0.1)'; border='rgba(34,197,94,0.4)'; textCol='#22c55e'; prefix='âœ“ '; }
+                    else if (wasSelected) { bg='rgba(239,68,68,0.08)'; border='rgba(239,68,68,0.35)'; textCol='#ef4444'; prefix='âœ— '; }
                     return `<div style="padding:10px 14px;background:${bg};border:1px solid ${border};border-radius:8px;font-size:0.88rem;color:${textCol};font-weight:${isCorrect?'600':'400'};">
                       ${prefix}${opt}${wasSelected&&!isCorrect?' <span style="font-size:0.75rem;opacity:0.7;">(your answer)</span>':''}
                     </div>`;
@@ -3201,7 +3201,7 @@ const WrongAnswerStudy = {
                 <!-- Explanation -->
                 ${r.exp ? `
                   <div style="background:linear-gradient(135deg,rgba(245,158,11,0.07),rgba(245,158,11,0.03));border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px;">
-                    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:6px;">💡 Why this is correct</div>
+                    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);font-weight:700;margin-bottom:6px;">ðŸ’¡ Why this is correct</div>
                     <div style="font-size:0.88rem;color:var(--text-primary);line-height:1.6;">${r.exp}</div>
                   </div>
                 ` : ''}
@@ -3212,11 +3212,11 @@ const WrongAnswerStudy = {
 
         <!-- CTA to Quiz -->
         <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(139,92,246,0.08));border:1px solid rgba(245,158,11,0.25);border-radius:16px;padding:28px;text-align:center;margin-top:32px;">
-          <div style="font-size:2rem;margin-bottom:10px;">🎯</div>
+          <div style="font-size:2rem;margin-bottom:10px;">ðŸŽ¯</div>
           <h3 style="margin:0 0 8px;font-size:1.1rem;font-weight:700;">Ready to test yourself?</h3>
-          <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:20px;">Take a targeted quiz with only these ${q.length} question${q.length!==1?'s':''} — no distractors, just your weak spots.</p>
+          <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:20px;">Take a targeted quiz with only these ${q.length} question${q.length!==1?'s':''} â€” no distractors, just your weak spots.</p>
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">⚡ Start Re-Quiz (${q.length} Questions)</button>
+            <button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">âš¡ Start Re-Quiz (${q.length} Questions)</button>
             <button class="btn btn-secondary" onclick="App.navigate('exams')">Back to Exams</button>
           </div>
         </div>
@@ -3251,7 +3251,7 @@ const WrongAnswerStudy = {
       container.innerHTML = `
         <div style="max-width:640px;margin:0 auto;text-align:center;padding:40px 20px;">
           <div style="font-size:4.5rem;font-weight:900;color:${pct>=80?'var(--success)':'var(--danger)'};">${pct}%</div>
-          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${allCorrect?'Perfect! All Mastered! 🏆':pct>=80?'Great improvement! 🎉':pct>=50?'Getting there! 💪':'Keep grinding! ⚡'}</div>
+          <div style="font-size:1.3rem;font-weight:700;margin:8px 0;">${allCorrect?'Perfect! All Mastered! ðŸ†':pct>=80?'Great improvement! ðŸŽ‰':pct>=50?'Getting there! ðŸ’ª':'Keep grinding! âš¡'}</div>
           <div style="color:var(--text-secondary);margin-bottom:28px;">${correct}/${q.length} correct on your targeted re-quiz</div>
 
           ${pct < 100 ? `
@@ -3259,16 +3259,16 @@ const WrongAnswerStudy = {
               <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);font-weight:700;margin-bottom:10px;">Still needs work (${q.length-correct})</div>
               ${q.filter((r,i)=>this.quizAnswers[i]!==r.correct).map(r=>`
                 <div style="text-align:left;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;">
-                  <div style="color:var(--text-primary);font-weight:500;margin-bottom:3px;">${r.q.length>80?r.q.slice(0,80)+'…':r.q}</div>
-                  <div style="color:#22c55e;font-size:0.8rem;">✓ ${r.opts[r.correct]}</div>
+                  <div style="color:var(--text-primary);font-weight:500;margin-bottom:3px;">${r.q.length>80?r.q.slice(0,80)+'â€¦':r.q}</div>
+                  <div style="color:#22c55e;font-size:0.8rem;">âœ“ ${r.opts[r.correct]}</div>
                 </div>
               `).join('')}
             </div>
-          ` : `<div style="font-size:1.1rem;color:var(--success);margin-bottom:24px;">You've mastered all of your weak areas! 🌟</div>`}
+          ` : `<div style="font-size:1.1rem;color:var(--success);margin-bottom:24px;">You've mastered all of your weak areas! ðŸŒŸ</div>`}
 
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-            ${pct < 100 ? `<button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">🔁 Retry Missed Questions</button>` : ''}
-            <button class="btn btn-secondary" onclick="WrongAnswerStudy.phase='study';WrongAnswerStudy.render()">📖 Review Study Guide</button>
+            ${pct < 100 ? `<button class="btn btn-primary" onclick="WrongAnswerStudy._startQuiz()">ðŸ” Retry Missed Questions</button>` : ''}
+            <button class="btn btn-secondary" onclick="WrongAnswerStudy.phase='study';WrongAnswerStudy.render()">ðŸ“– Review Study Guide</button>
             <button class="btn btn-secondary" onclick="App.navigate('exams')">Back to Exams</button>
           </div>
         </div>
@@ -3313,8 +3313,8 @@ const WrongAnswerStudy = {
             return `<button onclick="WrongAnswerStudy._selectAnswer(${oi})"
               style="width:100%;text-align:left;padding:14px 18px;background:${bg};border:2px solid ${border};border-radius:12px;color:${textCol};font-size:0.93rem;font-weight:500;cursor:${cursor};pointer-events:${pointerEvents};transition:border-color 0.15s,background 0.15s;line-height:1.4;">
               <span style="font-weight:700;margin-right:8px;opacity:0.6;">${String.fromCharCode(65+oi)}.</span>${opt}
-              ${showFb && oi===current.correct ? ' <span style="float:right;font-size:1rem;">✅</span>' : ''}
-              ${showFb && oi===sel && oi!==current.correct ? ' <span style="float:right;font-size:1rem;">❌</span>' : ''}
+              ${showFb && oi===current.correct ? ' <span style="float:right;font-size:1rem;">âœ…</span>' : ''}
+              ${showFb && oi===sel && oi!==current.correct ? ' <span style="float:right;font-size:1rem;">âŒ</span>' : ''}
             </button>`;
           }).join('')}
         </div>
@@ -3323,12 +3323,12 @@ const WrongAnswerStudy = {
         ${showFb ? `
           <div style="background:${sel===current.correct?'rgba(34,197,94,0.08)':'rgba(239,68,68,0.06)'};border:1px solid ${sel===current.correct?'rgba(34,197,94,0.25)':'rgba(239,68,68,0.2)'};border-radius:12px;padding:16px;margin-bottom:20px;">
             <div style="font-weight:700;font-size:0.9rem;color:${sel===current.correct?'#22c55e':'#ef4444'};margin-bottom:${current.exp?'8px':'0'};">
-              ${sel===current.correct?'✅ Correct!':'❌ Incorrect — the right answer was: '+current.opts[current.correct]}
+              ${sel===current.correct?'âœ… Correct!':'âŒ Incorrect â€” the right answer was: '+current.opts[current.correct]}
             </div>
             ${current.exp ? `<div style="font-size:0.87rem;color:var(--text-secondary);line-height:1.6;">${current.exp}</div>` : ''}
           </div>
           <button class="btn btn-primary" style="width:100%;" onclick="WrongAnswerStudy._next()">
-            ${this.quizIdx+1 < q.length ? 'Next Question →' : 'See Results'}
+            ${this.quizIdx+1 < q.length ? 'Next Question â†’' : 'See Results'}
           </button>
         ` : `
           <button class="btn btn-primary" style="width:100%;opacity:${sel===null?'0.45':'1'};pointer-events:${sel===null?'none':'auto'};" onclick="WrongAnswerStudy._confirmAnswer()">
@@ -4335,16 +4335,16 @@ const Tools = {
     { id: 'parallel-sim', name: 'Parallel Circuit Builder', icon: '&#x1F504;', desc: 'Build parallel circuits and watch branch currents split in real time', period: 1 },
     { id: 'wire-sizer', name: 'CEC Wire Sizer', icon: '&#x1F4D5;', desc: 'Look up CEC Table 2 wire ampacity, voltage drop, and conduit fill', period: 1 },
     { id: 'ac-wave', name: 'AC Waveform Viewer', icon: '&#x1F4C8;', desc: 'Animated sine wave showing peak, RMS, average, and frequency relationships', period: 2 },
-    { id: 'transformer-sim', name: 'Transformer Simulator', icon: '&#x1F504;', desc: 'Adjust turns ratio and load — see voltage, current, and power on both sides', period: 2 },
+    { id: 'transformer-sim', name: 'Transformer Simulator', icon: '&#x1F504;', desc: 'Adjust turns ratio and load â€” see voltage, current, and power on both sides', period: 2 },
     { id: 'motor-sim', name: 'Motor Speed & Torque', icon: '&#x2699;', desc: 'Change frequency, poles, and load to see sync speed, slip, and torque', period: 2 },
-    { id: 'pf-triangle', name: 'Power Triangle', icon: '&#x1F4CA;', desc: 'Interactive power triangle — drag to adjust true, reactive, and apparent power', period: 2 },
+    { id: 'pf-triangle', name: 'Power Triangle', icon: '&#x1F4CA;', desc: 'Interactive power triangle â€” drag to adjust true, reactive, and apparent power', period: 2 },
     { id: 'vd-calc', name: 'Voltage Drop Calculator', icon: '&#x1F9EE;', desc: 'Calculate voltage drop for copper and aluminum conductors per CEC standards', period: 1 },
     { id: 'exam-checker', name: 'CEC Exam Checker', icon: '&#x1F4CB;', desc: 'Paste exam questions and get correct CEC answers with rule citations instantly', period: 1 },
-    { id: 'demand-factor', name: 'Demand Factor Practice', icon: '&#x1F3E0;', desc: 'Scenario-based CEC 8-200 practice tool — read a home description and calculate the service size', period: 1 },
-    { id: 'demand-factor-calc', name: 'Demand Factor Calculator', icon: '&#x1F9EE;', desc: 'CEC Rule 8-200 residential demand load calculator — enter your own loads and see the math', period: 1 },
+    { id: 'demand-factor', name: 'Demand Factor Practice', icon: '&#x1F3E0;', desc: 'Scenario-based CEC 8-200 practice tool â€” read a home description and calculate the service size', period: 1 },
+    { id: 'demand-factor-calc', name: 'Demand Factor Calculator', icon: '&#x1F9EE;', desc: 'CEC Rule 8-200 residential demand load calculator â€” enter your own loads and see the math', period: 1 },
     { id: 'conduit-fill', name: 'Conduit Fill Calculator', icon: '&#x1F4D0;', desc: 'Calculate conduit fill percentage per CEC Table 8 for common raceway types', period: 1 },
     { id: 'rlc-impedance', name: 'RLC Impedance Calculator', icon: '&#x1F300;', desc: 'Calculate impedance, phase angle, and resonance in series/parallel RLC circuits', period: 2 },
-    { id: 'diagram-sim', name: 'Drawing & Diagram Conversion', icon: '&#x1F4CB;', desc: 'Learn to read block diagrams, wiring diagrams, and schematics — and count conductors for any circuit', period: 1 },
+    { id: 'diagram-sim', name: 'Drawing & Diagram Conversion', icon: '&#x1F4CB;', desc: 'Learn to read block diagrams, wiring diagrams, and schematics â€” and count conductors for any circuit', period: 1 },
   ],
 
   render(state) {
@@ -4910,10 +4910,10 @@ const Tools = {
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:0;overflow:hidden;">
         <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(135deg,rgba(245,158,11,0.06),transparent);">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            <div style="font-size:1.5rem;">⚡</div>
+            <div style="font-size:1.5rem;">âš¡</div>
             <div>
               <div style="font-weight:700;font-size:1rem;">Series Circuit Builder</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">Current is the same everywhere — voltage divides across resistors</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">Current is the same everywhere â€” voltage divides across resistors</div>
             </div>
           </div>
           <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
@@ -4955,7 +4955,7 @@ const Tools = {
     if (existing !== n) {
       inputDiv.innerHTML = Array.from({length: n}, (_, i) => `
         <div>
-          <label style="font-size:0.65rem;color:${colors[i % colors.length]};display:block;margin-bottom:4px;font-weight:700;">R${i+1} (Ω)</label>
+          <label style="font-size:0.65rem;color:${colors[i % colors.length]};display:block;margin-bottom:4px;font-weight:700;">R${i+1} (Î©)</label>
           <input type="number" id="serSimR${i}" value="${[100,200,300,150,250][i] || 100}" min="1" max="100000" style="width:76px;padding:7px 8px;background:var(--bg-input);border:2px solid ${colors[i % colors.length]}33;border-radius:8px;color:var(--text-primary);font-weight:600;font-size:0.9rem;" oninput="Tools._updateSeriesSim()">
         </div>
       `).join('');
@@ -5036,7 +5036,7 @@ const Tools = {
 
         // Resistor value inside
         ctx.fillStyle = color; ctx.font = 'bold 10px Inter,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(r + 'Ω', rx + resistorW / 2, wireY + 5);
+        ctx.fillText(r + 'Î©', rx + resistorW / 2, wireY + 5);
 
         // Voltage drop above (with arrow)
         ctx.fillStyle = color; ctx.font = 'bold 11px Inter,sans-serif';
@@ -5053,7 +5053,7 @@ const Tools = {
 
       // Current flow arrows on return wire
       ctx.fillStyle = '#22c55e'; ctx.font = 'bold 12px Inter,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('I = ' + (it >= 1 ? it.toFixed(3) + 'A' : (it * 1000).toFixed(2) + 'mA') + '   →', mx + mw / 2, retY + 16);
+      ctx.fillText('I = ' + (it >= 1 ? it.toFixed(3) + 'A' : (it * 1000).toFixed(2) + 'mA') + '   â†’', mx + mw / 2, retY + 16);
 
       // Animated electrons on the wire
       if (!this._serAnimFrame) {
@@ -5086,7 +5086,7 @@ const Tools = {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
             <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;text-align:center;">
               <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Total R</div>
-              <div style="font-size:1.1rem;font-weight:800;color:#f59e0b;">${rt.toFixed(1)}Ω</div>
+              <div style="font-size:1.1rem;font-weight:800;color:#f59e0b;">${rt.toFixed(1)}Î©</div>
             </div>
             <div style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;text-align:center;">
               <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Current</div>
@@ -5094,7 +5094,7 @@ const Tools = {
             </div>
           </div>
           <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.12);border-radius:8px;padding:8px 12px;font-size:0.75rem;color:#22c55e;font-weight:600;margin-bottom:12px;">
-            ✓ Current is THE SAME through every component
+            âœ“ Current is THE SAME through every component
           </div>
         </div>
         <div style="margin-bottom:14px;">
@@ -5102,14 +5102,14 @@ const Tools = {
           ${rs.map((r, i) => `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
               <div style="width:10px;height:10px;border-radius:50%;background:${colors[i % colors.length]};flex-shrink:0;"></div>
-              <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);">V<sub>${i+1}</sub> = ${it.toFixed(4)} × ${r}Ω</div>
+              <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);">V<sub>${i+1}</sub> = ${it.toFixed(4)} Ã— ${r}Î©</div>
               <div style="font-weight:700;color:${colors[i % colors.length]};font-size:0.85rem;">${drops[i].toFixed(2)}V</div>
             </div>
             <div style="height:4px;background:var(--bg-input);border-radius:2px;margin-bottom:8px;margin-left:18px;">
               <div style="height:100%;width:${(drops[i]/v*100).toFixed(1)}%;background:${colors[i % colors.length]};border-radius:2px;"></div>
             </div>
           `).join('')}
-          <div style="font-size:0.72rem;color:var(--text-muted);margin-left:18px;">Sum: ${drops.reduce((s,d)=>s+d,0).toFixed(2)}V = ${v}V ✓</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-left:18px;">Sum: ${drops.reduce((s,d)=>s+d,0).toFixed(2)}V = ${v}V âœ“</div>
         </div>
         <div>
           <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;">Power Dissipation</div>
@@ -5154,10 +5154,10 @@ const Tools = {
         <!-- Header -->
         <div style="padding:20px 24px 18px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.04),transparent);">
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.1));border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">⚡</div>
+            <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.1));border:1px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">âš¡</div>
             <div>
               <div style="font-weight:800;font-size:1.05rem;color:var(--text-primary);">Parallel Circuit Simulator</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Same voltage across every branch — current divides proportionally</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Same voltage across every branch â€” current divides proportionally</div>
             </div>
           </div>
           <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
@@ -5200,7 +5200,7 @@ const Tools = {
     if (existing !== n) {
       inputDiv.innerHTML = Array.from({length:n},(_,i)=>`
         <div>
-          <label style="font-size:0.68rem;color:${colors[i%colors.length]};display:block;margin-bottom:5px;font-weight:800;letter-spacing:0.3px;">R${i+1} (Ω)</label>
+          <label style="font-size:0.68rem;color:${colors[i%colors.length]};display:block;margin-bottom:5px;font-weight:800;letter-spacing:0.3px;">R${i+1} (Î©)</label>
           <input type="number" id="parSimR${i}" value="${[100,200,300,150,250][i]||100}" min="1" max="100000"
             style="width:80px;padding:8px 10px;background:${colors[i%colors.length]}14;border:2px solid ${colors[i%colors.length]}44;border-radius:9px;color:var(--text-primary);font-weight:700;font-size:0.95rem;outline:none;"
             oninput="Tools._updateParallelSim()">
@@ -5214,7 +5214,7 @@ const Tools = {
     const powers = rs.map(r=>v*v/r);
     const maxI = Math.max(...branches);
 
-    // ── Start / restart animation ──
+    // â”€â”€ Start / restart animation â”€â”€
     if (this._parAnimFrame) { cancelAnimationFrame(this._parAnimFrame); this._parAnimFrame = null; }
     this._parPhase = 0;
     this._parV = v; this._parN = n; this._parRs = rs;
@@ -5229,7 +5229,7 @@ const Tools = {
     };
     animate();
 
-    // ── Results panel ──
+    // â”€â”€ Results panel â”€â”€
     const resultsDiv = document.getElementById('parSimResults');
     if (!resultsDiv) return;
     const totalP = powers.reduce((s,p)=>s+p,0);
@@ -5240,8 +5240,8 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
         <div style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.03));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:14px;text-align:center;">
           <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Total R</div>
-          <div style="font-size:1.25rem;font-weight:900;color:#a78bfa;">${rt.toFixed(2)}Ω</div>
-          <div style="font-size:0.65rem;color:var(--text-muted);margin-top:3px;">&lt; ${Math.min(...rs)}Ω smallest</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#a78bfa;">${rt.toFixed(2)}Î©</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);margin-top:3px;">&lt; ${Math.min(...rs)}Î© smallest</div>
         </div>
         <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.03));border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:14px;text-align:center;">
           <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Total I</div>
@@ -5251,7 +5251,7 @@ const Tools = {
       </div>
       <!-- Voltage rule -->
       <div style="background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.18);border-radius:10px;padding:10px 13px;font-size:0.78rem;color:#a78bfa;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:1rem;">🔁</span> Every branch sees exactly <strong>${v}V</strong>
+        <span style="font-size:1rem;">ðŸ”</span> Every branch sees exactly <strong>${v}V</strong>
       </div>
       <!-- Branch currents -->
       <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700;margin-bottom:10px;">Branch Currents</div>
@@ -5263,7 +5263,7 @@ const Tools = {
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="width:11px;height:11px;border-radius:50%;background:${colors[i%colors.length]};box-shadow:0 0 6px ${colors[i%colors.length]}88;flex-shrink:0;"></div>
-              <span style="font-size:0.82rem;color:var(--text-secondary);">I<sub>${i+1}</sub> = ${v}V ÷ ${r}Ω</span>
+              <span style="font-size:0.82rem;color:var(--text-secondary);">I<sub>${i+1}</sub> = ${v}V Ã· ${r}Î©</span>
             </div>
             <span style="font-weight:800;color:${colors[i%colors.length]};font-size:0.88rem;">${iStr}</span>
           </div>
@@ -5274,7 +5274,7 @@ const Tools = {
         </div>`;
       }).join('')}
       <div style="font-size:0.72rem;color:var(--text-muted);padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);margin-top:2px;">
-        Sum: ${fmtI(branches.reduce((s,b)=>s+b,0))} = ${fmtI(it)} ✓
+        Sum: ${fmtI(branches.reduce((s,b)=>s+b,0))} = ${fmtI(it)} âœ“
       </div>
       <!-- Power -->
       <div style="margin-top:14px;">
@@ -5314,7 +5314,7 @@ const Tools = {
     const usableH = botY - topY;
     const branchSpacing = usableH / n;
 
-    // ── Draw branches first (behind bus bars) ──
+    // â”€â”€ Draw branches first (behind bus bars) â”€â”€
     rs.forEach((r,i) => {
       const branchY = topY + i * branchSpacing + branchSpacing / 2;
       const color = colors[i % colors.length];
@@ -5326,11 +5326,11 @@ const Tools = {
       const resCX = (busLX + busRX) / 2;
       const resX = resCX - resW/2, resY = branchY - resH/2;
 
-      // Left wire: busL → resistor
+      // Left wire: busL â†’ resistor
       ctx.strokeStyle = color + 'aa'; ctx.lineWidth = wireW;
       ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(busLX, branchY); ctx.lineTo(resX, branchY); ctx.stroke();
-      // Right wire: resistor → busR
+      // Right wire: resistor â†’ busR
       ctx.beginPath(); ctx.moveTo(resX+resW, branchY); ctx.lineTo(busRX, branchY); ctx.stroke();
 
       // Wire glow
@@ -5340,7 +5340,7 @@ const Tools = {
       ctx.beginPath(); ctx.moveTo(resX+resW, branchY); ctx.lineTo(busRX, branchY); ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // ── Resistor body ──
+      // â”€â”€ Resistor body â”€â”€
       // Outer glow rect
       ctx.shadowColor = color; ctx.shadowBlur = 18;
       const resGrad = ctx.createLinearGradient(resX, resY, resX+resW, resY+resH);
@@ -5365,7 +5365,7 @@ const Tools = {
       // Resistor value label above the box
       ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Inter,sans-serif'; ctx.textAlign = 'center';
       ctx.shadowColor = color; ctx.shadowBlur = 6;
-      ctx.fillText(r>=1000?(r/1000).toFixed(1)+'kΩ':r+'Ω', resCX, resY-6);
+      ctx.fillText(r>=1000?(r/1000).toFixed(1)+'kÎ©':r+'Î©', resCX, resY-6);
       ctx.shadowBlur = 0;
 
       // R label below
@@ -5377,7 +5377,7 @@ const Tools = {
       ctx.fillStyle = color; ctx.font = 'bold 11px Inter,sans-serif'; ctx.textAlign = 'left';
       ctx.fillText('I'+(i+1)+' = '+iStr, busLX+10, branchY-10);
 
-      // ── Animated current particles ──
+      // â”€â”€ Animated current particles â”€â”€
       const numParticles = Math.max(2, Math.round(branchFraction * 8));
       const totalLen = (resX - busLX) + resW + (busRX - (resX+resW));
       for(let p=0;p<numParticles;p++){
@@ -5406,7 +5406,7 @@ const Tools = {
       }
     });
 
-    // ── Left bus bar (hot) ──
+    // â”€â”€ Left bus bar (hot) â”€â”€
     const busGradL = ctx.createLinearGradient(0,topY,0,botY);
     busGradL.addColorStop(0,'#a78bfa'); busGradL.addColorStop(1,'#7c3aed');
     ctx.shadowColor = '#8b5cf6'; ctx.shadowBlur = 20;
@@ -5417,15 +5417,15 @@ const Tools = {
     ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 14px Inter,sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('+', busLX, topY-14);
 
-    // ── Right bus bar (return) ──
+    // â”€â”€ Right bus bar (return) â”€â”€
     ctx.shadowColor = '#475569'; ctx.shadowBlur = 8;
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(busRX,topY); ctx.lineTo(busRX,botY); ctx.stroke();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px Inter,sans-serif';
-    ctx.fillText('−', busRX, topY-14);
+    ctx.fillText('âˆ’', busRX, topY-14);
 
-    // ── Battery (below left bus) ──
+    // â”€â”€ Battery (below left bus) â”€â”€
     const batX = 52, batTopY = topY + 10, batBotY = botY - 10, batMid = (batTopY+batBotY)/2;
     // wire from bus top to battery top
     ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
@@ -5452,14 +5452,14 @@ const Tools = {
     ctx.fillText(v+'V', batX, batMid+34);
     ctx.shadowBlur=0;
 
-    // ── Total current label at top ──
+    // â”€â”€ Total current label at top â”€â”€
     const itStr = it>=1 ? it.toFixed(3)+'A' : (it*1000).toFixed(1)+'mA';
     ctx.fillStyle='#4ade80'; ctx.font='bold 13px Inter,sans-serif'; ctx.textAlign='left';
     ctx.shadowColor='#22c55e'; ctx.shadowBlur=8;
     ctx.fillText('IT = '+itStr, busLX+12, topY-14);
     ctx.shadowBlur=0;
 
-    // ── V label at bottom ──
+    // â”€â”€ V label at bottom â”€â”€
     ctx.fillStyle='rgba(167,139,250,0.6)'; ctx.font='600 10px Inter,sans-serif'; ctx.textAlign='center';
     ctx.fillText('V = '+v+'V across all branches', (busLX+busRX)/2, botY+20);
   },
@@ -5470,7 +5470,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(34,197,94,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">⚡ Load Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">âš¡ Load Parameters</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
               <div>
                 <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Load Current</label>
@@ -5482,23 +5482,23 @@ const Tools = {
               <div>
                 <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Insulation</label>
                 <select id="wireTemp" style="width:100%;padding:9px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-weight:600;" onchange="Tools._updateWireSizer()">
-                  <option value="60">60°C (TW)</option><option value="75" selected>75°C (T90)</option><option value="90">90°C (FT4)</option>
+                  <option value="60">60Â°C (TW)</option><option value="75" selected>75Â°C (T90)</option><option value="90">90Â°C (FT4)</option>
                 </select>
               </div>
             </div>
           </div>
           <div id="wireSizerResult" style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);"></div>
           <div style="padding:0 20px 20px;">
-            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:14px 0 8px;">CEC Table 2 — Copper Conductors</div>
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:14px 0 8px;">CEC Table 2 â€” Copper Conductors</div>
             <div style="overflow-x:auto;max-height:340px;overflow-y:auto;">
               <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
                 <thead style="position:sticky;top:0;z-index:1;">
                   <tr style="background:#1a1a2e;">
                     <th style="padding:7px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">AWG</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">mm²</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">60°C</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">75°C</th>
-                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">90°C</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">mmÂ²</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">60Â°C</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">75Â°C</th>
+                    <th style="padding:7px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;">90Â°C</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5517,7 +5517,7 @@ const Tools = {
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;">
-          <div style="font-weight:700;font-size:0.95rem;">📊 Conductor Size Comparison</div>
+          <div style="font-weight:700;font-size:0.95rem;">ðŸ“Š Conductor Size Comparison</div>
           <canvas id="wireSizerCanvas" width="420" height="360" style="border-radius:10px;width:100%;"></canvas>
           <div style="padding:12px;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:10px;font-size:0.75rem;color:var(--text-secondary);line-height:1.8;">
             <strong style="color:#22c55e;">Tip:</strong> Canadian code (CEC Rule 4-004) requires conductors rated at 125% for continuous loads. Always check applicable derating factors for ambient temperature and conduit fill.
@@ -5567,10 +5567,10 @@ const Tools = {
             <div style="height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:6px;">
               <div style="height:100%;width:${utilPct}%;background:${utilColor};border-radius:3px;transition:width 0.3s;"></div>
             </div>
-            <div style="font-size:0.75rem;color:var(--text-secondary);">${match.area} mm² · rated ${match[key]}A · ${temp}°C insulation</div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);">${match.area} mmÂ² Â· rated ${match[key]}A Â· ${temp}Â°C insulation</div>
           </div>`;
       } else {
-        resultDiv.innerHTML = '<div style="padding:14px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:12px;"><strong style="color:#ef4444;">⚠ Exceeds table range</strong><div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">Consult CEC Table 2 for conductors larger than 300 kcmil.</div></div>';
+        resultDiv.innerHTML = '<div style="padding:14px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:12px;"><strong style="color:#ef4444;">âš  Exceeds table range</strong><div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">Consult CEC Table 2 for conductors larger than 300 kcmil.</div></div>';
       }
     }
     // Highlight matching row
@@ -5668,7 +5668,7 @@ const Tools = {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.font = '8.5px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText('AWG / kcmil — CEC Table 2 Ampacity', W / 2, H - 6);
+    ctx.fillText('AWG / kcmil â€” CEC Table 2 Ampacity', W / 2, H - 6);
   },
 
   // ===== AC WAVEFORM VIEWER =====
@@ -5859,7 +5859,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(139,92,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">🔄 Transformer Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ”„ Transformer Parameters</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div>
                 <label style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Primary Voltage</label>
@@ -5872,7 +5872,7 @@ const Tools = {
                 <label style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Load Resistance</label>
                 <div style="display:flex;align-items:center;gap:4px;">
                   <input type="number" id="txSimLoad" value="10" min="0.1" style="flex:1;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-weight:700;" oninput="Tools._updateTxSim()">
-                  <span style="font-size:0.75rem;color:var(--text-muted);">Ω</span>
+                  <span style="font-size:0.75rem;color:var(--text-muted);">Î©</span>
                 </div>
               </div>
               <div>
@@ -5894,12 +5894,12 @@ const Tools = {
           <div id="txSimResults" style="padding:16px 20px;font-size:0.85rem;"></div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">🔁 Transformer Diagram</div>
+          <div style="font-weight:700;font-size:0.95rem;">ðŸ” Transformer Diagram</div>
           <canvas id="txSimCanvas" width="420" height="340" style="border-radius:10px;width:100%;"></canvas>
           <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;">
-            <span style="color:#f59e0b;">■ Primary (amber)</span>
-            <span style="color:#22c55e;">■ Secondary (green)</span>
-            <span style="color:#8b5cf6;">■ Iron Core</span>
+            <span style="color:#f59e0b;">â–  Primary (amber)</span>
+            <span style="color:#22c55e;">â–  Secondary (green)</span>
+            <span style="color:#8b5cf6;">â–  Iron Core</span>
           </div>
         </div>
       </div>
@@ -5921,7 +5921,7 @@ const Tools = {
     const pLoss = pInput - pLoad;
     const type = ratio > 1 ? 'Step-Down' : ratio < 1 ? 'Step-Up' : 'Isolation';
 
-    // Draw transformer — premium version
+    // Draw transformer â€” premium version
     const c = document.getElementById('txSimCanvas');
     if (c) {
       const ctx = c.getContext('2d');
@@ -5995,7 +5995,7 @@ const Tools = {
       ctx.beginPath(); ctx.moveTo(coreX + coreW + 28, coreY + 10); ctx.lineTo(TW - 30, coreY + 10); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(coreX + coreW + 28, coreY + coreH - 10); ctx.lineTo(TW - 30, coreY + coreH - 10); ctx.stroke();
 
-      // Labels — Primary
+      // Labels â€” Primary
       ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
       ctx.fillStyle = '#f59e0b'; ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 4;
       ctx.fillText('PRIMARY', 30, coreY - 8);
@@ -6006,7 +6006,7 @@ const Tools = {
       ctx.fillText(ip.toFixed(2) + 'A', 30, TH / 2 + 10);
       ctx.fillText(np + ' turns', 30, TH / 2 + 24);
 
-      // Labels — Secondary
+      // Labels â€” Secondary
       ctx.font = 'bold 11px Inter'; ctx.fillStyle = '#22c55e';
       ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 4;
       ctx.fillText('SECONDARY', TW - 35, coreY - 8);
@@ -6220,7 +6220,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(139,92,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">📐 Power Triangle Controls</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ“ Power Triangle Controls</div>
             <div style="margin-bottom:14px;">
               <label style="font-size:0.75rem;color:var(--text-muted);display:flex;justify-content:space-between;margin-bottom:5px;"><span>True Power P (W)</span><strong id="pfSimW_val" style="color:#22c55e;">8000 W</strong></label>
               <input type="range" id="pfSimW" min="100" max="50000" value="8000" class="range-green" style="width:100%;" oninput="Tools._updatePFSim()">
@@ -6239,7 +6239,7 @@ const Tools = {
               ${[
                 {id:'pfSimVA', label:'Apparent S', color:'#f59e0b', val:'10000 VA'},
                 {id:'pfSimPF', label:'Power Factor', color:'#8b5cf6', val:'0.800'},
-                {id:'pfSimAngle', label:'Phase Angle', color:'#3b82f6', val:'36.9°'},
+                {id:'pfSimAngle', label:'Phase Angle', color:'#3b82f6', val:'36.9Â°'},
                 {id:'pfSimRating', label:'PF Rating', color:'#f59e0b', val:'Fair'},
               ].map(s => `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center;">
                 <div style="font-size:0.62rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;">${s.label}</div>
@@ -6248,17 +6248,17 @@ const Tools = {
             </div>
           </div>
           <div style="padding:14px 20px;">
-            <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">⚡ PF Correction Capacitor</div>
+            <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">âš¡ PF Correction Capacitor</div>
             <div id="pfCorrectionResult" style="font-size:0.82rem;color:var(--text-secondary);"></div>
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">📊 Power Triangle Visualization</div>
+          <div style="font-weight:700;font-size:0.95rem;">ðŸ“Š Power Triangle Visualization</div>
           <canvas id="pfSimCanvas" width="420" height="340" style="border-radius:10px;width:100%;"></canvas>
           <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;">
-            <span style="color:#22c55e;">■ P — True Power (W)</span>
-            <span style="color:#ef4444;">■ Q — Reactive (VAR)</span>
-            <span style="color:#f59e0b;">■ S — Apparent (VA)</span>
+            <span style="color:#22c55e;">â–  P â€” True Power (W)</span>
+            <span style="color:#ef4444;">â–  Q â€” Reactive (VAR)</span>
+            <span style="color:#f59e0b;">â–  S â€” Apparent (VA)</span>
           </div>
         </div>
       </div>
@@ -6294,7 +6294,7 @@ const Tools = {
     const pfCor = document.getElementById('pfCorrectionResult');
     if (pfCor) {
       if (pf >= 0.95) {
-        pfCor.innerHTML = '<span style="color:#22c55e;">✓ PF is already at or above 0.95 — no correction needed.</span>';
+        pfCor.innerHTML = '<span style="color:#22c55e;">âœ“ PF is already at or above 0.95 â€” no correction needed.</span>';
       } else {
         const qTarget = w * Math.tan(Math.acos(pfTarget));
         const qCorrect = var_ - qTarget;
@@ -6310,13 +6310,13 @@ const Tools = {
             </div>
             <div style="display:flex;justify-content:space-between;font-size:0.82rem;">
               <span style="color:var(--text-muted);">Cap. at ${volt}V / 60Hz</span>
-              <strong style="color:#3b82f6;">${capUF.toFixed(1)} μF</strong>
+              <strong style="color:#3b82f6;">${capUF.toFixed(1)} Î¼F</strong>
             </div>
           </div>`;
       }
     }
 
-    // Draw triangle — premium version
+    // Draw triangle â€” premium version
     const c = document.getElementById('pfSimCanvas');
     if (!c) return;
     const ctx = c.getContext('2d');
@@ -6356,11 +6356,11 @@ const Tools = {
       }
     };
 
-    // P — true power (horizontal)
+    // P â€” true power (horizontal)
     drawVec(ox, oy, ox + wPx, oy, '#22c55e', 3, 'P = ' + (w/1000).toFixed(1) + ' kW', [0, -14]);
-    // Q — reactive (vertical)
+    // Q â€” reactive (vertical)
     if (varPx > 0) drawVec(ox + wPx, oy, ox + wPx, oy + varPx, '#ef4444', 3, 'Q = ' + (var_/1000).toFixed(1) + ' kVAR', [40, 0]);
-    // S — apparent (hyp)
+    // S â€” apparent (hyp)
     drawVec(ox, oy, ox + wPx, oy + varPx, '#f59e0b', 3.5, 'S = ' + (va/1000).toFixed(2) + ' kVA', [-30, 16]);
 
     // Right angle box
@@ -6374,7 +6374,7 @@ const Tools = {
     ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(ox, oy, 38, 0, angle * Math.PI / 180); ctx.stroke();
     ctx.fillStyle = '#8b5cf6'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'left';
-    ctx.fillText('θ=' + angle.toFixed(1) + '°', ox + 42, oy + 18);
+    ctx.fillText('Î¸=' + angle.toFixed(1) + 'Â°', ox + 42, oy + 18);
 
     // PF meter bar at bottom
     const barY = ch - 40, barX = 30, barW = cw - 60, barH = 14;
@@ -6396,12 +6396,12 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(59,130,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">🔌 Circuit Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ”Œ Circuit Parameters</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div>
                 <label style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">System Voltage</label>
                 <select id="vdVoltage" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-weight:600;font-size:0.85rem;" onchange="Tools._updateVDCalc()">
-                  <option value="120">120V (1Φ)</option><option value="208">208V (3Φ)</option><option value="240" selected>240V (1Φ)</option><option value="347">347V (3Φ)</option><option value="480">480V (3Φ)</option><option value="600">600V (3Φ)</option>
+                  <option value="120">120V (1Î¦)</option><option value="208">208V (3Î¦)</option><option value="240" selected>240V (1Î¦)</option><option value="347">347V (3Î¦)</option><option value="480">480V (3Î¦)</option><option value="600">600V (3Î¦)</option>
                 </select>
               </div>
               <div>
@@ -6435,14 +6435,14 @@ const Tools = {
           <div id="vdResult" style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);"></div>
           <div style="padding:14px 20px;background:rgba(59,130,246,0.03);">
             <div style="font-size:0.7rem;color:var(--text-muted);font-family:'Fira Code',monospace;line-height:2;">
-              Vd = (2 × ρ × L × I) / A &nbsp;(1Φ)<br>
-              Vd = (√3 × ρ × L × I) / A &nbsp;(3Φ)<br>
-              <span style="color:#3b82f6;">CEC 8-102: ≤3% feeders · ≤5% total</span>
+              Vd = (2 Ã— Ï Ã— L Ã— I) / A &nbsp;(1Î¦)<br>
+              Vd = (âˆš3 Ã— Ï Ã— L Ã— I) / A &nbsp;(3Î¦)<br>
+              <span style="color:#3b82f6;">CEC 8-102: â‰¤3% feeders Â· â‰¤5% total</span>
             </div>
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">⚡ Voltage Distribution Visual</div>
+          <div style="font-weight:700;font-size:0.95rem;">âš¡ Voltage Distribution Visual</div>
           <canvas id="vdCanvas" width="420" height="300" style="border-radius:10px;width:100%;"></canvas>
           <div id="vdWireInfo" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;"></div>
         </div>
@@ -6468,7 +6468,7 @@ const Tools = {
     const vLoad = voltage - vd;
 
     const color = pct <= 3 ? '#22c55e' : pct <= 5 ? '#f59e0b' : '#ef4444';
-    const status = pct <= 3 ? '✓ Within 3% feeder limit' : pct <= 5 ? '⚠ Exceeds 3% feeder — check 5% total' : '✗ Exceeds 5% total — upsize conductor';
+    const status = pct <= 3 ? 'âœ“ Within 3% feeder limit' : pct <= 5 ? 'âš  Exceeds 3% feeder â€” check 5% total' : 'âœ— Exceeds 5% total â€” upsize conductor';
 
     const r = document.getElementById('vdResult');
     if (r) {
@@ -6495,9 +6495,9 @@ const Tools = {
     if (wi) {
       const R_total = (multiplier * rho * dist) / (area * 1000);
       wi.innerHTML = [
-        { label: 'Resistance', val: R_total.toFixed(4) + ' Ω', c: '#8b5cf6' },
-        { label: 'Wire Area', val: area + ' mm²', c: '#3b82f6' },
-        { label: mat === 'cu' ? 'Copper ρ' : 'Alum. ρ', val: rho + ' nΩ·m', c: '#f59e0b' },
+        { label: 'Resistance', val: R_total.toFixed(4) + ' Î©', c: '#8b5cf6' },
+        { label: 'Wire Area', val: area + ' mmÂ²', c: '#3b82f6' },
+        { label: mat === 'cu' ? 'Copper Ï' : 'Alum. Ï', val: rho + ' nÎ©Â·m', c: '#f59e0b' },
       ].map(d => `<div style="background:var(--bg-input);border-radius:8px;padding:10px;text-align:center;">
         <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;">${d.label}</div>
         <div style="font-weight:700;color:${d.c};font-size:0.9rem;">${d.val}</div>
@@ -6538,7 +6538,7 @@ const Tools = {
     ctx.fillStyle = '#22c55e';
     ctx.font = 'bold 11px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText('⚡', panelX + 19, wireY + wireH / 2 - 5);
+    ctx.fillText('âš¡', panelX + 19, wireY + wireH / 2 - 5);
     ctx.font = 'bold 10px Inter';
     ctx.fillText(voltage + 'V', panelX + 19, wireY + wireH / 2 + 10);
 
@@ -6559,12 +6559,12 @@ const Tools = {
     ctx.font = '9px Inter';
     ctx.textAlign = 'center';
     const midWireX = panelX + 40 + wireLen / 2;
-    ctx.fillText(dist + 'm · AWG ' + wire + ' · ' + (mat === 'cu' ? 'Cu' : 'Al'), midWireX, wireY - 8);
+    ctx.fillText(dist + 'm Â· AWG ' + wire + ' Â· ' + (mat === 'cu' ? 'Cu' : 'Al'), midWireX, wireY - 8);
 
     // Drop label on wire
     ctx.fillStyle = color;
     ctx.font = 'bold 11px Inter';
-    ctx.fillText('▼ ' + vd.toFixed(2) + 'V drop (' + pct.toFixed(2) + '%)', midWireX, wireY + wireH + 20);
+    ctx.fillText('â–¼ ' + vd.toFixed(2) + 'V drop (' + pct.toFixed(2) + '%)', midWireX, wireY + wireH + 20);
 
     // 3% and 5% reference lines (vertical tick marks below)
     const limY = H - 25;
@@ -6608,8 +6608,8 @@ const Tools = {
     { desc: 'A 3,200 sq ft new construction home. Geothermal heat pump: 14,000W (counts as both heat and A/C). Electric range: 13,500W (over 12kW). Two electric dryers (garages): count first at 5,000W, second at 2,500W. Two hot water tanks: 4,500W each. EV charger: 7,200W other fixed load.', area: 3200, range: 13500, dryer: 5000, ac: 14000, heat: 14000, hw: 4500, other: 7200 },
     { desc: 'A 1,650 sq ft townhouse. No electric heat (natural gas). No A/C. Electric range: 9,000W. Electric dryer: 4,800W. Hot water tank: 3,000W. Electric floor heating (bathroom only): 800W.', area: 1650, range: 9000, dryer: 4800, ac: 0, heat: 0, hw: 3000, other: 800 },
     { desc: 'A 1,850 sq ft basement suite conversion. Electric baseboard heat: 7,500W. No A/C. No electric range (gas). Electric dryer: 5,000W. Hot water tank: 3,500W.', area: 1850, range: 0, dryer: 5000, ac: 0, heat: 7500, hw: 3500, other: 0 },
-    { desc: 'A 2,100 sq ft house with split systems. Air source heat pump: 10,000W (use as both A/C and heat — take the larger). Backup electric heat strips: 6,000W. Electric range: 11,000W. Dryer: 5,200W. Hot water tank: 4,000W.', area: 2100, range: 11000, dryer: 5200, ac: 10000, heat: 10000, hw: 4000, other: 0 },
-    { desc: 'A newly built 1,400 sq ft infill home. Mini-split heat pump: 5,000W (A/C function) and 5,000W (heating function — same unit). Electric range: 10,000W. Dryer: 4,500W. Tankless electric HWT: 15,000W (count as fixed load "other"). No separate baseboard heat.', area: 1400, range: 10000, dryer: 4500, ac: 5000, heat: 5000, hw: 0, other: 15000 },
+    { desc: 'A 2,100 sq ft house with split systems. Air source heat pump: 10,000W (use as both A/C and heat â€” take the larger). Backup electric heat strips: 6,000W. Electric range: 11,000W. Dryer: 5,200W. Hot water tank: 4,000W.', area: 2100, range: 11000, dryer: 5200, ac: 10000, heat: 10000, hw: 4000, other: 0 },
+    { desc: 'A newly built 1,400 sq ft infill home. Mini-split heat pump: 5,000W (A/C function) and 5,000W (heating function â€” same unit). Electric range: 10,000W. Dryer: 4,500W. Tankless electric HWT: 15,000W (count as fixed load "other"). No separate baseboard heat.', area: 1400, range: 10000, dryer: 4500, ac: 5000, heat: 5000, hw: 0, other: 15000 },
   ],
   _dfScenarioIdx: 0,
   _dfAnswerShown: false,
@@ -6620,14 +6620,14 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(59,130,246,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;">🏠 CEC Rule 8-200 Demand Factor Calculator</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;">ðŸ  CEC Rule 8-200 Demand Factor Calculator</div>
             <div style="font-size:0.75rem;color:var(--text-muted);">Enter residential loads to calculate service size demand</div>
           </div>
           <div style="padding:18px 20px;">
             <div style="display:flex;flex-direction:column;gap:10px;">
               ${[
                 { id:'dcArea', label:'Floor Area', unit:'sq ft', hint:'3 VA/sq ft (basic load)', col:'#3b82f6' },
-                { id:'dcRange', label:'Electric Range', unit:'W', hint:'≤12000W = 6000W demand; >12kW = 6kW + 40% over 12kW', col:'#f59e0b' },
+                { id:'dcRange', label:'Electric Range', unit:'W', hint:'â‰¤12000W = 6000W demand; >12kW = 6kW + 40% over 12kW', col:'#f59e0b' },
                 { id:'dcDryer', label:'Electric Dryer', unit:'W', hint:'First dryer at 25% of nameplate', col:'#8b5cf6' },
                 { id:'dcAC', label:'A/C (or Heat Pump)', unit:'W', hint:'Use larger of A/C or heat (not both)', col:'#22c55e' },
                 { id:'dcHeat', label:'Electric Heat', unit:'W', hint:'Use larger of A/C or heat (not both)', col:'#ef4444' },
@@ -6651,12 +6651,12 @@ const Tools = {
                 </select>
               </div>
             </div>
-            <button onclick="Tools._resetDemandCalc()" style="margin-top:16px;padding:8px 18px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;color:#ef4444;font-weight:600;font-size:0.8rem;cursor:pointer;">🗑 Clear All</button>
+            <button onclick="Tools._resetDemandCalc()" style="margin-top:16px;padding:8px 18px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;color:#ef4444;font-weight:600;font-size:0.8rem;cursor:pointer;">ðŸ—‘ Clear All</button>
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(34,197,94,0.05),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;">📋 CEC 8-200 Step-by-Step Calculation</div>
+            <div style="font-weight:700;font-size:0.95rem;">ðŸ“‹ CEC 8-200 Step-by-Step Calculation</div>
           </div>
           <div id="dcResult" style="padding:16px 20px;">
             <div style="color:var(--text-muted);font-size:0.85rem;padding:20px;text-align:center;">Enter values to see the demand calculation</div>
@@ -6716,16 +6716,16 @@ const Tools = {
 
     r.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:6px;">
-        ${row('Basic Load (3 VA/sq ft)', basicLoad.toFixed(0) + ' VA', '#3b82f6', area > 0 ? area + ' sq ft × 3 VA = ' + basicLoad.toFixed(0) + ' VA' : 'Enter floor area')}
+        ${row('Basic Load (3 VA/sq ft)', basicLoad.toFixed(0) + ' VA', '#3b82f6', area > 0 ? area + ' sq ft Ã— 3 VA = ' + basicLoad.toFixed(0) + ' VA' : 'Enter floor area')}
         ${row('Basic Load Demand', basicDemand.toFixed(0) + ' VA', '#3b82f6', basicLoad <= 5000 ? 'First 5000 VA at 100%' : 'First 5000 @ 100% + ' + (basicLoad-5000).toFixed(0) + ' VA @ 40%')}
-        ${range > 0 ? row('Range Demand', rangeDemand.toFixed(0) + ' VA', '#f59e0b', range <= 12000 ? range/1000 + ' kW range → flat 6000 VA' : range/1000 + ' kW range → 6000 + 40% over 12kW') : ''}
-        ${dryer > 0 ? row('Dryer Demand (25%)', dryerDemand.toFixed(0) + ' VA', '#8b5cf6', dryer.toFixed(0) + ' W × 25% = ' + dryerDemand.toFixed(0) + ' VA') : ''}
+        ${range > 0 ? row('Range Demand', rangeDemand.toFixed(0) + ' VA', '#f59e0b', range <= 12000 ? range/1000 + ' kW range â†’ flat 6000 VA' : range/1000 + ' kW range â†’ 6000 + 40% over 12kW') : ''}
+        ${dryer > 0 ? row('Dryer Demand (25%)', dryerDemand.toFixed(0) + ' VA', '#8b5cf6', dryer.toFixed(0) + ' W Ã— 25% = ' + dryerDemand.toFixed(0) + ' VA') : ''}
         ${hw > 0 ? row('Hot Water Tank (100%)', hwDemand.toFixed(0) + ' VA', '#f59e0b', hw.toFixed(0) + ' W at 100%') : ''}
-        ${(ac > 0 || heat > 0) ? row('A/C or Heat (larger)', acHeatDemand.toFixed(0) + ' VA', '#22c55e', 'A/C: ' + ac.toFixed(0) + ' W vs Heat: ' + heat.toFixed(0) + ' W → use ' + Math.max(ac,heat).toFixed(0) + ' W') : ''}
+        ${(ac > 0 || heat > 0) ? row('A/C or Heat (larger)', acHeatDemand.toFixed(0) + ' VA', '#22c55e', 'A/C: ' + ac.toFixed(0) + ' W vs Heat: ' + heat.toFixed(0) + ' W â†’ use ' + Math.max(ac,heat).toFixed(0) + ' W') : ''}
         ${other > 0 ? row('Other Fixed Loads', otherDemand.toFixed(0) + ' VA', '#ec4899', other.toFixed(0) + ' W at 100%') : ''}
         <div style="height:1px;background:rgba(255,255,255,0.08);margin:6px 0;"></div>
         ${row('Total Demand', (totalDemand/1000).toFixed(2) + ' kVA', '#f59e0b', 'Sum of all demand values')}
-        ${row('Service Amps @ ' + voltage + 'V', serviceAmps.toFixed(1) + ' A', '#f59e0b', totalDemand.toFixed(0) + ' VA ÷ ' + voltage + 'V')}
+        ${row('Service Amps @ ' + voltage + 'V', serviceAmps.toFixed(1) + ' A', '#f59e0b', totalDemand.toFixed(0) + ' VA Ã· ' + voltage + 'V')}
         <div style="margin-top:8px;padding:14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:10px;text-align:center;">
           <div style="font-size:0.65rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;">Recommended Service Size</div>
           <div style="font-size:2rem;font-weight:900;color:#22c55e;">${recommended}A</div>
@@ -6742,15 +6742,15 @@ const Tools = {
         <div style="padding:20px 24px;background:linear-gradient(135deg,rgba(245,158,11,0.08),transparent);border-bottom:1px solid rgba(255,255,255,0.06);">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
             <div style="display:flex;align-items:center;gap:12px;">
-              <div style="font-size:1.6rem;">🏠</div>
+              <div style="font-size:1.6rem;">ðŸ </div>
               <div>
                 <div style="font-weight:700;font-size:1rem;">CEC Rule 8-200 Demand Factor Simulator</div>
                 <div style="font-size:0.75rem;color:var(--text-muted);">Practice residential service sizing with real scenarios</div>
               </div>
             </div>
             <div style="display:flex;gap:8px;">
-              <button onclick="Tools._dfNewScenario()" style="padding:8px 16px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;font-weight:600;font-size:0.8rem;cursor:pointer;">🔄 New Scenario</button>
-              <button onclick="Tools._dfShowAnswer()" style="padding:8px 16px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:#22c55e;font-weight:600;font-size:0.8rem;cursor:pointer;">✓ Show Answer</button>
+              <button onclick="Tools._dfNewScenario()" style="padding:8px 16px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#f59e0b;font-weight:600;font-size:0.8rem;cursor:pointer;">ðŸ”„ New Scenario</button>
+              <button onclick="Tools._dfShowAnswer()" style="padding:8px 16px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:#22c55e;font-weight:600;font-size:0.8rem;cursor:pointer;">âœ“ Show Answer</button>
             </div>
           </div>
         </div>
@@ -6758,14 +6758,14 @@ const Tools = {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
           <div style="padding:20px;border-right:1px solid rgba(255,255,255,0.06);">
             <div id="dfScenarioCard" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:16px;margin-bottom:20px;">
-              <div id="dfScenarioNum" style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#f59e0b;margin-bottom:8px;font-weight:700;">📋 Scenario ${(this._dfScenarioIdx||0)+1} of ${this._dfScenarios.length}</div>
+              <div id="dfScenarioNum" style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#f59e0b;margin-bottom:8px;font-weight:700;">ðŸ“‹ Scenario ${(this._dfScenarioIdx||0)+1} of ${this._dfScenarios.length}</div>
               <div id="dfScenarioText" style="font-size:0.88rem;color:var(--text-primary);line-height:1.6;">${this._dfScenarios[this._dfScenarioIdx||0].desc}</div>
             </div>
             <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px;">Your Calculation Inputs (CEC Rule 8-200)</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
               ${[
                 {id:'dfArea', label:'Floor Area', unit:'sq ft', hint:'Basic load = 3 VA/sq ft'},
-                {id:'dfRange', label:'Electric Range', unit:'W', hint:'≤12kW = 6000W demand; >12kW add 40% of excess'},
+                {id:'dfRange', label:'Electric Range', unit:'W', hint:'â‰¤12kW = 6000W demand; >12kW add 40% of excess'},
                 {id:'dfDryer', label:'Electric Dryer', unit:'W', hint:'First dryer @ 25% of rating'},
                 {id:'dfAC', label:'A/C or Heat Pump', unit:'W', hint:'Take larger of A/C or heat'},
                 {id:'dfHeat', label:'Electric Heat', unit:'W', hint:'Take larger of A/C or heat'},
@@ -6793,17 +6793,17 @@ const Tools = {
               <div style="color:var(--text-muted);font-size:0.85rem;padding:20px;text-align:center;background:var(--bg-input);border-radius:10px;">Enter your values to see the running calculation</div>
             </div>
             <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:14px;">
-              <div style="font-size:0.7rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📖 CEC Rule 8-200 Quick Reference</div>
+              <div style="font-size:0.7rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">ðŸ“– CEC Rule 8-200 Quick Reference</div>
               <div style="font-size:0.75rem;color:var(--text-secondary);line-height:1.8;">
-                <div><strong style="color:var(--text-primary);">Step 1 — Basic Load:</strong> Area × 3 VA/sq ft</div>
-                <div style="padding-left:12px;color:var(--text-muted);">• First 5,000 VA @ 100%</div>
-                <div style="padding-left:12px;color:var(--text-muted);">• Remainder @ 40%</div>
-                <div><strong style="color:var(--text-primary);">Step 2 — Range:</strong> ≤12kW → 6,000W; >12kW → 6,000 + 40% of excess</div>
-                <div><strong style="color:var(--text-primary);">Step 3 — Dryer:</strong> First dryer @ 25% of rated watts</div>
-                <div><strong style="color:var(--text-primary);">Step 4 — A/C or Heat:</strong> Take only the LARGER of the two @ 100%</div>
-                <div><strong style="color:var(--text-primary);">Step 5 — Hot Water:</strong> 100% of rated watts</div>
-                <div><strong style="color:var(--text-primary);">Step 6 — Other Fixed:</strong> Add 25% of each fixed load</div>
-                <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);"><strong style="color:#3b82f6;">Service A = Total Demand (VA) ÷ Voltage</strong></div>
+                <div><strong style="color:var(--text-primary);">Step 1 â€” Basic Load:</strong> Area Ã— 3 VA/sq ft</div>
+                <div style="padding-left:12px;color:var(--text-muted);">â€¢ First 5,000 VA @ 100%</div>
+                <div style="padding-left:12px;color:var(--text-muted);">â€¢ Remainder @ 40%</div>
+                <div><strong style="color:var(--text-primary);">Step 2 â€” Range:</strong> â‰¤12kW â†’ 6,000W; >12kW â†’ 6,000 + 40% of excess</div>
+                <div><strong style="color:var(--text-primary);">Step 3 â€” Dryer:</strong> First dryer @ 25% of rated watts</div>
+                <div><strong style="color:var(--text-primary);">Step 4 â€” A/C or Heat:</strong> Take only the LARGER of the two @ 100%</div>
+                <div><strong style="color:var(--text-primary);">Step 5 â€” Hot Water:</strong> 100% of rated watts</div>
+                <div><strong style="color:var(--text-primary);">Step 6 â€” Other Fixed:</strong> Add 25% of each fixed load</div>
+                <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);"><strong style="color:#3b82f6;">Service A = Total Demand (VA) Ã· Voltage</strong></div>
               </div>
             </div>
             <div id="dfAnswerPanel" style="display:none;margin-top:16px;"></div>
@@ -6826,7 +6826,7 @@ const Tools = {
     const scText = document.getElementById('dfScenarioText');
     if (scText) scText.textContent = this._dfScenarios[next].desc;
     const numEl = document.getElementById('dfScenarioNum');
-    if (numEl) numEl.textContent = '📋 Scenario ' + (next + 1) + ' of ' + this._dfScenarios.length;
+    if (numEl) numEl.textContent = 'ðŸ“‹ Scenario ' + (next + 1) + ' of ' + this._dfScenarios.length;
     // Reset all input fields to 0
     ['dfArea','dfRange','dfDryer','dfAC','dfHeat','dfHW','dfOther'].forEach(id => {
       const el = document.getElementById(id);
@@ -6864,10 +6864,10 @@ const Tools = {
     panel.style.display = 'block';
     panel.innerHTML = `
       <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:16px;">
-        <div style="font-size:0.7rem;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">✅ Correct Answer — CEC 8-200 Calculation</div>
+        <div style="font-size:0.7rem;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">âœ… Correct Answer â€” CEC 8-200 Calculation</div>
         <div style="display:flex;flex-direction:column;gap:5px;font-size:0.8rem;margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="color:var(--text-secondary);">Basic Load (${area} × 3)</span><span style="font-weight:600;">${basicLoad.toFixed(0)} VA</span>
+            <span style="color:var(--text-secondary);">Basic Load (${area} Ã— 3)</span><span style="font-weight:600;">${basicLoad.toFixed(0)} VA</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
             <span style="color:var(--text-muted);padding-left:12px;">First 5000 VA @ 100%</span><span>${first5000.toFixed(0)} VA</span>
@@ -6875,11 +6875,11 @@ const Tools = {
           <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
             <span style="color:var(--text-muted);padding-left:12px;">Remainder @ 40%</span><span>${remainder.toFixed(0)} VA</span>
           </div>
-          ${rangeDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Range (${range}W → ${range<=12000?'6000W':'6000+'+((range-12000)*0.4).toFixed(0)+'W'})</span><span style="font-weight:600;">${rangeDemand.toFixed(0)} VA</span></div>` : ''}
-          ${dryerCalc > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Dryer (${dryer}W × 25%)</span><span style="font-weight:600;">${dryerCalc.toFixed(0)} VA</span></div>` : ''}
+          ${rangeDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Range (${range}W â†’ ${range<=12000?'6000W':'6000+'+((range-12000)*0.4).toFixed(0)+'W'})</span><span style="font-weight:600;">${rangeDemand.toFixed(0)} VA</span></div>` : ''}
+          ${dryerCalc > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Dryer (${dryer}W Ã— 25%)</span><span style="font-weight:600;">${dryerCalc.toFixed(0)} VA</span></div>` : ''}
           ${acHeatDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">A/C or Heat (larger of ${ac}W vs ${heat}W)</span><span style="font-weight:600;">${acHeatDemand.toFixed(0)} VA</span></div>` : ''}
           ${hwDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Hot Water (${hw}W @ 100%)</span><span style="font-weight:600;">${hwDemand.toFixed(0)} VA</span></div>` : ''}
-          ${otherDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Other Fixed (${other}W × 25%)</span><span style="font-weight:600;">${otherDemand.toFixed(0)} VA</span></div>` : ''}
+          ${otherDemand > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--text-secondary);">Other Fixed (${other}W Ã— 25%)</span><span style="font-weight:600;">${otherDemand.toFixed(0)} VA</span></div>` : ''}
           <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid rgba(34,197,94,0.3);margin-top:4px;">
             <span style="font-weight:700;color:#22c55e;font-size:0.9rem;">Total Demand</span>
             <span style="font-weight:800;color:#22c55e;font-size:0.9rem;">${totalDemand.toFixed(0)} VA</span>
@@ -6961,7 +6961,7 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(245,158,11,0.06),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">🔧 Conduit Configuration</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:14px;">ðŸ”§ Conduit Configuration</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                 <div>
@@ -7013,19 +7013,19 @@ const Tools = {
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">🔵 Cross-Section Visualization</div>
+          <div style="font-weight:700;font-size:0.95rem;">ðŸ”µ Cross-Section Visualization</div>
           <canvas id="cfCanvas" width="420" height="360" style="border-radius:10px;width:100%;"></canvas>
           <div style="padding:10px 14px;background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.1);border-radius:8px;font-size:0.73rem;color:var(--text-secondary);line-height:1.7;">
-            CEC fill limits: 1 conductor = 53% · 2 conductors = 31% · 3+ conductors = 40%
+            CEC fill limits: 1 conductor = 53% Â· 2 conductors = 31% Â· 3+ conductors = 40%
           </div>
         </div>
       </div>
     `;
   },
 
-  // Wire cross-section areas in mm² (approximate for THHN)
+  // Wire cross-section areas in mmÂ² (approximate for THHN)
   _wireAreas: { '14': 8.97, '12': 11.68, '10': 16.77, '8': 30.19, '6': 40.54, '4': 56.06, '3': 65.61, '2': 77.26, '1': 101.3, '1/0': 126.7, '2/0': 152.0, '3/0': 177.3, '4/0': 227.0, '250': 289.0, '350': 390.0, '500': 542.0 },
-  // Conduit internal area in mm² (CEC Table 8 simplified)
+  // Conduit internal area in mmÂ² (CEC Table 8 simplified)
   _conduitAreas: {
     emt:   { '0.5': 163, '0.75': 290, '1': 490, '1.25': 808, '1.5': 1065, '2': 1778, '2.5': 2892, '3': 4536, '4': 7854 },
     rigid: { '0.5': 176, '0.75': 305, '1': 508, '1.25': 843, '1.5': 1117, '2': 1855, '2.5': 3019, '3': 4717, '4': 8107 },
@@ -7162,7 +7162,7 @@ const Tools = {
 
     // Max wire limit badge
     ctx.fillStyle = 'rgba(245,158,11,0.8)'; ctx.font = '9.5px Inter'; ctx.textAlign = 'center';
-    ctx.fillText('Max ' + maxWires + ' · ' + type.toUpperCase() + ' ' + size + '"', cx, H - 10);
+    ctx.fillText('Max ' + maxWires + ' Â· ' + type.toUpperCase() + ' ' + size + '"', cx, H - 10);
   },
 
   // ===== RLC IMPEDANCE CALCULATOR =====
@@ -7171,16 +7171,16 @@ const Tools = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
           <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(139,92,246,0.07),transparent);border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="font-weight:700;font-size:0.95rem;margin-bottom:12px;">🌀 RLC Circuit Parameters</div>
+            <div style="font-weight:700;font-size:0.95rem;margin-bottom:12px;">ðŸŒ€ RLC Circuit Parameters</div>
             <div style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg-input);border-radius:8px;padding:3px;">
               <button id="rlcSerBtn" onclick="Tools._rlcMode='series';document.getElementById('rlcSerBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;background:var(--accent);color:#000;';document.getElementById('rlcParBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;background:transparent;color:var(--text-muted);';Tools._updateRLC()" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;background:var(--accent);color:#000;">Series</button>
               <button id="rlcParBtn" onclick="Tools._rlcMode='parallel';document.getElementById('rlcParBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;background:var(--accent);color:#000;';document.getElementById('rlcSerBtn').style.cssText='flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;background:transparent;color:var(--text-muted);';Tools._updateRLC()" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;background:transparent;color:var(--text-muted);">Parallel</button>
             </div>
             <div style="display:flex;flex-direction:column;gap:10px;">
               ${[
-                {id:'rlcR', label:'Resistance R', unit:'Ω', val:'100', col:'#22c55e'},
+                {id:'rlcR', label:'Resistance R', unit:'Î©', val:'100', col:'#22c55e'},
                 {id:'rlcL', label:'Inductance L', unit:'mH', val:'50', col:'#8b5cf6'},
-                {id:'rlcC', label:'Capacitance C', unit:'μF', val:'10', col:'#3b82f6'},
+                {id:'rlcC', label:'Capacitance C', unit:'Î¼F', val:'10', col:'#3b82f6'},
                 {id:'rlcF', label:'Frequency', unit:'Hz', val:'60', col:'#f59e0b'},
                 {id:'rlcV', label:'Source Voltage', unit:'V', val:'120', col:'#ef4444'},
               ].map(p => `<div style="display:flex;align-items:center;gap:8px;">
@@ -7195,13 +7195,13 @@ const Tools = {
           </div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-weight:700;font-size:0.95rem;">📐 Phasor Diagram</div>
+          <div style="font-weight:700;font-size:0.95rem;">ðŸ“ Phasor Diagram</div>
           <canvas id="rlcCanvas" width="420" height="360" style="border-radius:10px;width:100%;"></canvas>
           <div style="display:flex;gap:12px;font-size:0.72rem;flex-wrap:wrap;">
-            <span style="color:#22c55e;">■ R (Resistance)</span>
-            <span style="color:#8b5cf6;">■ X<sub>L</sub> (Inductive)</span>
-            <span style="color:#3b82f6;">■ X<sub>C</sub> (Capacitive)</span>
-            <span style="color:#f59e0b;">■ Z (Impedance)</span>
+            <span style="color:#22c55e;">â–  R (Resistance)</span>
+            <span style="color:#8b5cf6;">â–  X<sub>L</sub> (Inductive)</span>
+            <span style="color:#3b82f6;">â–  X<sub>C</sub> (Capacitive)</span>
+            <span style="color:#f59e0b;">â–  Z (Impedance)</span>
           </div>
         </div>
       </div>
@@ -7213,7 +7213,7 @@ const Tools = {
   _updateRLC() {
     const R = parseFloat(document.getElementById('rlcR').value) || 0;
     const L = (parseFloat(document.getElementById('rlcL').value) || 0) / 1000; // mH to H
-    const C = (parseFloat(document.getElementById('rlcC').value) || 0.001) / 1000000; // µF to F
+    const C = (parseFloat(document.getElementById('rlcC').value) || 0.001) / 1000000; // ÂµF to F
     const f = parseFloat(document.getElementById('rlcF').value) || 60;
     const V = parseFloat(document.getElementById('rlcV').value) || 120;
 
@@ -7249,7 +7249,7 @@ const Tools = {
     const r = document.getElementById('rlcResult');
     if (r) {
       r.innerHTML = `
-        <h3 style="margin:0 0 16px;font-size:1rem;">Impedance Results — ${this._rlcMode === 'series' ? 'Series' : 'Parallel'}</h3>
+        <h3 style="margin:0 0 16px;font-size:1rem;">Impedance Results â€” ${this._rlcMode === 'series' ? 'Series' : 'Parallel'}</h3>
         <div style="text-align:center;margin-bottom:20px;">
           <div style="font-size:2.2rem;font-weight:900;color:var(--accent);">${Z.toFixed(2)} &Omega;</div>
           <div style="font-size:0.85rem;color:${natureColor};font-weight:600;">${nature} &middot; &theta; = ${angle.toFixed(1)}&deg;</div>
@@ -7345,15 +7345,15 @@ const Tools = {
 
     // R vector (horizontal, green)
     const rPx = pR * scale;
-    drawArrow(ox, oy, ox + rPx, oy, '#22c55e', 'R=' + pR.toFixed(0) + 'Ω', false);
+    drawArrow(ox, oy, ox + rPx, oy, '#22c55e', 'R=' + pR.toFixed(0) + 'Î©', false);
 
     // XL vector (vertical up, purple)
     const xlPx = pXL * scale;
-    drawArrow(ox + rPx, oy, ox + rPx, oy - xlPx, '#8b5cf6', 'XL=' + pXL.toFixed(1) + 'Ω', false);
+    drawArrow(ox + rPx, oy, ox + rPx, oy - xlPx, '#8b5cf6', 'XL=' + pXL.toFixed(1) + 'Î©', false);
 
     // XC vector (vertical down, blue)
     const xcPx = pXC * scale;
-    drawArrow(ox + rPx, oy, ox + rPx, oy + xcPx, '#3b82f6', 'XC=' + pXC.toFixed(1) + 'Ω', false);
+    drawArrow(ox + rPx, oy, ox + rPx, oy + xcPx, '#3b82f6', 'XC=' + pXC.toFixed(1) + 'Î©', false);
 
     // Net X vector
     const netX = pXL - pXC;
@@ -7367,17 +7367,17 @@ const Tools = {
     // Z vector (hypotenuse, amber glow)
     const zPx = Z * scale;
     const angleRad = angle * Math.PI / 180;
-    drawArrow(ox, oy, ox + rPx, oy - xnetPx, '#f59e0b', 'Z=' + Z.toFixed(1) + 'Ω', true);
+    drawArrow(ox, oy, ox + rPx, oy - xnetPx, '#f59e0b', 'Z=' + Z.toFixed(1) + 'Î©', true);
 
     // Angle arc
     ctx.strokeStyle = 'rgba(245,158,11,0.5)'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(ox, oy, 28, -angleRad, 0); ctx.stroke();
     ctx.fillStyle = 'rgba(245,158,11,0.8)'; ctx.font = '9px Inter'; ctx.textAlign = 'center';
-    ctx.fillText('θ=' + angle.toFixed(0) + '°', ox + 38, oy + (angle >= 0 ? -8 : 10));
+    ctx.fillText('Î¸=' + angle.toFixed(0) + 'Â°', ox + 38, oy + (angle >= 0 ? -8 : 10));
 
     // Nature label
     ctx.fillStyle = natureColor; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
-    ctx.fillText(nature + ' · PF = ' + (Math.abs(PF)*100).toFixed(1) + '%', W/2, H - 8);
+    ctx.fillText(nature + ' Â· PF = ' + (Math.abs(PF)*100).toFixed(1) + '%', W/2, H - 8);
   },
 
   // ===== DRAWING & DIAGRAM CONVERSION SIMULATOR =====
@@ -7449,7 +7449,7 @@ const Tools = {
     </div>
     <!-- What am I looking at -->
     <div style="margin-bottom:14px;padding:12px 16px;background:rgba(${s===0?'245,158,11':s===1?'34,197,94':s===2?'59,130,246':'139,92,246'},0.07);border:1px solid rgba(${s===0?'245,158,11':s===1?'34,197,94':s===2?'59,130,246':'139,92,246'},0.2);border-radius:10px;font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">
-      <strong style="color:${sc.color};">${vLabels[v]} — what you're looking at:</strong><br>${explainText}
+      <strong style="color:${sc.color};">${vLabels[v]} â€” what you're looking at:</strong><br>${explainText}
     </div>
     <!-- SVG diagram -->
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;overflow:auto;">
@@ -7462,24 +7462,24 @@ const Tools = {
   _diagExplain(s, v) {
     const texts = {
       0: {
-        block: 'A block diagram shows the <strong>function</strong> of each part using labeled boxes and arrows. No wire colours, no box internals — just the logical flow of power from source to load.',
+        block: 'A block diagram shows the <strong>function</strong> of each part using labeled boxes and arrows. No wire colours, no box internals â€” just the logical flow of power from source to load.',
         wiring: 'A wiring diagram shows <strong>actual physical connections</strong>: which wire goes where, the real colours used, and how conductors are connected inside each box. This is what an electrician uses on the job.',
-        schematic: 'A schematic (ladder diagram) uses <strong>standard symbols</strong> on two rails (L1 and N). It shows the circuit logic clearly — easy to read fault conditions. Each rung is a complete series path from L1 to N.'
+        schematic: 'A schematic (ladder diagram) uses <strong>standard symbols</strong> on two rails (L1 and N). It shows the circuit logic clearly â€” easy to read fault conditions. Each rung is a complete series path from L1 to N.'
       },
       1: {
         block: 'The 3-way switch circuit uses <strong>two 3-way switches</strong> to control one light from two locations. The block diagram shows the order of components without wire details.',
-        wiring: 'Three cable runs are used. Source→SW1 is 14/2, SW1→SW2 is <strong>14/3</strong> (adds a red traveler wire), SW2→Light is 14/2. The two conductors between switches are called <strong>travelers</strong>.',
-        schematic: 'The schematic shows both switches sharing two traveler conductors. Only one traveler is in the circuit at a time — flipping either switch changes which traveler is active, toggling the light.'
+        wiring: 'Three cable runs are used. Sourceâ†’SW1 is 14/2, SW1â†’SW2 is <strong>14/3</strong> (adds a red traveler wire), SW2â†’Light is 14/2. The two conductors between switches are called <strong>travelers</strong>.',
+        schematic: 'The schematic shows both switches sharing two traveler conductors. Only one traveler is in the circuit at a time â€” flipping either switch changes which traveler is active, toggling the light.'
       },
       2: {
         block: 'A relay control circuit has two parts: the <strong>control circuit</strong> (low energy, switches the coil) and the <strong>power circuit</strong> (full voltage, switches the load via contacts). The block diagram separates these.',
         wiring: 'The control circuit runs 120V through a pushbutton to energize the relay coil. When the coil pulls in, the <strong>NO contact closes</strong>, completing the power circuit to the load. Two separate circuits share the same enclosure.',
-        schematic: 'The top rung is the control circuit (pushbutton → coil). The bottom rung is the power circuit (contact → load). This is standard ladder diagram format used in industry.'
+        schematic: 'The top rung is the control circuit (pushbutton â†’ coil). The bottom rung is the power circuit (contact â†’ load). This is standard ladder diagram format used in industry.'
       },
       3: {
         block: 'Three-wire control uses a <strong>seal-in contact</strong> (M) in parallel with the Start button so the motor runs after you release Start. Stop breaks the entire circuit. OL contacts protect against overload.',
         wiring: 'The push button station connects back to the starter. Stop (NC) is in series; Start (NO) is in parallel with the M contact. Wire count depends on whether neutral runs to the button station.',
-        schematic: 'Classic 3-wire ladder: Stop NC → Start NO parallel with M → M Coil. Main contacts feed three-phase power through OL heaters to the motor. OL NC contacts are in the control rung.'
+        schematic: 'Classic 3-wire ladder: Stop NC â†’ Start NO parallel with M â†’ M Coil. Main contacts feed three-phase power through OL heaters to the motor. OL NC contacts are in the control rung.'
       }
     };
     return texts[s][v];
@@ -7489,12 +7489,12 @@ const Tools = {
     const info = {
       0: {
         block: [
-          { label: 'Panel → Switch Box', count: 2, wires: ['Black (hot)','White (neutral)'], note: 'Standard 14/2 NMD90' },
-          { label: 'Switch Box → Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'White must be re-identified at switch box' },
+          { label: 'Panel â†’ Switch Box', count: 2, wires: ['Black (hot)','White (neutral)'], note: 'Standard 14/2 NMD90' },
+          { label: 'Switch Box â†’ Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'White must be re-identified at switch box' },
         ],
         wiring: [
-          { label: 'Panel → Switch Box', count: 2, wires: ['Black (hot → switch)','White (neutral → pigtail)'], note: '14/2 NMD90 · 2 current-carrying conductors' },
-          { label: 'Switch Box → Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'Re-identify white with black tape at switch' },
+          { label: 'Panel â†’ Switch Box', count: 2, wires: ['Black (hot â†’ switch)','White (neutral â†’ pigtail)'], note: '14/2 NMD90 Â· 2 current-carrying conductors' },
+          { label: 'Switch Box â†’ Light Box', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: 'Re-identify white with black tape at switch' },
         ],
         schematic: [
           { label: 'Control path', count: 2, wires: ['L1 through switch contact','Return on Neutral'], note: 'Switch interrupts the ungrounded (hot) conductor only' },
@@ -7502,14 +7502,14 @@ const Tools = {
       },
       1: {
         block: [
-          { label: 'Panel → 3-Way SW1', count: 2, wires: ['Black (hot)','White (neutral)'], note: '14/2 NMD90' },
-          { label: 'SW1 → 3-Way SW2', count: 3, wires: ['Black (traveler)','Red (traveler)','White (common)'], note: '14/3 NMD90 — the extra wire is key!' },
-          { label: 'SW2 → Light', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: '14/2 NMD90' },
+          { label: 'Panel â†’ 3-Way SW1', count: 2, wires: ['Black (hot)','White (neutral)'], note: '14/2 NMD90' },
+          { label: 'SW1 â†’ 3-Way SW2', count: 3, wires: ['Black (traveler)','Red (traveler)','White (common)'], note: '14/3 NMD90 â€” the extra wire is key!' },
+          { label: 'SW2 â†’ Light', count: 2, wires: ['Black (switched hot)','White (neutral)'], note: '14/2 NMD90' },
         ],
         wiring: [
-          { label: 'Panel → SW1', count: 2, wires: ['Black','White'], note: '14/2 · Hot goes to SW1 common terminal' },
-          { label: 'SW1 → SW2 (travelers)', count: 3, wires: ['Black traveler','Red traveler','White (neutral)'], note: '14/3 · Black & Red connect traveler terminals; White passes neutral through' },
-          { label: 'SW2 → Light', count: 2, wires: ['Black (switched hot from SW2 common)','White (neutral)'], note: '14/2 · White re-identified if used as hot' },
+          { label: 'Panel â†’ SW1', count: 2, wires: ['Black','White'], note: '14/2 Â· Hot goes to SW1 common terminal' },
+          { label: 'SW1 â†’ SW2 (travelers)', count: 3, wires: ['Black traveler','Red traveler','White (neutral)'], note: '14/3 Â· Black & Red connect traveler terminals; White passes neutral through' },
+          { label: 'SW2 â†’ Light', count: 2, wires: ['Black (switched hot from SW2 common)','White (neutral)'], note: '14/2 Â· White re-identified if used as hot' },
         ],
         schematic: [
           { label: 'Traveler conductors', count: 2, wires: ['Traveler A','Traveler B'], note: 'Only one active path at a time' },
@@ -7519,30 +7519,30 @@ const Tools = {
       2: {
         block: [
           { label: 'Control circuit', count: 2, wires: ['Hot (L1)','Neutral'], note: '120V control, low amperage' },
-          { label: 'Power circuit', count: 2, wires: ['Line hot','Load neutral'], note: '120/240V to load — switched by relay contacts' },
+          { label: 'Power circuit', count: 2, wires: ['Line hot','Load neutral'], note: '120/240V to load â€” switched by relay contacts' },
         ],
         wiring: [
-          { label: 'Pushbutton → Relay', count: 2, wires: ['Control hot','Control return'], note: 'Small gauge acceptable — coil is low current' },
-          { label: 'Relay contact → Load', count: 2, wires: ['Line hot (through contact)','Neutral to load'], note: 'Must be rated for full load current' },
+          { label: 'Pushbutton â†’ Relay', count: 2, wires: ['Control hot','Control return'], note: 'Small gauge acceptable â€” coil is low current' },
+          { label: 'Relay contact â†’ Load', count: 2, wires: ['Line hot (through contact)','Neutral to load'], note: 'Must be rated for full load current' },
         ],
         schematic: [
-          { label: 'Control rung', count: 2, wires: ['L1 rail','N rail'], note: 'Pushbutton → coil completes control rung' },
-          { label: 'Power rung', count: 2, wires: ['L1 rail','N rail'], note: 'NO contact → load completes power rung' },
+          { label: 'Control rung', count: 2, wires: ['L1 rail','N rail'], note: 'Pushbutton â†’ coil completes control rung' },
+          { label: 'Power rung', count: 2, wires: ['L1 rail','N rail'], note: 'NO contact â†’ load completes power rung' },
         ]
       },
       3: {
         block: [
-          { label: 'Push button station', count: 3, wires: ['L1 control','Common (between Stop & Start)','Return to starter'], note: '3 wires to button station — gives 3-wire control name' },
-          { label: 'Starter → Motor', count: 3, wires: ['T1','T2','T3'], note: '3-phase · runs through OL heaters' },
+          { label: 'Push button station', count: 3, wires: ['L1 control','Common (between Stop & Start)','Return to starter'], note: '3 wires to button station â€” gives 3-wire control name' },
+          { label: 'Starter â†’ Motor', count: 3, wires: ['T1','T2','T3'], note: '3-phase Â· runs through OL heaters' },
         ],
         wiring: [
-          { label: 'Control source → Stop PB', count: 2, wires: ['Control hot','Neutral'], note: 'Stop NC in series with everything' },
-          { label: 'Stop → Start PB', count: 1, wires: ['Series conductor'], note: 'One wire between Stop and Start' },
-          { label: 'Start PB → M Coil', count: 1, wires: ['Coil hot'], note: 'Parallel path: Start NO or M NO seal-in' },
-          { label: 'Starter → Motor', count: 3, wires: ['T1 (L1 through M contact)','T2 (L2 through M contact)','T3 (L3 through M contact)'], note: 'All three phases interrupted by main contacts' },
+          { label: 'Control source â†’ Stop PB', count: 2, wires: ['Control hot','Neutral'], note: 'Stop NC in series with everything' },
+          { label: 'Stop â†’ Start PB', count: 1, wires: ['Series conductor'], note: 'One wire between Stop and Start' },
+          { label: 'Start PB â†’ M Coil', count: 1, wires: ['Coil hot'], note: 'Parallel path: Start NO or M NO seal-in' },
+          { label: 'Starter â†’ Motor', count: 3, wires: ['T1 (L1 through M contact)','T2 (L2 through M contact)','T3 (L3 through M contact)'], note: 'All three phases interrupted by main contacts' },
         ],
         schematic: [
-          { label: 'Control rung wires', count: 3, wires: ['L1 control rail','Junction at Start/M contact','N rail (coil return)'], note: '3-wire control — Stop, Start, M coil' },
+          { label: 'Control rung wires', count: 3, wires: ['L1 control rail','Junction at Start/M contact','N rail (coil return)'], note: '3-wire control â€” Stop, Start, M coil' },
           { label: 'Power circuit', count: 6, wires: ['L1/L2/L3 line side','T1/T2/T3 load side'], note: '3 lines in, 3 lines out through main contacts and OL heaters' },
         ]
       }
@@ -7560,7 +7560,7 @@ const Tools = {
             <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">${r.label}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:6px;">
-            ${r.wires.map(w => `<div style="font-size:0.75rem;color:var(--text-secondary);padding-left:4px;">• ${w}</div>`).join('')}
+            ${r.wires.map(w => `<div style="font-size:0.75rem;color:var(--text-secondary);padding-left:4px;">â€¢ ${w}</div>`).join('')}
           </div>
           <div style="font-size:0.72rem;color:var(--text-muted);background:var(--bg-input);padding:4px 8px;border-radius:6px;">${r.note}</div>
         </div>`).join('')}
@@ -7594,7 +7594,7 @@ const Tools = {
       <text x="580" y="88" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700">LIGHT BOX</text>
       <text x="580" y="104" text-anchor="middle" fill="#94a3b8" font-size="10">120V Lamp</text>
       <!-- Labels -->
-      <text x="360" y="165" text-anchor="middle" fill="#64748b" font-size="10">Power flows left → right when switch is closed</text>
+      <text x="360" y="165" text-anchor="middle" fill="#64748b" font-size="10">Power flows left â†’ right when switch is closed</text>
     </svg>`;
 
     if (s === 1) return `
@@ -7649,7 +7649,7 @@ const Tools = {
       <text x="10" y="148" fill="#22c55e" font-size="10" font-weight="700">POWER CIRCUIT (Full voltage)</text>
       <rect x="160" y="158" width="90" height="50" rx="7" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-width="1.5"/>
       <text x="205" y="181" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="700">M CONTACT</text>
-      <text x="205" y="194" text-anchor="middle" fill="#94a3b8" font-size="8">(NO → Closes)</text>
+      <text x="205" y="194" text-anchor="middle" fill="#94a3b8" font-size="8">(NO â†’ Closes)</text>
       <line x1="250" y1="183" x2="310" y2="183" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr)"/>
       <rect x="310" y="158" width="90" height="50" rx="7" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-width="1.5"/>
       <text x="355" y="181" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="700">LOAD</text>
@@ -7714,13 +7714,13 @@ const Tools = {
       <rect x="20" y="90" width="90" height="80" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2"/>
       <text x="65" y="126" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">PANEL</text>
       <text x="65" y="143" text-anchor="middle" fill="#64748b" font-size="9">15A Breaker</text>
-      <!-- Cables panel→switch: black (hot) and white (neutral) -->
+      <!-- Cables panelâ†’switch: black (hot) and white (neutral) -->
       <line x1="110" y1="115" x2="290" y2="115" stroke="#1f2937" stroke-width="5"/>
       <line x1="110" y1="115" x2="290" y2="115" stroke="#111827" stroke-width="3"/>
       <line x1="110" y1="125" x2="290" y2="125" stroke="#e5e7eb" stroke-width="3"/>
       <text x="200" y="108" text-anchor="middle" fill="#64748b" font-size="9">14/2 NMD90</text>
-      <text x="148" y="141" fill="#64748b" font-size="8">⚫ Black (hot)</text>
-      <text x="148" y="152" fill="#9ca3af" font-size="8">⚪ White (neutral)</text>
+      <text x="148" y="141" fill="#64748b" font-size="8">âš« Black (hot)</text>
+      <text x="148" y="152" fill="#9ca3af" font-size="8">âšª White (neutral)</text>
       <!-- Switch box -->
       <rect x="290" y="80" width="100" height="100" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2"/>
       <text x="340" y="108" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="700">SWITCH</text>
@@ -7734,8 +7734,8 @@ const Tools = {
       <text x="360" y="159" text-anchor="middle" fill="#000" font-size="7" font-weight="900">WN</text>
       <!-- Re-identification note -->
       <rect x="280" y="190" width="130" height="24" rx="4" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1"/>
-      <text x="345" y="204" text-anchor="middle" fill="#ef4444" font-size="8">White → re-ID black tape</text>
-      <!-- Cables switch→light: black switched and white -->
+      <text x="345" y="204" text-anchor="middle" fill="#ef4444" font-size="8">White â†’ re-ID black tape</text>
+      <!-- Cables switchâ†’light: black switched and white -->
       <line x1="390" y1="115" x2="560" y2="115" stroke="#1f2937" stroke-width="5"/>
       <line x1="390" y1="115" x2="560" y2="115" stroke="#111827" stroke-width="3"/>
       <line x1="390" y1="125" x2="560" y2="125" stroke="#e5e7eb" stroke-width="3"/>
@@ -7776,14 +7776,14 @@ const Tools = {
       <line x1="215" y1="150" x2="240" y2="156" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="244" cy="140" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="244" cy="156" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
-      <!-- 14/3 cable SW1→SW2 — 3 conductors -->
+      <!-- 14/3 cable SW1â†’SW2 â€” 3 conductors -->
       <text x="360" y="100" text-anchor="middle" fill="#ec4899" font-size="9" font-weight="700">14/3 NMD90 (3 conductors!)</text>
       <line x1="290" y1="112" x2="450" y2="112" stroke="#111827" stroke-width="4"/>
       <line x1="290" y1="120" x2="450" y2="120" stroke="#dc2626" stroke-width="3"/>
       <line x1="290" y1="128" x2="450" y2="128" stroke="#e5e7eb" stroke-width="3"/>
-      <text x="360" y="145" text-anchor="middle" fill="#64748b" font-size="8">⚫ Black = traveler A</text>
-      <text x="360" y="156" text-anchor="middle" fill="#64748b" font-size="8">🔴 Red = traveler B</text>
-      <text x="360" y="167" text-anchor="middle" fill="#94a3b8" font-size="8">⚪ White = neutral</text>
+      <text x="360" y="145" text-anchor="middle" fill="#64748b" font-size="8">âš« Black = traveler A</text>
+      <text x="360" y="156" text-anchor="middle" fill="#64748b" font-size="8">ðŸ”´ Red = traveler B</text>
+      <text x="360" y="167" text-anchor="middle" fill="#94a3b8" font-size="8">âšª White = neutral</text>
       <!-- SW2 box -->
       <rect x="450" y="80" width="110" height="100" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="2"/>
       <text x="505" y="108" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="700">3-WAY SW2</text>
@@ -7792,7 +7792,7 @@ const Tools = {
       <line x1="485" y1="150" x2="510" y2="156" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="514" cy="140" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
       <circle cx="514" cy="156" r="4" fill="none" stroke="#22c55e" stroke-width="1.5"/>
-      <!-- 14/2 SW2→Light -->
+      <!-- 14/2 SW2â†’Light -->
       <line x1="560" y1="118" x2="650" y2="118" stroke="#111827" stroke-width="4"/>
       <line x1="560" y1="126" x2="650" y2="126" stroke="#e5e7eb" stroke-width="3"/>
       <text x="605" y="112" text-anchor="middle" fill="#64748b" font-size="8">14/2</text>
@@ -7837,7 +7837,7 @@ const Tools = {
       <line x1="420" y1="110" x2="435" y2="110" stroke="#22c55e" stroke-width="2"/>
       <line x1="380" y1="104" x2="420" y2="104" stroke="#22c55e" stroke-width="2"/>
       <text x="400" y="135" text-anchor="middle" fill="#22c55e" font-size="8">M Contact (NO)</text>
-      <!-- Dotted actuator line coil→contact -->
+      <!-- Dotted actuator line coilâ†’contact -->
       <line x1="400" y1="80" x2="400" y2="100" stroke="#64748b" stroke-width="1" stroke-dasharray="3,2"/>
       <!-- wire from contact to load -->
       <line x1="460" y1="110" x2="560" y2="110" stroke="#111827" stroke-width="3"/>
@@ -7857,7 +7857,7 @@ const Tools = {
       <line x1="560" y1="56" x2="560" y2="80" stroke="#111827" stroke-width="3"/>
       <!-- Note -->
       <rect x="10" y="220" width="800" height="40" rx="6" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="1"/>
-      <text x="410" y="237" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="700">TWO SEPARATE CIRCUITS share one enclosure. Control circuit (low energy) energizes the coil — coil actuates contact — contact carries full load current.</text>
+      <text x="410" y="237" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="700">TWO SEPARATE CIRCUITS share one enclosure. Control circuit (low energy) energizes the coil â€” coil actuates contact â€” contact carries full load current.</text>
       <text x="410" y="252" text-anchor="middle" fill="#64748b" font-size="9">This separation is why relay control is safe: you push a 120V button to switch 600V equipment without exposing the operator to high voltage.</text>
     </svg>`;
 
@@ -7892,7 +7892,7 @@ const Tools = {
       <text x="370" y="103" text-anchor="middle" fill="#8b5cf6" font-size="8">M COIL</text>
       <!-- OL heaters -->
       <rect x="430" y="85" width="55" height="28" rx="4" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1.5"/>
-      <text x="457" y="103" text-anchor="middle" fill="#ef4444" font-size="7" font-weight="700">OL (3×)</text>
+      <text x="457" y="103" text-anchor="middle" fill="#ef4444" font-size="7" font-weight="700">OL (3Ã—)</text>
       <!-- M auxiliary contact -->
       <line x1="330" y1="140" x2="345" y2="140" stroke="#22c55e" stroke-width="2"/>
       <line x1="345" y1="134" x2="375" y2="134" stroke="#22c55e" stroke-width="2"/>
@@ -7922,7 +7922,7 @@ const Tools = {
       <!-- Note -->
       <rect x="10" y="245" width="800" height="35" rx="6" fill="rgba(139,92,246,0.08)" stroke="#8b5cf6" stroke-width="1"/>
       <text x="410" y="261" text-anchor="middle" fill="#8b5cf6" font-size="9" font-weight="700">Why "3-wire" control? Three wires run to the push button station: L1 control hot, junction between Stop &amp; Start, and coil return. This allows the seal-in contact to hold the circuit without extra wiring.</text>
-      <text x="410" y="274" text-anchor="middle" fill="#64748b" font-size="9">Power circuit: 3 lines in → 3 main contacts → 3 OL heaters → 3 motor terminals (T1/T2/T3)</text>
+      <text x="410" y="274" text-anchor="middle" fill="#64748b" font-size="9">Power circuit: 3 lines in â†’ 3 main contacts â†’ 3 OL heaters â†’ 3 motor terminals (T1/T2/T3)</text>
     </svg>`;
   },
 
@@ -7955,7 +7955,7 @@ const Tools = {
       <!-- Wire to neutral -->
       <line x1="422" y1="90" x2="530" y2="90" stroke="#94a3b8" stroke-width="2"/>
       <!-- Annotation -->
-      <text x="300" y="160" text-anchor="middle" fill="#64748b" font-size="9">Switch interrupts the HOT (L1) conductor only — Neutral is continuous</text>
+      <text x="300" y="160" text-anchor="middle" fill="#64748b" font-size="9">Switch interrupts the HOT (L1) conductor only â€” Neutral is continuous</text>
     </svg>`;
 
     if (s === 1) return `
@@ -7967,7 +7967,7 @@ const Tools = {
       <text x="620" y="14" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">N</text>
       <!-- SW1 common -->
       <line x1="50" y1="80" x2="120" y2="80" stroke="#94a3b8" stroke-width="2"/>
-      <!-- SW1 symbol — pivot point -->
+      <!-- SW1 symbol â€” pivot point -->
       <circle cx="120" cy="80" r="4" fill="#22c55e"/>
       <text x="120" y="68" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="700">SW1 common</text>
       <!-- Traveler A (top path) -->
@@ -8005,7 +8005,7 @@ const Tools = {
       <line x1="600" y1="20" x2="600" y2="210" stroke="#e5e7eb" stroke-width="3"/>
       <text x="600" y="14" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700">N</text>
       <!-- CONTROL RUNG (top) -->
-      <text x="50" y="55" fill="#64748b" font-size="8">Rung 1 — Control</text>
+      <text x="50" y="55" fill="#64748b" font-size="8">Rung 1 â€” Control</text>
       <line x1="50" y1="70" x2="140" y2="70" stroke="#94a3b8" stroke-width="2"/>
       <!-- PB NO contact -->
       <line x1="140" y1="70" x2="155" y2="70" stroke="#3b82f6" stroke-width="2"/>
@@ -8019,7 +8019,7 @@ const Tools = {
       <text x="510" y="73" text-anchor="middle" fill="#8b5cf6" font-size="10" font-weight="700">M</text>
       <line x1="540" y1="70" x2="600" y2="70" stroke="#94a3b8" stroke-width="2"/>
       <!-- POWER RUNG (bottom) -->
-      <text x="50" y="135" fill="#64748b" font-size="8">Rung 2 — Power circuit</text>
+      <text x="50" y="135" fill="#64748b" font-size="8">Rung 2 â€” Power circuit</text>
       <line x1="50" y1="148" x2="160" y2="148" stroke="#94a3b8" stroke-width="2"/>
       <!-- M NO contact in power rung -->
       <line x1="160" y1="148" x2="175" y2="148" stroke="#22c55e" stroke-width="2"/>
@@ -8038,7 +8038,7 @@ const Tools = {
       <line x1="510" y1="85" x2="510" y2="120" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="510" y1="120" x2="197" y2="120" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="197" y1="120" x2="197" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
-      <text x="360" y="116" text-anchor="middle" fill="#8b5cf6" font-size="8">coil energized → closes M contact</text>
+      <text x="360" y="116" text-anchor="middle" fill="#8b5cf6" font-size="8">coil energized â†’ closes M contact</text>
     </svg>`;
 
     // s === 3 Motor Starter
@@ -8128,7 +8128,7 @@ const Tools = {
       <!-- Motor symbol -->
       <circle cx="440" cy="180" r="32" fill="rgba(34,197,94,0.06)" stroke="#22c55e" stroke-width="2.5"/>
       <text x="440" y="176" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="900">M</text>
-      <text x="440" y="190" text-anchor="middle" fill="#64748b" font-size="8">3Ø</text>
+      <text x="440" y="190" text-anchor="middle" fill="#64748b" font-size="8">3Ã˜</text>
       <line x1="400" y1="155" x2="408" y2="155" stroke="#f59e0b" stroke-width="2.5"/>
       <line x1="400" y1="180" x2="408" y2="180" stroke="#dc2626" stroke-width="2.5"/>
       <line x1="400" y1="205" x2="408" y2="205" stroke="#1d4ed8" stroke-width="2.5"/>
@@ -8136,7 +8136,7 @@ const Tools = {
       <line x1="580" y1="68" x2="580" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="580" y1="130" x2="220" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
       <line x1="220" y1="130" x2="220" y2="143" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
-      <text x="400" y="127" text-anchor="middle" fill="#8b5cf6" font-size="7">M energized → main contacts close → motor runs</text>
+      <text x="400" y="127" text-anchor="middle" fill="#8b5cf6" font-size="7">M energized â†’ main contacts close â†’ motor runs</text>
     </svg>`;
   },
 
@@ -8144,11 +8144,11 @@ const Tools = {
   _diagQuizQuestions: [
     { q: 'A single-pole switch controls a light. Looking at the wiring diagram, how many conductors run from the switch box to the light?', opts: ['1','2','3','4'], correct: 1, exp: 'A switch-light circuit needs 2 conductors: switched hot (black) + neutral (white). Both must be present to complete the circuit.' },
     { q: 'On a blueprint, a cable run between two 3-way switches has 3 slash marks (///). What cable type is required?', opts: ['14/1','14/2','14/3','14/4'], correct: 2, exp: 'Each slash mark = one conductor. Three slashes = 3 conductors = 14/3 NMD90. The extra conductor (red) carries the second traveler wire.' },
-    { q: 'In a ladder diagram (schematic), why does the switch contact appear on the LEFT side of the rung?', opts: ['It\'s a drawing convention only','Contacts are inputs/conditions — they control whether current can reach the output (coil/load) on the right','Contacts are always drawn first alphabetically','The neutral rail is on the left'], correct: 1, exp: 'In a ladder diagram: left rail = L1 (hot), right rail = N/L2. Contacts (inputs) are placed left, coils/loads (outputs) are placed right. Current flows left-to-right through closed contacts to energize the load.' },
+    { q: 'In a ladder diagram (schematic), why does the switch contact appear on the LEFT side of the rung?', opts: ['It\'s a drawing convention only','Contacts are inputs/conditions â€” they control whether current can reach the output (coil/load) on the right','Contacts are always drawn first alphabetically','The neutral rail is on the left'], correct: 1, exp: 'In a ladder diagram: left rail = L1 (hot), right rail = N/L2. Contacts (inputs) are placed left, coils/loads (outputs) are placed right. Current flows left-to-right through closed contacts to energize the load.' },
     { q: 'A relay control circuit has two separate rungs. What does the TOP rung contain?', opts: ['The motor winding','The main contacts and OL heaters','The control circuit: pushbutton and relay coil','The grounding conductor'], correct: 2, exp: 'In relay/starter ladder diagrams: top rung = CONTROL circuit (pushbutton, auxiliary contacts, coil). Bottom rung = POWER circuit (main contacts, OL heaters, load/motor). Control uses low energy; power carries full load current.' },
     { q: 'In a 3-wire motor control circuit, why is a SEAL-IN (M) contact wired in parallel with the Start pushbutton?', opts: ['To increase motor speed','To provide a second start button','To hold the circuit energized after you release the Start button','To reduce voltage to the coil'], correct: 2, exp: 'When you press Start, current flows through the Start NO contact and energizes M coil. M coil closes the M auxiliary (seal-in) contact, which creates a parallel path. When you release Start, the seal-in contact keeps the circuit alive. Pressing Stop breaks this path.' },
-    { q: 'On a wiring diagram, what is the purpose of the wire nut (WN) shown in the switch box for a basic switch-light circuit?', opts: ['It switches the circuit','It joins the neutral conductor — neutral passes through the box without interruption','It connects to ground only','It terminates the hot wire'], correct: 1, exp: 'The neutral (white) runs continuously from panel to light. It does NOT pass through the switch. At the switch box, the neutral is wire-nutted (spliced) to pass through — the switch only interrupts the hot (black) conductor.' },
-    { q: 'A block diagram shows: [Panel] → [Switch] → [Light]. Converting this to a wiring diagram, what additional information is now visible?', opts: ['Only the panel amperage','The actual wire colours, the cable type, how wires connect inside each box, and where wire nuts are located','Only the light wattage','Only the circuit number'], correct: 1, exp: 'A block diagram shows WHAT components exist and their ORDER. A wiring diagram adds HOW they connect: wire colours (black/white/green), cable type (14/2 NMD90), splice locations (wire nuts), box entry points, and which terminal each wire attaches to.' },
+    { q: 'On a wiring diagram, what is the purpose of the wire nut (WN) shown in the switch box for a basic switch-light circuit?', opts: ['It switches the circuit','It joins the neutral conductor â€” neutral passes through the box without interruption','It connects to ground only','It terminates the hot wire'], correct: 1, exp: 'The neutral (white) runs continuously from panel to light. It does NOT pass through the switch. At the switch box, the neutral is wire-nutted (spliced) to pass through â€” the switch only interrupts the hot (black) conductor.' },
+    { q: 'A block diagram shows: [Panel] â†’ [Switch] â†’ [Light]. Converting this to a wiring diagram, what additional information is now visible?', opts: ['Only the panel amperage','The actual wire colours, the cable type, how wires connect inside each box, and where wire nuts are located','Only the light wattage','Only the circuit number'], correct: 1, exp: 'A block diagram shows WHAT components exist and their ORDER. A wiring diagram adds HOW they connect: wire colours (black/white/green), cable type (14/2 NMD90), splice locations (wire nuts), box entry points, and which terminal each wire attaches to.' },
     { q: 'In a 3-way switch schematic, how many conductors are drawn between the two switch symbols on the schematic?', opts: ['1','2','3','4'], correct: 1, exp: 'Two traveler conductors run between 3-way switches. The schematic shows both: Traveler A and Traveler B. Only one is active at a time depending on both switch positions. The common conductors (hot in and switched hot out) connect to the rails.' },
   ],
 
@@ -8161,9 +8161,9 @@ const Tools = {
       const color = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
       return `
       <div style="text-align:center;padding:40px 20px;">
-        <div style="font-size:3rem;margin-bottom:12px;">${pct >= 80 ? '🏆' : pct >= 60 ? '💪' : '📚'}</div>
+        <div style="font-size:3rem;margin-bottom:12px;">${pct >= 80 ? 'ðŸ†' : pct >= 60 ? 'ðŸ’ª' : 'ðŸ“š'}</div>
         <h2 style="font-size:1.5rem;margin:0 0 8px;color:${color};">Quiz Complete! ${score}/${qs.length} correct (${pct}%)</h2>
-        <p style="color:var(--text-secondary);margin:0 0 24px;">${pct >= 80 ? 'Excellent! You understand diagram conversion well.' : pct >= 60 ? 'Good work — review the wiring and schematic views to reinforce the concepts.' : 'Keep practicing! Use the Learn tab to study each view carefully, then try again.'}</p>
+        <p style="color:var(--text-secondary);margin:0 0 24px;">${pct >= 80 ? 'Excellent! You understand diagram conversion well.' : pct >= 60 ? 'Good work â€” review the wiring and schematic views to reinforce the concepts.' : 'Keep practicing! Use the Learn tab to study each view carefully, then try again.'}</p>
         <button onclick="Tools._diagTab='learn';Tools._renderDiagramContent()" style="padding:10px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;margin-right:10px;">&#x1F4DA; Back to Learn</button>
         <button onclick="Tools._diagQuizIdx=0;Tools._diagQuizAnswered=false;Tools._diagQuizScore=0;Tools._diagQuizTotal=0;Tools._renderDiagramContent()" style="padding:10px 24px;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:10px;font-weight:700;cursor:pointer;">&#x1F504; Try Again</button>
       </div>`;
@@ -8188,7 +8188,7 @@ const Tools = {
               if (i === q.correct) style = 'padding:12px 16px;border-radius:10px;border:2px solid #22c55e;cursor:default;font-size:0.88rem;text-align:left;width:100%;background:rgba(34,197,94,0.1);color:#22c55e;font-weight:700;';
               else style = 'padding:12px 16px;border-radius:10px;border:1px solid rgba(239,68,68,0.3);cursor:default;font-size:0.88rem;text-align:left;width:100%;background:rgba(239,68,68,0.05);color:var(--text-muted);';
             }
-            const check = answered && i === q.correct ? ' ✓' : '';
+            const check = answered && i === q.correct ? ' âœ“' : '';
             return `<button onclick="${answered ? '' : `Tools._diagQuizAnswered=true;if(${i}===${q.correct})Tools._diagQuizScore=(Tools._diagQuizScore||0)+1;Tools._renderDiagramContent()`}" style="${style}">${o}${check}</button>`;
           }).join('')}
         </div>
@@ -8196,7 +8196,7 @@ const Tools = {
         <div style="margin-top:16px;padding:12px 14px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">
           <strong style="color:#3b82f6;">Explanation:</strong> ${q.exp}
         </div>
-        <button onclick="Tools._diagQuizIdx=(Tools._diagQuizIdx||0)+1;Tools._diagQuizAnswered=false;Tools._renderDiagramContent()" style="margin-top:14px;padding:10px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;width:100%;">Next →</button>` : ''}
+        <button onclick="Tools._diagQuizIdx=(Tools._diagQuizIdx||0)+1;Tools._diagQuizAnswered=false;Tools._renderDiagramContent()" style="margin-top:14px;padding:10px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;width:100%;">Next â†’</button>` : ''}
       </div>
     </div>`;
   },
@@ -8476,7 +8476,7 @@ const LESSONS_CONTENT = [
   {
     id: 'm1',
     title: 'AC Fundamentals',
-    icon: '〜',
+    icon: 'ã€œ',
     subtitle: 'The Invisible River That Powers Everything',
     color: '#f59e0b',
     gradient: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(234,88,12,0.06))',
@@ -8485,58 +8485,58 @@ const LESSONS_CONTENT = [
     sections: [
       {
         type: 'hook',
-        title: '⚡ Picture This',
-        body: `Right now, the electrons in your outlet aren't traveling from the power plant to your house — they're just jiggling back and forth, 60 times per second, barely moving anywhere at all.\n\nAnd yet your lights are on. Your phone is charging. Your coffee maker just finished its cycle.\n\nHow? Welcome to AC power — arguably the greatest electrical engineering trick ever pulled off.`
+        title: 'âš¡ Picture This',
+        body: `Right now, the electrons in your outlet aren't traveling from the power plant to your house â€” they're just jiggling back and forth, 60 times per second, barely moving anywhere at all.\n\nAnd yet your lights are on. Your phone is charging. Your coffee maker just finished its cycle.\n\nHow? Welcome to AC power â€” arguably the greatest electrical engineering trick ever pulled off.`
       },
       {
         type: 'story',
-        title: '🏆 The War of Currents',
-        body: `In the late 1880s, Thomas Edison and Nikola Tesla were locked in a bitter fight over which electrical system would power the world.\n\nEdison backed DC (direct current) — electrons flowing one direction, like water through a pipe. Safe, predictable. But DC couldn't be stepped up to high voltage efficiently, which meant it lost half its energy as heat over long distances. Edison's system needed a power station every mile or two.\n\nTesla backed AC (alternating current) — electrons oscillating back and forth. Edison called it dangerous and even publicly electrocuted animals to prove his point (truly a PR disaster). But AC had one killer advantage: it could be transformed.\n\nUsing a transformer, AC voltage could be stepped up to 100,000V to travel hundreds of kilometers with minimal loss, then stepped back down to a safe level at your house. Tesla and Westinghouse won. The world runs on AC to this day.`
+        title: 'ðŸ† The War of Currents',
+        body: `In the late 1880s, Thomas Edison and Nikola Tesla were locked in a bitter fight over which electrical system would power the world.\n\nEdison backed DC (direct current) â€” electrons flowing one direction, like water through a pipe. Safe, predictable. But DC couldn't be stepped up to high voltage efficiently, which meant it lost half its energy as heat over long distances. Edison's system needed a power station every mile or two.\n\nTesla backed AC (alternating current) â€” electrons oscillating back and forth. Edison called it dangerous and even publicly electrocuted animals to prove his point (truly a PR disaster). But AC had one killer advantage: it could be transformed.\n\nUsing a transformer, AC voltage could be stepped up to 100,000V to travel hundreds of kilometers with minimal loss, then stepped back down to a safe level at your house. Tesla and Westinghouse won. The world runs on AC to this day.`
       },
       {
         type: 'concept',
-        title: '📐 The Sine Wave: Nature\'s Favorite Shape',
-        body: `AC voltage follows a sine wave — the same mathematical curve you see in ocean waves, sound waves, and light waves. It's not a coincidence: it's what you get when something rotates.\n\nA generator is literally just a coil of wire spinning in a magnetic field. As the coil rotates, the voltage it produces traces a perfect sine wave:\n• Starting at 0 when the coil is parallel to the magnetic field\n• Rising to a positive peak when the coil is at 90°\n• Back to 0 at 180°\n• Dropping to a negative peak at 270°\n• Back to 0 at 360° (one full rotation)\n\nIn North America, the generator completes 60 of these rotations every second — that's 60 Hz (hertz). Europe uses 50 Hz. Your equipment is designed specifically for the frequency it was built for.`,
-        formula: 'v(t) = Vpeak × sin(2πft)\nWhere: f = 60 Hz, t = time in seconds'
+        title: 'ðŸ“ The Sine Wave: Nature\'s Favorite Shape',
+        body: `AC voltage follows a sine wave â€” the same mathematical curve you see in ocean waves, sound waves, and light waves. It's not a coincidence: it's what you get when something rotates.\n\nA generator is literally just a coil of wire spinning in a magnetic field. As the coil rotates, the voltage it produces traces a perfect sine wave:\nâ€¢ Starting at 0 when the coil is parallel to the magnetic field\nâ€¢ Rising to a positive peak when the coil is at 90Â°\nâ€¢ Back to 0 at 180Â°\nâ€¢ Dropping to a negative peak at 270Â°\nâ€¢ Back to 0 at 360Â° (one full rotation)\n\nIn North America, the generator completes 60 of these rotations every second â€” that's 60 Hz (hertz). Europe uses 50 Hz. Your equipment is designed specifically for the frequency it was built for.`,
+        formula: 'v(t) = Vpeak Ã— sin(2Ï€ft)\nWhere: f = 60 Hz, t = time in seconds'
       },
       {
         type: 'keypoint',
-        title: '⚡ Peak vs. RMS: The Number That Actually Matters',
-        body: `Here's where people get confused. When we say a standard outlet is "120V," that's NOT the peak voltage. The actual peak is about 170V.\n\nSo why do we say 120V? Because of RMS — Root Mean Square — a mathematical average that represents the equivalent DC heating effect.\n\nA 120V RMS AC supply does the same work as a 120V DC supply on a resistive load. It's the practical, useful number. The peak voltage is 1.414 times the RMS value (that factor is √2).\n\nThis matters enormously for equipment ratings, insulation ratings, and any calculations involving power.`,
-        formula: 'VRMS = Vpeak ÷ √2 = Vpeak × 0.707\nVpeak = VRMS × √2 = VRMS × 1.414\nExample: 120V RMS → Peak = 120 × 1.414 = 169.7V'
+        title: 'âš¡ Peak vs. RMS: The Number That Actually Matters',
+        body: `Here's where people get confused. When we say a standard outlet is "120V," that's NOT the peak voltage. The actual peak is about 170V.\n\nSo why do we say 120V? Because of RMS â€” Root Mean Square â€” a mathematical average that represents the equivalent DC heating effect.\n\nA 120V RMS AC supply does the same work as a 120V DC supply on a resistive load. It's the practical, useful number. The peak voltage is 1.414 times the RMS value (that factor is âˆš2).\n\nThis matters enormously for equipment ratings, insulation ratings, and any calculations involving power.`,
+        formula: 'VRMS = Vpeak Ã· âˆš2 = Vpeak Ã— 0.707\nVpeak = VRMS Ã— âˆš2 = VRMS Ã— 1.414\nExample: 120V RMS â†’ Peak = 120 Ã— 1.414 = 169.7V'
       },
       {
         type: 'analogy',
-        title: '🌊 Frequency & Period: Thinking in Time',
-        body: `Think of frequency like the tempo of a song. 60 Hz means the wave completes 60 full cycles per second — it's a very fast tempo. The period is the time for one complete cycle: 1/60 = 0.0167 seconds (about 16.7 milliseconds).\n\nWhy does this matter on the job? Because:\n• Fluorescent lights flicker at 120 Hz (twice per cycle) — if you ever see a strobe effect on rotating equipment, that's why\n• Induction motor speeds are directly tied to frequency: a 2-pole motor at 60 Hz runs at 3600 RPM (synchronous speed)\n• Harmonic frequencies (120 Hz, 180 Hz, 240 Hz...) are multiples of the fundamental and can cause heating in transformers and neutral conductors`,
-        formula: 'f = 1/T   T = 1/f\nAt 60 Hz: T = 1/60 = 16.7 ms\nMotor sync speed = (120 × f) ÷ number of poles'
+        title: 'ðŸŒŠ Frequency & Period: Thinking in Time',
+        body: `Think of frequency like the tempo of a song. 60 Hz means the wave completes 60 full cycles per second â€” it's a very fast tempo. The period is the time for one complete cycle: 1/60 = 0.0167 seconds (about 16.7 milliseconds).\n\nWhy does this matter on the job? Because:\nâ€¢ Fluorescent lights flicker at 120 Hz (twice per cycle) â€” if you ever see a strobe effect on rotating equipment, that's why\nâ€¢ Induction motor speeds are directly tied to frequency: a 2-pole motor at 60 Hz runs at 3600 RPM (synchronous speed)\nâ€¢ Harmonic frequencies (120 Hz, 180 Hz, 240 Hz...) are multiples of the fundamental and can cause heating in transformers and neutral conductors`,
+        formula: 'f = 1/T   T = 1/f\nAt 60 Hz: T = 1/60 = 16.7 ms\nMotor sync speed = (120 Ã— f) Ã· number of poles'
       },
       {
         type: 'concept',
-        title: '🔄 Phase: Where Are You in the Cycle?',
-        body: `Phase describes the timing relationship between two sine waves. If two waves start at exactly the same time, they're "in phase" — they work together perfectly.\n\nIf one wave is shifted in time relative to another, there's a phase difference, measured in degrees (since one full cycle = 360°).\n\nThis becomes critical in three-phase power, where three sine waves are deliberately spaced 120° apart. Those three phases allow generators to produce constant power (not pulsing like single-phase), allow smaller conductors for the same power, and enable self-starting motors.\n\nOn the job: when connecting three-phase motors, phase rotation order (A-B-C vs A-C-B) determines which direction the motor spins. Get it wrong and the motor runs backwards.`
+        title: 'ðŸ”„ Phase: Where Are You in the Cycle?',
+        body: `Phase describes the timing relationship between two sine waves. If two waves start at exactly the same time, they're "in phase" â€” they work together perfectly.\n\nIf one wave is shifted in time relative to another, there's a phase difference, measured in degrees (since one full cycle = 360Â°).\n\nThis becomes critical in three-phase power, where three sine waves are deliberately spaced 120Â° apart. Those three phases allow generators to produce constant power (not pulsing like single-phase), allow smaller conductors for the same power, and enable self-starting motors.\n\nOn the job: when connecting three-phase motors, phase rotation order (A-B-C vs A-C-B) determines which direction the motor spins. Get it wrong and the motor runs backwards.`
       },
       {
         type: 'real-world',
-        title: '🔧 Real World: Why Your Outlets Are 120V and 240V',
-        body: `Canadian residential service comes into your panel as 240V single-phase (two hot legs, each 120V to neutral, 240V between them). This clever setup means:\n\n• Normal outlets (120V): use one hot leg + neutral\n• High-power appliances (240V): use both hot legs\n\nThe two hot legs are 180° out of phase with each other — when one is at +170V peak, the other is at -170V peak. The difference between them is always 240V.\n\nThis is why a 240V circuit doesn't need a neutral for heating loads — it's just phase-to-phase. But 240V circuits with control electronics (like ovens with displays) DO use neutral for the low-voltage control circuits.`
+        title: 'ðŸ”§ Real World: Why Your Outlets Are 120V and 240V',
+        body: `Canadian residential service comes into your panel as 240V single-phase (two hot legs, each 120V to neutral, 240V between them). This clever setup means:\n\nâ€¢ Normal outlets (120V): use one hot leg + neutral\nâ€¢ High-power appliances (240V): use both hot legs\n\nThe two hot legs are 180Â° out of phase with each other â€” when one is at +170V peak, the other is at -170V peak. The difference between them is always 240V.\n\nThis is why a 240V circuit doesn't need a neutral for heating loads â€” it's just phase-to-phase. But 240V circuits with control electronics (like ovens with displays) DO use neutral for the low-voltage control circuits.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'ðŸ§  Quick Check',
         questions: [
-          { q: 'A 240V RMS supply has a peak voltage of approximately:', a: '340V (240 × 1.414 = 339.4V)' },
+          { q: 'A 240V RMS supply has a peak voltage of approximately:', a: '340V (240 Ã— 1.414 = 339.4V)' },
           { q: 'At 60 Hz, how long does one complete AC cycle take?', a: '16.7 milliseconds (1/60 second)' },
-          { q: 'Why does AC power win over DC for long-distance transmission?', a: 'AC voltage can be transformed (stepped up/down). High voltage = low current = low I²R losses over long distances.' }
+          { q: 'Why does AC power win over DC for long-distance transmission?', a: 'AC voltage can be transformed (stepped up/down). High voltage = low current = low IÂ²R losses over long distances.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'ðŸ›  Pro Tips',
         tips: [
           'When measuring AC with a multimeter, you\'re always reading RMS unless the meter specifies otherwise.',
-          'Three-phase panels label phases as A, B, C (or L1, L2, L3). The voltage between any two phases is always 1.732 × the phase-to-neutral voltage. At 120V/208V service: 120 × √3 = 207.8V ≈ 208V.',
-          'Harmonics are a real problem in modern buildings loaded with computers and variable frequency drives. They cause neutral conductors to overheat even when balanced — always check neutral sizing in these environments.'
+          'Three-phase panels label phases as A, B, C (or L1, L2, L3). The voltage between any two phases is always 1.732 Ã— the phase-to-neutral voltage. At 120V/208V service: 120 Ã— âˆš3 = 207.8V â‰ˆ 208V.',
+          'Harmonics are a real problem in modern buildings loaded with computers and variable frequency drives. They cause neutral conductors to overheat even when balanced â€” always check neutral sizing in these environments.'
         ]
       },
       {
@@ -8546,24 +8546,24 @@ const LESSONS_CONTENT = [
           'Describe the difference between alternating current (AC) and direct current (DC), and explain why AC is used for electrical power distribution.',
           'Describe how a generator produces a sine wave through the rotation of a conductor in a magnetic field.',
           'Identify the components of a sine wave: amplitude, peak value, peak-to-peak value, period, frequency, and phase angle.',
-          'Calculate peak voltage from RMS voltage using Vpk = VRMS × √2, and calculate RMS voltage from peak voltage using VRMS = Vpk × 0.707.',
-          'Calculate peak-to-peak voltage (Vpp = 2 × Vpk) and average voltage (Vavg = Vpk × 0.637) for a sine wave.',
+          'Calculate peak voltage from RMS voltage using Vpk = VRMS Ã— âˆš2, and calculate RMS voltage from peak voltage using VRMS = Vpk Ã— 0.707.',
+          'Calculate peak-to-peak voltage (Vpp = 2 Ã— Vpk) and average voltage (Vavg = Vpk Ã— 0.637) for a sine wave.',
           'Define frequency (Hz) as the number of complete cycles per second, and period (T) as the time for one complete cycle.',
           'Apply the reciprocal relationship between frequency and period: f = 1/T and T = 1/f.',
           'Explain why North American power systems operate at 60 Hz and describe the consequences of using 60 Hz equipment on a 50 Hz system.',
           'Define phase angle and explain what it means for two waveforms to be in phase or out of phase with each other.',
-          'Describe how three-phase power is generated, identifying the 120° phase separation between the three waveforms.',
+          'Describe how three-phase power is generated, identifying the 120Â° phase separation between the three waveforms.',
           'Identify the advantages of three-phase power over single-phase power: constant power delivery, smaller conductors for the same power, and self-starting induction motors.',
-          'Apply the relationship between line voltage and phase voltage in a three-phase wye-connected system: VL = VΦ × √3.',
+          'Apply the relationship between line voltage and phase voltage in a three-phase wye-connected system: VL = VÎ¦ Ã— âˆš3.',
           'Describe the construction of Canadian residential single-phase 120/240V service, identifying the two hot legs, neutral, and their voltage relationships.',
           'Apply Ohm\'s Law calculations to AC resistive circuits using RMS values for voltage and current.'
         ],
         questions: [
-          { q: 'A 347V RMS AC supply has a peak voltage of approximately:', a: '347 × 1.414 = 490.7V peak. (VRMS × √2 = Vpeak)' },
-          { q: 'In a 120/240V residential service, what is the voltage between the two hot legs?', a: '240V. The two hot legs are 180° out of phase — each is 120V to neutral, but measured between them the difference is always 240V.' },
+          { q: 'A 347V RMS AC supply has a peak voltage of approximately:', a: '347 Ã— 1.414 = 490.7V peak. (VRMS Ã— âˆš2 = Vpeak)' },
+          { q: 'In a 120/240V residential service, what is the voltage between the two hot legs?', a: '240V. The two hot legs are 180Â° out of phase â€” each is 120V to neutral, but measured between them the difference is always 240V.' },
           { q: 'At 60 Hz, the period of one complete AC cycle is:', a: 'T = 1/f = 1/60 = 0.0167 seconds (16.7 milliseconds).' },
-          { q: 'Why is the RMS value of an AC voltage more useful than the peak voltage for most calculations?', a: 'RMS represents the equivalent DC heating effect — a 120V RMS AC supply does the same work on a resistive load as 120V DC. It\'s the practical measure for power, heat, and load calculations.' },
-          { q: 'A three-phase 208V system has a phase-to-neutral voltage of:', a: '208 ÷ √3 = 120V per phase. Line voltage = phase voltage × √3, so phase voltage = line voltage ÷ √3.' }
+          { q: 'Why is the RMS value of an AC voltage more useful than the peak voltage for most calculations?', a: 'RMS represents the equivalent DC heating effect â€” a 120V RMS AC supply does the same work on a resistive load as 120V DC. It\'s the practical measure for power, heat, and load calculations.' },
+          { q: 'A three-phase 208V system has a phase-to-neutral voltage of:', a: '208 Ã· âˆš3 = 120V per phase. Line voltage = phase voltage Ã— âˆš3, so phase voltage = line voltage Ã· âˆš3.' }
         ]
       },
       {
@@ -8571,9 +8571,9 @@ const LESSONS_CONTENT = [
         title: 'Module Desired Outcome',
         outcome: 'The student will describe the characteristics and measurements of alternating current (AC) waveforms and apply these to basic AC calculations.',
         questions: [
-          { q: 'An electrician measures 169.7V peak on a circuit. What is the RMS voltage, and is this circuit suitable for 120V-rated equipment?', a: 'VRMS = 169.7 × 0.707 = 120V. Yes — this is a standard 120V RMS circuit. The peak of 169.7V ≈ 170V is normal for 120V RMS AC.' },
-          { q: 'A 600V/208V transformer secondary produces 208V line-to-line. What is the voltage from one phase to neutral? What is the peak voltage of the line-to-line waveform?', a: 'Phase-to-neutral: 208 ÷ √3 = 120V. Peak of line-to-line: 208 × √2 = 294.2V peak. The insulation of conductors must be rated for at least the peak voltage.' },
-          { q: 'A motor rated for 60 Hz is connected to a 50 Hz supply at the same voltage. Describe what happens and why.', a: 'The motor runs at 50/60 = 83.3% of its rated speed (synchronous speed = 120f/poles). It also draws more current because the lower frequency means higher inductive reactance… wait, lower XL = lower impedance = more current. The motor will overheat. Additionally, fans and pumps driving it may lose required performance. Equipment must be matched to the supply frequency.' }
+          { q: 'An electrician measures 169.7V peak on a circuit. What is the RMS voltage, and is this circuit suitable for 120V-rated equipment?', a: 'VRMS = 169.7 Ã— 0.707 = 120V. Yes â€” this is a standard 120V RMS circuit. The peak of 169.7V â‰ˆ 170V is normal for 120V RMS AC.' },
+          { q: 'A 600V/208V transformer secondary produces 208V line-to-line. What is the voltage from one phase to neutral? What is the peak voltage of the line-to-line waveform?', a: 'Phase-to-neutral: 208 Ã· âˆš3 = 120V. Peak of line-to-line: 208 Ã— âˆš2 = 294.2V peak. The insulation of conductors must be rated for at least the peak voltage.' },
+          { q: 'A motor rated for 60 Hz is connected to a 50 Hz supply at the same voltage. Describe what happens and why.', a: 'The motor runs at 50/60 = 83.3% of its rated speed (synchronous speed = 120f/poles). It also draws more current because the lower frequency means higher inductive reactanceâ€¦ wait, lower XL = lower impedance = more current. The motor will overheat. Additionally, fans and pumps driving it may lose required performance. Equipment must be matched to the supply frequency.' }
         ]
       }
     ]
@@ -8581,7 +8581,7 @@ const LESSONS_CONTENT = [
   {
     id: 'm2',
     title: 'Properties of Inductors & Capacitors',
-    icon: '🔄',
+    icon: 'ðŸ”„',
     subtitle: 'The Components That Make AC Interesting',
     color: '#8b5cf6',
     gradient: 'linear-gradient(135deg,rgba(139,92,246,0.12),rgba(59,130,246,0.06))',
@@ -8590,63 +8590,63 @@ const LESSONS_CONTENT = [
     sections: [
       {
         type: 'hook',
-        title: '⚡ The Components That Fight Back',
+        title: 'âš¡ The Components That Fight Back',
         body: `Resistors are boring. Feed them voltage, they resist, they heat up. Simple.\n\nBut inductors and capacitors? These components have attitude. They store energy. They fight changes in the circuit. They shift the phase of current. And together, they make possible everything from radio tuners to motor starters to power factor correction systems that utilities charge you thousands of dollars for.\n\nUnderstanding L and C is what separates an apprentice who can run wire from a journeyman who understands why the system works.`
       },
       {
         type: 'story',
-        title: '🌀 The Inductor: Magnetism Fights Back',
-        body: `An inductor is just a coil of wire — but wrapping wire into a coil creates a magnetic field when current flows through it. And here's the key insight: magnetic fields store energy.\n\nWhen you try to increase current through an inductor, the growing magnetic field induces a voltage that opposes the increase (Lenz's Law). When you try to decrease current, the collapsing field tries to maintain the current.\n\nIn other words: an inductor resists changes in current. It's electrical inertia.\n\nThe unit is the henry (H), named after Joseph Henry who discovered electromagnetic induction (yes, Faraday gets more credit, but Henry actually discovered it first — he just published later).\n\nReal-world inductors include motor windings, transformer primary coils, fluorescent lamp ballasts, and relay coils. Basically anything that uses a magnetic field to do work is an inductor.`
+        title: 'ðŸŒ€ The Inductor: Magnetism Fights Back',
+        body: `An inductor is just a coil of wire â€” but wrapping wire into a coil creates a magnetic field when current flows through it. And here's the key insight: magnetic fields store energy.\n\nWhen you try to increase current through an inductor, the growing magnetic field induces a voltage that opposes the increase (Lenz's Law). When you try to decrease current, the collapsing field tries to maintain the current.\n\nIn other words: an inductor resists changes in current. It's electrical inertia.\n\nThe unit is the henry (H), named after Joseph Henry who discovered electromagnetic induction (yes, Faraday gets more credit, but Henry actually discovered it first â€” he just published later).\n\nReal-world inductors include motor windings, transformer primary coils, fluorescent lamp ballasts, and relay coils. Basically anything that uses a magnetic field to do work is an inductor.`
       },
       {
         type: 'concept',
-        title: '📊 Inductive Reactance: Resistance That Cares About Frequency',
-        body: `Inductors don't have resistance in the traditional sense — they have reactance. And unlike resistance (which is fixed), inductive reactance changes with frequency.\n\nHigher frequency → inductor changes current faster → it fights back harder → more reactance.\n\nLower frequency (or DC) → slower change → inductor barely resists → nearly zero reactance at DC.\n\nThis is why inductors are used as "chokes" to block high-frequency signals while passing DC — perfect for power supply filters in electronics.`,
-        formula: 'XL = 2πfL\nWhere: XL = inductive reactance (Ω), f = frequency (Hz), L = inductance (H)\n\nExample: L = 100mH at 60 Hz\nXL = 2π × 60 × 0.1 = 37.7 Ω'
+        title: 'ðŸ“Š Inductive Reactance: Resistance That Cares About Frequency',
+        body: `Inductors don't have resistance in the traditional sense â€” they have reactance. And unlike resistance (which is fixed), inductive reactance changes with frequency.\n\nHigher frequency â†’ inductor changes current faster â†’ it fights back harder â†’ more reactance.\n\nLower frequency (or DC) â†’ slower change â†’ inductor barely resists â†’ nearly zero reactance at DC.\n\nThis is why inductors are used as "chokes" to block high-frequency signals while passing DC â€” perfect for power supply filters in electronics.`,
+        formula: 'XL = 2Ï€fL\nWhere: XL = inductive reactance (Î©), f = frequency (Hz), L = inductance (H)\n\nExample: L = 100mH at 60 Hz\nXL = 2Ï€ Ã— 60 Ã— 0.1 = 37.7 Î©'
       },
       {
         type: 'keypoint',
-        title: '⏰ Inductive Phase Shift: Current Lags',
-        body: `Here's the most important characteristic for your exam: in a purely inductive circuit, current LAGS voltage by 90°.\n\nMnemonic: ELI the ICE man\n• ELI: in an inductive (L) circuit, voltage (E) leads current (I)\n• ICE: in a capacitive (C) circuit, current (I) leads voltage (E)\n\nPhysically, this makes sense: voltage is applied first, but the inductor's opposition means current builds up slowly afterward. The voltage is always "ahead" of the current by a quarter-cycle (90°).\n\nThis phase shift is the root cause of poor power factor in industrial facilities. Inductive motors, transformers, and ballasts all cause lagging current, and utilities charge extra for it.`,
-        formula: 'In a pure inductor: θ = 90° (current lags voltage)'
+        title: 'â° Inductive Phase Shift: Current Lags',
+        body: `Here's the most important characteristic for your exam: in a purely inductive circuit, current LAGS voltage by 90Â°.\n\nMnemonic: ELI the ICE man\nâ€¢ ELI: in an inductive (L) circuit, voltage (E) leads current (I)\nâ€¢ ICE: in a capacitive (C) circuit, current (I) leads voltage (E)\n\nPhysically, this makes sense: voltage is applied first, but the inductor's opposition means current builds up slowly afterward. The voltage is always "ahead" of the current by a quarter-cycle (90Â°).\n\nThis phase shift is the root cause of poor power factor in industrial facilities. Inductive motors, transformers, and ballasts all cause lagging current, and utilities charge extra for it.`,
+        formula: 'In a pure inductor: Î¸ = 90Â° (current lags voltage)'
       },
       {
         type: 'story',
-        title: '⚡ The Capacitor: Electric Fields Fight Back',
-        body: `A capacitor stores energy in an electric field rather than a magnetic field. The basic structure is two conductive plates separated by an insulator (the dielectric). Push charge onto the plates, an electric field builds up between them — and energy is stored.\n\nCapacitors resist changes in voltage. Try to change the voltage across a capacitor quickly, and the capacitor absorbs or releases charge to fight you.\n\nWhen you disconnect a capacitor from a circuit, it holds its charge — sometimes for a very long time. This is why capacitors in equipment like large drives and power supplies can be lethally dangerous even hours after power is removed. Always verify capacitors are discharged with a properly rated discharge resistor before working inside high-voltage equipment.\n\nThe unit is the farad (F), but practical capacitors are usually in microfarads (μF) or nanofarads (nF) — a full farad is enormous.`
+        title: 'âš¡ The Capacitor: Electric Fields Fight Back',
+        body: `A capacitor stores energy in an electric field rather than a magnetic field. The basic structure is two conductive plates separated by an insulator (the dielectric). Push charge onto the plates, an electric field builds up between them â€” and energy is stored.\n\nCapacitors resist changes in voltage. Try to change the voltage across a capacitor quickly, and the capacitor absorbs or releases charge to fight you.\n\nWhen you disconnect a capacitor from a circuit, it holds its charge â€” sometimes for a very long time. This is why capacitors in equipment like large drives and power supplies can be lethally dangerous even hours after power is removed. Always verify capacitors are discharged with a properly rated discharge resistor before working inside high-voltage equipment.\n\nThe unit is the farad (F), but practical capacitors are usually in microfarads (Î¼F) or nanofarads (nF) â€” a full farad is enormous.`
       },
       {
         type: 'concept',
-        title: '📊 Capacitive Reactance: The Opposite of Inductive',
-        body: `Capacitive reactance is the opposite of inductive reactance in almost every way:\n\n• Higher frequency → capacitor charges/discharges faster → less time to fight → LESS reactance\n• Lower frequency (or DC) → very slow charging → capacitor barely lets anything through → infinite reactance at DC\n\nThis is why capacitors block DC but pass AC — essential in virtually every electronic circuit for signal coupling and filtering.`,
-        formula: 'XC = 1 / (2πfC)\nWhere: XC = capacitive reactance (Ω), f = frequency (Hz), C = capacitance (F)\n\nExample: C = 100μF at 60 Hz\nXC = 1 / (2π × 60 × 0.0001) = 26.5 Ω\n\nNote: XC decreases as frequency increases (opposite of XL)'
+        title: 'ðŸ“Š Capacitive Reactance: The Opposite of Inductive',
+        body: `Capacitive reactance is the opposite of inductive reactance in almost every way:\n\nâ€¢ Higher frequency â†’ capacitor charges/discharges faster â†’ less time to fight â†’ LESS reactance\nâ€¢ Lower frequency (or DC) â†’ very slow charging â†’ capacitor barely lets anything through â†’ infinite reactance at DC\n\nThis is why capacitors block DC but pass AC â€” essential in virtually every electronic circuit for signal coupling and filtering.`,
+        formula: 'XC = 1 / (2Ï€fC)\nWhere: XC = capacitive reactance (Î©), f = frequency (Hz), C = capacitance (F)\n\nExample: C = 100Î¼F at 60 Hz\nXC = 1 / (2Ï€ Ã— 60 Ã— 0.0001) = 26.5 Î©\n\nNote: XC decreases as frequency increases (opposite of XL)'
       },
       {
         type: 'keypoint',
-        title: '⏰ Capacitive Phase Shift: Current Leads',
-        body: `In a purely capacitive circuit, current LEADS voltage by 90°.\n\nPhysical intuition: when you first connect voltage to a capacitor, current rushes in immediately to charge the plates — before the voltage has had time to build up. Current is "eager," getting there before voltage.\n\nThis leading current is the exact opposite of inductive lagging current, which is why capacitors are used to correct power factor: they cancel out the lagging effect of inductive loads.\n\nPower factor correction capacitor banks are installed at industrial facilities, transformer substations, and motor control panels. They reduce the reactive current the utility has to supply, reducing losses and avoiding demand charges.`,
-        formula: 'In a pure capacitor: θ = -90° (current leads voltage)'
+        title: 'â° Capacitive Phase Shift: Current Leads',
+        body: `In a purely capacitive circuit, current LEADS voltage by 90Â°.\n\nPhysical intuition: when you first connect voltage to a capacitor, current rushes in immediately to charge the plates â€” before the voltage has had time to build up. Current is "eager," getting there before voltage.\n\nThis leading current is the exact opposite of inductive lagging current, which is why capacitors are used to correct power factor: they cancel out the lagging effect of inductive loads.\n\nPower factor correction capacitor banks are installed at industrial facilities, transformer substations, and motor control panels. They reduce the reactive current the utility has to supply, reducing losses and avoiding demand charges.`,
+        formula: 'In a pure capacitor: Î¸ = -90Â° (current leads voltage)'
       },
       {
         type: 'real-world',
-        title: '🔧 Real World: The Motor Start Capacitor',
-        body: `Single-phase induction motors can't self-start without help — the single-phase supply creates a pulsating (not rotating) magnetic field. A start capacitor solves this by creating a second, phase-shifted current in a separate start winding.\n\nThe capacitor shifts the current in the start winding by about 90°, creating a phase difference between the run and start windings. The two magnetic fields, 90° apart in time and space, create a rotating field that kicks the motor off.\n\nOnce up to speed, a centrifugal switch disconnects the start capacitor (which is only rated for intermittent duty). Run capacitors (smaller, continuous duty rated) stay in circuit to improve power factor and efficiency.\n\nIf a single-phase motor hums but won't start, or starts only when you give it a spin by hand — the start capacitor is bad. Test it with a capacitance meter.`
+        title: 'ðŸ”§ Real World: The Motor Start Capacitor',
+        body: `Single-phase induction motors can't self-start without help â€” the single-phase supply creates a pulsating (not rotating) magnetic field. A start capacitor solves this by creating a second, phase-shifted current in a separate start winding.\n\nThe capacitor shifts the current in the start winding by about 90Â°, creating a phase difference between the run and start windings. The two magnetic fields, 90Â° apart in time and space, create a rotating field that kicks the motor off.\n\nOnce up to speed, a centrifugal switch disconnects the start capacitor (which is only rated for intermittent duty). Run capacitors (smaller, continuous duty rated) stay in circuit to improve power factor and efficiency.\n\nIf a single-phase motor hums but won't start, or starts only when you give it a spin by hand â€” the start capacitor is bad. Test it with a capacitance meter.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'ðŸ§  Quick Check',
         questions: [
-          { q: 'A 50 mH inductor at 60 Hz has a reactance of:', a: 'XL = 2π × 60 × 0.05 = 18.85 Ω' },
-          { q: 'In a purely inductive circuit, current _____ voltage by 90°.', a: 'LAGS (use ELI: voltage E leads current I in inductor L)' },
-          { q: 'A 47 μF capacitor at 60 Hz has a reactance of:', a: 'XC = 1/(2π × 60 × 0.000047) = 56.4 Ω' },
-          { q: 'Why is capacitive reactance high at DC (0 Hz)?', a: 'XC = 1/(2πfC) — dividing by frequency approaching zero gives infinity. DC cannot charge/discharge a capacitor continuously, so it blocks DC.' }
+          { q: 'A 50 mH inductor at 60 Hz has a reactance of:', a: 'XL = 2Ï€ Ã— 60 Ã— 0.05 = 18.85 Î©' },
+          { q: 'In a purely inductive circuit, current _____ voltage by 90Â°.', a: 'LAGS (use ELI: voltage E leads current I in inductor L)' },
+          { q: 'A 47 Î¼F capacitor at 60 Hz has a reactance of:', a: 'XC = 1/(2Ï€ Ã— 60 Ã— 0.000047) = 56.4 Î©' },
+          { q: 'Why is capacitive reactance high at DC (0 Hz)?', a: 'XC = 1/(2Ï€fC) â€” dividing by frequency approaching zero gives infinity. DC cannot charge/discharge a capacitor continuously, so it blocks DC.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'ðŸ›  Pro Tips',
         tips: [
-          'Remember ELI the ICE man — it\'s the most exam-tested concept related to L and C. ELI = E leads I in Inductor. ICE = I leads E in Capacitor.',
+          'Remember ELI the ICE man â€” it\'s the most exam-tested concept related to L and C. ELI = E leads I in Inductor. ICE = I leads E in Capacitor.',
           'Capacitors store dangerous charge. On anything with a large capacitor bank (drives, UPS systems, motor start panels), verify voltage with your meter before touching. Some will hold a lethal charge for many minutes.',
           'Inductive reactance and capacitive reactance cancel each other out at resonance (when XL = XC). Resonance is exploited in radio tuning circuits and power factor correction, but can also cause dangerous overvoltages in unintended resonant conditions.'
         ]
@@ -8658,13 +8658,13 @@ const LESSONS_CONTENT = [
           'Define inductance (L) and explain the principle of self-induction using Faraday\'s and Lenz\'s Laws.',
           'Describe how a magnetic field stores energy in an inductor and explain why an inductor opposes changes in current.',
           'Identify the factors that determine the inductance of a coil: number of turns, core permeability, cross-sectional area, and coil length.',
-          'Calculate inductive reactance using XL = 2πfL and explain how XL changes with frequency and inductance.',
-          'Describe the phase relationship between voltage and current in a purely inductive circuit (current lags voltage by 90°).',
+          'Calculate inductive reactance using XL = 2Ï€fL and explain how XL changes with frequency and inductance.',
+          'Describe the phase relationship between voltage and current in a purely inductive circuit (current lags voltage by 90Â°).',
           'Apply the ELI mnemonic (E leads I in L) to remember inductor phase relationships.',
           'Define capacitance (C) and describe how an electric field stores energy between the plates of a capacitor.',
           'Identify the factors that determine capacitance: plate area, plate separation, and dielectric material.',
-          'Calculate capacitive reactance using XC = 1/(2πfC) and explain how XC changes with frequency and capacitance.',
-          'Describe the phase relationship between voltage and current in a purely capacitive circuit (current leads voltage by 90°).',
+          'Calculate capacitive reactance using XC = 1/(2Ï€fC) and explain how XC changes with frequency and capacitance.',
+          'Describe the phase relationship between voltage and current in a purely capacitive circuit (current leads voltage by 90Â°).',
           'Apply the ICE mnemonic (I leads E in C) to remember capacitor phase relationships.',
           'Explain why inductors pass DC but block high-frequency AC signals, and why capacitors block DC but pass AC.',
           'Identify common applications of inductors in electrical systems: motor windings, transformer coils, fluorescent ballasts, reactor coils, and relay coils.',
@@ -8672,11 +8672,11 @@ const LESSONS_CONTENT = [
           'Describe the safety hazard of stored charge in large capacitors and explain the proper procedure for discharging capacitors before working on equipment.'
         ],
         questions: [
-          { q: 'A 200mH inductor is connected to a 60 Hz supply. What is its inductive reactance?', a: 'XL = 2πfL = 2π × 60 × 0.2 = 75.4 Ω' },
-          { q: 'A 100μF capacitor is connected to a 60 Hz supply. What is its capacitive reactance?', a: 'XC = 1/(2πfC) = 1/(2π × 60 × 0.0001) = 26.5 Ω' },
-          { q: 'In a purely inductive circuit, current lags voltage by how many degrees? Apply ELI to confirm.', a: '90°. ELI: in an inductor (L), voltage (E) leads current (I) — meaning current lags voltage by 90°.' },
+          { q: 'A 200mH inductor is connected to a 60 Hz supply. What is its inductive reactance?', a: 'XL = 2Ï€fL = 2Ï€ Ã— 60 Ã— 0.2 = 75.4 Î©' },
+          { q: 'A 100Î¼F capacitor is connected to a 60 Hz supply. What is its capacitive reactance?', a: 'XC = 1/(2Ï€fC) = 1/(2Ï€ Ã— 60 Ã— 0.0001) = 26.5 Î©' },
+          { q: 'In a purely inductive circuit, current lags voltage by how many degrees? Apply ELI to confirm.', a: '90Â°. ELI: in an inductor (L), voltage (E) leads current (I) â€” meaning current lags voltage by 90Â°.' },
           { q: 'Why must large capacitors in industrial equipment be discharged before working on them?', a: 'Capacitors store charge and hold it even after power is removed. Large capacitors in drives, UPS systems, and power supplies can retain lethal voltage for many minutes or hours. They must be discharged through a rated resistor and verified with a voltmeter before touching.' },
-          { q: 'What happens to inductive reactance if the frequency doubles? What happens to capacitive reactance if the frequency doubles?', a: 'XL doubles (XL = 2πfL — directly proportional to f). XC halves (XC = 1/(2πfC) — inversely proportional to f). This is why inductors increasingly block higher frequencies and capacitors increasingly pass them.' }
+          { q: 'What happens to inductive reactance if the frequency doubles? What happens to capacitive reactance if the frequency doubles?', a: 'XL doubles (XL = 2Ï€fL â€” directly proportional to f). XC halves (XC = 1/(2Ï€fC) â€” inversely proportional to f). This is why inductors increasingly block higher frequencies and capacitors increasingly pass them.' }
         ]
       },
       {
@@ -8684,8 +8684,8 @@ const LESSONS_CONTENT = [
         title: 'Module Desired Outcome',
         outcome: 'The student will describe the properties of inductors and capacitors and explain their effects on current and voltage in AC circuits.',
         questions: [
-          { q: 'A technician connects a 50mH coil directly across a 120V, 60Hz supply. Calculate the inductive reactance and the current that will flow. Is this a safe thing to do without knowing the coil\'s resistance?', a: 'XL = 2π × 60 × 0.05 = 18.85 Ω. Assuming ideal inductor: I = V/XL = 120/18.85 = 6.37A. In practice, a real coil has DC resistance too — total current depends on Z = √(R² + XL²). Without knowing resistance, you could draw much more current than the coil is rated for. Always check the coil\'s rated current before connecting.' },
-          { q: 'Explain why a large variable frequency drive should have its capacitor bank discharged before a technician works inside, even 30 minutes after power is removed. How would you verify it is safe?', a: 'Large DC bus capacitors in drives can hold hundreds of volts for extended periods after power off — the bus voltage decays slowly through high-resistance discharge resistors. To verify: wait the manufacturer\'s specified discharge time (typically 5-15 min), then measure DC bus voltage with a properly rated meter between the DC+ and DC- terminals. Voltage must be below 50V (or per the drive\'s safety threshold) before proceeding.' }
+          { q: 'A technician connects a 50mH coil directly across a 120V, 60Hz supply. Calculate the inductive reactance and the current that will flow. Is this a safe thing to do without knowing the coil\'s resistance?', a: 'XL = 2Ï€ Ã— 60 Ã— 0.05 = 18.85 Î©. Assuming ideal inductor: I = V/XL = 120/18.85 = 6.37A. In practice, a real coil has DC resistance too â€” total current depends on Z = âˆš(RÂ² + XLÂ²). Without knowing resistance, you could draw much more current than the coil is rated for. Always check the coil\'s rated current before connecting.' },
+          { q: 'Explain why a large variable frequency drive should have its capacitor bank discharged before a technician works inside, even 30 minutes after power is removed. How would you verify it is safe?', a: 'Large DC bus capacitors in drives can hold hundreds of volts for extended periods after power off â€” the bus voltage decays slowly through high-resistance discharge resistors. To verify: wait the manufacturer\'s specified discharge time (typically 5-15 min), then measure DC bus voltage with a properly rated meter between the DC+ and DC- terminals. Voltage must be below 50V (or per the drive\'s safety threshold) before proceeding.' }
         ]
       }
     ]
@@ -8693,7 +8693,7 @@ const LESSONS_CONTENT = [
   {
     id: 'm3',
     title: 'Inductors & Capacitors in Circuits',
-    icon: '⚡',
+    icon: 'âš¡',
     subtitle: 'Reactance, Impedance, and the Power Triangle',
     color: '#06b6d4',
     gradient: 'linear-gradient(135deg,rgba(6,182,212,0.12),rgba(59,130,246,0.06))',
@@ -8702,60 +8702,60 @@ const LESSONS_CONTENT = [
     sections: [
       {
         type: 'hook',
-        title: '⚡ Resistance Isn\'t Everything',
-        body: `In a DC circuit, life is simple: Ohm's Law, resistance, done. But in an AC circuit with inductors and capacitors, resistance is just one piece of the puzzle.\n\nWhen you combine resistance (R) with reactance (XL or XC), you get impedance (Z) — the total opposition to current flow in an AC circuit. And impedance doesn't just determine how much current flows — it determines when it flows.\n\nMaster impedance and you understand why motors draw reactive current, why long fluorescent ballast circuits need power factor capacitors, and why neutral conductors in some commercial buildings carry more current than the phase conductors.`
+        title: 'âš¡ Resistance Isn\'t Everything',
+        body: `In a DC circuit, life is simple: Ohm's Law, resistance, done. But in an AC circuit with inductors and capacitors, resistance is just one piece of the puzzle.\n\nWhen you combine resistance (R) with reactance (XL or XC), you get impedance (Z) â€” the total opposition to current flow in an AC circuit. And impedance doesn't just determine how much current flows â€” it determines when it flows.\n\nMaster impedance and you understand why motors draw reactive current, why long fluorescent ballast circuits need power factor capacitors, and why neutral conductors in some commercial buildings carry more current than the phase conductors.`
       },
       {
         type: 'concept',
-        title: '📐 Impedance: The Full Picture',
-        body: `You cannot simply add resistance and reactance together — they're at different angles. R is always at 0° (in phase with voltage), while XL is at +90° and XC is at -90°.\n\nTo combine them, use the Pythagorean theorem on the impedance triangle:\n• Z = √(R² + (XL - XC)²)\n\nWhen XL > XC: net reactance is inductive, current lags voltage\nWhen XC > XL: net reactance is capacitive, current leads voltage\nWhen XL = XC: resonance — Z = R only, current is in phase with voltage\n\nThe phase angle θ tells you how far current is shifted from voltage:\nθ = arctan((XL - XC) / R)`,
-        formula: 'Z = √(R² + X²)\nwhere X = XL - XC (net reactance)\n\nFor an RL circuit: Z = √(R² + XL²)\nFor an RC circuit: Z = √(R² + XC²)\nFor an RLC circuit: Z = √(R² + (XL - XC)²)'
+        title: 'ðŸ“ Impedance: The Full Picture',
+        body: `You cannot simply add resistance and reactance together â€” they're at different angles. R is always at 0Â° (in phase with voltage), while XL is at +90Â° and XC is at -90Â°.\n\nTo combine them, use the Pythagorean theorem on the impedance triangle:\nâ€¢ Z = âˆš(RÂ² + (XL - XC)Â²)\n\nWhen XL > XC: net reactance is inductive, current lags voltage\nWhen XC > XL: net reactance is capacitive, current leads voltage\nWhen XL = XC: resonance â€” Z = R only, current is in phase with voltage\n\nThe phase angle Î¸ tells you how far current is shifted from voltage:\nÎ¸ = arctan((XL - XC) / R)`,
+        formula: 'Z = âˆš(RÂ² + XÂ²)\nwhere X = XL - XC (net reactance)\n\nFor an RL circuit: Z = âˆš(RÂ² + XLÂ²)\nFor an RC circuit: Z = âˆš(RÂ² + XCÂ²)\nFor an RLC circuit: Z = âˆš(RÂ² + (XL - XC)Â²)'
       },
       {
         type: 'concept',
-        title: '⚡ Series RL Circuit: Motors and Ballasts',
-        body: `Almost every inductive load you'll work with is a series RL circuit: resistance from the copper windings plus inductance from the coil. Motors, transformers, relay coils, and fluorescent ballasts are all RL loads.\n\nIn a series RL circuit:\n• Voltage across R is in phase with current\n• Voltage across L leads current by 90°\n• Total supply voltage is the phasor sum: VS = √(VR² + VL²)\n• Current lags supply voltage by angle θ = arctan(XL/R)\n\nExample: A motor coil has R = 8Ω and XL = 6Ω at 60 Hz.\nZ = √(8² + 6²) = √(64 + 36) = √100 = 10 Ω\nCurrent lags voltage by θ = arctan(6/8) = 36.87°`,
-        formula: 'Series RL:\nZ = √(R² + XL²)\nVR = I × R\nVL = I × XL\nVS = √(VR² + VL²)\nθ = arctan(XL / R)   [current lags]'
+        title: 'âš¡ Series RL Circuit: Motors and Ballasts',
+        body: `Almost every inductive load you'll work with is a series RL circuit: resistance from the copper windings plus inductance from the coil. Motors, transformers, relay coils, and fluorescent ballasts are all RL loads.\n\nIn a series RL circuit:\nâ€¢ Voltage across R is in phase with current\nâ€¢ Voltage across L leads current by 90Â°\nâ€¢ Total supply voltage is the phasor sum: VS = âˆš(VRÂ² + VLÂ²)\nâ€¢ Current lags supply voltage by angle Î¸ = arctan(XL/R)\n\nExample: A motor coil has R = 8Î© and XL = 6Î© at 60 Hz.\nZ = âˆš(8Â² + 6Â²) = âˆš(64 + 36) = âˆš100 = 10 Î©\nCurrent lags voltage by Î¸ = arctan(6/8) = 36.87Â°`,
+        formula: 'Series RL:\nZ = âˆš(RÂ² + XLÂ²)\nVR = I Ã— R\nVL = I Ã— XL\nVS = âˆš(VRÂ² + VLÂ²)\nÎ¸ = arctan(XL / R)   [current lags]'
       },
       {
         type: 'concept',
-        title: '🔋 Series RC Circuit: Timers and Filters',
-        body: `Series RC circuits appear in motor start circuits, timing circuits, and filter networks. Current leads voltage in a capacitive circuit, which is the exact opposite of an RL load.\n\nExample: A circuit has R = 30Ω and C = 100μF at 60 Hz.\nXC = 1/(2π × 60 × 0.0001) = 26.5 Ω\nZ = √(30² + 26.5²) = √(900 + 702) = √1602 = 40.0 Ω\nθ = arctan(26.5/30) = 41.4° (current leads voltage)`,
-        formula: 'Series RC:\nZ = √(R² + XC²)\nVR = I × R\nVC = I × XC\nVS = √(VR² + VC²)\nθ = arctan(XC / R)   [current leads]'
+        title: 'ðŸ”‹ Series RC Circuit: Timers and Filters',
+        body: `Series RC circuits appear in motor start circuits, timing circuits, and filter networks. Current leads voltage in a capacitive circuit, which is the exact opposite of an RL load.\n\nExample: A circuit has R = 30Î© and C = 100Î¼F at 60 Hz.\nXC = 1/(2Ï€ Ã— 60 Ã— 0.0001) = 26.5 Î©\nZ = âˆš(30Â² + 26.5Â²) = âˆš(900 + 702) = âˆš1602 = 40.0 Î©\nÎ¸ = arctan(26.5/30) = 41.4Â° (current leads voltage)`,
+        formula: 'Series RC:\nZ = âˆš(RÂ² + XCÂ²)\nVR = I Ã— R\nVC = I Ã— XC\nVS = âˆš(VRÂ² + VCÂ²)\nÎ¸ = arctan(XC / R)   [current leads]'
       },
       {
         type: 'keypoint',
-        title: '🔺 The Power Triangle: Real, Reactive, Apparent',
-        body: `Power in AC circuits comes in three flavors:\n\n• True Power (P) — measured in Watts (W). This is REAL power that does actual work: heats elements, spins motors, powers computers. Calculated from I²R (the resistive component only).\n\n• Reactive Power (Q) — measured in VAR (Volt-Amps Reactive). This power is NOT consumed — it just sloshes back and forth between the source and the inductor/capacitor. It does no useful work, but it occupies conductor and transformer capacity.\n\n• Apparent Power (S) — measured in VA (Volt-Amps). This is what the utility actually has to supply: it's the total current times the total voltage, regardless of phase angle. S = V × I.\n\nThese three form a right triangle (just like the impedance triangle):\n S = √(P² + Q²)\n\nPower factor = P / S = cos(θ)`,
-        formula: 'P = I² × R = S × cos(θ)     [Watts — does work]\nQ = I² × X = S × sin(θ)     [VAR — does no work]\nS = V × I = √(P² + Q²)      [VA — what the utility supplies]\n\nPF = P/S = cos(θ)\nPF = 1.0 = perfect (resistive only)\nPF = 0.8 = typical induction motor (lagging)'
+        title: 'ðŸ”º The Power Triangle: Real, Reactive, Apparent',
+        body: `Power in AC circuits comes in three flavors:\n\nâ€¢ True Power (P) â€” measured in Watts (W). This is REAL power that does actual work: heats elements, spins motors, powers computers. Calculated from IÂ²R (the resistive component only).\n\nâ€¢ Reactive Power (Q) â€” measured in VAR (Volt-Amps Reactive). This power is NOT consumed â€” it just sloshes back and forth between the source and the inductor/capacitor. It does no useful work, but it occupies conductor and transformer capacity.\n\nâ€¢ Apparent Power (S) â€” measured in VA (Volt-Amps). This is what the utility actually has to supply: it's the total current times the total voltage, regardless of phase angle. S = V Ã— I.\n\nThese three form a right triangle (just like the impedance triangle):\n S = âˆš(PÂ² + QÂ²)\n\nPower factor = P / S = cos(Î¸)`,
+        formula: 'P = IÂ² Ã— R = S Ã— cos(Î¸)     [Watts â€” does work]\nQ = IÂ² Ã— X = S Ã— sin(Î¸)     [VAR â€” does no work]\nS = V Ã— I = âˆš(PÂ² + QÂ²)      [VA â€” what the utility supplies]\n\nPF = P/S = cos(Î¸)\nPF = 1.0 = perfect (resistive only)\nPF = 0.8 = typical induction motor (lagging)'
       },
       {
         type: 'real-world',
-        title: '🏭 Real World: Power Factor Correction',
-        body: `A large factory runs 200A of current on a 600V system. Power factor is 0.72 lagging (very common with lots of induction motors).\n\nApparent power: S = 600 × 200 = 120 kVA\nTrue power: P = 120 × 0.72 = 86.4 kW\n\nThe utility charges based on the 120 kVA demand (they have to supply that much current), but only 86.4 kW of useful work is being done. The remaining 33.6 kVAR is reactive power wasting conductor capacity.\n\nSolution: install capacitor banks sized to cancel the inductive reactive power (Q). This brings PF closer to 1.0, reducing the apparent current the utility must supply — which reduces your demand charges and line losses.\n\nAs an electrician, you'll install and maintain these power factor correction banks. The capacitors are usually switched in and out automatically based on load.`
+        title: 'ðŸ­ Real World: Power Factor Correction',
+        body: `A large factory runs 200A of current on a 600V system. Power factor is 0.72 lagging (very common with lots of induction motors).\n\nApparent power: S = 600 Ã— 200 = 120 kVA\nTrue power: P = 120 Ã— 0.72 = 86.4 kW\n\nThe utility charges based on the 120 kVA demand (they have to supply that much current), but only 86.4 kW of useful work is being done. The remaining 33.6 kVAR is reactive power wasting conductor capacity.\n\nSolution: install capacitor banks sized to cancel the inductive reactive power (Q). This brings PF closer to 1.0, reducing the apparent current the utility must supply â€” which reduces your demand charges and line losses.\n\nAs an electrician, you'll install and maintain these power factor correction banks. The capacitors are usually switched in and out automatically based on load.`
       },
       {
         type: 'concept',
-        title: '🎯 Resonance: When XL = XC',
-        body: `Resonance occurs when inductive and capacitive reactances are equal and opposite — they cancel each other out, leaving only resistance. The results are dramatic:\n\n• Series resonance: impedance drops to minimum (Z = R only), current reaches maximum\n• Parallel resonance: impedance rises to maximum, current from source is minimum\n\nResonant frequency: fr = 1 / (2π√(LC))\n\nThis principle is used intentionally in radio tuners (adjusting C to resonate at a specific station's frequency) and power factor correction banks. Unintentionally, harmonics from VFDs can excite resonance in power factor correction capacitors, causing damaging overvoltages and capacitor failures.`,
-        formula: 'Resonant frequency:\nfr = 1 / (2π × √(L × C))\n\nAt resonance: XL = XC, Z = R, PF = 1.0\nSeries resonance: maximum current\nParallel resonance: minimum current from source'
+        title: 'ðŸŽ¯ Resonance: When XL = XC',
+        body: `Resonance occurs when inductive and capacitive reactances are equal and opposite â€” they cancel each other out, leaving only resistance. The results are dramatic:\n\nâ€¢ Series resonance: impedance drops to minimum (Z = R only), current reaches maximum\nâ€¢ Parallel resonance: impedance rises to maximum, current from source is minimum\n\nResonant frequency: fr = 1 / (2Ï€âˆš(LC))\n\nThis principle is used intentionally in radio tuners (adjusting C to resonate at a specific station's frequency) and power factor correction banks. Unintentionally, harmonics from VFDs can excite resonance in power factor correction capacitors, causing damaging overvoltages and capacitor failures.`,
+        formula: 'Resonant frequency:\nfr = 1 / (2Ï€ Ã— âˆš(L Ã— C))\n\nAt resonance: XL = XC, Z = R, PF = 1.0\nSeries resonance: maximum current\nParallel resonance: minimum current from source'
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'ðŸ§  Quick Check',
         questions: [
-          { q: 'A series RL circuit has R = 6Ω and XL = 8Ω. What is the impedance?', a: 'Z = √(6² + 8²) = √(36 + 64) = √100 = 10 Ω' },
-          { q: 'A motor draws 20A at 240V with a power factor of 0.85. What is the true power?', a: 'S = 240 × 20 = 4800 VA; P = 4800 × 0.85 = 4080 W' },
-          { q: 'Why does reactive power (VAR) not appear on your electricity bill?', a: 'Reactive power does no useful work — it just oscillates between source and load. But utilities often charge for high reactive demand because it increases their current supply requirements.' }
+          { q: 'A series RL circuit has R = 6Î© and XL = 8Î©. What is the impedance?', a: 'Z = âˆš(6Â² + 8Â²) = âˆš(36 + 64) = âˆš100 = 10 Î©' },
+          { q: 'A motor draws 20A at 240V with a power factor of 0.85. What is the true power?', a: 'S = 240 Ã— 20 = 4800 VA; P = 4800 Ã— 0.85 = 4080 W' },
+          { q: 'Why does reactive power (VAR) not appear on your electricity bill?', a: 'Reactive power does no useful work â€” it just oscillates between source and load. But utilities often charge for high reactive demand because it increases their current supply requirements.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'ðŸ›  Pro Tips',
         tips: [
           'The impedance triangle and power triangle are the SAME shape at the SAME angle. If you know Z, R, and X for the circuit, you know the ratio of P, S, and Q too.',
           'Power factor of 0.8 lagging is the absolute minimum for most industrial facilities before the utility starts charging demand penalties. If you see power factor capacitors in a commercial or industrial panel, their job is to bring PF back above 0.9 or 0.95.',
-          'On exam questions involving power: always identify whether the given voltage/current is per-phase or line-to-line in a three-phase system. Three-phase power = 3 × Vphase × Iphase × PF, or equivalently √3 × Vline × Iline × PF.'
+          'On exam questions involving power: always identify whether the given voltage/current is per-phase or line-to-line in a three-phase system. Three-phase power = 3 Ã— Vphase Ã— Iphase Ã— PF, or equivalently âˆš3 Ã— Vline Ã— Iline Ã— PF.'
         ]
       },
       {
@@ -8763,15 +8763,15 @@ const LESSONS_CONTENT = [
         title: 'Module 3 Objectives',
         objectives: [
           'Define impedance (Z) as the total opposition to AC current flow, combining resistance and reactance.',
-          'Calculate series circuit impedance using the impedance formula: Z = √(R² + X²) where X = XL − XC.',
+          'Calculate series circuit impedance using the impedance formula: Z = âˆš(RÂ² + XÂ²) where X = XL âˆ’ XC.',
           'Analyze a series RLC circuit to calculate total impedance, circuit current, and individual component voltage drops.',
-          'Calculate parallel circuit impedance using branch currents (IR, IL, IC) and total current IT = √(IR² + (IL − IC)²).',
-          'Construct and interpret the impedance triangle, identifying the relationships between R, X, Z, and phase angle θ.',
-          'Define true power (P) in watts as the power consumed by resistance and producing real work: P = I²R = V²/R.',
-          'Define reactive power (Q) in volt-amperes reactive (VAR) as the power oscillating between source and reactive components: Q = I²X.',
-          'Define apparent power (S) in volt-amperes (VA) as the total power supplied by the source: S = V × I.',
-          'Construct and interpret the power triangle, applying the Pythagorean relationship: S² = P² + Q².',
-          'Define power factor (PF) as the ratio of true power to apparent power: PF = P/S = cos θ.',
+          'Calculate parallel circuit impedance using branch currents (IR, IL, IC) and total current IT = âˆš(IRÂ² + (IL âˆ’ IC)Â²).',
+          'Construct and interpret the impedance triangle, identifying the relationships between R, X, Z, and phase angle Î¸.',
+          'Define true power (P) in watts as the power consumed by resistance and producing real work: P = IÂ²R = VÂ²/R.',
+          'Define reactive power (Q) in volt-amperes reactive (VAR) as the power oscillating between source and reactive components: Q = IÂ²X.',
+          'Define apparent power (S) in volt-amperes (VA) as the total power supplied by the source: S = V Ã— I.',
+          'Construct and interpret the power triangle, applying the Pythagorean relationship: SÂ² = PÂ² + QÂ².',
+          'Define power factor (PF) as the ratio of true power to apparent power: PF = P/S = cos Î¸.',
           'Classify power factor as leading (capacitive load) or lagging (inductive load) and explain its significance.',
           'Identify the causes of poor power factor in industrial electrical systems (inductive loads: motors, transformers, ballasts).',
           'Describe how power factor correction capacitors improve power factor and reduce reactive current demand.',
@@ -8779,11 +8779,11 @@ const LESSONS_CONTENT = [
           'Solve AC circuit problems involving series and parallel combinations of R, L, and C components.'
         ],
         questions: [
-          { q: 'A series RLC circuit has R = 30Ω, XL = 60Ω, XC = 20Ω. What is the total impedance?', a: 'X = XL − XC = 60 − 20 = 40Ω. Z = √(R² + X²) = √(30² + 40²) = √(900 + 1600) = √2500 = 50Ω.' },
-          { q: 'A circuit draws 10A at 120V with a power factor of 0.8 lagging. Calculate P, Q, and S.', a: 'S = V × I = 120 × 10 = 1200 VA. P = S × PF = 1200 × 0.8 = 960W. Q = √(S² − P²) = √(1200² − 960²) = 720 VAR.' },
-          { q: 'What does a lagging power factor mean in terms of current and voltage phase relationship?', a: 'Lagging PF means current lags behind voltage — the load is inductive. The current waveform peaks after the voltage waveform. This increases reactive current and causes the utility to supply more apparent power than the real power consumed.' },
-          { q: 'Why do utilities charge industrial customers for poor power factor?', a: 'Poor power factor means the utility must supply more current (more apparent power) to deliver the same real power. More current means larger conductors, more transformer capacity, and more I²R losses in the distribution system — all of which cost money. Industrial customers with PF below 0.85-0.90 typically face demand surcharges.' },
-          { q: 'At resonance in a series RLC circuit, what happens to impedance and why?', a: 'At resonance, XL = XC, so they cancel: X = XL − XC = 0. Total impedance Z = √(R² + 0²) = R — the circuit is purely resistive with minimum impedance. Current is at maximum. This is why resonance circuits are used as tuned filters.' }
+          { q: 'A series RLC circuit has R = 30Î©, XL = 60Î©, XC = 20Î©. What is the total impedance?', a: 'X = XL âˆ’ XC = 60 âˆ’ 20 = 40Î©. Z = âˆš(RÂ² + XÂ²) = âˆš(30Â² + 40Â²) = âˆš(900 + 1600) = âˆš2500 = 50Î©.' },
+          { q: 'A circuit draws 10A at 120V with a power factor of 0.8 lagging. Calculate P, Q, and S.', a: 'S = V Ã— I = 120 Ã— 10 = 1200 VA. P = S Ã— PF = 1200 Ã— 0.8 = 960W. Q = âˆš(SÂ² âˆ’ PÂ²) = âˆš(1200Â² âˆ’ 960Â²) = 720 VAR.' },
+          { q: 'What does a lagging power factor mean in terms of current and voltage phase relationship?', a: 'Lagging PF means current lags behind voltage â€” the load is inductive. The current waveform peaks after the voltage waveform. This increases reactive current and causes the utility to supply more apparent power than the real power consumed.' },
+          { q: 'Why do utilities charge industrial customers for poor power factor?', a: 'Poor power factor means the utility must supply more current (more apparent power) to deliver the same real power. More current means larger conductors, more transformer capacity, and more IÂ²R losses in the distribution system â€” all of which cost money. Industrial customers with PF below 0.85-0.90 typically face demand surcharges.' },
+          { q: 'At resonance in a series RLC circuit, what happens to impedance and why?', a: 'At resonance, XL = XC, so they cancel: X = XL âˆ’ XC = 0. Total impedance Z = âˆš(RÂ² + 0Â²) = R â€” the circuit is purely resistive with minimum impedance. Current is at maximum. This is why resonance circuits are used as tuned filters.' }
         ]
       },
       {
@@ -8791,8 +8791,8 @@ const LESSONS_CONTENT = [
         title: 'Module Desired Outcome',
         outcome: 'The student will analyze AC circuits containing resistors, inductors, and capacitors, and calculate impedance, current, voltage, and power relationships.',
         questions: [
-          { q: 'A 120V, 60Hz circuit contains a 40Ω resistor in series with a 0.1H inductor and a 100μF capacitor. Calculate XL, XC, Z, and the current. Is the circuit inductive or capacitive?', a: 'XL = 2π × 60 × 0.1 = 37.7Ω. XC = 1/(2π × 60 × 0.0001) = 26.5Ω. X = XL − XC = 37.7 − 26.5 = 11.2Ω (net inductive). Z = √(40² + 11.2²) = √(1600 + 125.4) = √1725.4 = 41.5Ω. I = V/Z = 120/41.5 = 2.89A. The circuit is inductive (XL > XC).' },
-          { q: 'An industrial facility has a total load of 500kW at 0.70 power factor lagging. Calculate the apparent power, reactive power, and the reactive current. Why is this a problem for the utility?', a: 'S = P/PF = 500,000/0.70 = 714.3 kVA. Q = √(S² − P²) = √(714.3² − 500²) = 510.2 kVAR. At 480V 3-phase: IL = S/(√3 × VL) = 714,300/(1.732 × 480) = 859A. Only 500,000/(1.732 × 480) = 601A of that does real work. The utility must size its equipment for 859A, not 601A — the extra 258A is purely reactive current producing no useful work, creating extra losses and requiring larger equipment.' }
+          { q: 'A 120V, 60Hz circuit contains a 40Î© resistor in series with a 0.1H inductor and a 100Î¼F capacitor. Calculate XL, XC, Z, and the current. Is the circuit inductive or capacitive?', a: 'XL = 2Ï€ Ã— 60 Ã— 0.1 = 37.7Î©. XC = 1/(2Ï€ Ã— 60 Ã— 0.0001) = 26.5Î©. X = XL âˆ’ XC = 37.7 âˆ’ 26.5 = 11.2Î© (net inductive). Z = âˆš(40Â² + 11.2Â²) = âˆš(1600 + 125.4) = âˆš1725.4 = 41.5Î©. I = V/Z = 120/41.5 = 2.89A. The circuit is inductive (XL > XC).' },
+          { q: 'An industrial facility has a total load of 500kW at 0.70 power factor lagging. Calculate the apparent power, reactive power, and the reactive current. Why is this a problem for the utility?', a: 'S = P/PF = 500,000/0.70 = 714.3 kVA. Q = âˆš(SÂ² âˆ’ PÂ²) = âˆš(714.3Â² âˆ’ 500Â²) = 510.2 kVAR. At 480V 3-phase: IL = S/(âˆš3 Ã— VL) = 714,300/(1.732 Ã— 480) = 859A. Only 500,000/(1.732 Ã— 480) = 601A of that does real work. The utility must size its equipment for 859A, not 601A â€” the extra 258A is purely reactive current producing no useful work, creating extra losses and requiring larger equipment.' }
         ]
       }
     ]
@@ -8800,7 +8800,7 @@ const LESSONS_CONTENT = [
   {
     id: 'm21',
     title: 'Relays & Contactors',
-    icon: '🔌',
+    icon: 'ðŸ”Œ',
     subtitle: 'The Brain and Muscle of Industrial Control',
     color: '#10b981',
     gradient: 'linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.06))',
@@ -8809,38 +8809,38 @@ const LESSONS_CONTENT = [
     sections: [
       {
         type: 'hook',
-        title: '⚡ Small Signal, Big Power',
-        body: `Imagine you want to turn on a 100-horsepower motor from across a factory floor. You can't run a wire carrying 150 amps to a little pushbutton at a control station — that would melt the wiring and probably kill the operator.\n\nSo instead, you run a low-voltage, low-current control circuit to a relay or contactor. A tiny 24V signal energizes a coil, which creates a magnetic field, which pulls in a set of contacts, which closes a circuit carrying the full motor current.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. And relays and contactors are what make it possible.`
+        title: 'âš¡ Small Signal, Big Power',
+        body: `Imagine you want to turn on a 100-horsepower motor from across a factory floor. You can't run a wire carrying 150 amps to a little pushbutton at a control station â€” that would melt the wiring and probably kill the operator.\n\nSo instead, you run a low-voltage, low-current control circuit to a relay or contactor. A tiny 24V signal energizes a coil, which creates a magnetic field, which pulls in a set of contacts, which closes a circuit carrying the full motor current.\n\nThis is the fundamental concept behind all industrial motor control: separate the control circuit from the power circuit. And relays and contactors are what make it possible.`
       },
       {
         type: 'concept',
-        title: '🔌 Relay vs. Contactor: Same Idea, Different Scale',
-        body: `A relay and a contactor work on exactly the same principle — an electromagnetic coil pulls in an armature to open or close contacts. The difference is scale and purpose:\n\n• Relays: designed for control circuits. Low current (typically < 10A), multiple sets of contacts, used to route signals and interlock circuits. Think of a relay as the logic device.\n\n• Contactors: designed for power circuits. High current (10A to thousands of amps), fewer contact sets (usually 3 main power contacts + a few auxiliary), built for starting and stopping motors and loads. Think of a contactor as the muscle.\n\nContactors have arc suppression features that relays don't — when you interrupt 150A at 600V, there's a tremendous arc. Special materials, magnet blow-out coils, and arc chutes deal with this energy. A relay's contacts would weld together.`
+        title: 'ðŸ”Œ Relay vs. Contactor: Same Idea, Different Scale',
+        body: `A relay and a contactor work on exactly the same principle â€” an electromagnetic coil pulls in an armature to open or close contacts. The difference is scale and purpose:\n\nâ€¢ Relays: designed for control circuits. Low current (typically < 10A), multiple sets of contacts, used to route signals and interlock circuits. Think of a relay as the logic device.\n\nâ€¢ Contactors: designed for power circuits. High current (10A to thousands of amps), fewer contact sets (usually 3 main power contacts + a few auxiliary), built for starting and stopping motors and loads. Think of a contactor as the muscle.\n\nContactors have arc suppression features that relays don't â€” when you interrupt 150A at 600V, there's a tremendous arc. Special materials, magnet blow-out coils, and arc chutes deal with this energy. A relay's contacts would weld together.`
       },
       {
         type: 'concept',
-        title: '📐 Contact Types: NO, NC, and Why It Matters',
-        body: `Every relay and contactor has contacts in one of two resting states:\n\n• Normally Open (NO): contacts are open when the coil is de-energized. When the coil energizes, they close. This is the most common type for motor starters — you want the motor off by default.\n\n• Normally Closed (NC): contacts are closed when the coil is de-energized. When the coil energizes, they open. Used for safety circuits: if power fails, the NC contact stays closed (safe state) or opens to de-energize a dangerous load.\n\nCritical: "normally" refers to the state with NO power applied. A pushbutton, relay contact, or limit switch is described by its state at rest. This seems obvious but trips up electricians constantly during troubleshooting — a closed NC contact means the coil is NOT energized.`
+        title: 'ðŸ“ Contact Types: NO, NC, and Why It Matters',
+        body: `Every relay and contactor has contacts in one of two resting states:\n\nâ€¢ Normally Open (NO): contacts are open when the coil is de-energized. When the coil energizes, they close. This is the most common type for motor starters â€” you want the motor off by default.\n\nâ€¢ Normally Closed (NC): contacts are closed when the coil is de-energized. When the coil energizes, they open. Used for safety circuits: if power fails, the NC contact stays closed (safe state) or opens to de-energize a dangerous load.\n\nCritical: "normally" refers to the state with NO power applied. A pushbutton, relay contact, or limit switch is described by its state at rest. This seems obvious but trips up electricians constantly during troubleshooting â€” a closed NC contact means the coil is NOT energized.`
       },
       {
         type: 'keypoint',
-        title: '🔒 Seal-In Contacts: The Self-Latching Trick',
-        body: `Here's one of the most important circuits you'll build: the motor starter with seal-in contacts.\n\nProblem: you use a momentary pushbutton (springs back when released) to start a motor. But once you release the button, the control circuit opens and the motor stops. How do you keep the motor running?\n\nSolution: add an auxiliary NO contact from the contactor, wired in parallel with the start button. When you press Start, the contactor energizes. The auxiliary contact (now closed, since the coil is energized) bridges across the start button — creating an alternate current path that holds the coil energized even after you release Start.\n\nPress Stop (an NC pushbutton in series) and the circuit opens — contactor drops out, motor stops, and the now-open auxiliary contact removes the seal-in. Circuit is back to its normal, off state.\n\nThis is called a three-wire control circuit. It's also inherently safe: if power fails, the contactor drops out and won't restart automatically when power returns (unlike a two-wire circuit).`
+        title: 'ðŸ”’ Seal-In Contacts: The Self-Latching Trick',
+        body: `Here's one of the most important circuits you'll build: the motor starter with seal-in contacts.\n\nProblem: you use a momentary pushbutton (springs back when released) to start a motor. But once you release the button, the control circuit opens and the motor stops. How do you keep the motor running?\n\nSolution: add an auxiliary NO contact from the contactor, wired in parallel with the start button. When you press Start, the contactor energizes. The auxiliary contact (now closed, since the coil is energized) bridges across the start button â€” creating an alternate current path that holds the coil energized even after you release Start.\n\nPress Stop (an NC pushbutton in series) and the circuit opens â€” contactor drops out, motor stops, and the now-open auxiliary contact removes the seal-in. Circuit is back to its normal, off state.\n\nThis is called a three-wire control circuit. It's also inherently safe: if power fails, the contactor drops out and won't restart automatically when power returns (unlike a two-wire circuit).`
       },
       {
         type: 'real-world',
-        title: '🔀 Interlock Circuits: Preventing Disasters',
-        body: `Interlocking is the technique of using contacts to prevent dangerous simultaneous operations. The classic example is a reversing motor starter:\n\nA forward contactor (F) and reverse contactor (R) cannot EVER be energized at the same time — doing so would connect two phases together and short the power supply. So you wire it so each contactor's NC auxiliary contact is in series with the coil of the other.\n\nThis means: if F is energized (its NC contact is now open), the circuit path to R's coil is broken — you physically cannot energize R while F is on. This is electrical interlock.\n\nFor extra safety, add mechanical interlock — a physical lever that prevents both contactors from pulling in simultaneously. Belt-and-suspenders approach.\n\nAs an apprentice, you'll be asked to wire these interlocks. Get them wrong and you risk a phase-to-phase fault, a very unpleasant explosion, and a failed inspection.`
+        title: 'ðŸ”€ Interlock Circuits: Preventing Disasters',
+        body: `Interlocking is the technique of using contacts to prevent dangerous simultaneous operations. The classic example is a reversing motor starter:\n\nA forward contactor (F) and reverse contactor (R) cannot EVER be energized at the same time â€” doing so would connect two phases together and short the power supply. So you wire it so each contactor's NC auxiliary contact is in series with the coil of the other.\n\nThis means: if F is energized (its NC contact is now open), the circuit path to R's coil is broken â€” you physically cannot energize R while F is on. This is electrical interlock.\n\nFor extra safety, add mechanical interlock â€” a physical lever that prevents both contactors from pulling in simultaneously. Belt-and-suspenders approach.\n\nAs an apprentice, you'll be asked to wire these interlocks. Get them wrong and you risk a phase-to-phase fault, a very unpleasant explosion, and a failed inspection.`
       },
       {
         type: 'concept',
-        title: '🌡️ Overload Relays: Protecting the Motor',
-        body: `Every motor starter includes an overload relay (OL relay) to protect the motor from overheating. The overload relay monitors current and trips if the current exceeds a threshold for a sustained period.\n\nTwo main types:\n\n• Thermal overload: a bimetallic strip or eutectic alloy that deforms as it heats up (proportional to I² × t). Heats up like the motor does. Trips after a time delay proportional to the overcurrent — brief spikes don't trip it, but sustained overloads do.\n\n• Electronic overload: measures actual current through the motor, calculates thermal model mathematically, trips more accurately and consistently than thermal types. Can also provide phase loss protection and trip history.\n\nThe OL relay's contacts are wired in series with the contactor coil circuit. When the OL trips, it opens its NC contact, which de-energizes the contactor coil, which opens the power contacts, which stops the motor. The motor cannot restart until the OL is manually reset.`,
-        formula: 'Overload relay setting range: typically 0.8 × to 1.25 × motor FLA\nCEC requires OL protection for motors: set at no more than 125% of FLA for motors with SF ≥ 1.15 and temperature rise ≤ 40°C'
+        title: 'ðŸŒ¡ï¸ Overload Relays: Protecting the Motor',
+        body: `Every motor starter includes an overload relay (OL relay) to protect the motor from overheating. The overload relay monitors current and trips if the current exceeds a threshold for a sustained period.\n\nTwo main types:\n\nâ€¢ Thermal overload: a bimetallic strip or eutectic alloy that deforms as it heats up (proportional to IÂ² Ã— t). Heats up like the motor does. Trips after a time delay proportional to the overcurrent â€” brief spikes don't trip it, but sustained overloads do.\n\nâ€¢ Electronic overload: measures actual current through the motor, calculates thermal model mathematically, trips more accurately and consistently than thermal types. Can also provide phase loss protection and trip history.\n\nThe OL relay's contacts are wired in series with the contactor coil circuit. When the OL trips, it opens its NC contact, which de-energizes the contactor coil, which opens the power contacts, which stops the motor. The motor cannot restart until the OL is manually reset.`,
+        formula: 'Overload relay setting range: typically 0.8 Ã— to 1.25 Ã— motor FLA\nCEC requires OL protection for motors: set at no more than 125% of FLA for motors with SF â‰¥ 1.15 and temperature rise â‰¤ 40Â°C'
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'ðŸ§  Quick Check',
         questions: [
           { q: 'What is the purpose of seal-in (holding) contacts in a motor starter?', a: 'To maintain the contactor coil circuit energized after the momentary start pushbutton is released. The NC auxiliary contact wired in parallel with the start button holds the circuit.' },
           { q: 'What happens to an NC contact when its coil is energized?', a: 'It opens. NC = Normally Closed = closed when de-energized. Energizing the coil causes the armature to pull in, opening the NC contact.' },
@@ -8849,11 +8849,11 @@ const LESSONS_CONTENT = [
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'ðŸ›  Pro Tips',
         tips: [
-          'When troubleshooting a contactor that chatters or "machine-guns" — check coil voltage first. Low voltage (below ~85% of rated) means the coil can\'t fully pull in the armature. The armature drops out, coil voltage rises, pulls back in, repeat. Also check for a shorted shading ring (in AC contactors).',
+          'When troubleshooting a contactor that chatters or "machine-guns" â€” check coil voltage first. Low voltage (below ~85% of rated) means the coil can\'t fully pull in the armature. The armature drops out, coil voltage rises, pulls back in, repeat. Also check for a shorted shading ring (in AC contactors).',
           'Always check the "normal" state of contacts before a job: an NC contact with the system off should have continuity. If it doesn\'t, the coil is either still energized, or the contact is damaged.',
-          'Three-wire vs. two-wire control: three-wire (momentary pushbutton with seal-in) is safety preferred — loss of power means motor won\'t auto-restart. Two-wire (maintained contact) will restart automatically when power returns. Use two-wire only where that\'s the intended behavior and is safe.'
+          'Three-wire vs. two-wire control: three-wire (momentary pushbutton with seal-in) is safety preferred â€” loss of power means motor won\'t auto-restart. Two-wire (maintained contact) will restart automatically when power returns. Use two-wire only where that\'s the intended behavior and is safe.'
         ]
       },
       {
@@ -8878,10 +8878,10 @@ const LESSONS_CONTENT = [
         ],
         questions: [
           { q: 'A relay has 4 contacts: 2 NO and 2 NC. When the coil is energized, what is the state of each contact?', a: 'When the coil energizes: the 2 NO contacts CLOSE, and the 2 NC contacts OPEN. "Normal" refers to the state with no coil power applied.' },
-          { q: 'Why does a reversing motor starter require interlocking between the forward and reverse contactors?', a: 'If both F and R contactors energized simultaneously, they would connect two AC phases together, creating a phase-to-phase short circuit — an extremely high fault current that would destroy the contactors and pose a severe safety hazard. Interlocks (electrical and mechanical) prevent this.' },
-          { q: 'A motor\'s FLA is 15A. The overload relay has an adjustment range of 10-18A. Where should it be set?', a: 'Per CEC, OL relays are typically set at 100-125% of FLA for standard motors. For 15A FLA, set to 15-18.75A — so the upper end of the range (18A) if the motor has a 1.15 service factor, or closer to 15A for a standard motor. Must not exceed 125% of FLA for motors with 40°C rise and SF ≥ 1.15.' },
-          { q: 'What is the difference between three-wire and two-wire motor control, and which is preferred for personnel safety?', a: 'Three-wire: uses momentary pushbuttons with seal-in contact — motor stops if power is lost and must be manually restarted. Two-wire: uses a maintained contact — motor restarts automatically when power returns. Three-wire is preferred for safety: automatic restart after an unexpected power loss can injure personnel near equipment.' },
-          { q: 'A contactor chatters repeatedly (buzzing sound while operating). List two possible causes.', a: '1) Coil voltage too low (below ~85% rated) — the magnetic field is too weak to fully seat the armature, so it drops in and out at twice the line frequency. 2) Broken or missing shading ring — the shading ring maintains flux during AC zero-crossings; without it, the armature releases 120 times per second.' }
+          { q: 'Why does a reversing motor starter require interlocking between the forward and reverse contactors?', a: 'If both F and R contactors energized simultaneously, they would connect two AC phases together, creating a phase-to-phase short circuit â€” an extremely high fault current that would destroy the contactors and pose a severe safety hazard. Interlocks (electrical and mechanical) prevent this.' },
+          { q: 'A motor\'s FLA is 15A. The overload relay has an adjustment range of 10-18A. Where should it be set?', a: 'Per CEC, OL relays are typically set at 100-125% of FLA for standard motors. For 15A FLA, set to 15-18.75A â€” so the upper end of the range (18A) if the motor has a 1.15 service factor, or closer to 15A for a standard motor. Must not exceed 125% of FLA for motors with 40Â°C rise and SF â‰¥ 1.15.' },
+          { q: 'What is the difference between three-wire and two-wire motor control, and which is preferred for personnel safety?', a: 'Three-wire: uses momentary pushbuttons with seal-in contact â€” motor stops if power is lost and must be manually restarted. Two-wire: uses a maintained contact â€” motor restarts automatically when power returns. Three-wire is preferred for safety: automatic restart after an unexpected power loss can injure personnel near equipment.' },
+          { q: 'A contactor chatters repeatedly (buzzing sound while operating). List two possible causes.', a: '1) Coil voltage too low (below ~85% rated) â€” the magnetic field is too weak to fully seat the armature, so it drops in and out at twice the line frequency. 2) Broken or missing shading ring â€” the shading ring maintains flux during AC zero-crossings; without it, the armature releases 120 times per second.' }
         ]
       },
       {
@@ -8889,8 +8889,8 @@ const LESSONS_CONTENT = [
         title: 'Module Desired Outcome',
         outcome: 'The student will describe the function of relays and contactors and demonstrate understanding of their application in industrial motor control circuits.',
         questions: [
-          { q: 'You are asked to wire a motor starter with two start/stop stations (one local, one remote), interlocked against a second motor so only one can run at a time. Describe the wiring approach for the interlocks and the multiple stations.', a: 'Multiple stops: wire both STOP buttons (NC) in series with each other and in the coil circuit — any one can shut down the motor. Multiple starts: wire both START buttons (NO) in parallel — any one can start the motor. Seal-in: wire an auxiliary NO contact from this contactor in parallel with the START buttons. Interlock with second motor: wire an NC auxiliary contact from the second motor\'s contactor in series with this motor\'s coil circuit — if the second motor runs, its NC contact opens and prevents this motor from starting.' },
-          { q: 'A technician replaces a thermal overload relay\'s heaters with the next larger size because the relay was nuisance-tripping. Explain what is wrong with this approach and what the correct solution is.', a: 'Installing larger heaters raises the overload trip threshold above the motor\'s actual thermal limit. The motor can now draw sustained overcurrent without the OL tripping — it will overheat, degrade insulation, and eventually fail. The correct approach is to measure the actual current and compare to FLA: if the motor is drawing normal current and the OL trips, the heaters are incorrect (too small) for the motor. Replace with heaters matched to the motor\'s FLA. If the motor is drawing high current, find the cause — mechanical overload, low voltage, phase loss, or a failing motor.' }
+          { q: 'You are asked to wire a motor starter with two start/stop stations (one local, one remote), interlocked against a second motor so only one can run at a time. Describe the wiring approach for the interlocks and the multiple stations.', a: 'Multiple stops: wire both STOP buttons (NC) in series with each other and in the coil circuit â€” any one can shut down the motor. Multiple starts: wire both START buttons (NO) in parallel â€” any one can start the motor. Seal-in: wire an auxiliary NO contact from this contactor in parallel with the START buttons. Interlock with second motor: wire an NC auxiliary contact from the second motor\'s contactor in series with this motor\'s coil circuit â€” if the second motor runs, its NC contact opens and prevents this motor from starting.' },
+          { q: 'A technician replaces a thermal overload relay\'s heaters with the next larger size because the relay was nuisance-tripping. Explain what is wrong with this approach and what the correct solution is.', a: 'Installing larger heaters raises the overload trip threshold above the motor\'s actual thermal limit. The motor can now draw sustained overcurrent without the OL tripping â€” it will overheat, degrade insulation, and eventually fail. The correct approach is to measure the actual current and compare to FLA: if the motor is drawing normal current and the OL trips, the heaters are incorrect (too small) for the motor. Replace with heaters matched to the motor\'s FLA. If the motor is drawing high current, find the cause â€” mechanical overload, low voltage, phase loss, or a failing motor.' }
         ]
       }
     ]
@@ -8898,7 +8898,7 @@ const LESSONS_CONTENT = [
   {
     id: 'm22',
     title: 'Timers & Smart Relays',
-    icon: '⏱',
+    icon: 'â±',
     subtitle: 'Time-Based Control and Programmable Logic',
     color: '#f97316',
     gradient: 'linear-gradient(135deg,rgba(249,115,22,0.12),rgba(245,158,11,0.06))',
@@ -8907,39 +8907,39 @@ const LESSONS_CONTENT = [
     sections: [
       {
         type: 'hook',
-        title: '⏰ When "Now" Isn\'t Good Enough',
-        body: `Not everything in a control system should happen instantaneously. A conveyor needs to run for 5 seconds before a downstream process starts. A blower should keep running for 2 minutes after an oven shuts off to prevent heat damage. A pump needs a rest period between starts to avoid overheating.\n\nTimers solve all of these problems. They add the dimension of time to control logic, turning simple on/off decisions into time-sequenced operations. And smart relays take this further — they're essentially tiny programmable computers that can replace dozens of timers, counters, and relays with a single compact device.`
+        title: 'â° When "Now" Isn\'t Good Enough',
+        body: `Not everything in a control system should happen instantaneously. A conveyor needs to run for 5 seconds before a downstream process starts. A blower should keep running for 2 minutes after an oven shuts off to prevent heat damage. A pump needs a rest period between starts to avoid overheating.\n\nTimers solve all of these problems. They add the dimension of time to control logic, turning simple on/off decisions into time-sequenced operations. And smart relays take this further â€” they're essentially tiny programmable computers that can replace dozens of timers, counters, and relays with a single compact device.`
       },
       {
         type: 'concept',
-        title: '📊 ON-Delay Timer (TON): Wait, Then Act',
-        body: `The most common timer type. An ON-delay timer waits a preset time after receiving an input signal before energizing its output.\n\nSequence:\n1. Input signal arrives (coil energizes)\n2. Timing begins\n3. After preset time, output contact closes (timed contact)\n4. If input is removed before timing completes, timer resets — nothing happens\n5. When input is removed after timing, output immediately opens\n\nReal world uses: motor startup delay (allow pressures/temperatures to stabilize before starting), conveyor sequencing (upstream conveyor starts, downstream conveyor delays 3 seconds), HVAC damper control (open damper before starting fan).\n\nInstantaneous contacts: some timers also have an "instantaneous" contact that closes the moment the coil energizes (before timing starts) — useful for starting a different operation while timing proceeds.`,
-        formula: 'ON-delay: Input ON → timer counts → output ON after preset time\nInput OFF (anytime) → timer resets → output OFF immediately'
+        title: 'ðŸ“Š ON-Delay Timer (TON): Wait, Then Act',
+        body: `The most common timer type. An ON-delay timer waits a preset time after receiving an input signal before energizing its output.\n\nSequence:\n1. Input signal arrives (coil energizes)\n2. Timing begins\n3. After preset time, output contact closes (timed contact)\n4. If input is removed before timing completes, timer resets â€” nothing happens\n5. When input is removed after timing, output immediately opens\n\nReal world uses: motor startup delay (allow pressures/temperatures to stabilize before starting), conveyor sequencing (upstream conveyor starts, downstream conveyor delays 3 seconds), HVAC damper control (open damper before starting fan).\n\nInstantaneous contacts: some timers also have an "instantaneous" contact that closes the moment the coil energizes (before timing starts) â€” useful for starting a different operation while timing proceeds.`,
+        formula: 'ON-delay: Input ON â†’ timer counts â†’ output ON after preset time\nInput OFF (anytime) â†’ timer resets â†’ output OFF immediately'
       },
       {
         type: 'concept',
-        title: '⏲ OFF-Delay Timer (TOF): Keeps Running After Stop',
-        body: `An OFF-delay timer does the opposite: it keeps its output energized for a preset time after the input signal is REMOVED.\n\nSequence:\n1. Input signal arrives → output immediately energizes\n2. Input signal removed → timing begins\n3. After preset time, output de-energizes\n\nReal world uses: cooling fan delay (keep fan running after motor stops to remove heat), exhaust hood (keep running after cooking stops), parking garage lighting (lights stay on for 5 minutes after you leave the area), anti-short-cycle protection on compressors.`,
-        formula: 'OFF-delay: Input ON → output immediately ON\nInput OFF → timer counts → output OFF after preset time'
+        title: 'â² OFF-Delay Timer (TOF): Keeps Running After Stop',
+        body: `An OFF-delay timer does the opposite: it keeps its output energized for a preset time after the input signal is REMOVED.\n\nSequence:\n1. Input signal arrives â†’ output immediately energizes\n2. Input signal removed â†’ timing begins\n3. After preset time, output de-energizes\n\nReal world uses: cooling fan delay (keep fan running after motor stops to remove heat), exhaust hood (keep running after cooking stops), parking garage lighting (lights stay on for 5 minutes after you leave the area), anti-short-cycle protection on compressors.`,
+        formula: 'OFF-delay: Input ON â†’ output immediately ON\nInput OFF â†’ timer counts â†’ output OFF after preset time'
       },
       {
         type: 'concept',
-        title: '🔁 Recycling (Repeat Cycle) Timers: Pulse Generators',
-        body: `A recycling timer automatically and repeatedly cycles its output on and off at adjustable intervals. Think of it as a built-in pulse generator.\n\nTwo adjustable settings:\n• ON time: how long output stays energized\n• OFF time: how long output stays de-energized\n\nReal world uses: intermittent windshield wiper control, irrigation systems (water for 2 min, pause 30 min), alarm horns (beep-pause-beep), automatic lubrication systems (pump for 10 seconds every 15 minutes).`
+        title: 'ðŸ” Recycling (Repeat Cycle) Timers: Pulse Generators',
+        body: `A recycling timer automatically and repeatedly cycles its output on and off at adjustable intervals. Think of it as a built-in pulse generator.\n\nTwo adjustable settings:\nâ€¢ ON time: how long output stays energized\nâ€¢ OFF time: how long output stays de-energized\n\nReal world uses: intermittent windshield wiper control, irrigation systems (water for 2 min, pause 30 min), alarm horns (beep-pause-beep), automatic lubrication systems (pump for 10 seconds every 15 minutes).`
       },
       {
         type: 'keypoint',
-        title: '💻 Smart Relays: Tiny PLCs',
-        body: `A smart relay (also called a programmable logic relay or PLR) is a compact, inexpensive device that combines inputs, outputs, and programmable logic in one unit. Common brands: Siemens LOGO!, Schneider Electric Zelio, Allen-Bradley Pico.\n\nCapabilities in a package the size of a large relay:\n• 8-24 digital inputs\n• 4-16 digital outputs\n• Analog inputs (some models)\n• Built-in clock/calendar\n• Multiple timer functions (ON, OFF, repeat cycle, single-shot)\n• Counter functions\n• Logic gates (AND, OR, NOT, XOR)\n• Simple arithmetic\n• Communication (some models)\n\nA single smart relay can replace a panel stuffed with 10-15 individual relays, timers, and counters — at a fraction of the cost and panel space. They're programmed either through a front panel display or via laptop with free software.`
+        title: 'ðŸ’» Smart Relays: Tiny PLCs',
+        body: `A smart relay (also called a programmable logic relay or PLR) is a compact, inexpensive device that combines inputs, outputs, and programmable logic in one unit. Common brands: Siemens LOGO!, Schneider Electric Zelio, Allen-Bradley Pico.\n\nCapabilities in a package the size of a large relay:\nâ€¢ 8-24 digital inputs\nâ€¢ 4-16 digital outputs\nâ€¢ Analog inputs (some models)\nâ€¢ Built-in clock/calendar\nâ€¢ Multiple timer functions (ON, OFF, repeat cycle, single-shot)\nâ€¢ Counter functions\nâ€¢ Logic gates (AND, OR, NOT, XOR)\nâ€¢ Simple arithmetic\nâ€¢ Communication (some models)\n\nA single smart relay can replace a panel stuffed with 10-15 individual relays, timers, and counters â€” at a fraction of the cost and panel space. They're programmed either through a front panel display or via laptop with free software.`
       },
       {
         type: 'real-world',
-        title: '🏭 Ladder Logic: The Language of Control',
-        body: `Industrial control programs are written in ladder logic — a visual programming language that looks like a schematic of relay contacts and coils laid out in rungs, like a ladder.\n\nEach rung is a logical statement:\n• Contacts on the left side = conditions (inputs)\n• Coils on the right side = outputs\n• Current "flows" left to right if all contacts are satisfied\n\nA normally open contact in ladder logic = an input that must be TRUE to pass logic.\nA normally closed contact = an input that must be FALSE to pass logic.\n\nLadder logic translates directly from hardwired relay logic — if you understand relay control circuits, you already understand the fundamentals of ladder logic programming. This is why learning relay control is so valuable for the modern electrician: PLCs and smart relays have taken over, but they still speak the language of relays.`
+        title: 'ðŸ­ Ladder Logic: The Language of Control',
+        body: `Industrial control programs are written in ladder logic â€” a visual programming language that looks like a schematic of relay contacts and coils laid out in rungs, like a ladder.\n\nEach rung is a logical statement:\nâ€¢ Contacts on the left side = conditions (inputs)\nâ€¢ Coils on the right side = outputs\nâ€¢ Current "flows" left to right if all contacts are satisfied\n\nA normally open contact in ladder logic = an input that must be TRUE to pass logic.\nA normally closed contact = an input that must be FALSE to pass logic.\n\nLadder logic translates directly from hardwired relay logic â€” if you understand relay control circuits, you already understand the fundamentals of ladder logic programming. This is why learning relay control is so valuable for the modern electrician: PLCs and smart relays have taken over, but they still speak the language of relays.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'ðŸ§  Quick Check',
         questions: [
           { q: 'An ON-delay timer starts timing when the input turns ON. True or False: if the input turns off before timing completes, the output will energize for the remaining delay time.', a: 'FALSE. If the input is removed before the preset time expires, the timer resets and the output never energizes.' },
           { q: 'A blower motor needs to keep running for 3 minutes after an oven shuts off. Which timer type is used?', a: 'OFF-delay timer (TOF). The blower energizes immediately when the oven runs, then stays on for 3 minutes after the oven shuts off.' },
@@ -8948,19 +8948,19 @@ const LESSONS_CONTENT = [
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'ðŸ›  Pro Tips',
         tips: [
           'When troubleshooting timer circuits, separate the timing function from the contact function. First verify the coil is energizing (voltage across coil terminals). Then verify the timer is actually timing (LED or display indicator). Then check the output contacts.',
           'ON-delay or OFF-delay? Ask yourself: "does the output come ON after a delay, or does it go OFF after a delay?" That question answers it every time.',
-          'Smart relays use the IEC61131-3 standard for ladder logic — the same standard as full PLCs. Time you spend learning Siemens LOGO! or Zelio programming translates directly into understanding Allen-Bradley, Siemens S7, and other industrial PLC platforms.'
+          'Smart relays use the IEC61131-3 standard for ladder logic â€” the same standard as full PLCs. Time you spend learning Siemens LOGO! or Zelio programming translates directly into understanding Allen-Bradley, Siemens S7, and other industrial PLC platforms.'
         ]
       },
       {
         type: 'objectives',
         title: 'Module 22 Objectives',
         objectives: [
-          'Define ON-delay (TDOE – Time Delay On Energization) timer operation, describing contact behavior during timing and after the time period elapses.',
-          'Define OFF-delay (TDOD – Time Delay On De-energization) timer operation, describing contact behavior and when the timing period begins.',
+          'Define ON-delay (TDOE â€“ Time Delay On Energization) timer operation, describing contact behavior during timing and after the time period elapses.',
+          'Define OFF-delay (TDOD â€“ Time Delay On De-energization) timer operation, describing contact behavior and when the timing period begins.',
           'Identify typical industrial applications for ON-delay timers: star-delta motor starting, conveyor sequencing, process heating warm-up, and alarm time delays.',
           'Identify typical industrial applications for OFF-delay timers: motor cooling fan run-on, conveyor coast-down, oil pressure pre-lube, and alarm/fault clearance delays.',
           'Describe the operating principle of pneumatic (dashpot) timers, identifying the bellows, needle valve, and how they produce the timing delay.',
@@ -8975,11 +8975,11 @@ const LESSONS_CONTENT = [
           'Describe the IEC 61131-3 standard and identify the five programming languages it defines: LD (ladder), FBD (function block diagram), SFC, ST, and IL.'
         ],
         questions: [
-          { q: 'A TON (on-delay) timer is energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TON input energizes, NO contacts remain OPEN and NC contacts remain CLOSED — output doesn\'t change yet. After the preset time elapses, the NO contacts CLOSE and NC contacts OPEN. When the input de-energizes, all contacts return to normal state immediately (no delay off).' },
-          { q: 'A TOF (off-delay) timer is de-energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TOF input de-energizes, the output contacts DO NOT return to normal immediately — timing begins. After the preset time elapses, the NO contacts OPEN and NC contacts CLOSE (returning to normal state).' },
+          { q: 'A TON (on-delay) timer is energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TON input energizes, NO contacts remain OPEN and NC contacts remain CLOSED â€” output doesn\'t change yet. After the preset time elapses, the NO contacts CLOSE and NC contacts OPEN. When the input de-energizes, all contacts return to normal state immediately (no delay off).' },
+          { q: 'A TOF (off-delay) timer is de-energized. Describe what happens to its output contacts immediately and after the set time.', a: 'When the TOF input de-energizes, the output contacts DO NOT return to normal immediately â€” timing begins. After the preset time elapses, the NO contacts OPEN and NC contacts CLOSE (returning to normal state).' },
           { q: 'In a star-delta motor starting circuit, what does the timer control?', a: 'The timer controls the transition from star (wye) connection to delta connection. The motor starts in star (reduced voltage), and after the preset time (typically 5-15 seconds, when the motor has accelerated to near full speed), the timer transfers to delta (full voltage). Switching too early causes high inrush; switching too late provides no benefit.' },
-          { q: 'In a ladder logic rung, two NO contacts are drawn in series before a coil. What logic does this represent?', a: 'AND logic — BOTH contacts must be closed (TRUE) for the coil to energize. In relay control terms, this means both switches must be ON simultaneously.' },
-          { q: 'What is the key advantage of using a smart relay instead of discrete relays and timers for a multi-step sequential process?', a: 'Smart relays can be reprogrammed without rewiring — logic changes are made in software. Discrete relay panels require physical rewiring, addition of new relays, and re-tracing logic every time the process changes. Smart relays also take less panel space, are more reliable (no contact wear for logic functions), and provide built-in timers, counters, and displays.' }
+          { q: 'In a ladder logic rung, two NO contacts are drawn in series before a coil. What logic does this represent?', a: 'AND logic â€” BOTH contacts must be closed (TRUE) for the coil to energize. In relay control terms, this means both switches must be ON simultaneously.' },
+          { q: 'What is the key advantage of using a smart relay instead of discrete relays and timers for a multi-step sequential process?', a: 'Smart relays can be reprogrammed without rewiring â€” logic changes are made in software. Discrete relay panels require physical rewiring, addition of new relays, and re-tracing logic every time the process changes. Smart relays also take less panel space, are more reliable (no contact wear for logic functions), and provide built-in timers, counters, and displays.' }
         ]
       },
       {
@@ -8987,8 +8987,8 @@ const LESSONS_CONTENT = [
         title: 'Module Desired Outcome',
         outcome: 'The student will describe timer types and their application in industrial control, and demonstrate basic understanding of smart relay and programmable logic control.',
         questions: [
-          { q: 'A conveyor system requires that: 1) a warning horn sounds for 5 seconds before the conveyor starts, 2) the conveyor runs for its cycle, and 3) after the stop button is pressed, the cooling fan runs for an additional 60 seconds. Describe which timer types you would use for each function.', a: 'Function 1 (pre-start warning): ON-delay timer — when start is pressed, the horn output energizes immediately (NO contact closes), and after 5 seconds the timer\'s timed contact energizes the conveyor. Function 3 (fan run-on): OFF-delay timer — the fan output is energized while the conveyor runs, and when the stop button is pressed, the OFF-delay timer continues powering the fan for 60 seconds before returning to off state.' },
-          { q: 'Draw a ladder logic rung (describe it in words) that energizes a pump (Output Y1) when: float switch (Input X1) is activated AND pressure switch (Input X2) is NOT activated, and a stop button (Input X3) has not been pressed (NC contact in circuit).', a: 'Rung: [X1 NO]—[X2 NC]—[X3 NC]—(Y1). Reading left to right: X1 must be CLOSED (float switch activated), X2 must be OPEN/deactivated (NC contact: the pressure switch NC contact must still be passing — meaning high pressure NOT present), X3 must be CLOSED (stop button NC contact: not pressed). All three in series before the Y1 coil. When all three conditions are met, the pump output Y1 energizes.' }
+          { q: 'A conveyor system requires that: 1) a warning horn sounds for 5 seconds before the conveyor starts, 2) the conveyor runs for its cycle, and 3) after the stop button is pressed, the cooling fan runs for an additional 60 seconds. Describe which timer types you would use for each function.', a: 'Function 1 (pre-start warning): ON-delay timer â€” when start is pressed, the horn output energizes immediately (NO contact closes), and after 5 seconds the timer\'s timed contact energizes the conveyor. Function 3 (fan run-on): OFF-delay timer â€” the fan output is energized while the conveyor runs, and when the stop button is pressed, the OFF-delay timer continues powering the fan for 60 seconds before returning to off state.' },
+          { q: 'Draw a ladder logic rung (describe it in words) that energizes a pump (Output Y1) when: float switch (Input X1) is activated AND pressure switch (Input X2) is NOT activated, and a stop button (Input X3) has not been pressed (NC contact in circuit).', a: 'Rung: [X1 NO]â€”[X2 NC]â€”[X3 NC]â€”(Y1). Reading left to right: X1 must be CLOSED (float switch activated), X2 must be OPEN/deactivated (NC contact: the pressure switch NC contact must still be passing â€” meaning high pressure NOT present), X3 must be CLOSED (stop button NC contact: not pressed). All three in series before the Y1 coil. When all three conditions are met, the pump output Y1 energizes.' }
         ]
       }
     ]
@@ -8996,7 +8996,7 @@ const LESSONS_CONTENT = [
   {
     id: 'm23',
     title: 'Pilot & Overcurrent Devices',
-    icon: '🛡',
+    icon: 'ðŸ›¡',
     subtitle: 'The Guardians of Every Circuit',
     color: '#ef4444',
     gradient: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.06))',
@@ -9005,51 +9005,51 @@ const LESSONS_CONTENT = [
     sections: [
       {
         type: 'hook',
-        title: '⚡ Every Circuit Needs Protection',
-        body: `Every electrical circuit has a potential failure mode: too much current. Overcurrent destroys insulation, melts conductors, starts fires, and kills people.\n\nThe overcurrent protection device (OCPD) — whether a fuse or circuit breaker — is the last line of defense. It monitors current, and when current exceeds its rating for a sufficient time, it interrupts the circuit.\n\nBut protection isn't the only job in a control system. Someone also has to initiate, stop, and direct the flow of current to the loads. That's the job of pilot devices — the pushbuttons, switches, and sensors that give humans and machines control over electrical systems.`
+        title: 'âš¡ Every Circuit Needs Protection',
+        body: `Every electrical circuit has a potential failure mode: too much current. Overcurrent destroys insulation, melts conductors, starts fires, and kills people.\n\nThe overcurrent protection device (OCPD) â€” whether a fuse or circuit breaker â€” is the last line of defense. It monitors current, and when current exceeds its rating for a sufficient time, it interrupts the circuit.\n\nBut protection isn't the only job in a control system. Someone also has to initiate, stop, and direct the flow of current to the loads. That's the job of pilot devices â€” the pushbuttons, switches, and sensors that give humans and machines control over electrical systems.`
       },
       {
         type: 'concept',
-        title: '🔘 Pilot Devices: Control Without Power',
-        body: `A pilot device is a control component that controls a circuit but doesn't carry the main load current. The name comes from "pilot," meaning guide or direct.\n\nKey pilot devices you'll work with:\n\n• Pushbuttons: momentary (springs back) or maintained (stays in place). NO types start things; NC types stop things. Color code: green/black = start, red = stop.\n\n• Selector switches: 2 or 3 position, maintained. For mode selection (Hand/Off/Auto, Local/Remote).\n\n• Limit switches: mechanically actuated by equipment position. Used to detect "door open," "conveyor at end of travel," "cylinder fully extended." Can be NO or NC, maintained or momentary.\n\n• Float switches: actuated by liquid level. Used to control pumps and sump systems.\n\n• Pressure switches: actuated by fluid or air pressure. Compressor control, hydraulic systems.\n\n• Pilot lights: indicate status (motor running, fault condition, power present). Wired in parallel with the load they're indicating.`
+        title: 'ðŸ”˜ Pilot Devices: Control Without Power',
+        body: `A pilot device is a control component that controls a circuit but doesn't carry the main load current. The name comes from "pilot," meaning guide or direct.\n\nKey pilot devices you'll work with:\n\nâ€¢ Pushbuttons: momentary (springs back) or maintained (stays in place). NO types start things; NC types stop things. Color code: green/black = start, red = stop.\n\nâ€¢ Selector switches: 2 or 3 position, maintained. For mode selection (Hand/Off/Auto, Local/Remote).\n\nâ€¢ Limit switches: mechanically actuated by equipment position. Used to detect "door open," "conveyor at end of travel," "cylinder fully extended." Can be NO or NC, maintained or momentary.\n\nâ€¢ Float switches: actuated by liquid level. Used to control pumps and sump systems.\n\nâ€¢ Pressure switches: actuated by fluid or air pressure. Compressor control, hydraulic systems.\n\nâ€¢ Pilot lights: indicate status (motor running, fault condition, power present). Wired in parallel with the load they're indicating.`
       },
       {
         type: 'keypoint',
-        title: '🟢 Color Codes and Standards',
-        body: `Pilot device colors are standardized by NEMA ICS and the CEC:\n\n• Red: Stop, emergency stop, power off. NC pushbutton.\n• Green or Black: Start, run, power on. NO pushbutton.\n• Yellow: Caution, abnormal condition.\n• Blue: Mandatory action (lockout).\n• White/Grey: no specific function.\n\nPilot lights follow similar conventions:\n• Red = machine running or dangerous condition present\n• Green = safe condition, machine stopped, power available\n• Amber = abnormal condition, attention needed\n\nKnowing color codes lets you read an unfamiliar control panel quickly. A green lit light with a red lit light simultaneously? Something's wrong — those shouldn't both be on if they represent opposite states.`
+        title: 'ðŸŸ¢ Color Codes and Standards',
+        body: `Pilot device colors are standardized by NEMA ICS and the CEC:\n\nâ€¢ Red: Stop, emergency stop, power off. NC pushbutton.\nâ€¢ Green or Black: Start, run, power on. NO pushbutton.\nâ€¢ Yellow: Caution, abnormal condition.\nâ€¢ Blue: Mandatory action (lockout).\nâ€¢ White/Grey: no specific function.\n\nPilot lights follow similar conventions:\nâ€¢ Red = machine running or dangerous condition present\nâ€¢ Green = safe condition, machine stopped, power available\nâ€¢ Amber = abnormal condition, attention needed\n\nKnowing color codes lets you read an unfamiliar control panel quickly. A green lit light with a red lit light simultaneously? Something's wrong â€” those shouldn't both be on if they represent opposite states.`
       },
       {
         type: 'concept',
-        title: '⚡ Fuses: Simple, Fast, Sacrificial',
-        body: `A fuse is the simplest overcurrent protection device: a piece of calibrated metal that melts at a specific current, breaking the circuit. One-shot device — once blown, it must be replaced.\n\nFuse characteristics that matter:\n\n• Current rating: the continuous current the fuse handles without opening. Size to 100-125% of load.\n\n• Voltage rating: maximum voltage the fuse can safely interrupt. A 250V fuse on a 600V circuit is dangerous — the arc won't extinguish.\n\n• Interrupting rating: the maximum fault current the fuse can safely clear. A fuse rated 10 kAIC on a bus capable of 50 kA fault current WILL explode violently.\n\n• Current-limiting: fast-acting fuses (Class CC, J, RK1, RK5, L) limit the peak let-through current by clearing in less than a half-cycle. This protects equipment from the destructive energy of high fault currents.\n\n• Time-delay (dual-element): have a thermal delay element that ignores brief motor inrush (5-7× FLA) while still protecting against sustained overloads. Essential for motor circuits.`,
+        title: 'âš¡ Fuses: Simple, Fast, Sacrificial',
+        body: `A fuse is the simplest overcurrent protection device: a piece of calibrated metal that melts at a specific current, breaking the circuit. One-shot device â€” once blown, it must be replaced.\n\nFuse characteristics that matter:\n\nâ€¢ Current rating: the continuous current the fuse handles without opening. Size to 100-125% of load.\n\nâ€¢ Voltage rating: maximum voltage the fuse can safely interrupt. A 250V fuse on a 600V circuit is dangerous â€” the arc won't extinguish.\n\nâ€¢ Interrupting rating: the maximum fault current the fuse can safely clear. A fuse rated 10 kAIC on a bus capable of 50 kA fault current WILL explode violently.\n\nâ€¢ Current-limiting: fast-acting fuses (Class CC, J, RK1, RK5, L) limit the peak let-through current by clearing in less than a half-cycle. This protects equipment from the destructive energy of high fault currents.\n\nâ€¢ Time-delay (dual-element): have a thermal delay element that ignores brief motor inrush (5-7Ã— FLA) while still protecting against sustained overloads. Essential for motor circuits.`,
         formula: 'Motor circuit fuse sizing (CEC Rule 28-200):\nTime-delay fuses: up to 175% of motor FLA\nNon-time-delay: up to 300% of motor FLA (but must not exceed 600% for short-circuit protection)'
       },
       {
         type: 'concept',
-        title: '🔌 Circuit Breakers: Resettable Protection',
-        body: `A circuit breaker performs the same overcurrent protection function as a fuse, but mechanically trips rather than melting — it can be reset after a fault is cleared.\n\nThermal-magnetic circuit breaker (most common):\n• Bimetallic strip: provides time-delay overload protection. As overcurrent heats the strip, it bends and trips the mechanism. Simulates thermal damage to the protected conductor.\n• Magnetic (electromagnetic) trip: a solenoid that trips the breaker almost instantaneously on very high fault currents. Protects against short circuits.\n\nElectronic trip breakers (LSIG):\n• Long-time (L): overload protection with inverse time-current curve\n• Short-time (S): short-time delay for selective coordination\n• Instantaneous (I): immediate trip for high-level faults\n• Ground fault (G): ground fault protection at adjustable threshold\n\nGFCI (Ground Fault Circuit Interrupter): detects as little as 5mA of ground fault current and trips in <1/40 second. Protects people from electrocution on 15/20A branch circuits. Required by CEC near water.\n\nGFP (Ground Fault Protection of Equipment): detects ground faults typically in the 150mA-1200mA range. Protects equipment from arcing ground faults on large systems. Required on 1000A+ services per CEC.`
+        title: 'ðŸ”Œ Circuit Breakers: Resettable Protection',
+        body: `A circuit breaker performs the same overcurrent protection function as a fuse, but mechanically trips rather than melting â€” it can be reset after a fault is cleared.\n\nThermal-magnetic circuit breaker (most common):\nâ€¢ Bimetallic strip: provides time-delay overload protection. As overcurrent heats the strip, it bends and trips the mechanism. Simulates thermal damage to the protected conductor.\nâ€¢ Magnetic (electromagnetic) trip: a solenoid that trips the breaker almost instantaneously on very high fault currents. Protects against short circuits.\n\nElectronic trip breakers (LSIG):\nâ€¢ Long-time (L): overload protection with inverse time-current curve\nâ€¢ Short-time (S): short-time delay for selective coordination\nâ€¢ Instantaneous (I): immediate trip for high-level faults\nâ€¢ Ground fault (G): ground fault protection at adjustable threshold\n\nGFCI (Ground Fault Circuit Interrupter): detects as little as 5mA of ground fault current and trips in <1/40 second. Protects people from electrocution on 15/20A branch circuits. Required by CEC near water.\n\nGFP (Ground Fault Protection of Equipment): detects ground faults typically in the 150mA-1200mA range. Protects equipment from arcing ground faults on large systems. Required on 1000A+ services per CEC.`
       },
       {
         type: 'real-world',
-        title: '🔗 Selective Coordination: The Art of Only Tripping What Needs to Trip',
-        body: `In a properly coordinated system, a fault on a branch circuit should trip only the branch circuit breaker — not the feeder breaker, not the main breaker. Otherwise a small fault in one room takes down the whole building.\n\nAchieving coordination means sizing and selecting breakers so each upstream device has a significantly slower (or higher threshold) trip characteristic than the downstream device. Engineers use time-current curves to verify coordination.\n\nFor electricians: never "upsize" a breaker to stop nuisance tripping. If a 20A breaker keeps tripping, the LOAD is drawing more than 20A — fix the load, or investigate the fault. Upsizing the breaker destroys the protection the system was designed to provide.`
+        title: 'ðŸ”— Selective Coordination: The Art of Only Tripping What Needs to Trip',
+        body: `In a properly coordinated system, a fault on a branch circuit should trip only the branch circuit breaker â€” not the feeder breaker, not the main breaker. Otherwise a small fault in one room takes down the whole building.\n\nAchieving coordination means sizing and selecting breakers so each upstream device has a significantly slower (or higher threshold) trip characteristic than the downstream device. Engineers use time-current curves to verify coordination.\n\nFor electricians: never "upsize" a breaker to stop nuisance tripping. If a 20A breaker keeps tripping, the LOAD is drawing more than 20A â€” fix the load, or investigate the fault. Upsizing the breaker destroys the protection the system was designed to provide.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'ðŸ§  Quick Check',
         questions: [
           { q: 'A fuse is rated 600V, 30A, with an interrupting rating of 10 kAIC. The available fault current is 15 kA. Can this fuse be used?', a: 'NO. The interrupting rating (10 kAIC) is less than the available fault current (15 kA). The fuse would explode violently and fail to safely clear the fault.' },
           { q: 'What is the difference between GFCI and GFP?', a: 'GFCI detects very small ground faults (5mA) to protect people. GFP detects larger ground faults (150mA+) to protect equipment from arcing damage. Both interrupt the circuit, but they serve different purposes at different current thresholds.' },
-          { q: 'A time-delay fuse for a motor is used instead of a fast-acting fuse. Why?', a: 'Motors draw 5-7× their full-load current during starting. A fast-acting fuse would blow on every motor start. A time-delay fuse rides through brief inrush current while still protecting against sustained overloads and short circuits.' }
+          { q: 'A time-delay fuse for a motor is used instead of a fast-acting fuse. Why?', a: 'Motors draw 5-7Ã— their full-load current during starting. A fast-acting fuse would blow on every motor start. A time-delay fuse rides through brief inrush current while still protecting against sustained overloads and short circuits.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'ðŸ›  Pro Tips',
         tips: [
           'The CEC requires overcurrent protection to be sized based on the conductor ampacity, not the load. If you have a 12 AWG conductor (rated 20A in NMD90), you cannot install a 30A breaker even if the load only draws 15A. The breaker protects the wire, not the load.',
           'Fuse classes use size rejection features to prevent installing the wrong fuse. A Class J fuse physically cannot fit in a Class H fuseholder. Never force a fuse into a holder it wasn\'t designed for, and never bridge a fuse with wire.',
-          'When a fuse blows, the fuse is doing its job. Find and fix the fault before replacing the fuse. Putting in a new fuse without clearing the fault means the new fuse will blow too — or worse, if you installed a higher-rated fuse to "fix" the problem, now the conductor is unprotected and it may be the wire that fails next time.'
+          'When a fuse blows, the fuse is doing its job. Find and fix the fault before replacing the fuse. Putting in a new fuse without clearing the fault means the new fuse will blow too â€” or worse, if you installed a higher-rated fuse to "fix" the problem, now the conductor is unprotected and it may be the wire that fails next time.'
         ]
       },
       {
@@ -9069,7 +9069,7 @@ const LESSONS_CONTENT = [
           'Describe the construction and operating principle of a fuse and explain what causes it to open.',
           'Identify the difference between non-time-delay and time-delay (dual-element) fuses.',
           'Describe the purpose of the thermal element and the fast-acting element in a dual-element fuse.',
-          'Define "current-limiting fuse" and describe how it reduces I²t energy let-through during a fault.',
+          'Define "current-limiting fuse" and describe how it reduces IÂ²t energy let-through during a fault.',
           'Identify the common fuse classes (H, CC, J, RK1, RK5, T, L) and explain the purpose of physical rejection features.',
           'Explain why a fuse must be rated at or above the circuit voltage and describe the consequence of installing an under-rated fuse.',
           'Define interrupting rating (AIC) and explain why it must exceed the available fault current at the installation point.',
@@ -9085,11 +9085,11 @@ const LESSONS_CONTENT = [
           'Identify the CEC requirement for a motor disconnect and describe its location and function.'
         ],
         questions: [
-          { q: 'What is the key function of a pilot device in a motor control circuit?', a: 'A pilot device controls the operation of a power circuit without carrying the full load current — it operates in the lower-voltage control circuit and signals contactors or starters to energize or de-energize the motor.' },
+          { q: 'What is the key function of a pilot device in a motor control circuit?', a: 'A pilot device controls the operation of a power circuit without carrying the full load current â€” it operates in the lower-voltage control circuit and signals contactors or starters to energize or de-energize the motor.' },
           { q: 'Stop buttons are wired in series and start buttons in parallel. Why?', a: 'Series stops: any one station can break the circuit and stop the motor (fail-safe). Parallel starts: any one station can energize the coil to start the motor (convenience). This arrangement is universal in motor control.' },
-          { q: 'What is the difference between a Class J and a Class H fuse?', a: 'Class J is current-limiting (clears in <½ cycle), rated 200,000A AIC, with rejection features. Class H (glass tube) is NOT current-limiting, typically rated only 10,000A AIC, and can be replaced with any cylindrical fuse. Class J provides vastly superior fault protection.' },
-          { q: 'Why must a fuse\'s voltage rating meet or exceed the circuit voltage?', a: 'After the fuse element melts, an arc forms across the gap. The fuse must be able to extinguish this arc. A fuse rated below circuit voltage cannot reliably extinguish the arc — the housing may rupture and the fault current continues to flow.' },
-          { q: 'A GFP device trips at 300mA. A GFCI trips at 5mA. Why are both used instead of just GFCI everywhere?', a: 'GFCI at 5mA would nuisance-trip on the normal leakage currents of large commercial/industrial systems. GFP at 150mA–1200mA detects only genuine arcing ground faults on large conductors without nuisance tripping, while GFCI is used on branch circuits for personnel protection.' }
+          { q: 'What is the difference between a Class J and a Class H fuse?', a: 'Class J is current-limiting (clears in <Â½ cycle), rated 200,000A AIC, with rejection features. Class H (glass tube) is NOT current-limiting, typically rated only 10,000A AIC, and can be replaced with any cylindrical fuse. Class J provides vastly superior fault protection.' },
+          { q: 'Why must a fuse\'s voltage rating meet or exceed the circuit voltage?', a: 'After the fuse element melts, an arc forms across the gap. The fuse must be able to extinguish this arc. A fuse rated below circuit voltage cannot reliably extinguish the arc â€” the housing may rupture and the fault current continues to flow.' },
+          { q: 'A GFP device trips at 300mA. A GFCI trips at 5mA. Why are both used instead of just GFCI everywhere?', a: 'GFCI at 5mA would nuisance-trip on the normal leakage currents of large commercial/industrial systems. GFP at 150mAâ€“1200mA detects only genuine arcing ground faults on large conductors without nuisance tripping, while GFCI is used on branch circuits for personnel protection.' }
         ]
       },
       {
@@ -9098,9 +9098,9 @@ const LESSONS_CONTENT = [
         outcome: 'The student will identify pilot devices and overcurrent protection devices used in industrial motor control circuits, and correctly size overcurrent protection for conductors and motors.',
         questions: [
           { q: 'A motor control panel has a red mushroom-head button, a green momentary button, an amber selector switch, and a green pilot light. Identify each device\'s likely function.', a: 'Red mushroom-head = Emergency Stop (maintained, hardwired). Green momentary = Start pushbutton (NO, momentary). Amber selector = Mode/caution function (e.g., Hand-Off-Auto or speed select). Green pilot light = Motor running or power available indicator.' },
-          { q: 'A 30A, 600V, Class H fuse is installed in a panel where the available fault current is 25,000A. The fuse is rated 10,000A interrupting capacity. Describe the risk and the correct solution.', a: 'The fuse\'s interrupting rating (10 kAIC) is far below the available fault current (25 kA). Under a short circuit, the fuse will rupture violently and fail to clear the fault. The correct solution is to replace it with a fuse rated for at least 25 kAIC — such as Class J (200 kAIC) or Class RK1 (200 kAIC).' },
-          { q: 'Describe a scenario where a time-delay fuse is required instead of a non-time-delay fuse, and explain the consequence of using the wrong type.', a: 'A motor circuit drawing 20A FLA with 5-7× starting inrush (100-140A for ~3 seconds). A non-time-delay fuse sized for 20A continuous current would blow on every start due to the inrush. It must be oversized to ~300% (60A), which severely reduces short-circuit protection. A time-delay fuse sized at 125-175% of FLA (25-35A) rides through the inrush while providing superior fault protection.' },
-          { q: 'A 20A circuit breaker trips repeatedly on a circuit feeding an electric heater. The electrician replaces it with a 30A breaker to "fix" the problem. Explain what is wrong with this and what the correct approach should be.', a: 'Wrong approach: the 12 AWG wiring on a typical 20A circuit is only rated for 20A. A 30A breaker will allow 30A to flow through conductors rated for 20A, causing overheating, insulation breakdown, and potentially a fire. Correct approach: measure the actual current draw of the heater. If it exceeds 20A, the heater is oversized for the circuit — either replace the heater or upgrade the circuit (wiring and breaker together) to the appropriate ampacity.' }
+          { q: 'A 30A, 600V, Class H fuse is installed in a panel where the available fault current is 25,000A. The fuse is rated 10,000A interrupting capacity. Describe the risk and the correct solution.', a: 'The fuse\'s interrupting rating (10 kAIC) is far below the available fault current (25 kA). Under a short circuit, the fuse will rupture violently and fail to clear the fault. The correct solution is to replace it with a fuse rated for at least 25 kAIC â€” such as Class J (200 kAIC) or Class RK1 (200 kAIC).' },
+          { q: 'Describe a scenario where a time-delay fuse is required instead of a non-time-delay fuse, and explain the consequence of using the wrong type.', a: 'A motor circuit drawing 20A FLA with 5-7Ã— starting inrush (100-140A for ~3 seconds). A non-time-delay fuse sized for 20A continuous current would blow on every start due to the inrush. It must be oversized to ~300% (60A), which severely reduces short-circuit protection. A time-delay fuse sized at 125-175% of FLA (25-35A) rides through the inrush while providing superior fault protection.' },
+          { q: 'A 20A circuit breaker trips repeatedly on a circuit feeding an electric heater. The electrician replaces it with a 30A breaker to "fix" the problem. Explain what is wrong with this and what the correct approach should be.', a: 'Wrong approach: the 12 AWG wiring on a typical 20A circuit is only rated for 20A. A 30A breaker will allow 30A to flow through conductors rated for 20A, causing overheating, insulation breakdown, and potentially a fire. Correct approach: measure the actual current draw of the heater. If it exceeds 20A, the heater is oversized for the circuit â€” either replace the heater or upgrade the circuit (wiring and breaker together) to the appropriate ampacity.' }
         ]
       }
     ]
@@ -9108,7 +9108,7 @@ const LESSONS_CONTENT = [
   ,{
     id: 'm24',
     title: 'Drawing & Diagram Conversion',
-    icon: '📋',
+    icon: 'ðŸ“‹',
     subtitle: 'Reading the Language Every Electrician Must Speak',
     color: '#ec4899',
     gradient: 'linear-gradient(135deg,rgba(236,72,153,0.12),rgba(139,92,246,0.06))',
@@ -9117,60 +9117,60 @@ const LESSONS_CONTENT = [
     sections: [
       {
         type: 'hook',
-        title: '⚡ The Drawing Is the Circuit',
-        body: `Before a single wire is pulled, before a single conduit is bent, the electrician reads the drawing.\n\nThe drawing tells you what to build. And every drawing speaks a specific language — a language of symbols, conventions, and diagram types that took over a century to standardize across the entire electrical industry.\n\nMiss one wire on the wiring diagram? The light doesn't work. Misread a contact symbol on the schematic? The motor won't start — or worse, won't stop. Mistake a 14/2 cable run for a 14/3 on a blueprint? You'll be back in the wall.\n\nThis module is about reading that language fluently.`
+        title: 'âš¡ The Drawing Is the Circuit',
+        body: `Before a single wire is pulled, before a single conduit is bent, the electrician reads the drawing.\n\nThe drawing tells you what to build. And every drawing speaks a specific language â€” a language of symbols, conventions, and diagram types that took over a century to standardize across the entire electrical industry.\n\nMiss one wire on the wiring diagram? The light doesn't work. Misread a contact symbol on the schematic? The motor won't start â€” or worse, won't stop. Mistake a 14/2 cable run for a 14/3 on a blueprint? You'll be back in the wall.\n\nThis module is about reading that language fluently.`
       },
       {
         type: 'story',
-        title: '🏗 Three Ways to Describe the Same Circuit',
-        body: `Imagine you need to explain a simple switch-light circuit to three different people.\n\nTo a project manager, you draw boxes: [Panel] → [Switch] → [Light]. Simple. Clean. Shows the logic without any messy details.\n\nTo the apprentice who's pulling wire, you draw a wiring diagram: which wire goes to which terminal, what colour is which, where the wire nut is, and which cable carries how many conductors.\n\nTo the troubleshooter who shows up at 2 AM when the light doesn't work, you hand them a schematic: L1 on the left rail, N on the right, SW1 contact in the rung, lamp symbol at the end. They trace continuity from left to right in 10 seconds and find the problem.\n\nSame circuit. Three completely different drawings. Each one is exactly right for its purpose — and you need to be able to work with all three.`
+        title: 'ðŸ— Three Ways to Describe the Same Circuit',
+        body: `Imagine you need to explain a simple switch-light circuit to three different people.\n\nTo a project manager, you draw boxes: [Panel] â†’ [Switch] â†’ [Light]. Simple. Clean. Shows the logic without any messy details.\n\nTo the apprentice who's pulling wire, you draw a wiring diagram: which wire goes to which terminal, what colour is which, where the wire nut is, and which cable carries how many conductors.\n\nTo the troubleshooter who shows up at 2 AM when the light doesn't work, you hand them a schematic: L1 on the left rail, N on the right, SW1 contact in the rung, lamp symbol at the end. They trace continuity from left to right in 10 seconds and find the problem.\n\nSame circuit. Three completely different drawings. Each one is exactly right for its purpose â€” and you need to be able to work with all three.`
       },
       {
         type: 'concept',
-        title: '📦 Block Diagrams: The Big Picture',
-        body: `A block diagram is the simplest of the three. It uses labeled rectangles (blocks) connected by arrows to show the functional flow of a circuit.\n\nEach block represents one function:\n• [Power Source] → [Switch] → [Load]\n• [Control Source] → [Pushbutton] → [Relay Coil]\n• [L1/L2/L3] → [Main Contacts] → [OL Heaters] → [Motor]\n\nBlock diagrams tell you:\n✓ What components are in the circuit\n✓ What order they appear in\n✓ Which is the control path and which is the power path\n\nBlock diagrams do NOT tell you:\n✗ Wire colours\n✗ Cable types or sizes\n✗ Physical routing\n✗ Terminal connections\n✗ Whether contacts are NO or NC\n\nUse block diagrams for planning, documentation, and quick communication. They are often the first step in circuit design.`
+        title: 'ðŸ“¦ Block Diagrams: The Big Picture',
+        body: `A block diagram is the simplest of the three. It uses labeled rectangles (blocks) connected by arrows to show the functional flow of a circuit.\n\nEach block represents one function:\nâ€¢ [Power Source] â†’ [Switch] â†’ [Load]\nâ€¢ [Control Source] â†’ [Pushbutton] â†’ [Relay Coil]\nâ€¢ [L1/L2/L3] â†’ [Main Contacts] â†’ [OL Heaters] â†’ [Motor]\n\nBlock diagrams tell you:\nâœ“ What components are in the circuit\nâœ“ What order they appear in\nâœ“ Which is the control path and which is the power path\n\nBlock diagrams do NOT tell you:\nâœ— Wire colours\nâœ— Cable types or sizes\nâœ— Physical routing\nâœ— Terminal connections\nâœ— Whether contacts are NO or NC\n\nUse block diagrams for planning, documentation, and quick communication. They are often the first step in circuit design.`
       },
       {
         type: 'keypoint',
-        title: '🧵 Wiring Diagrams: What the Apprentice Uses',
-        body: `A wiring diagram shows how the circuit is actually built — wire by wire, terminal by terminal.\n\nEvery conductor is shown with its correct colour. Every splice shows a wire nut. Every device shows all its terminals and what connects where. The physical layout of boxes often approximates the actual installation.\n\nCanadian conductor colour code:\n• Black = hot (ungrounded) conductor\n• White = neutral (grounded) conductor\n• Red = second hot in a multi-wire circuit (14/3 or 12/3 cable)\n• Green or bare = equipment grounding conductor (EGC)\n\nSwitch loops (switch legs): In older wiring, the cable from a light box to a switch box carries the hot in the black wire and returns the switched hot in the white wire. The white wire must be re-identified with black tape or paint at both ends — it is acting as a hot conductor, not a neutral.\n\nCounting conductors: each wire in a cable counts. 14/2 has 2 insulated conductors (black + white) plus a bare EGC. 14/3 has 3 insulated conductors (black + red + white) plus a bare EGC. The number after the slash tells you how many insulated conductors.`
+        title: 'ðŸ§µ Wiring Diagrams: What the Apprentice Uses',
+        body: `A wiring diagram shows how the circuit is actually built â€” wire by wire, terminal by terminal.\n\nEvery conductor is shown with its correct colour. Every splice shows a wire nut. Every device shows all its terminals and what connects where. The physical layout of boxes often approximates the actual installation.\n\nCanadian conductor colour code:\nâ€¢ Black = hot (ungrounded) conductor\nâ€¢ White = neutral (grounded) conductor\nâ€¢ Red = second hot in a multi-wire circuit (14/3 or 12/3 cable)\nâ€¢ Green or bare = equipment grounding conductor (EGC)\n\nSwitch loops (switch legs): In older wiring, the cable from a light box to a switch box carries the hot in the black wire and returns the switched hot in the white wire. The white wire must be re-identified with black tape or paint at both ends â€” it is acting as a hot conductor, not a neutral.\n\nCounting conductors: each wire in a cable counts. 14/2 has 2 insulated conductors (black + white) plus a bare EGC. 14/3 has 3 insulated conductors (black + red + white) plus a bare EGC. The number after the slash tells you how many insulated conductors.`
       },
       {
         type: 'concept',
-        title: '🪜 Schematic (Ladder) Diagrams: The Troubleshooter\'s Map',
-        body: `The schematic diagram is drawn in ladder format and is the universal language of motor control troubleshooting.\n\nStructure:\n• Two vertical rails: L1 (hot, left) and N/L2 (neutral or second hot, right)\n• Horizontal rungs connect the two rails\n• Each rung is a complete circuit path from L1 through contacts to a load at N/L2\n\nContact symbols:\n• NO contact: two short vertical lines (open gap) — must close for current to flow\n• NC contact: two short vertical lines with a diagonal slash — must NOT open for current to flow\n\nOutput symbols:\n• Coil: letter in parentheses or a circle — (M), (CR), (T)\n• Lamp: circle with X inside\n• Motor: circle with M\n\nReading rule: trace from L1, through each contact in series, to the output at N/L2. If ALL series contacts are closed, the output energizes. Contacts in parallel = OR logic (either one provides a path).\n\nThe most important convention: CONTACTS are on the LEFT side of the rung. OUTPUTS (coils, loads) are on the RIGHT side. Always.`,
+        title: 'ðŸªœ Schematic (Ladder) Diagrams: The Troubleshooter\'s Map',
+        body: `The schematic diagram is drawn in ladder format and is the universal language of motor control troubleshooting.\n\nStructure:\nâ€¢ Two vertical rails: L1 (hot, left) and N/L2 (neutral or second hot, right)\nâ€¢ Horizontal rungs connect the two rails\nâ€¢ Each rung is a complete circuit path from L1 through contacts to a load at N/L2\n\nContact symbols:\nâ€¢ NO contact: two short vertical lines (open gap) â€” must close for current to flow\nâ€¢ NC contact: two short vertical lines with a diagonal slash â€” must NOT open for current to flow\n\nOutput symbols:\nâ€¢ Coil: letter in parentheses or a circle â€” (M), (CR), (T)\nâ€¢ Lamp: circle with X inside\nâ€¢ Motor: circle with M\n\nReading rule: trace from L1, through each contact in series, to the output at N/L2. If ALL series contacts are closed, the output energizes. Contacts in parallel = OR logic (either one provides a path).\n\nThe most important convention: CONTACTS are on the LEFT side of the rung. OUTPUTS (coils, loads) are on the RIGHT side. Always.`,
         formula: 'Series contacts: ALL must be closed (AND logic)\nParallel contacts: ANY ONE can close (OR logic)\nA coil energizes when current reaches it from L1 to N/L2'
       },
       {
         type: 'keypoint',
-        title: '🔢 Counting Wires — The Core Skill',
-        body: `When you look at a block diagram and need to know what cable to buy, you count the conductors required between each pair of locations.\n\nBasic switch-light:\n• Panel → Switch box: 2 conductors (hot + neutral) → 14/2\n• Switch box → Light box: 2 conductors (switched hot + neutral) → 14/2\n\n3-way switch circuit:\n• Panel → SW1 box: 2 conductors → 14/2\n• SW1 box → SW2 box: 3 conductors (traveler A + traveler B + neutral) → 14/3\n• SW2 box → Light box: 2 conductors → 14/2\n\n3-wire motor control push button station:\n• 3 conductors to the button station (control hot, junction point, neutral return)\n\nMotor power circuit:\n• 3 conductors from starter to motor (T1, T2, T3)\n\nOn blueprints, slash marks on a circuit line tell you the same thing:\n// = 2 conductors (14/2)\n/// = 3 conductors (14/3)\n//// = 4 conductors\n\nA home run arrow on a floor plan shows which panel the circuit returns to.`
+        title: 'ðŸ”¢ Counting Wires â€” The Core Skill',
+        body: `When you look at a block diagram and need to know what cable to buy, you count the conductors required between each pair of locations.\n\nBasic switch-light:\nâ€¢ Panel â†’ Switch box: 2 conductors (hot + neutral) â†’ 14/2\nâ€¢ Switch box â†’ Light box: 2 conductors (switched hot + neutral) â†’ 14/2\n\n3-way switch circuit:\nâ€¢ Panel â†’ SW1 box: 2 conductors â†’ 14/2\nâ€¢ SW1 box â†’ SW2 box: 3 conductors (traveler A + traveler B + neutral) â†’ 14/3\nâ€¢ SW2 box â†’ Light box: 2 conductors â†’ 14/2\n\n3-wire motor control push button station:\nâ€¢ 3 conductors to the button station (control hot, junction point, neutral return)\n\nMotor power circuit:\nâ€¢ 3 conductors from starter to motor (T1, T2, T3)\n\nOn blueprints, slash marks on a circuit line tell you the same thing:\n// = 2 conductors (14/2)\n/// = 3 conductors (14/3)\n//// = 4 conductors\n\nA home run arrow on a floor plan shows which panel the circuit returns to.`
       },
       {
         type: 'concept',
-        title: '🔄 Converting Between Diagram Types',
-        body: `Block → Wiring Diagram:\n1. Identify each block and select the physical device (single-pole switch, relay, motor)\n2. Draw each device's enclosure with all terminals\n3. Connect terminals with conductors using correct colour codes\n4. Show all wire nuts for splices\n5. Label cable types (14/2 NMD90, etc.)\n\nWiring → Schematic:\n1. Identify all loads (coils, motors, lamps) — these become your output symbols on the right rail\n2. Identify all contacts and switches — these become contact symbols on the left side of rungs\n3. Trace current paths in the wiring diagram → replicate as rungs\n4. Series connections in wiring become contacts in series in the rung\n5. Parallel connections become contacts in parallel\n6. Draw dashed lines connecting a coil symbol to all contacts operated by that coil\n\nSchematic → Wiring:\n1. Identify each rung and trace what it energizes\n2. For each component, draw its physical enclosure\n3. Connect terminals per the schematic, adding correct wire colours\n4. Combine circuits sharing the same box into one drawing\n\nThis back-and-forth conversion is what happens every time an electrician plans and then builds a control circuit.`
+        title: 'ðŸ”„ Converting Between Diagram Types',
+        body: `Block â†’ Wiring Diagram:\n1. Identify each block and select the physical device (single-pole switch, relay, motor)\n2. Draw each device's enclosure with all terminals\n3. Connect terminals with conductors using correct colour codes\n4. Show all wire nuts for splices\n5. Label cable types (14/2 NMD90, etc.)\n\nWiring â†’ Schematic:\n1. Identify all loads (coils, motors, lamps) â€” these become your output symbols on the right rail\n2. Identify all contacts and switches â€” these become contact symbols on the left side of rungs\n3. Trace current paths in the wiring diagram â†’ replicate as rungs\n4. Series connections in wiring become contacts in series in the rung\n5. Parallel connections become contacts in parallel\n6. Draw dashed lines connecting a coil symbol to all contacts operated by that coil\n\nSchematic â†’ Wiring:\n1. Identify each rung and trace what it energizes\n2. For each component, draw its physical enclosure\n3. Connect terminals per the schematic, adding correct wire colours\n4. Combine circuits sharing the same box into one drawing\n\nThis back-and-forth conversion is what happens every time an electrician plans and then builds a control circuit.`
       },
       {
         type: 'real-world',
-        title: '🛠 The 3-Wire Control Circuit — Reading the Ladder',
-        body: `The 3-wire motor starter is the most common control circuit in industrial electrical work, and you need to read it cold.\n\nControl rung (trace from left to right):\nL1 → [OL NC contact] → [Stop NC] → junction point → [Start NO] → [M coil] → N/L2\n                                              ↕ (parallel)\n                                         [M aux NO seal-in]\n\nHow to read it:\n• OL NC: if the overload trips, this contact opens, killing the coil — motor stops\n• Stop NC: pressing Stop opens this contact — motor stops\n• Junction: current can reach the coil through either the Start NO or the M seal-in\n• Start NO: momentarily closes when Start is pressed — energizes M coil\n• M seal-in: closes when M energizes — holds the circuit after Start is released\n• M coil: energizes to close all M contacts\n\nPower rungs (3-phase):\nL1 → [M contact] → [OL heater 1] → T1 → Motor\nL2 → [M contact] → [OL heater 2] → T2 → Motor\nL3 → [M contact] → [OL heater 3] → T3 → Motor\n\nThe dashed line from the M coil to all M contacts shows: when M coil energizes, ALL M contacts change state simultaneously.`
+        title: 'ðŸ›  The 3-Wire Control Circuit â€” Reading the Ladder',
+        body: `The 3-wire motor starter is the most common control circuit in industrial electrical work, and you need to read it cold.\n\nControl rung (trace from left to right):\nL1 â†’ [OL NC contact] â†’ [Stop NC] â†’ junction point â†’ [Start NO] â†’ [M coil] â†’ N/L2\n                                              â†• (parallel)\n                                         [M aux NO seal-in]\n\nHow to read it:\nâ€¢ OL NC: if the overload trips, this contact opens, killing the coil â€” motor stops\nâ€¢ Stop NC: pressing Stop opens this contact â€” motor stops\nâ€¢ Junction: current can reach the coil through either the Start NO or the M seal-in\nâ€¢ Start NO: momentarily closes when Start is pressed â€” energizes M coil\nâ€¢ M seal-in: closes when M energizes â€” holds the circuit after Start is released\nâ€¢ M coil: energizes to close all M contacts\n\nPower rungs (3-phase):\nL1 â†’ [M contact] â†’ [OL heater 1] â†’ T1 â†’ Motor\nL2 â†’ [M contact] â†’ [OL heater 2] â†’ T2 â†’ Motor\nL3 â†’ [M contact] â†’ [OL heater 3] â†’ T3 â†’ Motor\n\nThe dashed line from the M coil to all M contacts shows: when M coil energizes, ALL M contacts change state simultaneously.`
       },
       {
         type: 'quiz',
-        title: '🧠 Quick Check',
+        title: 'ðŸ§  Quick Check',
         questions: [
-          { q: 'A block diagram shows 3 slash marks on the cable run between two switch boxes. What cable type is needed?', a: '14/3 NMD90 — 3 slash marks = 3 conductors. The circuit is a 3-way switch and the two traveler wires plus neutral must run in the same cable between the two switch locations.' },
+          { q: 'A block diagram shows 3 slash marks on the cable run between two switch boxes. What cable type is needed?', a: '14/3 NMD90 â€” 3 slash marks = 3 conductors. The circuit is a 3-way switch and the two traveler wires plus neutral must run in the same cable between the two switch locations.' },
           { q: 'In a ladder diagram, where are contacts placed relative to the coil?', a: 'Contacts (inputs/conditions) are always on the LEFT side of the rung. Coils and loads (outputs) are always on the RIGHT side, closest to the neutral rail. Current flows left to right through closed contacts to energize the output.' },
-          { q: 'What does a diagonal line through a contact symbol on a schematic mean?', a: 'It is a Normally Closed (NC) contact — the contacts are CLOSED when no power is applied to the coil. They OPEN when the coil is energized. NC contacts are used for stop buttons and overload contacts.' }
+          { q: 'What does a diagonal line through a contact symbol on a schematic mean?', a: 'It is a Normally Closed (NC) contact â€” the contacts are CLOSED when no power is applied to the coil. They OPEN when the coil is energized. NC contacts are used for stop buttons and overload contacts.' }
         ]
       },
       {
         type: 'protip',
-        title: '🛠 Pro Tips',
+        title: 'ðŸ›  Pro Tips',
         tips: [
           'When counting conductors on a block diagram, draw a line between each pair of adjacent boxes and ask: "How many electrical connections must cross this line?" That number is your conductor count. Each connection needs its own conductor.',
-          'The white wire in a switch loop MUST be re-identified as a hot conductor — typically with a wrap of black electrical tape at both ends. If you see a white wire at a single-pole switch terminal (not at a wire nut), it is a switch leg return and it should be marked. Leaving it white is a code violation and creates a hazard for the next person who works there.',
+          'The white wire in a switch loop MUST be re-identified as a hot conductor â€” typically with a wrap of black electrical tape at both ends. If you see a white wire at a single-pole switch terminal (not at a wire nut), it is a switch leg return and it should be marked. Leaving it white is a code violation and creates a hazard for the next person who works there.',
           'When troubleshooting from a ladder diagram: cover the right side with your finger, look at only the contacts in the rung, and ask "Can current get through here right now?" If yes, the coil should be energized. If the coil is NOT energized, you found the rung. Now test each contact in that rung until you find the one that won\'t close.'
         ]
       },
@@ -9208,9 +9208,9 @@ const LESSONS_CONTENT = [
         title: 'Module Desired Outcome',
         outcome: 'The student will read, interpret, and convert between block diagrams, wiring diagrams, and schematic (ladder) diagrams for residential and motor control circuits, and will correctly count conductors from diagram information.',
         questions: [
-          { q: 'You are given a block diagram: [Panel] → [3-Way SW1] → [3-Way SW2] → [Light Fixture]. List the three cable runs required, the cable type for each, and the conductor count for each run.', a: 'Run 1: Panel to SW1 box — 14/2 NMD90 — 2 conductors (black hot, white neutral). Run 2: SW1 box to SW2 box — 14/3 NMD90 — 3 conductors (black traveler, red traveler, white neutral). Run 3: SW2 box to Light box — 14/2 NMD90 — 2 conductors (black switched hot, white neutral). Total: 3 cable runs, 7 conductors (plus EGCs in each cable).' },
-          { q: 'Convert the following description to a ladder schematic rung: "A relay coil (CR1) is controlled by a normally open pushbutton (PB1). A normally closed limit switch (LS1) is in series before the pushbutton. A CR1 auxiliary contact is in parallel with PB1."', a: 'L1 rail → [LS1 NC contact] → junction → [PB1 NO contact] → [CR1 coil] → N rail. In parallel with PB1: [CR1 NO auxiliary contact] connected between the junction and the point after PB1. The NC slash on LS1 and NO gap on PB1 and CR1 aux must be correctly drawn.' },
-          { q: 'On a wiring diagram you see a white wire connected to a single-pole switch terminal. Is this correct? What must be done?', a: 'This is a switch loop — the white conductor is returning the switched hot from the switch back to the light box. It is being used as an ungrounded (hot) conductor, not a neutral. The CEC requires the white wire to be re-identified at both ends (at the switch terminal and at the splice in the light box) with black electrical tape or black paint to indicate it is being used as a hot conductor. Leaving it white is a violation and creates a hazard.' }
+          { q: 'You are given a block diagram: [Panel] â†’ [3-Way SW1] â†’ [3-Way SW2] â†’ [Light Fixture]. List the three cable runs required, the cable type for each, and the conductor count for each run.', a: 'Run 1: Panel to SW1 box â€” 14/2 NMD90 â€” 2 conductors (black hot, white neutral). Run 2: SW1 box to SW2 box â€” 14/3 NMD90 â€” 3 conductors (black traveler, red traveler, white neutral). Run 3: SW2 box to Light box â€” 14/2 NMD90 â€” 2 conductors (black switched hot, white neutral). Total: 3 cable runs, 7 conductors (plus EGCs in each cable).' },
+          { q: 'Convert the following description to a ladder schematic rung: "A relay coil (CR1) is controlled by a normally open pushbutton (PB1). A normally closed limit switch (LS1) is in series before the pushbutton. A CR1 auxiliary contact is in parallel with PB1."', a: 'L1 rail â†’ [LS1 NC contact] â†’ junction â†’ [PB1 NO contact] â†’ [CR1 coil] â†’ N rail. In parallel with PB1: [CR1 NO auxiliary contact] connected between the junction and the point after PB1. The NC slash on LS1 and NO gap on PB1 and CR1 aux must be correctly drawn.' },
+          { q: 'On a wiring diagram you see a white wire connected to a single-pole switch terminal. Is this correct? What must be done?', a: 'This is a switch loop â€” the white conductor is returning the switched hot from the switch back to the light box. It is being used as an ungrounded (hot) conductor, not a neutral. The CEC requires the white wire to be re-identified at both ends (at the switch terminal and at the splice in the light box) with black electrical tape or black paint to indicate it is being used as a hot conductor. Leaving it white is a violation and creates a hazard.' }
         ]
       }
     ]
@@ -9236,7 +9236,7 @@ const Lessons = {
     container.innerHTML = `
       <div style="padding:24px 0 8px;">
         <h1 style="font-size:2rem;margin-bottom:6px;">&#x1F4DA; Lessons</h1>
-        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">Deep-dive lessons for every available module — real explanations, real-world examples, and the kind of context that makes everything click.</p>
+        <p style="color:var(--text-secondary);font-size:1rem;max-width:600px;">Deep-dive lessons for every available module â€” real explanations, real-world examples, and the kind of context that makes everything click.</p>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-top:24px;">
         ${LESSONS_CONTENT.map(lesson => `
@@ -9319,7 +9319,7 @@ const Lessons = {
       return `
         <div style="background:rgba(255,255,255,0.02);border:2px solid ${accentColor}33;border-radius:14px;padding:24px;margin-bottom:18px;">
           <h3 style="font-size:1.1rem;margin:0 0 4px;display:flex;align-items:center;gap:8px;color:${accentColor};">&#x1F4CB; ${s.title}</h3>
-          <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 16px;font-style:italic;">Knowledge objectives only — hands-on demonstration objectives are excluded.</p>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin:0 0 16px;font-style:italic;">Knowledge objectives only â€” hands-on demonstration objectives are excluded.</p>
           ${objList}${qHtml}
         </div>`;
     }
@@ -9362,9 +9362,9 @@ const Lessons = {
     if (s.body) {
       const paragraphs = s.body.split('\n\n').map(p => {
         const lines = p.split('\n');
-        if (lines.length > 1 && lines.some(l => l.startsWith('•'))) {
-          const listItems = lines.filter(l => l.startsWith('•')).map(l => '<li style="margin-bottom:5px;">' + l.slice(1).trim() + '</li>').join('');
-          const pre = lines.filter(l => !l.startsWith('•')).join(' ').trim();
+        if (lines.length > 1 && lines.some(l => l.startsWith('â€¢'))) {
+          const listItems = lines.filter(l => l.startsWith('â€¢')).map(l => '<li style="margin-bottom:5px;">' + l.slice(1).trim() + '</li>').join('');
+          const pre = lines.filter(l => !l.startsWith('â€¢')).join(' ').trim();
           return (pre ? '<p style="margin:0 0 8px;">' + pre + '</p>' : '') + '<ul style="margin:0 0 12px;padding-left:20px;">' + listItems + '</ul>';
         }
         return '<p style="margin:0 0 12px;line-height:1.7;color:var(--text-primary);">' + p.replace(/\n/g, '<br>') + '</p>';
@@ -9534,13 +9534,13 @@ const Settings = {
 
       <!-- Image upload -->
       <div style="margin-bottom:18px;">
-        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:8px;">Upload a photo of your timetable (optional — for reference)</label>
+        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:8px;">Upload a photo of your timetable (optional â€” for reference)</label>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <label style="padding:8px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.85rem;">
-            📎 Choose Image
+            ðŸ“Ž Choose Image
             <input type="file" accept="image/*,application/pdf" style="display:none;" onchange="Settings.uploadScheduleImage(event)">
           </label>
-          ${sched.imageData ? `<span style="font-size:0.8rem;color:#22c55e;">✓ Schedule image saved</span>
+          ${sched.imageData ? `<span style="font-size:0.8rem;color:#22c55e;">âœ“ Schedule image saved</span>
             <button onclick="Settings.clearScheduleImage()" style="font-size:0.75rem;color:#ef4444;background:none;border:none;cursor:pointer;">Remove</button>` : '<span style="font-size:0.8rem;color:var(--text-muted);">No image uploaded</span>'}
         </div>
         ${sched.imageData ? `<img src="${sched.imageData}" style="max-width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--border);">` : ''}
@@ -9554,12 +9554,12 @@ const Settings = {
             <div style="min-width:90px;font-size:0.85rem;font-weight:600;color:var(--text-secondary);">${day}</div>
             <select id="sched_${day}" onchange="Settings.saveScheduleDay('${day}',this.value)"
               style="flex:1;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.82rem;">
-              <option value="">— No class —</option>
+              <option value="">â€” No class â€”</option>
               ${topics.map(m=>`<option value="${m.id}" ${sched[day]===m.id?'selected':''}>${m.num}. ${m.name}</option>`).join('')}
             </select>
           </div>`).join('')}
       </div>
-      ${hasSchedule ? `<div style="margin-top:12px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:8px;font-size:0.82rem;color:#22c55e;">✅ Schedule saved — your dashboard will show daily study suggestions based on today's topic.</div>` : ''}
+      ${hasSchedule ? `<div style="margin-top:12px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:8px;font-size:0.82rem;color:#22c55e;">âœ… Schedule saved â€” your dashboard will show daily study suggestions based on today's topic.</div>` : ''}
     </div>`;
   },
 
@@ -9777,6 +9777,14 @@ const PromoCodes = {
     if (c) c.active = !c.active;
     this.save(all);
   },
+  apply(code) {
+    if (!code) return { success: false, message: '' };
+    const promo = this.validate(code);
+    if (!promo) return { success: false, message: 'Invalid or expired promo code.' };
+    this.redeem(code);
+    Diagnostic._appliedPromoData = promo;
+    return { success: true, message: promo.type === 'free' ? '🎉 Free access applied!' : promo.type === 'trial_extend' ? `+${promo.value} extra trial days applied!` : promo.type === 'percent' ? `${promo.value}% discount applied!` : `$${promo.value} discount applied!` };
+  },
   validate(code) {
     if (!code) return null;
     const all = this.getAll();
@@ -9831,7 +9839,7 @@ const OwnerDashboard = {
     const avgDiag = diagScores.length>0?Math.round(diagScores.reduce((a,b)=>a+b,0)/diagScores.length):0;
     const recentEvents = SiteAnalytics.getRecentEvents(50);
 
-    // Traffic stats — use Firebase cloud data if available (real cross-device, owner-excluded)
+    // Traffic stats â€” use Firebase cloud data if available (real cross-device, owner-excluded)
     let totalVisits, todayVisits, visitDays, hourly, topPages;
     if (this._cloudVisits) {
       const cv = this._cloudVisits;
@@ -10249,7 +10257,7 @@ const OwnerDashboard = {
   }
 };
 
-// ===== MOBILE NAV TOGGLE (burger → open drawer) =====
+// ===== MOBILE NAV TOGGLE (burger â†’ open drawer) =====
 function toggleMobileNav() { openMobileDrawer(); }
 
 function openMobileDrawer() {
@@ -10276,21 +10284,21 @@ function updateMobileDrawer(state, activePage) {
   const isMobile = window.innerWidth <= 768;
 
   if (!state) {
-    // Not logged in — hide drawer user, hide bottom nav
+    // Not logged in â€” hide drawer user, hide bottom nav
     if (drawerUser) drawerUser.style.display = 'none';
     if (bottomNav) bottomNav.classList.remove('bn-visible');
     if (drawerNav) drawerNav.innerHTML = `
       <div class="mobile-drawer-section-label">Account</div>
       <button class="mobile-drawer-item" onclick="App.navigate('login');closeMobileDrawer();">
-        <span class="mdi">🔑</span> Log In
+        <span class="mdi">ðŸ”‘</span> Log In
       </button>
       <button class="mobile-drawer-item" onclick="App.navigate('signup');closeMobileDrawer();">
-        <span class="mdi">✨</span> Sign Up
+        <span class="mdi">âœ¨</span> Sign Up
       </button>`;
     return;
   }
 
-  // Logged in — show user info
+  // Logged in â€” show user info
   if (drawerUser) drawerUser.style.display = 'flex';
   if (drawerAvatar) drawerAvatar.textContent = (state.user.name || '?')[0].toUpperCase();
   if (drawerName) drawerName.textContent = state.user.name || 'Student';
@@ -10311,28 +10319,28 @@ function updateMobileDrawer(state, activePage) {
   // Build drawer nav items
   const navItems = [
     { section: 'Study' },
-    { page: 'dashboard', icon: '🏠', label: 'Dashboard' },
-    { page: 'flashcards', icon: '🃏', label: 'Flashcards' },
-    { page: 'exams', icon: '📝', label: 'Exams' },
-    { page: 'lessons', icon: '📚', label: 'Lessons' },
-    { page: 'study-guide', icon: '📖', label: 'Study Guide' },
-    { page: 'notes', icon: '📝', label: 'My Notes' },
+    { page: 'dashboard', icon: 'ðŸ ', label: 'Dashboard' },
+    { page: 'flashcards', icon: 'ðŸƒ', label: 'Flashcards' },
+    { page: 'exams', icon: 'ðŸ“', label: 'Exams' },
+    { page: 'lessons', icon: 'ðŸ“š', label: 'Lessons' },
+    { page: 'study-guide', icon: 'ðŸ“–', label: 'Study Guide' },
+    { page: 'notes', icon: 'ðŸ“', label: 'My Notes' },
     { section: 'Tools & Insights' },
-    { page: 'tools', icon: '🔧', label: 'Simulators' },
-    { page: 'math', icon: '🧮', label: 'Math Practice' },
-    { page: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
-    { page: 'analytics', icon: '📊', label: 'Analytics' },
-    { page: 'review', icon: '⭐', label: 'Review Wrong' },
+    { page: 'tools', icon: 'ðŸ”§', label: 'Simulators' },
+    { page: 'math', icon: 'ðŸ§®', label: 'Math Practice' },
+    { page: 'leaderboard', icon: 'ðŸ†', label: 'Leaderboard' },
+    { page: 'analytics', icon: 'ðŸ“Š', label: 'Analytics' },
+    { page: 'review', icon: 'â­', label: 'Review Wrong' },
     { section: 'Account' },
-    { page: 'settings', icon: '⚙️', label: 'Settings' },
+    { page: 'settings', icon: 'âš™ï¸', label: 'Settings' },
   ];
   if (state.user.isOwner) {
     navItems.splice(navItems.findIndex(i => i.section === 'Account'), 0,
-      { page: 'owner', icon: '👑', label: 'Owner Analytics' });
+      { page: 'owner', icon: 'ðŸ‘‘', label: 'Owner Analytics' });
   }
   if (state.user.subscription && state.user.subscription.groupId) {
     navItems.splice(navItems.findIndex(i => i.page === 'settings'), 0,
-      { page: 'group', icon: '👥', label: 'Group' });
+      { page: 'group', icon: 'ðŸ‘¥', label: 'Group' });
   }
 
   drawerNav.innerHTML = navItems.map(item => {
@@ -10376,20 +10384,20 @@ const MathPractice = {
   showingConfig: false,
 
   categories: [
-    { id:'ac-basics',   name:'Module 1 — Fundamentals of Alternating Current',    icon:'〜',  formula:'Vrms = Vp × 0.707  |  f = 1/T  |  T = 1/f' },
-    { id:'reactance',   name:'Module 2 — Properties of Inductors & Capacitors',   icon:'📡',  formula:'XL = 2πfL  |  XC = 1/(2πfC)' },
-    { id:'impedance',   name:'Module 3 — Inductors & Capacitors in Circuits',     icon:'📐',  formula:'Z = √(R² + X²)  |  θ = arctan(X/R)' },
-    { id:'three-phase', name:'Module 4 — Principles of AC Circuits',              icon:'🔺',  formula:'VL = √3 × Vp  |  IL = √3 × Ip (delta)' },
+    { id:'ac-basics',   name:'Module 1 â€” Fundamentals of Alternating Current',    icon:'ã€œ',  formula:'Vrms = Vp Ã— 0.707  |  f = 1/T  |  T = 1/f' },
+    { id:'reactance',   name:'Module 2 â€” Properties of Inductors & Capacitors',   icon:'ðŸ“¡',  formula:'XL = 2Ï€fL  |  XC = 1/(2Ï€fC)' },
+    { id:'impedance',   name:'Module 3 â€” Inductors & Capacitors in Circuits',     icon:'ðŸ“',  formula:'Z = âˆš(RÂ² + XÂ²)  |  Î¸ = arctan(X/R)' },
+    { id:'three-phase', name:'Module 4 â€” Principles of AC Circuits',              icon:'ðŸ”º',  formula:'VL = âˆš3 Ã— Vp  |  IL = âˆš3 Ã— Ip (delta)' },
   ],
 
   // Maps each math category to its actual lesson/study content.
-  // type:'lessons' → opens a specific lesson module by module ID (m1, m2, etc.)
-  // type:'study-guide' → opens the Study Guide for that topic (period 1 content or modules without a written lesson yet)
+  // type:'lessons' â†’ opens a specific lesson module by module ID (m1, m2, etc.)
+  // type:'study-guide' â†’ opens the Study Guide for that topic (period 1 content or modules without a written lesson yet)
   _studyTopicMap: {
-    'ac-basics':   { type:'lessons', id:'m1', label:'Module 1 — Fundamentals of Alternating Current' },
-    'reactance':   { type:'lessons', id:'m2', label:'Module 2 — Properties of Inductors and Capacitors' },
-    'impedance':   { type:'lessons', id:'m3', label:'Module 3 — Inductors and Capacitors in Circuits' },
-    'three-phase': { type:'lessons', id:'m4', label:'Module 4 — Principles of AC Circuits' },
+    'ac-basics':   { type:'lessons', id:'m1', label:'Module 1 â€” Fundamentals of Alternating Current' },
+    'reactance':   { type:'lessons', id:'m2', label:'Module 2 â€” Properties of Inductors and Capacitors' },
+    'impedance':   { type:'lessons', id:'m3', label:'Module 3 â€” Inductors and Capacitors in Circuits' },
+    'three-phase': { type:'lessons', id:'m4', label:'Module 4 â€” Principles of AC Circuits' },
   },
 
   openLesson(catId) {
@@ -10444,7 +10452,7 @@ const MathPractice = {
     if (!state) return;
     if (!state.mathSettings) state.mathSettings = { enabledCategories: null };
     let enabled = state.mathSettings.enabledCategories;
-    // null means all enabled — materialise the full list first
+    // null means all enabled â€” materialise the full list first
     if (!enabled) enabled = this.categories.map(c => c.id);
     if (enabled.includes(id)) {
       enabled = enabled.filter(e => e !== id);
@@ -10470,90 +10478,90 @@ const MathPractice = {
 
   _gen_ohms_law() {
     const type = this._r(0,2);
-    if (type===0) { const V=this._r(12,480,12),R=this._r(1,200,5); return {q:`A circuit has a voltage of <strong>${V}V</strong> and a resistance of <strong>${R}Ω</strong>. What is the current?`,a:this._round(V/R),unit:'A',hint:'I = V ÷ R',formula:'I = V / R'}; }
-    if (type===1) { const I=this._r(1,30),R=this._r(5,200,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Ω</strong> resistor. What is the voltage across it?`,a:this._round(I*R),unit:'V',hint:'V = I × R',formula:'V = I × R'}; }
-    const V=this._r(12,480,12),I=this._r(1,20); return {q:`A <strong>${V}V</strong> source pushes <strong>${I}A</strong> through a resistor. What is the resistance?`,a:this._round(V/I),unit:'Ω',hint:'R = V ÷ I',formula:'R = V / I'};
+    if (type===0) { const V=this._r(12,480,12),R=this._r(1,200,5); return {q:`A circuit has a voltage of <strong>${V}V</strong> and a resistance of <strong>${R}Î©</strong>. What is the current?`,a:this._round(V/R),unit:'A',hint:'I = V Ã· R',formula:'I = V / R'}; }
+    if (type===1) { const I=this._r(1,30),R=this._r(5,200,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Î©</strong> resistor. What is the voltage across it?`,a:this._round(I*R),unit:'V',hint:'V = I Ã— R',formula:'V = I Ã— R'}; }
+    const V=this._r(12,480,12),I=this._r(1,20); return {q:`A <strong>${V}V</strong> source pushes <strong>${I}A</strong> through a resistor. What is the resistance?`,a:this._round(V/I),unit:'Î©',hint:'R = V Ã· I',formula:'R = V / I'};
   },
 
   _gen_power() {
     const type = this._r(0,3);
-    if (type===0) { const V=this._r(12,240,12),I=this._r(1,20); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong>. What is the power?`,a:this._round(V*I),unit:'W',hint:'P = V × I',formula:'P = V × I'}; }
-    if (type===1) { const I=this._r(1,20),R=this._r(5,100,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Ω</strong> resistor. What power is dissipated?`,a:this._round(I*I*R),unit:'W',hint:'P = I² × R',formula:'P = I² × R'}; }
-    if (type===2) { const V=this._r(12,240,12),R=this._r(5,100,5); return {q:`<strong>${V}V</strong> is applied across a <strong>${R}Ω</strong> resistor. What is the power?`,a:this._round(V*V/R),unit:'W',hint:'P = V² ÷ R',formula:'P = V² / R'}; }
-    const P=this._r(100,2400,100),V=this._r(120,240,120); return {q:`A <strong>${P}W</strong> heater operates at <strong>${V}V</strong>. What current does it draw?`,a:this._round(P/V),unit:'A',hint:'I = P ÷ V',formula:'I = P / V'};
+    if (type===0) { const V=this._r(12,240,12),I=this._r(1,20); return {q:`A load draws <strong>${I}A</strong> at <strong>${V}V</strong>. What is the power?`,a:this._round(V*I),unit:'W',hint:'P = V Ã— I',formula:'P = V Ã— I'}; }
+    if (type===1) { const I=this._r(1,20),R=this._r(5,100,5); return {q:`A current of <strong>${I}A</strong> flows through a <strong>${R}Î©</strong> resistor. What power is dissipated?`,a:this._round(I*I*R),unit:'W',hint:'P = IÂ² Ã— R',formula:'P = IÂ² Ã— R'}; }
+    if (type===2) { const V=this._r(12,240,12),R=this._r(5,100,5); return {q:`<strong>${V}V</strong> is applied across a <strong>${R}Î©</strong> resistor. What is the power?`,a:this._round(V*V/R),unit:'W',hint:'P = VÂ² Ã· R',formula:'P = VÂ² / R'}; }
+    const P=this._r(100,2400,100),V=this._r(120,240,120); return {q:`A <strong>${P}W</strong> heater operates at <strong>${V}V</strong>. What current does it draw?`,a:this._round(P/V),unit:'A',hint:'I = P Ã· V',formula:'I = P / V'};
   },
 
   _gen_series() {
     const type = this._r(0,2);
-    if (type===0) { const R1=this._r(5,100,5),R2=this._r(5,100,5),R3=this._r(5,100,5); return {q:`Three resistors <strong>R1=${R1}Ω, R2=${R2}Ω, R3=${R3}Ω</strong> are connected in series. What is the total resistance?`,a:R1+R2+R3,unit:'Ω',hint:'Add all resistors: Rt = R1+R2+R3',formula:'Rt = R1 + R2 + R3'}; }
-    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,50,10),R2=this._r(10,50,10); const I=this._round(V/(R1+R2)); return {q:`<strong>${V}V</strong> is applied across a series circuit with <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What is the current?`,a:I,unit:'A',hint:'Find Rt first, then I = V ÷ Rt',formula:'I = V / (R1+R2)'}; }
-    const V=this._r(24,120,12),R1=this._r(10,40,10),R2=this._r(10,40,10); const I=V/(R1+R2); return {q:`In a series circuit with <strong>${V}V</strong>, <strong>R1=${R1}Ω</strong>, and <strong>R2=${R2}Ω</strong>, what is the voltage drop across R1?`,a:this._round(I*R1),unit:'V',hint:'Find I first (I=V/Rt), then V1 = I × R1',formula:'V1 = I × R1'};
+    if (type===0) { const R1=this._r(5,100,5),R2=this._r(5,100,5),R3=this._r(5,100,5); return {q:`Three resistors <strong>R1=${R1}Î©, R2=${R2}Î©, R3=${R3}Î©</strong> are connected in series. What is the total resistance?`,a:R1+R2+R3,unit:'Î©',hint:'Add all resistors: Rt = R1+R2+R3',formula:'Rt = R1 + R2 + R3'}; }
+    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,50,10),R2=this._r(10,50,10); const I=this._round(V/(R1+R2)); return {q:`<strong>${V}V</strong> is applied across a series circuit with <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong>. What is the current?`,a:I,unit:'A',hint:'Find Rt first, then I = V Ã· Rt',formula:'I = V / (R1+R2)'}; }
+    const V=this._r(24,120,12),R1=this._r(10,40,10),R2=this._r(10,40,10); const I=V/(R1+R2); return {q:`In a series circuit with <strong>${V}V</strong>, <strong>R1=${R1}Î©</strong>, and <strong>R2=${R2}Î©</strong>, what is the voltage drop across R1?`,a:this._round(I*R1),unit:'V',hint:'Find I first (I=V/Rt), then V1 = I Ã— R1',formula:'V1 = I Ã— R1'};
   },
 
   _gen_parallel() {
     const type = this._r(0,2);
-    if (type===0) { const R1=this._r(10,100,10),R2=this._r(10,100,10); const Rt=this._round((R1*R2)/(R1+R2)); return {q:`Two resistors <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong> are in parallel. What is the total resistance?`,a:Rt,unit:'Ω',hint:'Use the product-over-sum formula: Rt = (R1×R2)/(R1+R2)',formula:'Rt = (R1×R2) / (R1+R2)'}; }
-    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); const I1=this._round(V/R1),I2=this._round(V/R2); return {q:`<strong>${V}V</strong> is applied to a parallel circuit with <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What is the total current?`,a:this._round(I1+I2),unit:'A',hint:'Each branch: I=V/R. Total: It=I1+I2',formula:'It = V/R1 + V/R2'}; }
-    const V=this._r(24,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); return {q:`A parallel circuit has <strong>${V}V</strong> across branches <strong>R1=${R1}Ω</strong> and <strong>R2=${R2}Ω</strong>. What current flows through R2?`,a:this._round(V/R2),unit:'A',hint:'In parallel, same voltage across all branches. I2 = V / R2',formula:'I2 = V / R2'};
+    if (type===0) { const R1=this._r(10,100,10),R2=this._r(10,100,10); const Rt=this._round((R1*R2)/(R1+R2)); return {q:`Two resistors <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong> are in parallel. What is the total resistance?`,a:Rt,unit:'Î©',hint:'Use the product-over-sum formula: Rt = (R1Ã—R2)/(R1+R2)',formula:'Rt = (R1Ã—R2) / (R1+R2)'}; }
+    if (type===1) { const V=this._r(12,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); const I1=this._round(V/R1),I2=this._round(V/R2); return {q:`<strong>${V}V</strong> is applied to a parallel circuit with <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong>. What is the total current?`,a:this._round(I1+I2),unit:'A',hint:'Each branch: I=V/R. Total: It=I1+I2',formula:'It = V/R1 + V/R2'}; }
+    const V=this._r(24,120,12),R1=this._r(10,60,10),R2=this._r(10,60,10); return {q:`A parallel circuit has <strong>${V}V</strong> across branches <strong>R1=${R1}Î©</strong> and <strong>R2=${R2}Î©</strong>. What current flows through R2?`,a:this._round(V/R2),unit:'A',hint:'In parallel, same voltage across all branches. I2 = V / R2',formula:'I2 = V / R2'};
   },
 
   _gen_series_parallel() {
     const R1=this._r(10,50,10),R2=this._r(10,50,10),R3=this._r(10,50,10),V=this._r(24,120,12);
     const Rp=this._round((R2*R3)/(R2+R3)); const Rt=this._round(R1+Rp); const I=this._round(V/Rt);
     const type=this._r(0,1);
-    if(type===0) return {q:`R1=${R1}Ω is in series with parallel combination of R2=${R2}Ω and R3=${R3}Ω. Source is <strong>${V}V</strong>. What is the total current?`,a:I,unit:'A',hint:'Find Rparallel=(R2×R3)/(R2+R3), then Rt=R1+Rp, then I=V/Rt',formula:'Rp=(R2×R3)/(R2+R3), Rt=R1+Rp, I=V/Rt'};
-    return {q:`R1=${R1}Ω is in series with parallel combination of R2=${R2}Ω and R3=${R3}Ω. Source is <strong>${V}V</strong>. What is the total resistance?`,a:Rt,unit:'Ω',hint:'Rp=(R2×R3)/(R2+R3), then Rt=R1+Rp',formula:'Rt = R1 + (R2×R3)/(R2+R3)'};
+    if(type===0) return {q:`R1=${R1}Î© is in series with parallel combination of R2=${R2}Î© and R3=${R3}Î©. Source is <strong>${V}V</strong>. What is the total current?`,a:I,unit:'A',hint:'Find Rparallel=(R2Ã—R3)/(R2+R3), then Rt=R1+Rp, then I=V/Rt',formula:'Rp=(R2Ã—R3)/(R2+R3), Rt=R1+Rp, I=V/Rt'};
+    return {q:`R1=${R1}Î© is in series with parallel combination of R2=${R2}Î© and R3=${R3}Î©. Source is <strong>${V}V</strong>. What is the total resistance?`,a:Rt,unit:'Î©',hint:'Rp=(R2Ã—R3)/(R2+R3), then Rt=R1+Rp',formula:'Rt = R1 + (R2Ã—R3)/(R2+R3)'};
   },
 
   _gen_ac_basics() {
     const type=this._r(0,3);
-    if(type===0){ const Vp=this._r(100,400,10); return {q:`A sine wave has a peak voltage of <strong>${Vp}V</strong>. What is the RMS voltage?`,a:this._round(Vp*0.7071),unit:'V',hint:'Vrms = Vpeak × 0.7071',formula:'Vrms = Vpeak × 0.7071'}; }
-    if(type===1){ const Vr=this._r(100,250,10); return {q:`The RMS voltage of a circuit is <strong>${Vr}V</strong>. What is the peak voltage?`,a:this._round(Vr*1.4142),unit:'V',hint:'Vpeak = Vrms × 1.414',formula:'Vpeak = Vrms × 1.414'}; }
+    if(type===0){ const Vp=this._r(100,400,10); return {q:`A sine wave has a peak voltage of <strong>${Vp}V</strong>. What is the RMS voltage?`,a:this._round(Vp*0.7071),unit:'V',hint:'Vrms = Vpeak Ã— 0.7071',formula:'Vrms = Vpeak Ã— 0.7071'}; }
+    if(type===1){ const Vr=this._r(100,250,10); return {q:`The RMS voltage of a circuit is <strong>${Vr}V</strong>. What is the peak voltage?`,a:this._round(Vr*1.4142),unit:'V',hint:'Vpeak = Vrms Ã— 1.414',formula:'Vpeak = Vrms Ã— 1.414'}; }
     if(type===2){ const T=this._r(10,100,5); return {q:`A sine wave has a period of <strong>${T}ms</strong>. What is its frequency?`,a:this._round(1000/T,1),unit:'Hz',hint:'f = 1 / T (convert ms to seconds first)',formula:'f = 1/T'}; }
-    const f=this._r(10,120,10); return {q:`A signal has a frequency of <strong>${f}Hz</strong>. What is its period?`,a:this._round(1000/f,2),unit:'ms',hint:'T = 1/f (then convert to ms)',formula:'T = 1/f × 1000ms'};
+    const f=this._r(10,120,10); return {q:`A signal has a frequency of <strong>${f}Hz</strong>. What is its period?`,a:this._round(1000/f,2),unit:'ms',hint:'T = 1/f (then convert to ms)',formula:'T = 1/f Ã— 1000ms'};
   },
 
   _gen_reactance() {
     const type=this._r(0,1);
-    if(type===0){ const f=this._r(30,120,10),L=this._r(10,500,10); return {q:`An inductor of <strong>${L}mH</strong> is connected to a <strong>${f}Hz</strong> supply. What is its inductive reactance?`,a:this._round(2*Math.PI*f*(L/1000)),unit:'Ω',hint:'XL = 2π × f × L (convert mH to H)',formula:'XL = 2πfL'}; }
-    const f=this._r(30,120,10),C=this._r(10,500,10); return {q:`A capacitor of <strong>${C}μF</strong> is connected to a <strong>${f}Hz</strong> supply. What is its capacitive reactance?`,a:this._round(1/(2*Math.PI*f*(C/1000000))),unit:'Ω',hint:'XC = 1 ÷ (2π × f × C) (convert μF to F)',formula:'XC = 1/(2πfC)'};
+    if(type===0){ const f=this._r(30,120,10),L=this._r(10,500,10); return {q:`An inductor of <strong>${L}mH</strong> is connected to a <strong>${f}Hz</strong> supply. What is its inductive reactance?`,a:this._round(2*Math.PI*f*(L/1000)),unit:'Î©',hint:'XL = 2Ï€ Ã— f Ã— L (convert mH to H)',formula:'XL = 2Ï€fL'}; }
+    const f=this._r(30,120,10),C=this._r(10,500,10); return {q:`A capacitor of <strong>${C}Î¼F</strong> is connected to a <strong>${f}Hz</strong> supply. What is its capacitive reactance?`,a:this._round(1/(2*Math.PI*f*(C/1000000))),unit:'Î©',hint:'XC = 1 Ã· (2Ï€ Ã— f Ã— C) (convert Î¼F to F)',formula:'XC = 1/(2Ï€fC)'};
   },
 
   _gen_impedance() {
     const type=this._r(0,1);
     const R=this._r(10,100,10);
-    if(type===0){ const XL=this._r(10,150,10); return {q:`A series RL circuit has R=<strong>${R}Ω</strong> and XL=<strong>${XL}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XL*XL)),unit:'Ω',hint:'Z = √(R² + XL²)',formula:'Z = √(R² + X²)'}; }
-    const XC=this._r(10,150,10); return {q:`A series RC circuit has R=<strong>${R}Ω</strong> and XC=<strong>${XC}Ω</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XC*XC)),unit:'Ω',hint:'Z = √(R² + XC²)',formula:'Z = √(R² + X²)'};
+    if(type===0){ const XL=this._r(10,150,10); return {q:`A series RL circuit has R=<strong>${R}Î©</strong> and XL=<strong>${XL}Î©</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XL*XL)),unit:'Î©',hint:'Z = âˆš(RÂ² + XLÂ²)',formula:'Z = âˆš(RÂ² + XÂ²)'}; }
+    const XC=this._r(10,150,10); return {q:`A series RC circuit has R=<strong>${R}Î©</strong> and XC=<strong>${XC}Î©</strong>. What is the impedance?`,a:this._round(Math.sqrt(R*R+XC*XC)),unit:'Î©',hint:'Z = âˆš(RÂ² + XCÂ²)',formula:'Z = âˆš(RÂ² + XÂ²)'};
   },
 
   _gen_power_factor() {
     const type=this._r(0,2);
-    if(type===0){ const pf=this._round(this._r(70,99)/100,2),S=this._r(1000,10000,500); return {q:`A load has an apparent power of <strong>${S}VA</strong> and a power factor of <strong>${pf}</strong>. What is the true power?`,a:this._round(S*pf),unit:'W',hint:'P = S × PF',formula:'P = S × PF'}; }
-    if(type===1){ const R=this._r(10,80,10),X=this._r(10,80,10); const Z=Math.sqrt(R*R+X*X); return {q:`A circuit has R=<strong>${R}Ω</strong> and X=<strong>${X}Ω</strong>. What is the power factor?`,a:this._round(R/Z,3),unit:'(decimal)',hint:'PF = R / Z (where Z = √(R²+X²))',formula:'PF = cos θ = R/Z'}; }
-    const V=this._r(120,600,120),I=this._r(5,40,5); return {q:`A circuit has <strong>${V}V</strong> and <strong>${I}A</strong>. What is the apparent power?`,a:this._round(V*I),unit:'VA',hint:'S = V × I',formula:'S = V × I'};
+    if(type===0){ const pf=this._round(this._r(70,99)/100,2),S=this._r(1000,10000,500); return {q:`A load has an apparent power of <strong>${S}VA</strong> and a power factor of <strong>${pf}</strong>. What is the true power?`,a:this._round(S*pf),unit:'W',hint:'P = S Ã— PF',formula:'P = S Ã— PF'}; }
+    if(type===1){ const R=this._r(10,80,10),X=this._r(10,80,10); const Z=Math.sqrt(R*R+X*X); return {q:`A circuit has R=<strong>${R}Î©</strong> and X=<strong>${X}Î©</strong>. What is the power factor?`,a:this._round(R/Z,3),unit:'(decimal)',hint:'PF = R / Z (where Z = âˆš(RÂ²+XÂ²))',formula:'PF = cos Î¸ = R/Z'}; }
+    const V=this._r(120,600,120),I=this._r(5,40,5); return {q:`A circuit has <strong>${V}V</strong> and <strong>${I}A</strong>. What is the apparent power?`,a:this._round(V*I),unit:'VA',hint:'S = V Ã— I',formula:'S = V Ã— I'};
   },
 
   _gen_transformers() {
     const type=this._r(0,2);
     const N1=this._r(100,2000,100),N2=this._r(50,500,50);
-    if(type===0){ const V1=this._r(120,4800,120); return {q:`A transformer has <strong>${N1} primary turns</strong> and <strong>${N2} secondary turns</strong>. Primary voltage is <strong>${V1}V</strong>. What is the secondary voltage?`,a:this._round(V1*N2/N1),unit:'V',hint:'V2 = V1 × (N2/N1)',formula:'V1/V2 = N1/N2'}; }
+    if(type===0){ const V1=this._r(120,4800,120); return {q:`A transformer has <strong>${N1} primary turns</strong> and <strong>${N2} secondary turns</strong>. Primary voltage is <strong>${V1}V</strong>. What is the secondary voltage?`,a:this._round(V1*N2/N1),unit:'V',hint:'V2 = V1 Ã— (N2/N1)',formula:'V1/V2 = N1/N2'}; }
     if(type===1){ const V1=this._r(240,4800,240),V2=this._r(12,240,12); const ratio=this._round(V1/V2,1); return {q:`A transformer steps down from <strong>${V1}V</strong> to <strong>${V2}V</strong>. What is the turns ratio (N1:N2)?`,a:ratio,unit:':1',hint:'Turns ratio = V1 / V2',formula:'N1/N2 = V1/V2'}; }
     const V1=this._r(240,4800,240),N1b=this._r(200,2000,200),N2b=this._r(50,500,50),I2=this._r(5,50,5);
-    return {q:`A transformer has turns ratio ${N1b}:${N2b}. If secondary current is <strong>${I2}A</strong>, what is the primary current?`,a:this._round(I2*N2b/N1b),unit:'A',hint:'I1 = I2 × (N2/N1) — primary current is inversely proportional to turns',formula:'I1/I2 = N2/N1'};
+    return {q:`A transformer has turns ratio ${N1b}:${N2b}. If secondary current is <strong>${I2}A</strong>, what is the primary current?`,a:this._round(I2*N2b/N1b),unit:'A',hint:'I1 = I2 Ã— (N2/N1) â€” primary current is inversely proportional to turns',formula:'I1/I2 = N2/N1'};
   },
 
   _gen_motors() {
     const type=this._r(0,1);
-    if(type===0){ const f=60,P=this._r(2,8,2)*2; return {q:`A <strong>${P}-pole</strong> induction motor operates on <strong>60Hz</strong>. What is its synchronous speed?`,a:this._round(120*f/P),unit:'RPM',hint:'Ns = 120 × f / P',formula:'Ns = 120f / P'}; }
+    if(type===0){ const f=60,P=this._r(2,8,2)*2; return {q:`A <strong>${P}-pole</strong> induction motor operates on <strong>60Hz</strong>. What is its synchronous speed?`,a:this._round(120*f/P),unit:'RPM',hint:'Ns = 120 Ã— f / P',formula:'Ns = 120f / P'}; }
     const Ns=this._r(600,3600,300),slip=this._r(2,8);
     const Nr=Math.round(Ns*(1-slip/100));
-    return {q:`A motor has synchronous speed <strong>${Ns}RPM</strong> and runs at <strong>${Nr}RPM</strong>. What is the slip percentage?`,a:slip,unit:'%',hint:'Slip = (Ns - Nr) / Ns × 100',formula:'Slip% = (Ns−Nr)/Ns × 100'};
+    return {q:`A motor has synchronous speed <strong>${Ns}RPM</strong> and runs at <strong>${Nr}RPM</strong>. What is the slip percentage?`,a:slip,unit:'%',hint:'Slip = (Ns - Nr) / Ns Ã— 100',formula:'Slip% = (Nsâˆ’Nr)/Ns Ã— 100'};
   },
 
   _gen_three_phase() {
     const type=this._r(0,1);
-    if(type===0){ const Vp=this._r(120,277,1); return {q:`In a <strong>wye (Y)</strong> connected system, the phase voltage is <strong>${Vp}V</strong>. What is the line voltage?`,a:this._round(Vp*Math.sqrt(3)),unit:'V',hint:'VL = Vp × √3 (√3 ≈ 1.732)',formula:'VL = Vp × √3'}; }
-    const VL=this._r(208,600,100); return {q:`In a <strong>wye (Y)</strong> system, the line voltage is <strong>${VL}V</strong>. What is the phase voltage?`,a:this._round(VL/Math.sqrt(3)),unit:'V',hint:'Vp = VL ÷ √3 (√3 ≈ 1.732)',formula:'Vp = VL / √3'};
+    if(type===0){ const Vp=this._r(120,277,1); return {q:`In a <strong>wye (Y)</strong> connected system, the phase voltage is <strong>${Vp}V</strong>. What is the line voltage?`,a:this._round(Vp*Math.sqrt(3)),unit:'V',hint:'VL = Vp Ã— âˆš3 (âˆš3 â‰ˆ 1.732)',formula:'VL = Vp Ã— âˆš3'}; }
+    const VL=this._r(208,600,100); return {q:`In a <strong>wye (Y)</strong> system, the line voltage is <strong>${VL}V</strong>. What is the phase voltage?`,a:this._round(VL/Math.sqrt(3)),unit:'V',hint:'Vp = VL Ã· âˆš3 (âˆš3 â‰ˆ 1.732)',formula:'Vp = VL / âˆš3'};
   },
 
   checkAnswer() {
@@ -10579,8 +10587,8 @@ const MathPractice = {
     if (isCorrect) {
       this.score++;
       Points.award('Math problem solved', Points.ACTIONS.math_correct.base, true);
-      showToast('✅ Correct! +2 pts', 'success');
-    } else { showToast(`❌ Not quite. Answer: ${correct} ${this.currentProblem.unit}`, 'error'); }
+      showToast('âœ… Correct! +2 pts', 'success');
+    } else { showToast(`âŒ Not quite. Answer: ${correct} ${this.currentProblem.unit}`, 'error'); }
     const pct = this.attempts > 0 ? Math.round(this.score/this.attempts*100) : 0;
     const scoreEl = document.getElementById('mathScore');
     if (scoreEl) scoreEl.textContent = `${this.score}/${this.attempts} (${pct}%)`;
@@ -10602,20 +10610,20 @@ const MathPractice = {
     container.innerHTML = `
       <!-- Header -->
       <div style="margin-bottom:18px;">
-        <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:2px;">🧮 Math Practice</h1>
+        <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:2px;">ðŸ§® Math Practice</h1>
         <p style="color:var(--text-secondary);font-size:0.85rem;">Formulas are always shown. Pick only the modules you need.</p>
       </div>
 
-      <!-- Module selector — always visible, chip-style toggles -->
+      <!-- Module selector â€” always visible, chip-style toggles -->
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <span style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);">
-            MODULES — <span style="color:var(--accent);">${enabledCount} active</span>
+            MODULES â€” <span style="color:var(--accent);">${enabledCount} active</span>
           </span>
           <div style="display:flex;gap:6px;">
             <button onclick="MathPractice._setAll(true)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All on</button>
             <button onclick="MathPractice._setAll(false)" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;">All off</button>
-            <button onclick="MathPractice.generateProblem(true)" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 12px;">🎲 Random</button>
+            <button onclick="MathPractice.generateProblem(true)" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 12px;">ðŸŽ² Random</button>
           </div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -10624,10 +10632,10 @@ const MathPractice = {
             const isActive = c.id === this.currentCategory;
             const s = mathStats[c.id] || { attempts:0, correct:0 };
             const acc = s.attempts > 0 ? Math.round(s.correct/s.attempts*100) : null;
-            const accDot = acc === null ? '' : acc >= 80 ? ' 🟢' : acc >= 50 ? ' 🟡' : ' 🔴';
+            const accDot = acc === null ? '' : acc >= 80 ? ' ðŸŸ¢' : acc >= 50 ? ' ðŸŸ¡' : ' ðŸ”´';
             return `<button onclick="MathPractice._chipClick('${c.id}', event)"
               data-chipid="${c.id}"
-              title="${isEnabled ? 'Click to practice · Right-click to toggle on/off' : 'Disabled — click to enable & practice'}"
+              title="${isEnabled ? 'Click to practice Â· Right-click to toggle on/off' : 'Disabled â€” click to enable & practice'}"
               style="padding:6px 12px;border-radius:20px;font-size:0.8rem;font-weight:${isActive?'700':'500'};
                 border:2px solid ${isActive ? 'var(--accent)' : isEnabled ? 'var(--border)' : 'transparent'};
                 background:${isActive ? 'var(--accent-soft)' : isEnabled ? 'var(--bg-secondary)' : 'rgba(0,0,0,0.3)'};
@@ -10670,25 +10678,25 @@ const MathPractice = {
               <!-- Answer row -->
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
                 <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;">
-                  <input id="mathAnswer" type="number" step="any" placeholder="Your answer…"
+                  <input id="mathAnswer" type="number" step="any" placeholder="Your answerâ€¦"
                     style="flex:1;padding:12px 14px;font-size:1.1rem;background:var(--bg-input);border:2px solid var(--accent);border-radius:10px;color:var(--text-primary);outline:none;"
                     onkeydown="if(event.key==='Enter')MathPractice.checkAnswer()">
                   <span style="font-weight:600;color:var(--text-secondary);">${this.currentProblem.unit}</span>
                 </div>
-                <button onclick="MathPractice.checkAnswer()" class="btn btn-primary" style="padding:12px 24px;font-size:1rem;">Check ✓</button>
-                <button onclick="MathPractice.generateProblem()" class="btn btn-ghost btn-sm">Skip →</button>
+                <button onclick="MathPractice.checkAnswer()" class="btn btn-primary" style="padding:12px 24px;font-size:1rem;">Check âœ“</button>
+                <button onclick="MathPractice.generateProblem()" class="btn btn-ghost btn-sm">Skip â†’</button>
               </div>
 
               <!-- Wrong answer feedback / hint -->
               <div id="mathSolution" style="display:${this.showingSolution?'block':'none'};background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:0.88rem;">
-                <strong>💡 Hint:</strong> ${this.currentProblem.hint}<br>
+                <strong>ðŸ’¡ Hint:</strong> ${this.currentProblem.hint}<br>
                 <strong>Formula used:</strong> <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">${this.currentProblem.formula}</code><br>
                 <strong>Answer:</strong> <span style="color:var(--accent);font-weight:700;">${this.currentProblem.a} ${this.currentProblem.unit}</span>
               </div>
               <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
-                ${!this.showingSolution ? `<button onclick="document.getElementById('mathSolution').style.display='block';this.style.display='none';" style="font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;">💡 Show hint</button>` : ''}
+                ${!this.showingSolution ? `<button onclick="document.getElementById('mathSolution').style.display='block';this.style.display='none';" style="font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;">ðŸ’¡ Show hint</button>` : ''}
                 <button onclick="MathPractice.openLesson('${this.currentCategory}')" style="font-size:0.78rem;color:#818cf8;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px;">
-                  📖 ${this._lessonLabel(this.currentCategory)} →
+                  ðŸ“– ${this._lessonLabel(this.currentCategory)} â†’
                 </button>
               </div>
 
@@ -10696,25 +10704,25 @@ const MathPractice = {
               <div style="text-align:center;padding:32px 20px 24px;color:var(--text-muted);">
                 <div style="font-size:3rem;margin-bottom:10px;">${cat.icon}</div>
                 <p style="font-size:0.95rem;color:var(--text-primary);font-weight:600;">Ready to practice ${cat.name}</p>
-                <p style="font-size:0.82rem;margin:4px 0 20px;">Formulas are on the right — hit Start when you're ready.</p>
+                <p style="font-size:0.82rem;margin:4px 0 20px;">Formulas are on the right â€” hit Start when you're ready.</p>
                 <button onclick="MathPractice.openLesson('${this.currentCategory}')"
                   style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);border-radius:8px;cursor:pointer;font-size:0.85rem;color:#818cf8;font-weight:600;"
                   onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
-                  📖 Not sure? Read: ${this._lessonLabel(this.currentCategory)}
+                  ðŸ“– Not sure? Read: ${this._lessonLabel(this.currentCategory)}
                 </button>
               </div>
             `}
           </div>
 
           <button onclick="MathPractice.generateProblem()" class="btn btn-primary" style="width:100%;font-size:1rem;padding:14px;">
-            ${this.currentProblem ? '➡️ Next Problem' : '▶️ Start Practicing'}
+            ${this.currentProblem ? 'âž¡ï¸ Next Problem' : 'â–¶ï¸ Start Practicing'}
           </button>
         </div>
 
-        <!-- Formula sheet — always visible, right column -->
+        <!-- Formula sheet â€” always visible, right column -->
         <div style="position:sticky;top:74px;">
           <div style="background:var(--bg-card);border:2px solid var(--accent);border-radius:var(--radius);padding:18px;">
-            <div style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📋 Formula Sheet — ${cat.name}</div>
+            <div style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">ðŸ“‹ Formula Sheet â€” ${cat.name}</div>
             <div style="font-size:0.88rem;color:var(--text-primary);line-height:2;font-family:'Courier New',monospace;font-weight:500;">
               ${formulaLines}
             </div>
@@ -10724,12 +10732,12 @@ const MathPractice = {
           <button onclick="MathPractice.openLesson('${this.currentCategory}')"
             style="width:100%;margin-top:10px;padding:12px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);border-radius:var(--radius);cursor:pointer;text-align:left;transition:var(--transition);"
             onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.12)'">
-            <div style="font-size:0.8rem;font-weight:700;color:#818cf8;margin-bottom:2px;">📖 ${this._lessonLabel(this.currentCategory)}</div>
+            <div style="font-size:0.8rem;font-weight:700;color:#818cf8;margin-bottom:2px;">ðŸ“– ${this._lessonLabel(this.currentCategory)}</div>
             <div style="font-size:0.73rem;color:var(--text-muted);line-height:1.4;">Read the lesson, see worked examples, and take a mini-quiz on this topic.</div>
           </button>
 
           <div style="margin-top:10px;">
-            <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">🖨️ Print Worksheet</button>
+            <button onclick="MathPractice.exportPDF()" class="btn btn-secondary btn-sm" style="width:100%;">ðŸ–¨ï¸ Print Worksheet</button>
           </div>
         </div>
 
@@ -10754,7 +10762,7 @@ const MathPractice = {
   },
 
   _chipClick(id, event) {
-    // Left-click → select this module and generate a problem.
+    // Left-click â†’ select this module and generate a problem.
     // If the module was disabled, re-enable it so it joins the random rotation too.
     const state = Storage.get();
     if (state && state.mathSettings && state.mathSettings.enabledCategories && !state.mathSettings.enabledCategories.includes(id)) {
@@ -10775,18 +10783,18 @@ const MathPractice = {
 
   _formulaRef(id) {
     const refs = {
-      'ohms-law': 'V = I × R<br>I = V / R<br>R = V / I',
-      'power': 'P = V × I<br>P = I² × R<br>P = V² / R<br>I = P / V<br>V = P / I',
-      'series': 'Rt = R1 + R2 + R3...<br>It = I1 = I2 = I3 (same)<br>Vt = V1 + V2 + V3<br>Vn = It × Rn',
-      'parallel': 'Vt = V1 = V2 = V3 (same)<br>It = I1 + I2 + I3<br>Rt = (R1×R2)/(R1+R2)  [2 resistors]<br>1/Rt = 1/R1 + 1/R2 + 1/R3',
-      'series-parallel': 'Solve parallel groups first → get Rp<br>Add Rp to series resistors → get Rt<br>I = V / Rt<br>Vdrop = I × R (series parts)',
-      'ac-basics': 'Vrms = Vpeak × 0.7071<br>Vpeak = Vrms × 1.4142<br>f = 1 / T<br>T = 1 / f<br>60 Hz → T = 16.67ms',
-      'reactance': 'XL = 2π × f × L<br>XC = 1 / (2π × f × C)<br>XL in Ω, f in Hz, L in H<br>XC in Ω, f in Hz, C in F',
-      'impedance': 'Z = √(R² + X²)<br>θ = arctan(X / R)<br>X = XL − XC (net reactance)',
-      'power-factor': 'PF = cos θ = R / Z<br>P = S × PF  (true power, W)<br>Q = S × sin θ  (reactive, VAR)<br>S = V × I  (apparent, VA)<br>S² = P² + Q²',
-      'transformers': 'V1/V2 = N1/N2<br>I1/I2 = N2/N1<br>V2 = V1 × (N2/N1)<br>I1 = I2 × (N2/N1)<br>Efficiency = Pout / Pin × 100%',
-      'motors': 'Ns = 120 × f / P<br>Slip = (Ns − Nr) / Ns × 100%<br>Nr = Ns × (1 − slip)<br>(Ns=sync RPM, Nr=rotor RPM, P=poles)',
-      'three-phase': 'Wye: VL = Vp × √3,  IL = Ip<br>Delta: VL = Vp,  IL = Ip × √3<br>√3 = 1.732<br>3φ Power = √3 × VL × IL × PF',
+      'ohms-law': 'V = I Ã— R<br>I = V / R<br>R = V / I',
+      'power': 'P = V Ã— I<br>P = IÂ² Ã— R<br>P = VÂ² / R<br>I = P / V<br>V = P / I',
+      'series': 'Rt = R1 + R2 + R3...<br>It = I1 = I2 = I3 (same)<br>Vt = V1 + V2 + V3<br>Vn = It Ã— Rn',
+      'parallel': 'Vt = V1 = V2 = V3 (same)<br>It = I1 + I2 + I3<br>Rt = (R1Ã—R2)/(R1+R2)  [2 resistors]<br>1/Rt = 1/R1 + 1/R2 + 1/R3',
+      'series-parallel': 'Solve parallel groups first â†’ get Rp<br>Add Rp to series resistors â†’ get Rt<br>I = V / Rt<br>Vdrop = I Ã— R (series parts)',
+      'ac-basics': 'Vrms = Vpeak Ã— 0.7071<br>Vpeak = Vrms Ã— 1.4142<br>f = 1 / T<br>T = 1 / f<br>60 Hz â†’ T = 16.67ms',
+      'reactance': 'XL = 2Ï€ Ã— f Ã— L<br>XC = 1 / (2Ï€ Ã— f Ã— C)<br>XL in Î©, f in Hz, L in H<br>XC in Î©, f in Hz, C in F',
+      'impedance': 'Z = âˆš(RÂ² + XÂ²)<br>Î¸ = arctan(X / R)<br>X = XL âˆ’ XC (net reactance)',
+      'power-factor': 'PF = cos Î¸ = R / Z<br>P = S Ã— PF  (true power, W)<br>Q = S Ã— sin Î¸  (reactive, VAR)<br>S = V Ã— I  (apparent, VA)<br>SÂ² = PÂ² + QÂ²',
+      'transformers': 'V1/V2 = N1/N2<br>I1/I2 = N2/N1<br>V2 = V1 Ã— (N2/N1)<br>I1 = I2 Ã— (N2/N1)<br>Efficiency = Pout / Pin Ã— 100%',
+      'motors': 'Ns = 120 Ã— f / P<br>Slip = (Ns âˆ’ Nr) / Ns Ã— 100%<br>Nr = Ns Ã— (1 âˆ’ slip)<br>(Ns=sync RPM, Nr=rotor RPM, P=poles)',
+      'three-phase': 'Wye: VL = Vp Ã— âˆš3,  IL = Ip<br>Delta: VL = Vp,  IL = Ip Ã— âˆš3<br>âˆš3 = 1.732<br>3Ï† Power = âˆš3 Ã— VL Ã— IL Ã— PF',
     };
     return refs[id] || '';
   },
@@ -10812,15 +10820,15 @@ const MathPractice = {
       .footer{margin-top:40px;font-size:0.75rem;color:#888;text-align:center;}
       @media print{button{display:none;}}
     </style></head><body>
-    <h1>🧮 ${cat.name} Worksheet</h1>
+    <h1>ðŸ§® ${cat.name} Worksheet</h1>
     <p style="font-size:0.85rem;color:#555;">Formula: ${cat.formula}</p>
     <p style="font-size:0.85rem;color:#555;">Name: ___________________ &nbsp;&nbsp;&nbsp; Date: ___________________</p>
     ${problems.map((p,i)=>`<div class="problem"><div class="num">Problem ${i+1}</div>
     <div class="q">${p.q.replace(/<strong>/g,'').replace(/<\/strong>/g,'')}</div>
     <div>Answer: <span class="answer"></span> ${p.unit}</div>
     <div class="formula">Hint: ${p.hint}</div></div>`).join('')}
-    <div class="footer">SparkyStudy — ${cat.name} Worksheet — sparkystudy.com</div>
-    <br><button onclick="window.print()">🖨️ Print</button>
+    <div class="footer">SparkyStudy â€” ${cat.name} Worksheet â€” sparkystudy.com</div>
+    <br><button onclick="window.print()">ðŸ–¨ï¸ Print</button>
     </body></html>`;
     const win = window.open('','_blank');
     win.document.write(html);
@@ -10948,7 +10956,7 @@ const QuickQuiz = {
           ${(() => {
             const wrongs = this.questions.map((q,i)=>this.answers[i]!==q.correct?{q:q.q,opts:q.opts,correct:q.correct,selected:this.answers[i],exp:q.exp||'',topic:q.topic}:null).filter(Boolean);
             if (wrongs.length > 0) { WrongAnswerStudy._pending = wrongs; WrongAnswerStudy._pendingLabel = 'Quick Quiz'; }
-            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">📖 Study ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
+            return wrongs.length > 0 ? `<button class="btn btn-primary" style="background:linear-gradient(135deg,#ef4444,#f59e0b);border:none;order:-1;" onclick="WrongAnswerStudy.launchPending()">ðŸ“– Study ${wrongs.length} Wrong Answer${wrongs.length!==1?'s':''}</button>` : '';
           })()}
           <button class="btn btn-primary" onclick="QuickQuiz.start()">Another Quick Quiz</button>
           <button class="btn btn-secondary" onclick="App.navigate('dashboard')">Dashboard</button>
@@ -10974,16 +10982,16 @@ const FormulaSheet = {
           <button class="btn btn-ghost btn-sm" onclick="FormulaSheet.toggle()">&#10005;</button>
         </div>
         <div style="font-family:'Courier New',monospace;font-size:0.8rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:16px;">
-          <div class="formula-box"><strong style="color:var(--accent);">Ohm's Law</strong><br>V = I × R<br>I = V / R<br>R = V / I</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Power</strong><br>P = V × I<br>P = I² × R<br>P = V² / R</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Ohm's Law</strong><br>V = I Ã— R<br>I = V / R<br>R = V / I</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Power</strong><br>P = V Ã— I<br>P = IÂ² Ã— R<br>P = VÂ² / R</div>
           <div class="formula-box"><strong style="color:var(--accent);">Series Circuits</strong><br>Rt = R1 + R2 + R3<br>It = I1 = I2 = I3<br>Vt = V1 + V2 + V3</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Parallel Circuits</strong><br>1/Rt = 1/R1 + 1/R2<br>Rt = (R1×R2)/(R1+R2)<br>Vt = V1 = V2 = V3<br>It = I1 + I2 + I3</div>
-          <div class="formula-box"><strong style="color:var(--accent);">AC Values</strong><br>Vrms = Vpeak × 0.707<br>Vpeak = Vrms × 1.414<br>f = 1 / T</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Impedance</strong><br>Z = √(R² + X²)<br>XL = 2πfL<br>XC = 1/(2πfC)</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Transformers</strong><br>Vp/Vs = Np/Ns<br>Vp×Ip = Vs×Is</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Motor Speed</strong><br>Ns = 120f / P<br>Slip% = (Ns-Nr)/Ns × 100</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Power Factor</strong><br>PF = W / VA = cos θ<br>VA² = W² + VAR²</div>
-          <div class="formula-box"><strong style="color:var(--accent);">Voltage Drop</strong><br>Vd = 2 × I × R × L<br>Max 3% branch, 5% total</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Parallel Circuits</strong><br>1/Rt = 1/R1 + 1/R2<br>Rt = (R1Ã—R2)/(R1+R2)<br>Vt = V1 = V2 = V3<br>It = I1 + I2 + I3</div>
+          <div class="formula-box"><strong style="color:var(--accent);">AC Values</strong><br>Vrms = Vpeak Ã— 0.707<br>Vpeak = Vrms Ã— 1.414<br>f = 1 / T</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Impedance</strong><br>Z = âˆš(RÂ² + XÂ²)<br>XL = 2Ï€fL<br>XC = 1/(2Ï€fC)</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Transformers</strong><br>Vp/Vs = Np/Ns<br>VpÃ—Ip = VsÃ—Is</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Motor Speed</strong><br>Ns = 120f / P<br>Slip% = (Ns-Nr)/Ns Ã— 100</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Power Factor</strong><br>PF = W / VA = cos Î¸<br>VAÂ² = WÂ² + VARÂ²</div>
+          <div class="formula-box"><strong style="color:var(--accent);">Voltage Drop</strong><br>Vd = 2 Ã— I Ã— R Ã— L<br>Max 3% branch, 5% total</div>
           <div class="formula-box"><strong style="color:var(--accent);">Wire Ampacity</strong><br>14 AWG = 15A<br>12 AWG = 20A<br>10 AWG = 30A<br>8 AWG = 40A<br>6 AWG = 55A</div>
         </div>
       `;
@@ -11115,7 +11123,7 @@ const ExamChecker = {
   render() {
     return '<div style="max-width:800px;margin:0 auto;padding:24px 16px;">' +
       '<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;">&#x1F4CB; CEC Exam Checker</h1>' +
-      '<p style="color:var(--text-secondary);margin-bottom:20px;">Paste your exam questions below — the AI will find the correct answer for each one using the 2024 Canadian Electrical Code.</p>' +
+      '<p style="color:var(--text-secondary);margin-bottom:20px;">Paste your exam questions below â€” the AI will find the correct answer for each one using the 2024 Canadian Electrical Code.</p>' +
       '<textarea id="examInput" style="width:100%;height:300px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text-primary);font-size:0.9rem;resize:vertical;font-family:inherit;box-sizing:border-box;" placeholder="Paste your exam questions here..."></textarea>' +
       '<button onclick="ExamChecker.check()" class="btn btn-primary" style="margin-top:12px;width:100%;padding:14px;font-size:1rem;font-weight:700;">&#x26A1; Check Answers</button>' +
       '<div id="examResults" style="margin-top:24px;"></div>' +
@@ -11218,7 +11226,7 @@ const Leaderboard = {
   async render(state) {
     const el = document.getElementById('leaderboardContent');
     if (!el) return;
-    el.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--text-muted);">Loading leaderboard…</div>`;
+    el.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--text-muted);">Loading leaderboardâ€¦</div>`;
 
     // Fetch all users from Firebase
     let users = [];
@@ -11272,7 +11280,7 @@ const Leaderboard = {
       <div style="max-width:700px;margin:0 auto;padding:24px 16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
           <div>
-            <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:4px;">🏆 Leaderboard</h1>
+            <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:4px;">ðŸ† Leaderboard</h1>
             <p style="color:var(--text-secondary);font-size:0.9rem;">Compete with other students. Study more, earn more points.</p>
           </div>
           <div style="display:flex;gap:8px;">
@@ -11286,8 +11294,8 @@ const Leaderboard = {
           <div style="font-size:1.4rem;font-weight:900;color:var(--accent);min-width:40px;text-align:center;">#${myPos+1}</div>
           <div style="width:38px;height:38px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;">${sorted[myPos].avatar}</div>
           <div style="flex:1;">
-            <div style="font-weight:700;">You — ${sorted[myPos].name}</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);">${myRank ? `${myRank.badge} ${myRank.name}` : ''} · ${sorted[myPos].streak}🔥 streak</div>
+            <div style="font-weight:700;">You â€” ${sorted[myPos].name}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">${myRank ? `${myRank.badge} ${myRank.name}` : ''} Â· ${sorted[myPos].streak}ðŸ”¥ streak</div>
           </div>
           <div style="font-size:1.3rem;font-weight:900;color:var(--accent);">${myPts.toLocaleString()} pts</div>
         </div>` : ''}
@@ -11298,13 +11306,13 @@ const Leaderboard = {
               const rank = Points.getRank(u.totalPts);
               const pts = this._tab === 'weekly' ? u.weeklyPts : u.totalPts;
               const isMe = u.id === myId;
-              const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="color:var(--text-muted);font-size:0.85rem;">#${i+1}</span>`;
+              const medal = i === 0 ? 'ðŸ¥‡' : i === 1 ? 'ðŸ¥ˆ' : i === 2 ? 'ðŸ¥‰' : `<span style="color:var(--text-muted);font-size:0.85rem;">#${i+1}</span>`;
               return `<div style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--border);background:${isMe ? 'rgba(245,158,11,0.06)' : 'transparent'};transition:background 0.2s;" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='${isMe ? 'rgba(245,158,11,0.06)' : 'transparent'}'">
                 <div style="width:32px;text-align:center;font-size:${i<3?'1.2rem':'0.9rem'};">${medal}</div>
                 <div style="width:36px;height:36px;border-radius:50%;background:${isMe ? 'var(--accent)' : 'var(--bg-secondary)'};color:${isMe ? '#000' : 'var(--text-secondary)'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;flex-shrink:0;">${u.avatar}</div>
                 <div style="flex:1;min-width:0;">
                   <div style="font-weight:${isMe ? '700' : '500'};font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.name}${isMe ? ' (you)' : ''}</div>
-                  <div style="font-size:0.72rem;color:${rank.color};">${rank.badge} ${rank.name}${u.streak > 0 ? ` · ${u.streak}🔥` : ''}</div>
+                  <div style="font-size:0.72rem;color:${rank.color};">${rank.badge} ${rank.name}${u.streak > 0 ? ` Â· ${u.streak}ðŸ”¥` : ''}</div>
                 </div>
                 <div style="font-weight:700;font-size:0.95rem;color:${i===0?'#f59e0b':i===1?'#9ca3af':i===2?'#cd7c2f':'var(--text-primary)'};">${pts.toLocaleString()}<span style="font-size:0.72rem;font-weight:400;color:var(--text-muted);margin-left:3px;">pts</span></div>
               </div>`;
@@ -11321,7 +11329,7 @@ const Leaderboard = {
               </div>`
             ).join('')}
           </div>
-          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:10px;">🔥 Streak bonuses: 3-day streak = 1.5× points · 7-day streak = 2× points</p>
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:10px;">ðŸ”¥ Streak bonuses: 3-day streak = 1.5Ã— points Â· 7-day streak = 2Ã— points</p>
         </div>
       </div>
     `;
@@ -11335,16 +11343,16 @@ const Leaderboard = {
 };
 
 
-// ═══════════════════════════════════════════════════════════════════
-// AskAI — Smart module search assistant (no external API)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// AskAI â€” Smart module search assistant (no external API)
 // Searches LESSONS_CONTENT for answers using keyword matching
-// ═══════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const AskAI = {
   _open: false,
   _history: [],
   _typing: false,
 
-  // ── Electrical domain synonym map ────────────────────────────────
+  // â”€â”€ Electrical domain synonym map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Keys are what a user might type; values = extra terms to search
   _synonyms: {
     'ac':          ['alternating current'],
@@ -11377,8 +11385,8 @@ const AskAI = {
     'period':      ['cycle time','wavelength','one cycle'],
     'frequency':   ['hz','hertz','cycles per second'],
     'phase':       ['phase angle','phase shift','leading','lagging'],
-    'three phase': ['3 phase','three-phase','3-phase','three wire','3φ'],
-    'single phase':['1 phase','one phase','1φ'],
+    'three phase': ['3 phase','three-phase','3-phase','three wire','3Ï†'],
+    'single phase':['1 phase','one phase','1Ï†'],
     'power factor':['pf','cos theta','phase angle'],
     'motor':       ['induction motor','synchronous','rpm','rotor','stator'],
     'relay':       ['coil','contacts','normally open','normally closed'],
@@ -11396,10 +11404,10 @@ const AskAI = {
     'series':      ['series circuit','loop'],
   },
 
-  // ── Simple electrical-aware stemmer ─────────────────────────────
+  // â”€â”€ Simple electrical-aware stemmer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _stem(word) {
     if (word.length < 5) return word;
-    // Longest-match suffix stripping — order matters
+    // Longest-match suffix stripping â€” order matters
     const rules = [
       ['izations','ize'], ['ization','ize'], ['ications','icate'],
       ['ication','icate'], ['ances','ance'], ['ences','ence'],
@@ -11418,7 +11426,7 @@ const AskAI = {
     return word;
   },
 
-  // ── Stop words ───────────────────────────────────────────────────
+  // â”€â”€ Stop words â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _stopWords: new Set(['the','a','an','is','are','was','were','be','been','being',
     'have','has','had','do','does','did','will','would','could','should','may',
     'might','shall','can','need','dare','ought','used','what','which','who','how',
@@ -11428,7 +11436,7 @@ const AskAI = {
     'it','its','i','you','we','they','he','she','my','your','our','their',
     'tell','explain','describe','show','give','help','me','about','please']),
 
-  // ── Keyword extraction with synonym + stem expansion ─────────────
+  // â”€â”€ Keyword extraction with synonym + stem expansion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _keywords(q) {
     const raw = q.toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
@@ -11458,7 +11466,7 @@ const AskAI = {
     return [...expanded].filter(w => w.length > 1);
   },
 
-  // ── Question type detector ───────────────────────────────────────
+  // â”€â”€ Question type detector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _questionType(q) {
     const l = q.toLowerCase();
     if (/formula|equation|calculat|how\s+to\s+(find|calculate|compute)|what.s\s+the\s+(formula|equation)/.test(l)) return 'formula';
@@ -11470,7 +11478,7 @@ const AskAI = {
     return 'general';
   },
 
-  // ── Section type weights per question type ───────────────────────
+  // â”€â”€ Section type weights per question type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _sectionWeight(sectionType, questionType) {
     const table = {
       formula:     { keypoint:1.8, concept:1.3, quiz:0.7, story:0.4, hook:0.3, 'real-world':1.0, analogy:0.7, protip:1.0 },
@@ -11484,7 +11492,7 @@ const AskAI = {
     return (table[questionType] || table.general)[sectionType] || 1.0;
   },
 
-  // ── Section text extractor ───────────────────────────────────────
+  // â”€â”€ Section text extractor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _sectionText(section) {
     let text = (section.title || '') + ' ' + (section.body || '');
     if (section.formula) text += ' ' + section.formula;
@@ -11492,7 +11500,7 @@ const AskAI = {
     return text.toLowerCase();
   },
 
-  // ── Bigram fuzzy matching (for typos) ───────────────────────────
+  // â”€â”€ Bigram fuzzy matching (for typos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _bigrams(word) {
     const bg = new Set();
     for (let i = 0; i < word.length - 1; i++) bg.add(word.slice(i, i + 2));
@@ -11514,7 +11522,7 @@ const AskAI = {
     return false;
   },
 
-  // ── Phrase bonus: reward multi-word keyword matches ──────────────
+  // â”€â”€ Phrase bonus: reward multi-word keyword matches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _phraseBonus(text, keywords) {
     let bonus = 0;
     // Check every pair of adjacent keywords in query order
@@ -11525,7 +11533,7 @@ const AskAI = {
     return bonus;
   },
 
-  // ── Main scorer ──────────────────────────────────────────────────
+  // â”€â”€ Main scorer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _score(text, keywords, questionType, sectionType) {
     if (!keywords.length) return 0;
     const textWords = text.match(/[a-z0-9]+/g) || [];
@@ -11545,7 +11553,7 @@ const AskAI = {
     return score;
   },
 
-  // ── Best-sentence extractor ──────────────────────────────────────
+  // â”€â”€ Best-sentence extractor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Instead of a dumb window, find the sentence(s) most packed with keywords
   _bestPassage(body, keywords, maxLen = 300) {
     if (!body) return '';
@@ -11566,7 +11574,7 @@ const AskAI = {
 
     scored.sort((a, b) => b.sc - a.sc);
     const best = scored[0];
-    if (best.sc === 0) return body.slice(0, maxLen) + (body.length > maxLen ? '…' : '');
+    if (best.sc === 0) return body.slice(0, maxLen) + (body.length > maxLen ? 'â€¦' : '');
 
     // Grab best sentence + the one after it for context
     const pick = [best];
@@ -11577,11 +11585,11 @@ const AskAI = {
     }
     pick.sort((a, b) => a.idx - b.idx);
     let result = pick.map(p => p.s).join(' ');
-    if (result.length > maxLen) result = result.slice(0, maxLen) + '…';
+    if (result.length > maxLen) result = result.slice(0, maxLen) + 'â€¦';
     return result;
   },
 
-  // ── Search ───────────────────────────────────────────────────────
+  // â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _search(question) {
     const keywords = this._keywords(question);
     const questionType = this._questionType(question);
@@ -11599,7 +11607,7 @@ const AskAI = {
     return { results: results.slice(0, 4), questionType, keywords };
   },
 
-  // ── Response formatter ───────────────────────────────────────────
+  // â”€â”€ Response formatter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _formatResponse(question, { results, questionType, keywords }) {
     if (!results.length) {
       return {
@@ -11618,18 +11626,18 @@ const AskAI = {
 
     if (questionType === 'formula' && formula) {
       // Lead with the formula(s)
-      text = '📐 ' + formula.replace(/\n/g, '\n📐 ');
+      text = 'ðŸ“ ' + formula.replace(/\n/g, '\nðŸ“ ');
       const passage = this._bestPassage(body, keywords, 200);
       if (passage) text += '\n\n' + passage;
     } else if (questionType === 'definition') {
       // First sentence of best passage = the definition
       text = this._bestPassage(body, keywords, 300);
-      if (formula) text += '\n\n📐 ' + formula.split('\n')[0];
+      if (formula) text += '\n\nðŸ“ ' + formula.split('\n')[0];
     } else {
       text = this._bestPassage(body, keywords, 300);
       if (formula && questionType !== 'example') {
         const fLines = formula.split('\n').slice(0, 2).join('  |  ');
-        text += '\n\n📐 ' + fLines;
+        text += '\n\nðŸ“ ' + fLines;
       }
     }
 
@@ -11645,7 +11653,7 @@ const AskAI = {
     return { text, sources, followUps };
   },
 
-  // ── Follow-up question suggester ─────────────────────────────────
+  // â”€â”€ Follow-up question suggester â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _suggestFollowUps(lesson, section, questionType) {
     const suggestions = {
       'm1': ['What is RMS voltage?', 'How does a transformer work?', 'What is frequency?'],
@@ -11660,7 +11668,7 @@ const AskAI = {
     return (suggestions[lesson.id] || []).slice(0, 3);
   },
 
-  // ── Public API ───────────────────────────────────────────────────
+  // â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   toggle() { this._open ? this.close() : this.open(); },
 
   open() {
@@ -11697,7 +11705,7 @@ const AskAI = {
         body: JSON.stringify({ question, history: this._history.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })) })
       });
       const data = await res.json();
-      const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: '📖' }));
+      const sources = (data.sources || []).map(s => ({ lessonTitle: s.section, sectionTitle: 'p.' + s.page, icon: 'ðŸ“–' }));
       this._history.push({ role: 'ai', text: data.answer || data.error || 'No response.', sources, followUps: [] });
     } catch(err) {
       this._history.push({ role: 'ai', text: 'Connection error. Check your internet.', sources: [], followUps: [] });
@@ -11707,7 +11715,7 @@ const AskAI = {
     this._scrollBottom();
   },
 
-  // ── UI ───────────────────────────────────────────────────────────
+  // â”€â”€ UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _createPanel() {
     const panel = document.createElement('div');
     panel.id = 'askaiPanel';
@@ -11716,13 +11724,13 @@ const AskAI = {
     panel.innerHTML = `
       <div class="askai-header">
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.3rem;">🤖</span>
+          <span style="font-size:1.3rem;">ðŸ¤–</span>
           <div>
             <div style="font-weight:700;font-size:0.95rem;color:var(--text-primary);">SparkyAI</div>
             <div style="font-size:0.72rem;color:var(--accent);font-weight:600;">Searches your IBEW modules</div>
           </div>
         </div>
-        <button onclick="AskAI.close()" class="askai-close-btn">✕</button>
+        <button onclick="AskAI.close()" class="askai-close-btn">âœ•</button>
       </div>
       <div id="askaiMessages" class="askai-messages">
         ${this._welcomeBubble()}
@@ -11732,7 +11740,7 @@ const AskAI = {
           placeholder="e.g. What is impedance?"
           onkeydown="if(event.key==='Enter')AskAI._submitInput()"
           maxlength="10000" />
-        <button class="askai-send-btn" onclick="AskAI._submitInput()">➤</button>
+        <button class="askai-send-btn" onclick="AskAI._submitInput()">âž¤</button>
       </div>
     `;
     document.body.appendChild(panel);
@@ -11742,12 +11750,12 @@ const AskAI = {
 
   _welcomeBubble() {
     return `<div class="askai-bubble askai-ai">
-      <div class="askai-bubble-text">Hey! Ask me anything from your loaded IBEW modules — AC theory, inductors &amp; capacitors, impedance, three-phase power, motor controls, relays, timers, PLCs and more.<br><br>I understand abbreviations like <strong>RMS</strong>, <strong>XL</strong>, <strong>PF</strong>, typos, and related terms. ⚡</div>
+      <div class="askai-bubble-text">Hey! Ask me anything from your loaded IBEW modules â€” AC theory, inductors &amp; capacitors, impedance, three-phase power, motor controls, relays, timers, PLCs and more.<br><br>I understand abbreviations like <strong>RMS</strong>, <strong>XL</strong>, <strong>PF</strong>, typos, and related terms. âš¡</div>
       <div class="askai-sources" style="margin-top:10px;">
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('What is RMS voltage?')">💡 What is RMS voltage?</span>
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How does impedance work?')">💡 Impedance</span>
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('Three phase power formula')">💡 3-phase formulas</span>
-        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How do relays work?')">💡 How relays work</span>
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('What is RMS voltage?')">ðŸ’¡ What is RMS voltage?</span>
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How does impedance work?')">ðŸ’¡ Impedance</span>
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('Three phase power formula')">ðŸ’¡ 3-phase formulas</span>
+        <span class="askai-source-tag" style="cursor:pointer;" onclick="AskAI._quickAsk('How do relays work?')">ðŸ’¡ How relays work</span>
       </div>
     </div>`;
   },
@@ -11777,12 +11785,12 @@ const AskAI = {
       }
       const sourceHtml = msg.sources && msg.sources.length
         ? `<div class="askai-sources">${msg.sources.map(s =>
-            `<span class="askai-source-tag">${s.icon} ${this._esc(s.lessonTitle)} — ${this._esc(s.sectionTitle)}</span>`
+            `<span class="askai-source-tag">${s.icon} ${this._esc(s.lessonTitle)} â€” ${this._esc(s.sectionTitle)}</span>`
           ).join('')}</div>`
         : '';
       const followHtml = msg.followUps && msg.followUps.length
         ? `<div class="askai-followups">${msg.followUps.map(q =>
-            `<span class="askai-followup-tag" onclick="AskAI._quickAsk('${q.replace(/'/g,'&#39;')}')">→ ${this._esc(q)}</span>`
+            `<span class="askai-followup-tag" onclick="AskAI._quickAsk('${q.replace(/'/g,'&#39;')}')">â†’ ${this._esc(q)}</span>`
           ).join('')}</div>`
         : '';
       return `<div class="askai-bubble askai-ai">
@@ -11820,13 +11828,13 @@ function createAskAIFAB() {
   const btn = document.createElement('button');
   btn.id = 'askaiBtn';
   btn.className = 'askai-fab';
-  btn.innerHTML = '🤖';
+  btn.innerHTML = 'ðŸ¤–';
   btn.title = 'Ask SparkyAI';
   btn.onclick = () => AskAI.toggle();
   document.body.appendChild(btn);
 }
 
-// One-time analytics wipe — clears all pre-launch test traffic (was 100% owner)
+// One-time analytics wipe â€” clears all pre-launch test traffic (was 100% owner)
 (function purgeTestTraffic() {
   const FLAG = 'sparkstudy_traffic_purged_v1';
   if (localStorage.getItem(FLAG)) return; // already ran, never run again
@@ -11868,3 +11876,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+
