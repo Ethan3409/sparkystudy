@@ -109,8 +109,26 @@ const FireDB = {
     try {
       const cutoff = Date.now() - days * 86400000;
       const snap = await this.db.collection('visits').where('timestamp', '>=', cutoff).orderBy('timestamp', 'desc').limit(5000).get();
+      console.log('[sparkystudy] Cloud visits loaded:', snap.docs.length);
       return snap.docs.map(d => d.data());
-    } catch(e) { return null; }
+    } catch(e) {
+      console.warn('[sparkystudy] getVisits failed:', e.message);
+      // Fallback: try without orderBy (avoids missing index issue)
+      try {
+        const cutoff = Date.now() - days * 86400000;
+        const snap = await this.db.collection('visits').where('timestamp', '>=', cutoff).limit(5000).get();
+        console.log('[sparkystudy] Cloud visits loaded (fallback):', snap.docs.length);
+        return snap.docs.map(d => d.data()).sort((a, b) => b.timestamp - a.timestamp);
+      } catch(e2) {
+        console.warn('[sparkystudy] getVisits fallback also failed:', e2.message);
+        // Last resort: get all visits without any filter
+        try {
+          const snap = await this.db.collection('visits').limit(5000).get();
+          console.log('[sparkystudy] Cloud visits loaded (no filter):', snap.docs.length);
+          return snap.docs.map(d => d.data()).sort((a, b) => b.timestamp - a.timestamp);
+        } catch(e3) { return null; }
+      }
+    }
   },
   async deleteUser(uid) {
     if (!this.ready) return;
