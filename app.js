@@ -100,9 +100,13 @@ const FireDB = {
     } catch(e) { console.warn('[sparkystudy] getAllUsers failed:', e.message); return null; }
   },
   async logVisit(data) {
-    if (!this.ready) return;
+    if (!this.ready) {
+      // Firebase not ready yet — retry after init completes
+      setTimeout(() => this.logVisit(data), 3000);
+      return;
+    }
     try { await this.db.collection('visits').add({ ...data, _ts: firebase.firestore.FieldValue.serverTimestamp() }); }
-    catch(e) { /* non-critical, fail silently */ }
+    catch(e) { console.warn('[sparkystudy] logVisit failed:', e.message); }
   },
   async getVisits(days = 30) {
     if (!this.ready) return null;
